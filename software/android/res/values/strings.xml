@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="hello">Hello World, flygina!</string>
+    <string name="app_name">FlyGina</string>
+<string name="moteconnect_title">Enter the IPv6 address and port of the remote GINA</string>
+<string name="addrtext">IPv6 address of the GINA mote:</string>
+<string name="addrbutton">Save and ping mote</string>
+</resources>
