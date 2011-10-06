@@ -1,5 +1,5 @@
 # the IPv4 address of the LBR you try to connect to
-LBRADDR = 75.18.213.209
+LBRADDR = 67.203.88.56
 
 # the TCP port of the LBR
 LBRPORT = 80
