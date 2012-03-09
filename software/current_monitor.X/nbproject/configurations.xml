@@ -4,6 +4,8 @@
     <logicalFolder name="HeaderFiles"
                    displayName="Header Files"
                    projectFiles="true">
+      <logicalFolder name="Drivers" displayName="Drivers" projectFiles="true">
+      </logicalFolder>
       <logicalFolder name="Microchip" displayName="Microchip" projectFiles="true">
         <logicalFolder name="Include" displayName="Include" projectFiles="true">
           <logicalFolder name="USB" displayName="USB" projectFiles="true">
@@ -59,10 +61,14 @@
           <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/Microchip/Include/uart2.h</itemPath>
         </logicalFolder>
       </logicalFolder>
+      <logicalFolder name="Services" displayName="Services" projectFiles="true">
+        <itemPath>src/Services/usb2serial.h</itemPath>
+        <itemPath>src/Services/commands.h</itemPath>
+      </logicalFolder>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/HardwareProfile - PIC18F46J50 PIM.h</itemPath>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/HardwareProfile.h</itemPath>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/usb_config.h</itemPath>
-      <itemPath>usb_memory.h</itemPath>
+      <itemPath>src/usb_memory.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LibraryFiles"
                    displayName="Library Files"
@@ -75,6 +81,8 @@
     <logicalFolder name="SourceFiles"
                    displayName="Source Files"
                    projectFiles="true">
+      <logicalFolder name="Drivers" displayName="Drivers" projectFiles="true">
+      </logicalFolder>
       <logicalFolder name="Microchip" displayName="Microchip" projectFiles="true">
         <logicalFolder name="USB" displayName="USB" projectFiles="true">
           <logicalFolder name="CDC Device Driver"
@@ -93,10 +101,14 @@
           <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/Microchip/USB/usb_hal_local.h</itemPath>
         </logicalFolder>
       </logicalFolder>
+      <logicalFolder name="Services" displayName="Services" projectFiles="true">
+        <itemPath>src/Services/usb2serial.c</itemPath>
+        <itemPath>src/Services/commands.c</itemPath>
+      </logicalFolder>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/main.c</itemPath>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/rm18f46j50_g.lkr</itemPath>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/usb_descriptors.c</itemPath>
-      <itemPath>usb_memory.c</itemPath>
+      <itemPath>src/usb_memory.c</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -105,7 +117,7 @@
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>src/Microchip</Elem>
+    <Elem>src</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -153,7 +165,7 @@
         <property key="enable-ou" value="true"/>
         <property key="enable-ow" value="true"/>
         <property key="extra-include-directories"
-                  value="/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/Microchip/Include;/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src;/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/Microchip"/>
+                  value="/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/Microchip/Include;/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src;/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/Microchip;/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/Services"/>
         <property key="optimization-master" value="Enable all"/>
         <property key="preprocessor-macros" value=""/>
         <property key="procedural-abstraction-passes" value="0"/>
