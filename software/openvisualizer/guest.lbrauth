@@ -1,5 +1,5 @@
 # the IPv4 address of the LBR you try to connect to
-LBRADDR = 67.203.88.56
+LBRADDR = lbr.openwsn.me
 
 # the TCP port of the LBR
 LBRPORT = 80
