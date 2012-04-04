@@ -118,12 +118,12 @@
 
 #elif defined(PIC18F46J50_PIM) || defined(PIC18F47J53_PIM)
      #pragma config WDTEN = OFF          //WDT disabled (enabled by SWDTEN bit)
-     #pragma config PLLDIV = 3           //Divide by 3 (12 MHz oscillator input)
+     #pragma config PLLDIV = 2           //Divide by 2 (8 MHz oscillator input)
      #pragma config STVREN = ON            //stack overflow/underflow reset enabled
      #pragma config XINST = OFF          //Extended instruction set disabled
      #pragma config CPUDIV = OSC1        //No CPU system clock divide
      #pragma config CP0 = OFF            //Program memory is not code-protected
-     #pragma config OSC = HSPLL          //HS oscillator, PLL enabled, HSPLL used by USB
+     #pragma config OSC = INTOSCPLL          //HS oscillator, PLL enabled, HSPLL used by USB
      //#pragma config T1DIG = ON           //Sec Osc clock source may be selected
      //#pragma config LPT1OSC = OFF        //high power Timer1 mode
      #pragma config FCMEN = OFF          //Fail-Safe Clock Monitor disabled
@@ -234,6 +234,10 @@
 
 #include "./Services/usb2serial.h"
 #include "./Services/commands.h"
+#include "../Drivers/rtc.h"
+#include "../Drivers/currentADC.h"
+#include "../Drivers/leds.h"
+
 
 /** V A R I A B L E S ********************************************************/
 #if defined(__18CXX)
@@ -346,13 +350,18 @@ void UserInit(void);
 	#pragma interrupt YourHighPriorityISRCode
 	void YourHighPriorityISRCode()
 	{
+
 		//Check which interrupt flag caused the interrupt.
 		//Service the interrupt
 		//Clear the interrupt flag
 		//Etc.
-        #if defined(USB_INTERRUPT)
-	        USBDeviceTasks();
-        #endif
+            if ( PIR1bits.TMR1IF ){
+                T1_interrupt();
+            } else {
+            #if defined(USB_INTERRUPT)
+                    USBDeviceTasks();
+            #endif
+            }
 	
 	}	//This return will be a "retfie fast", since this is in a #pragma interrupt section 
 	#pragma interruptlow YourLowPriorityISRCode
@@ -362,6 +371,11 @@ void UserInit(void);
 		//Service the interrupt
 		//Clear the interrupt flag
 		//Etc.
+            if ( PIR1bits.ADIF ) {
+                ADC_interrupt();
+            } else if ( PIR2bits.CCP2IF ) {
+                CCP2_interrupt();
+            }
 	
 	}	//This return will be a "retfie", since this is in a #pragma interruptlow section 
 
@@ -657,11 +671,21 @@ static void InitializeSystem(void)
 void UserInit(void)
 {
 
+    rtc_init();
+    currentADC_init();
+    leds_init();
+
+    xbee_init();
+
     usb2serial_init();
     commands_init();
-	lastTransmission = 0;
+    lastTransmission = 0;
 
-	mInitAllLEDs();
+    mInitAllLEDs();
+
+    INTCONbits.PEIE = 1;
+    RCONbits.IPEN = 1;
+
 }//end UserInit
 
 /********************************************************************

@@ -255,7 +255,7 @@ void USBCheckCDCRequest(void)
             CONFIGURE_RTS(control_signal_bitmap.CARRIER_CONTROL);  
             //------------------------------------------------------------------            
             
-            #if defined(USB_CDC_SUPPORT_DTR_SIGNALING)
+            #if 0 && defined(USB_CDC_SUPPORT_DTR_SIGNALING)
                 if(control_signal_bitmap.DTE_PRESENT == 1)
                 {
                     UART_DTR = USB_CDC_DTR_ACTIVE_LEVEL;

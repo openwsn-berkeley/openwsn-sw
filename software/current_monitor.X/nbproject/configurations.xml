@@ -5,6 +5,10 @@
                    displayName="Header Files"
                    projectFiles="true">
       <logicalFolder name="Drivers" displayName="Drivers" projectFiles="true">
+        <itemPath>src/Drivers/xbee.h</itemPath>
+        <itemPath>src/Drivers/currentADC.h</itemPath>
+        <itemPath>src/Drivers/rtc.h</itemPath>
+        <itemPath>src/Drivers/leds.h</itemPath>
       </logicalFolder>
       <logicalFolder name="Microchip" displayName="Microchip" projectFiles="true">
         <logicalFolder name="Include" displayName="Include" projectFiles="true">
@@ -64,6 +68,8 @@
       <logicalFolder name="Services" displayName="Services" projectFiles="true">
         <itemPath>src/Services/usb2serial.h</itemPath>
         <itemPath>src/Services/commands.h</itemPath>
+        <itemPath>src/Services/commands_xbee.h</itemPath>
+        <itemPath>src/Services/commands_adc.h</itemPath>
       </logicalFolder>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/HardwareProfile - PIC18F46J50 PIM.h</itemPath>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/HardwareProfile.h</itemPath>
@@ -82,6 +88,9 @@
                    displayName="Source Files"
                    projectFiles="true">
       <logicalFolder name="Drivers" displayName="Drivers" projectFiles="true">
+        <itemPath>src/Drivers/xbee.c</itemPath>
+        <itemPath>src/Drivers/currentADC.c</itemPath>
+        <itemPath>src/Drivers/rtc.c</itemPath>
       </logicalFolder>
       <logicalFolder name="Microchip" displayName="Microchip" projectFiles="true">
         <logicalFolder name="USB" displayName="USB" projectFiles="true">
@@ -104,6 +113,8 @@
       <logicalFolder name="Services" displayName="Services" projectFiles="true">
         <itemPath>src/Services/usb2serial.c</itemPath>
         <itemPath>src/Services/commands.c</itemPath>
+        <itemPath>src/Services/commands_xbee.c</itemPath>
+        <itemPath>src/Services/commands_adc.c</itemPath>
       </logicalFolder>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/main.c</itemPath>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/rm18f46j50_g.lkr</itemPath>
@@ -124,7 +135,7 @@
     <conf name="default" type="2">
       <toolsSet>
         <developmentServer>localhost</developmentServer>
-        <targetDevice>PIC18F4550</targetDevice>
+        <targetDevice>PIC18F26J50</targetDevice>
         <targetHeader></targetHeader>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>C18</languageToolchain>
@@ -149,7 +160,7 @@
       <C18>
         <property key="code-model" value="ms"/>
         <property key="data-model" value="oa-"/>
-        <property key="default-char-unsigned" value="false"/>
+        <property key="default-char-unsigned" value="true"/>
         <property key="enable-all-optimizations" value="true"/>
         <property key="enable-int-promotion" value="false"/>
         <property key="enable-multi-bank-stack-model" value="false"/>
@@ -210,7 +221,7 @@
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.end" value="0x7fff"/>
         <property key="memories.programmemory.start" value="0x0"/>
-        <property key="poweroptions.powerenable" value="true"/>
+        <property key="poweroptions.powerenable" value="false"/>
         <property key="programmertogo.imagename" value=""/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.preserveeeprom" value="false"/>
@@ -220,7 +231,7 @@
         <property key="programoptions.preserveuserid" value="false"/>
         <property key="programoptions.usehighvoltageonmclr" value="false"/>
         <property key="programoptions.uselvpprogramming" value="false"/>
-        <property key="voltagevalue" value="5.0"/>
+        <property key="voltagevalue" value="3.375"/>
       </PICkit3PlatformTool>
     </conf>
   </confs>

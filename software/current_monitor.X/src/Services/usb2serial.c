@@ -25,6 +25,9 @@ unsigned char    RS232cp;       // current position within the buffer
 unsigned char RS232_Out_Data_Rdy = 0;
 USB_HANDLE  lastTransmission;
 
+// callbacks
+void (* usb2serial_cb)(char);
+void (* serial2usb_cb)(char);
 
 #if defined(__18CXX)
     #define mDataRdyUSART() PIR1bits.RCIF
@@ -47,6 +50,14 @@ void usb2serial_init() {
 
 	NextUSBOut = 0;
 	LastRS232Out = 0;
+
+        usb2serial_cb = NULL;
+        serial2usb_cb = NULL;
+}
+
+void usb2serial_setCallbacks(  void (*usb2serial)(char), void (*serial2usb)(char)) {
+    usb2serial_cb = usb2serial;
+    serial2usb_cb = serial2usb;
 }
 
 void usb2serial_processIO() {
@@ -70,6 +81,8 @@ void usb2serial_processIO() {
         	//actually sending it.
         	if(UART_CTS == USB_CDC_CTS_ACTIVE_LEVEL)
         	{
+                        if ( usb2serial_cb )
+                            usb2serial_cb(RS232_Out_Data[RS232cp]);
         		putcUSART(RS232_Out_Data[RS232cp]);
         		++RS232cp;
         		if (RS232cp == LastRS232Out)
@@ -77,6 +90,9 @@ void usb2serial_processIO() {
     	    }
 	    #else
 	        //Hardware flow control not being used.  Just send the data.
+                if ( usb2serial_cb )
+                    usb2serial_cb(RS232_Out_Data[RS232cp]);
+
     		putcUSART(RS232_Out_Data[RS232cp]);
     		++RS232cp;
     		if (RS232cp == LastRS232Out)
@@ -89,11 +105,13 @@ void usb2serial_processIO() {
 	if(mDataRdyUSART() && (NextUSBOut < (CDC_DATA_OUT_EP_SIZE - 1)))
 	{
 		USB_Out_Buffer[NextUSBOut] = getcUSART();
+                if ( serial2usb_cb )
+                    serial2usb_cb(USB_Out_Buffer[NextUSBOut]);
 		++NextUSBOut;
 		USB_Out_Buffer[NextUSBOut] = 0;
 	}
 
-	#if 0 && defined(USB_CDC_SUPPORT_HARDWARE_FLOW_CONTROL)
+	#if  defined(USB_CDC_SUPPORT_HARDWARE_FLOW_CONTROL)
     	//Drive RTS pin, to let UART device attached know if it is allowed to
     	//send more data or not.  If the receive buffer is almost full, we
     	//deassert RTS.

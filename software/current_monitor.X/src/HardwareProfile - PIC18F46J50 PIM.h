@@ -134,13 +134,13 @@
     //Make sure these definitions match the GPIO pins being used for your hardware
     //setup.
     #define UART_DTS PORTBbits.RB0
-    #define UART_DTR LATDbits.LATD7
-    #define UART_RTS LATBbits.LATB2
-    #define UART_CTS PORTBbits.RB1
+    #define UART_DTR LATAbits.LATA3
+    #define UART_RTS LATBbits.LATB0
+    #define UART_CTS PORTAbits.RA1
     
-    #define mInitRTSPin() {TRISBbits.TRISB2 = 0;}   //Configure RTS as a digital output.  
-    #define mInitCTSPin() {TRISBbits.TRISB1 = 1;}   //Configure CTS as a digital input.  (Make sure pin is digital if ANxx functions is present on the pin)
+    #define mInitRTSPin() {TRISBbits.TRISB0 = 0; UART_RTS = 1;}   //Configure RTS as a digital output.
+    #define mInitCTSPin() {TRISAbits.TRISA1 = 1;}   //Configure CTS as a digital input.  (Make sure pin is digital if ANxx functions is present on the pin)
     #define mInitDTSPin() {TRISBbits.TRISB0 = 1;}   //Configure DTS as a digital input.  (Make sure pin is digital if ANxx functions is present on the pin)
-    #define mInitDTRPin() {TRISDbits.TRISD7 = 0;}   //Configure DTR as a digital output.
+    #define mInitDTRPin() {TRISAbits.TRISA3 = 0; UART_DTR = 1;}   //Configure DTR as a digital output.
 
 #endif  //HARDWARE_PROFILE_PIC18F46J50_PIM_H

@@ -5,7 +5,7 @@
 #include "usb_memory.h"
 
 #if defined(__18CXX)
-    #if defined(__18F14K50) || defined(__18F13K50) || defined(__18LF14K50) || defined(__18LF13K50)
+    #if defined(__18F14K50) || defined(__18F13K50) || defined(__18LF14K50) || defined(__18LF13K50) 
         #pragma udata usbram2
     #elif defined(__18F2455) || defined(__18F2550) || defined(__18F4455) || defined(__18F4550)\
         || defined(__18F2458) || defined(__18F2453) || defined(__18F4558) || defined(__18F4553)
@@ -13,7 +13,7 @@
     #elif defined(__18F4450) || defined(__18F2450)
         #pragma udata USB_VARIABLES=0x480
     #else
-        #pragma udata
+        #pragma udata usb_cdc
     #endif
 #endif
 
@@ -35,8 +35,7 @@ LINE_CODING line_coding;    // Buffer to store line coding information
     #elif defined(__18F4450) || defined(__18F2450)
         #pragma udata USB_VARIABLES=0x480
     #else
-        #pragma udata
-    #endif
+        #pragma udata usb_custom
 #endif
 
 unsigned char OUTPacket[64];	//User application buffer for receiving and holding OUT packets sent from the host

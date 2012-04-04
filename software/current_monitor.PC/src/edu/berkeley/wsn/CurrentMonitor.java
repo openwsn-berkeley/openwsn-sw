@@ -89,7 +89,7 @@ public class CurrentMonitor  extends JFrame{
 
 		} catch (USBException exp) {
 			error(""+exp);
-		}	
+		}
 	}
 	
 	
