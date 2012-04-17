@@ -182,6 +182,16 @@ class lbrClientThread(threading.Thread):
          return
       # ---N---> send netname
       self.socket.send('N'+self.netname)
+      try:
+         input = self.socket.recv(4096)
+      except socket.timeout:
+         try:
+            self.socket.shutdown(socket.SHUT_RDWR)
+            self.socket.close()
+         except socket.error:
+            pass
+         tkMessageBox.showerror('Error','Waited too long for netname')
+         return
       # <---P--- listen for prefix
       try:
          input = self.socket.recv(4096)
