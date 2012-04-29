@@ -69,7 +69,7 @@ typedef struct {
     char payload[];
 } packet_t;
 
-#define MAX_PAYLOAD_PER_PACKET (USBGEN_EP_SIZE-sizeof(packet_t))
+#define MAX_PAYLOAD_PER_PACKET (USBGEN_EP_SIZE-sizeof(packet_t) + 1) // don't count payload char[]
 
 struct {
     unsigned recieving_partial:1;
@@ -80,8 +80,8 @@ struct {
 #pragma udata udata2
 char packet_buffer[256];
 #pragma udata
-char packet_buffer_len = 0;
-char packet_send_len = 0;
+int packet_buffer_len = 0;
+int packet_send_len = 0;
 
 void commands_init() {
     USBGenericOutHandle = 0;
@@ -209,6 +209,7 @@ void commands_processIO() {
 
                 while(USBHandleBusy(USBGenericInHandle));
                 USBGenericInHandle = USBGenWrite(USBGEN_EP_NUM,(BYTE *)packet,USBGEN_EP_SIZE);
+                while(USBHandleBusy(USBGenericInHandle)); // otherwise we might overwrite packet while sending over USB
             }
         }
 

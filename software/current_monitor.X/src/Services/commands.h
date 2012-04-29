@@ -3,8 +3,8 @@
 
 
 extern char packet_buffer[256];
-extern char packet_buffer_len;
-extern char packet_send_len;
+extern int packet_buffer_len;
+extern int packet_send_len;
 
 void commands_init(void);
 
