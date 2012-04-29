@@ -4,6 +4,7 @@
  *
  * Created on March 8, 2012, 6:50 PM
  */
+#include <string.h>
 #include "./USB/usb.h"
 #include "./USB/usb_function_cdc.h"
 #include "usb_memory.h"
@@ -22,6 +23,7 @@
 #include "./Services/commands.h"
 #include "./Services/commands_xbee.h"
 #include "./Services/commands_adc.h"
+#include "./Services/commands_flash.h"
 #include "Drivers/leds.h"
 
 #if defined(__18CXX)
@@ -35,9 +37,12 @@ typedef enum {
             PIC_RESET = 0x00,
             DEVICE_RESET = 0x01,
 
-            FLASH_READ = 0x10,
-            FLASH_WRITE = 0x12,
-            FLASH_ERASE = 0x13,
+            FLASH_START_READ = 0x10,
+            FLASH_CONTINUE_READ = 0x11,
+            FLASH_STOP_READ = 0x12,
+            FLASH_START_WRITE = 0x15,
+            FLASH_CONTINUE_WRITE = 0x16,
+            FLASH_STOP_WRITE = 0x17,
 
             XBEE_INFO = 0x20, // get information about # of configurations and current one
             XBEE_GET_CONFIG = 0x21, // dump a configuration
@@ -86,6 +91,7 @@ void commands_init() {
     reciever_state.segments_recieved = 0;
 
     commands_xbee_init();
+    commands_flash_init();
 }
 
 
@@ -99,10 +105,18 @@ void commands_packet_recieved() {
         case DEVICE_RESET:
             break;
 
-        case FLASH_READ:
-        case FLASH_WRITE:
-        case FLASH_ERASE:
-            break;
+        case FLASH_START_READ:
+            commands_FLASH_START_READ(); break;
+        case FLASH_CONTINUE_READ:
+            commands_FLASH_CONTINUE_READ(); break;
+        case FLASH_STOP_READ:
+            commands_FLASH_STOP_READ(); break;
+        case FLASH_START_WRITE:
+            commands_FLASH_START_WRITE(); break;
+        case FLASH_CONTINUE_WRITE:
+            commands_FLASH_CONTINUE_WRITE(); break;
+        case FLASH_STOP_WRITE:
+            commands_FLASH_STOP_WRITE(); break;
 
         case XBEE_INFO:  // get information about # of configurations and current one
             commands_XBEE_INFO(); break;

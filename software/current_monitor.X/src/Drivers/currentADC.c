@@ -51,7 +51,7 @@ void currentADC_trigger() {
 
 void currentADC_init() {
     ANCON0 = 0b11111011;
-    ANCON1 = 0;
+    ANCON1 = 0b00011111;
 
     ADCON0 = (0<<2) | 1; // turn on module, channel 0
     ADCON1 = 0b11000110; // no acquisition time, do calibration, right-justified

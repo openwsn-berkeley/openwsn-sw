@@ -9,6 +9,8 @@
         <itemPath>src/Drivers/currentADC.h</itemPath>
         <itemPath>src/Drivers/rtc.h</itemPath>
         <itemPath>src/Drivers/leds.h</itemPath>
+        <itemPath>src/Drivers/atflash.h</itemPath>
+        <itemPath>src/Drivers/SPI.h</itemPath>
       </logicalFolder>
       <logicalFolder name="Microchip" displayName="Microchip" projectFiles="true">
         <logicalFolder name="Include" displayName="Include" projectFiles="true">
@@ -70,6 +72,7 @@
         <itemPath>src/Services/commands.h</itemPath>
         <itemPath>src/Services/commands_xbee.h</itemPath>
         <itemPath>src/Services/commands_adc.h</itemPath>
+        <itemPath>src/Services/commands_flash.h</itemPath>
       </logicalFolder>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/HardwareProfile - PIC18F46J50 PIM.h</itemPath>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/HardwareProfile.h</itemPath>
@@ -91,6 +94,8 @@
         <itemPath>src/Drivers/xbee.c</itemPath>
         <itemPath>src/Drivers/currentADC.c</itemPath>
         <itemPath>src/Drivers/rtc.c</itemPath>
+        <itemPath>src/Drivers/atflash.c</itemPath>
+        <itemPath>src/Drivers/SPI.c</itemPath>
       </logicalFolder>
       <logicalFolder name="Microchip" displayName="Microchip" projectFiles="true">
         <logicalFolder name="USB" displayName="USB" projectFiles="true">
@@ -115,6 +120,7 @@
         <itemPath>src/Services/commands.c</itemPath>
         <itemPath>src/Services/commands_xbee.c</itemPath>
         <itemPath>src/Services/commands_adc.c</itemPath>
+        <itemPath>src/Services/commands_flash.c</itemPath>
       </logicalFolder>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/main.c</itemPath>
       <itemPath>/mnt/DATA/documents/UCB/WSN/openwsn/trunk/software/current_monitor.X/src/rm18f46j50_g.lkr</itemPath>

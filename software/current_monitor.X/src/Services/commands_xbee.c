@@ -1,14 +1,17 @@
+#include <string.h>
 #include "./Services/usb2serial.h"
 #include "./Services/commands.h"
 #include "./Services/commands_xbee.h"
+#include <p18cxxx.h>
 
 #include "./Drivers/xbee.h"
+#include "./Drivers/leds.h"
 
 #define AT_CMD_BUFFER_LEN 52
-char at_cmd_buffer[AT_CMD_BUFFER_LEN];
-char at_cmd_buffer_pos;
-char at_commands_queued;
-char overflow;
+volatile char at_cmd_buffer[AT_CMD_BUFFER_LEN];
+volatile char at_cmd_buffer_pos;
+volatile char at_commands_queued;
+volatile char overflow;
 
 void commands_xbee_init() {
 
@@ -16,16 +19,19 @@ void commands_xbee_init() {
 }
 
 void commands_xbee_u2s_cb(char ch) {
+    char c;
     API_frame_t * frame = xbee_parse(ch);
-    if ( frame && frame->frame_type == AT_COMMAND) {
-        if( at_cmd_buffer_pos < AT_CMD_BUFFER_LEN - xbee_payload_length - 2 ) {
+    if ( frame && (frame->frame_type == AT_COMMAND || frame->frame_type == AT_COMMAND_QUEUE) ) {
+        if( at_cmd_buffer_pos <= AT_CMD_BUFFER_LEN - xbee_payload_length - 3 ) {
             AT_command_frame_t * data = &(frame->payload.at_command_frame);
             at_cmd_buffer[at_cmd_buffer_pos] = data->code[0];
             at_cmd_buffer[at_cmd_buffer_pos + 1] = data->code[1];
             at_cmd_buffer[at_cmd_buffer_pos + 2] = xbee_payload_length - offsetof(API_frame_t,payload.at_command_frame.value);
-            memcpy(at_cmd_buffer + at_cmd_buffer_pos + 3,data->value,at_cmd_buffer[at_cmd_buffer_pos + 2]);
+
+            memcpy(at_cmd_buffer + at_cmd_buffer_pos + 3, data->value, at_cmd_buffer[at_cmd_buffer_pos + 2]);
             at_cmd_buffer_pos += 3 + at_cmd_buffer[at_cmd_buffer_pos + 2];
             at_commands_queued++;
+            led_tog2();
         } else {
             overflow ++;
         }

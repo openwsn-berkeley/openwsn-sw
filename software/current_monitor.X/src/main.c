@@ -237,6 +237,9 @@
 #include "../Drivers/rtc.h"
 #include "../Drivers/currentADC.h"
 #include "../Drivers/leds.h"
+#include "../Drivers/SPI.h"
+#include "../Drivers/atflash.h"
+#include "../Drivers/xbee.h"
 
 
 /** V A R I A B L E S ********************************************************/
@@ -674,8 +677,10 @@ void UserInit(void)
     rtc_init();
     currentADC_init();
     leds_init();
-
     xbee_init();
+
+    spi_init();
+    atflash_init();
 
     usb2serial_init();
     commands_init();

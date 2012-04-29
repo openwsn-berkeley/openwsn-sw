@@ -3,7 +3,7 @@
 #define XBEE_H
 #include "GenericTypeDefs.h"
 
-extern char xbee_api_buf[128];
+volatile extern char xbee_api_buf[128];
 #define MAX_XBEE_API_PAYLOAD (sizeof(xbee_api_buf) - 4)
 
 typedef struct {
@@ -111,11 +111,11 @@ typedef struct {
 
 
 
-void xbee_init();
+void xbee_init(void);
 
-void xbee_reset_parser();
+void xbee_reset_parser(void);
 
-extern UINT16 xbee_payload_length;
+volatile extern UINT16 xbee_payload_length;
 
 API_frame_t * xbee_parse(char ch);
 

@@ -8,10 +8,10 @@
 extern volatile UINT16 current_reading_high;
 extern volatile UINT16 current_reading_low;
 
-void currentADC_init();
-void ADC_interrupt() ;
-void CCP2_interrupt();
-void currentADC_trigger() ;
+void currentADC_init(void);
+void ADC_interrupt(void) ;
+void CCP2_interrupt(void);
+void currentADC_trigger(void) ;
 
 
 

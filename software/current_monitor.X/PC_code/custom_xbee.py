@@ -30,34 +30,33 @@ ep_in = usb.util.find_descriptor( intf, custom_match = \
                                                 usb.util.ENDPOINT_IN )                                                
                                                 
 seq_no = 0;
-iLow_avg = 0;
-iLow_sum = 0;
-iLow_smp = 0;
-iRaw_sum = 0;
-iRaw_smp = 0;
 
-while(True):
+def sendrcv(cmd):
+    global seq_no
     seq_no += 1;
-    packet = chr((seq_no&0xFF)) + chr((seq_no>>8)&0xFF) + '\x01\x01\x00\x30';
+    packet = chr((seq_no&0xFF)) + chr((seq_no>>8)&0xFF) + '\x01\x01\x00'+cmd;
     packet = packet + '\x00'*(64-len(packet))
     ep_out.write(packet)
     dat = ep_in.read(64);
-    #print ''.join([' %02X'%i for i in dat])
-    iLow_raw = dat[5] + (dat[6]<<8);
-    iHigh_raw = dat[7] + (dat[8]<<8);
-    
-    iHigh = ((iHigh_raw - 1) * 3.3/1024 / 10.34   )
-    vThresh = 0.75;
-    tCalibrate = 0;
-    #iLow = ((vThresh*10e-9)/((iLow_raw-tCalibrate) * 4/48000000.)   - 0)
-    # from MATLAB polyfit
-    iLow = -0.000044361198738*iLow_raw + 0.008737874605678;
-    if (iLow_smp < 10 or abs(iLow-iLow_avg) < 10e-3):
-        iLow_sum += iLow;
-        iLow_smp += 1;
-        iLow_avg = iLow_sum / iLow_smp;
-        iRaw_sum += iLow_raw
-        iRaw_smp += 1;
-    #iLow_avg = 0.9*iLow_avg + 0.1*iLow;
-    print 'Low: %10.2fuA (%6d / %8.2fA) / %10.2fAuA (%4d samps)   High: %10.2fmA (%6d)'%(iLow*1e6,iLow_raw,1.*iRaw_sum/iRaw_smp,iLow_avg*1e6,iLow_smp,iHigh*1e3,iHigh_raw)
+    return dat
+
+sendrcv('\x24');
+
+while(True):
     time.sleep(.1);
+    seq_no += 1;
+    dat = sendrcv('\x26')
+
+    #print ''.join([' %02X'%i for i in dat])
+    commands = dat[5]
+    overflow = dat[6]
+    
+    print "Commands: %d, Overflow: %d"%(commands,overflow)
+    pos = 7;
+    for i in range(0,commands):
+        alen = dat[pos+2]
+        vstr = ''
+        for j in range(0,alen):
+            vstr += '%02X'%(dat[pos+3+j])
+        print "\t%c%c %d %s"%(dat[pos],dat[pos+1],alen,vstr)
+        pos += 3 + alen;
