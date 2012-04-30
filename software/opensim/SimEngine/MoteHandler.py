@@ -4,6 +4,7 @@ import threading
 import socket
 import logging
 import os
+import time
 
 TCPRXBUFSIZE       = 4096    # size of the TCP reception buffer
 
@@ -46,6 +47,8 @@ class MoteHandler(threading.Thread):
         # log
         self.log.info('starting')
         
+        self.conn.send('poipoi')
+        
         while(1):
             try:
                 input = self.conn.recv(TCPRXBUFSIZE)
@@ -53,7 +56,12 @@ class MoteHandler(threading.Thread):
                 self.log.error('connection error (err='+str(err)+')')
             else:
                 self.log.info('received input='+str(input))
-            self.conn.send('poipoipoipoi')
+            
+            print len(input)
+            
+            time.sleep(1)
+            
+            self.conn.send(chr(0))
     
     #======================== private =========================================
     
