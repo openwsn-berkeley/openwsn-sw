@@ -12,12 +12,12 @@ class BspDebugpins(BspModule.BspModule):
         # store params
         
         # local variables
-        self.frameHigh  = False
-        self.slotHigh   = False
-        self.fsmHigh    = False
-        self.taskHigh   = False
-        self.isrHigh    = False
-        self.radioHigh  = False
+        self.framePinHigh    = False
+        self.slotPinHigh     = False
+        self.fsmPinHigh      = False
+        self.taskPinHigh     = False
+        self.isrPinHigh      = False
+        self.radioPinHigh    = False
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspDebugpins')
@@ -32,7 +32,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_frame_toggle')
         
         # change the internal state
-        self.frameHigh = not self.frameHigh
+        self.framePinHigh = not self.framePinHigh
     
     def cmd_frame_clr(self):
         
@@ -40,7 +40,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_frame_clr')
         
         # change the internal state
-        self.frameHigh = False      
+        self.framePinHigh = False      
     
     def cmd_frame_set(self):
         
@@ -48,7 +48,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_frame_set')
         
         # change the internal state
-        self.frameHigh = True
+        self.framePinHigh = True
     
     def cmd_slot_toggle(self):
         
@@ -56,7 +56,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_slot_toggle')
         
         # change the internal state
-        self.slotHigh = not self.slotHigh
+        self.slotPinHigh = not self.slotPinHigh
     
     def cmd_slot_clr(self):
         
@@ -64,7 +64,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_slot_clr')
         
         # change the internal state
-        self.slotHigh = False
+        self.slotPinHigh = False
     
     def cmd_slot_set(self):
         
@@ -72,7 +72,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_slot_set')
         
         # change the internal state
-        self.slotHigh = True
+        self.slotPinHigh = True
     
     def cmd_fsm_toggle(self):
         
@@ -80,7 +80,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_fsm_toggle')
         
         # change the internal state
-        self.fsmHigh = not self.fsmHigh
+        self.fsmPinHigh = not self.fsmPinHigh
     
     def cmd_fsm_clr(self):
         
@@ -88,7 +88,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_fsm_clr')
         
         # change the internal state
-        self.fsmHigh = False
+        self.fsmPinHigh = False
     
     def cmd_fsm_set(self):
         
@@ -96,7 +96,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_fsm_set')
         
         # change the internal state
-        self.fsmHigh = True
+        self.fsmPinHigh = True
     
     def cmd_task_toggle(self):
         
@@ -104,7 +104,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_task_toggle')
         
         # change the internal state
-        self.taskHigh = not self.taskHigh
+        self.taskPinHigh = not self.taskPinHigh
     
     def cmd_task_clr(self):
         
@@ -112,7 +112,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_task_clr')
         
         # change the internal state
-        self.taskHigh = False
+        self.taskPinHigh = False
     
     def cmd_task_set(self):
         
@@ -120,7 +120,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_task_set')
         
         # change the internal state
-        self.taskHigh = True
+        self.taskPinHigh = True
     
     def cmd_isr_toggle(self):
         
@@ -128,7 +128,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_isr_toggle')
         
         # change the internal state
-        self.isrHigh = not self.isrHigh
+        self.isrPinHigh = not self.isrPinHigh
     
     def cmd_isr_clr(self):
         
@@ -136,7 +136,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_isr_clr')
         
         # change the internal state
-        self.isrHigh = False
+        self.isrPinHigh = False
     
     def cmd_isr_set(self):
         
@@ -144,7 +144,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_isr_set')
         
         # change the internal state
-        self.isrHigh = True
+        self.isrPinHigh = True
     
     def cmd_radio_toggle(self):
         
@@ -152,7 +152,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_radio_toggle')
         
         # change the internal state
-        self.radioHigh = not self.radioHigh
+        self.radioPinHigh = not self.radioPinHigh
     
     def cmd_radio_clr(self):
         
@@ -160,7 +160,7 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_radio_clr')
         
         # change the internal state
-        self.radioHigh = False
+        self.radioPinHigh = False
     
     def cmd_radio_set(self):
         
@@ -168,23 +168,23 @@ class BspDebugpins(BspModule.BspModule):
         self.log.debug('cmd_radio_set')
         
         # change the internal state
-        self.radioHigh = True
+        self.radioPinHigh = True
     
     #=== getters
     
-    def get_frameHigh(self):
-        return frameHigh
+    def get_framePinHigh(self):
+        return framePinHigh
     
-    def get_slotHigh(self):
-        return slotHigh
+    def get_slotPinHigh(self):
+        return slotPinHigh
     
-    def get_fsmHigh(self):
-        return fsmHigh
+    def get_fsmPinHigh(self):
+        return fsmPinHigh
     
-    def get_isrHigh(self):
-        return isrHigh
+    def get_isrPinHigh(self):
+        return isrPinHigh
     
-    def get_radioHigh(self):
-        return radioHigh
+    def get_radioPinHigh(self):
+        return radioPinHigh
     
     #======================== private =========================================
