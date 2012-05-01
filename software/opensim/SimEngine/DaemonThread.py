@@ -17,10 +17,11 @@ class DaemonThread(threading.Thread):
     \brief Thread waiting for new connections from motes over TCP.
     '''
     
-    def __init__(self,port):
+    def __init__(self,engine,port):
         
         # store variables
-        self.port  = port
+        self.engine    = engine
+        self.port      = port
         
         # logging
         self.log   = logging.getLogger('DaemonThread')
@@ -60,5 +61,5 @@ class DaemonThread(threading.Thread):
             self.log.info("Connection attempt from "+str(addr))
             
             # hand over connection to moteHandler
-            moteHandler = MoteHandler(conn,addr[0],addr[1])
+            moteHandler = MoteHandler(self.engine,conn,addr[0],addr[1])
             moteHandler.start()

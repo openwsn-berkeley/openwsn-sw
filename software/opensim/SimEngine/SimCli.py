@@ -15,29 +15,50 @@ class SimCli(threading.Thread):
     \brief Thread which handles CLI commands entered by the user.
     '''
     
-    def __init__(self):
+    def __init__(self,engine):
     
         # record variables
+        self.engine = engine
         
         # local variables
         self.commands = []
         
         # register commands
+        self._registerCommand('debugpins',
+                              'dp',
+                              'print the current state of the leds',
+                              'debugpins',
+                              self._handleDebugpins)
+        self._registerCommand('delay',
+                              'd',
+                              'introduce a delay between each event, in s',
+                              'delay <delay_in_s>',
+                              self._handleDelay)
         self._registerCommand('help', 
                               'h',
                               'print this menu',
                               '',
                               self._handleHelp)
-        self._registerCommand('poipoi',
+        self._registerCommand('leds', 
+                              'l',
+                              'print the current state of the leds',
+                              'leds',
+                              self._handleLeds)
+        self._registerCommand('pause',
                               'p',
-                              'poipoi',
-                              '<poipoi> <poipoi>',
-                              self._handlePoipoi)
+                              'pause the execution',
+                              '',
+                              self._handlePause)
         self._registerCommand('quit',
                               'q',
                               'quit this application',
                               '',
                               self._handleQuit)
+        self._registerCommand('resume',
+                              'r',
+                              'resume the execution',
+                              '',
+                              self._handleResume)
         
         # logging
         self.log           = logging.getLogger('SimCli')
@@ -109,6 +130,36 @@ class SimCli(threading.Thread):
     
     #=== command handlers
     
+    def _handleDebugpins(self,params):
+        # usage
+        if len(params)!=0:
+            self._printUsageFromName('debugpins')
+            return
+        
+        output  = ''
+        output += '- frame: TODO\n'
+        output += '- slot:  TODO\n'
+        output += '- fsm:   TODO\n'
+        output += '- isr:   TODO\n'
+        output += '- radio: TODO\n'
+        print output
+    
+    def _handleDelay(self,params):
+        # usage
+        if len(params)!=1:
+            self._printUsageFromName('delay')
+            return
+        
+        # filter errors
+        try:
+            delay = float(params[0])
+        except ValueError:
+            print 'invalid delay'
+            return
+        
+        # apply delay
+        self.engine.setDelay(delay)
+    
     def _handleHelp(self,params):
         # usage
         if len(params)!=0:
@@ -122,9 +173,28 @@ class SimCli(threading.Thread):
         output += ' Notes:\n'
         output += '  - type \'<command> ?\' to get the usage\n'
         print output
-    
-    def _handlePoipoi(self,params):
-        print "poipoi"
+        
+    def _handleLeds(self,params):
+        # usage
+        if len(params)!=0:
+            self._printUsageFromName('leds')
+            return
+        
+        output  = ''
+        output += '- error: TODO\n'
+        output += '- radio: TODO\n'
+        output += '- sync:  TODO\n'
+        output += '- debug: TODO\n'
+        print output
+        
+    def _handlePause(self,params):
+        # usage
+        if len(params)!=0:
+            self._printUsageFromName('pause')
+            return
+        
+        # pause the engine
+        self.engine.pause()
     
     def _handleQuit(self,params):
         
@@ -132,18 +202,17 @@ class SimCli(threading.Thread):
         if len(params)!=0:
             self._printUsageFromName('quit')
             return
-        
-    def _handleQuit(self,params):
-        
-        # usage
-        if len(params)!=0:
-            self._printUsageFromName('quit')
-            return
-        
-        # disconnect all users
-        self.lbrd.disconnectUser(Lbrd.Lbrd.ALL)
         
         # this thread quits
         sys.exit(0)
+    
+    def _handleResume(self,params):
+        # usage
+        if len(params)!=0:
+            self._printUsageFromName('resume')
+            return
+        
+        # pause the engine
+        self.engine.resume()
     
     #======================== helpers =========================================

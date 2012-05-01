@@ -27,9 +27,10 @@ class MoteHandler(threading.Thread):
     \brief Handle the connection of a mote.
     '''
     
-    def __init__(self,conn,addr,port):
+    def __init__(self,engine,conn,addr,port):
         
         # store params
+        self.engine               = engine
         self.conn                 = conn
         self.addr                 = addr
         self.port                 = port
@@ -153,8 +154,6 @@ class MoteHandler(threading.Thread):
         # log
         self.log.info('starting')
         
-        self.conn.send('poipoi')
-        
         while(1):
             try:
                 input = self.conn.recv(TCPRXBUFSIZE)
@@ -181,6 +180,9 @@ class MoteHandler(threading.Thread):
     #======================== private =========================================
     
     def _handleReceivedCommand(self,input):
+        
+        # apply the delay
+        self.engine.pauseOrDelay()
         
         # get the command id from the received command
         cmdId = ord(input[0])
