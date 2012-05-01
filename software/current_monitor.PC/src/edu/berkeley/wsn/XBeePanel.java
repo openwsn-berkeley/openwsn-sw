@@ -4,6 +4,7 @@ import javax.swing.JPanel;
 import ch.ntb.usb.*;
 import javax.swing.*;
 import javax.swing.*;
+
 import java.awt.*;
 import java.awt.event.*;
 
@@ -23,14 +24,6 @@ public class XBeePanel extends JPanel {
 	
 	Vector<XBeeConfiguration> configs = new Vector<XBeeConfiguration>();
 
-	JButton read_info_button = new JButton("Read Information");
-	{
-		read_info_button.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent arg0) {
-				readInformation();
-			}
-		});
-	}
 	JButton add_configuration_button = new JButton("Add Configuration");
 	{
 		add_configuration_button.addActionListener(new ActionListener(){
@@ -78,7 +71,6 @@ public class XBeePanel extends JPanel {
 		Box v1 = Box.createVerticalBox();
 		Box v2 = Box.createVerticalBox();
 		h1.setBorder(new TitledBorder("Operations"));
-		h1.add(read_info_button);
 		v2.add(add_configuration_button); v2.add(delete_configuration_button);
 		h1.add(v2);
 		v1.add(start_recording_button);
@@ -147,11 +139,9 @@ public class XBeePanel extends JPanel {
 	}
 	
 	
-	public XBeePanel(CurrentMonitor p) {
+	public XBeePanel() {
 		super(new BorderLayout());
-		parent = p;
-		
-		
+		parent = CurrentMonitor.me;		
 	}
 	
 	void readInformation() {
@@ -161,10 +151,14 @@ public class XBeePanel extends JPanel {
 	
 	void startRecording() {
 		parent.msg("Starting to record XB transactions");
-		
+		new XbeeRecordingWindow(this);
 	}
+	
 	void addConfiguration() {
-		XBeeConfiguration cfg = new XBeeConfiguration();
+		addConfiguration(new XBeeConfiguration());
+	}
+	
+	void addConfiguration(XBeeConfiguration cfg) {
 		configs.add(cfg);
 		config_list_model.addRow(new Object[] {cfg.toString()});
 		configuration_list.editCellAt(config_list_model.getRowCount()-1, 0);
@@ -222,6 +216,13 @@ public class XBeePanel extends JPanel {
 			register_list_model.removeRow(idx);
 		}
 	}
+
+	public void save_config(XBeeConfiguration cfg) {
+		configs.add(cfg);
+		config_list_model.addRow(new Object[] {cfg.toString()});
+		configuration_list.editCellAt(config_list_model.getRowCount()-1, 0);
+		configuration_list.changeSelection(config_list_model.getRowCount()-1, 0, false, false);
+	}
 }
 
 
@@ -268,5 +269,100 @@ class XBeeConfiguration {
 	public String toString() {
 		return name;
 	}
+}
+
+class XbeeRecordingWindow extends JFrame implements Runnable {
+	JButton stop = new JButton("Stop Recording");
+	{
+		stop.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				stopRecording(true);
+			}
+		});
+	}
+	
+	JLabel status_text = new JLabel("AT Commands Recorded: 0");
+	JLabel missed_text = new JLabel("AT Commands Missed: 0");
+	int missed = 0;
+	
+	boolean running = true;
+
+	
+	XBeeConfiguration conf = new XBeeConfiguration();
+	
+	public void stopRecording(boolean new_conf) {
+		running = false;
+		if (new_conf) {
+			parent.save_config(conf);
+		}
+		
+		CurrentMonitor.commands.sendRcv(DeviceCommands.CmdDefs.XBEE_STOP_MONITOR);
+		this.setVisible(false);
+		this.dispose();
+	}
+	
+	XBeePanel parent;
+	
+	public XbeeRecordingWindow(XBeePanel parent) {
+		super("Recording XB transactions...");
+		this.parent = parent;
+		Box v1 = Box.createVerticalBox();
+		v1.add(status_text);v1.add(missed_text);
+		getContentPane().add(v1,BorderLayout.CENTER);
+		getContentPane().add(stop,BorderLayout.SOUTH);
+		
+		setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+		
+		addWindowListener(new WindowAdapter() {
+			public void windowClosing(WindowEvent evt) {
+				if ( JOptionPane.OK_OPTION == JOptionPane.showConfirmDialog(null, "Do you wish to cancel recording Xbee configuration?", "Confirm?", JOptionPane.YES_NO_OPTION) ) {
+					stopRecording(false);
+				}
+			}
+		});
+		
+		new Thread(this).start();
+		
+		setVisible(true);
+		setSize(300,150);
+	}
+
+	public void run() {
+		CurrentMonitor.commands.sendRcv(DeviceCommands.CmdDefs.XBEE_START_MONITOR);
+		while(running) {
+			try {
+				Thread.sleep(10);
+			} catch (Exception e) {}
+			
+			//CurrentMonitor.msg("Check AT events...");
+			byte[] retval = CurrentMonitor.commands.sendRcv(DeviceCommands.CmdDefs.XBEE_CHECK_EVENT);
+			byte nAT = retval[0];
+			byte nOverflow = retval[1];
+			//CurrentMonitor.msg("\tQueued="+nAT+" Overflow="+nOverflow);
+			int pos = 2;
+			for (int c = 0; c < nAT; c++ ) {
+				ATSetting atcmd = conf.new ATSetting();
+				atcmd.name = ""+(char)retval[pos] + (char)retval[pos+1];
+				atcmd.setting = new byte[retval[pos+2]];
+				StringBuffer str = new StringBuffer();
+				for (int d = 0; d < atcmd.setting.length; d++ ) {
+					atcmd.setting[d] = retval[pos+3+d];
+					str.append(Integer.toHexString(retval[pos+3+d]));
+				}
+				pos += 3 + atcmd.setting.length;
+				//CurrentMonitor.msg("\t"+atcmd.name+" "+str);
+				conf.at_settings.add(atcmd);
+			}
+			if (nAT > 0) {
+				status_text.setText("AT Commands Recorded: "+conf.at_settings.size());	
+			}
+			
+			if ( nOverflow > 0) {
+				missed += nOverflow;
+				missed_text.setText("AT Commands Missed: "+missed);
+			}
+		}
+	}
 	
 }
+
