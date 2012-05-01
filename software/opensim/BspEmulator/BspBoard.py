@@ -1,12 +1,8 @@
 #!/usr/bin/python
 
-import logging
+import BspModule
 
-class NullLogHandler(logging.Handler):
-    def emit(self, record):
-        pass
-
-class BspBoard(object):
+class BspBoard(BspModule.BspModule):
     '''
     \brief Emulates the 'board' BSP module
     '''
@@ -17,17 +13,16 @@ class BspBoard(object):
         
         # local variables
         
-        # logging
-        self.log   = logging.getLogger('BspBoard')
-        self.log.setLevel(logging.DEBUG)
-        self.log.addHandler(NullLogHandler())
+        # initialize the parent
+        BspModule.BspModule.__init__(self,'BspBoard')
     
     #======================== public ==========================================
     
-    def init(self):
-        print 'TODO'
+    #=== commands
     
-    def sleep(self):
-        print 'TODO'
+    def cmd_sleep(self):
+        
+        # log the activity
+        self.log.debug('cmd_sleep')
     
     #======================== private =========================================

@@ -1,12 +1,8 @@
 #!/usr/bin/python
 
-import logging
+import BspModule
 
-class NullLogHandler(logging.Handler):
-    def emit(self, record):
-        pass
-
-class BspBsp_timer(object):
+class BspBsp_timer(BspModule.BspModule):
     '''
     \brief Emulates the 'bsp_timer' BSP module
     '''
@@ -17,11 +13,35 @@ class BspBsp_timer(object):
         
         # local variables
         
-        # logging
-        self.log   = logging.getLogger('BspBsp_timer')
-        self.log.setLevel(logging.DEBUG)
-        self.log.addHandler(NullLogHandler())
+        # initialize the parent
+        BspModule.BspModule.__init__(self,'BspBsp_timer')
     
     #======================== public ==========================================
     
+    #=== commands
+    
+    def cmd_reset(self):
+        
+        # log the activity
+        self.log.debug('cmd_reset')
+        
+        raise NotImplementedError()
+    
+    def cmd_scheduleIn(self):
+    
+        # log the activity
+        self.log.debug('cmd_scheduleIn')
+        
+        raise NotImplementedError()
+    
+    def cmd_cancel_schedule(self):
+        
+        # log the activity
+        self.log.debug('cmd_cancel_schedule')
+        
+        raise NotImplementedError()
+    
     #======================== private =========================================
+    
+    def getIsInitialized():
+       return self.isInitialized
