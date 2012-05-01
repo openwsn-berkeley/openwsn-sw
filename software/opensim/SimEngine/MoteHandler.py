@@ -36,8 +36,13 @@ class MoteHandler(threading.Thread):
         self.port                 = port
         
         # local variables
+        # synchronizing
         self.waitingForReplySem   = threading.Lock()
         self.waitingForReply      = False
+        # stats
+        self.numRxCommands        = 0
+        self.numTxCommands        = 0
+        # bsp
         self.bspBoard             = BspBoard.BspBoard()
         self.bspBsp_timer         = BspBsp_timer.BspBsp_timer()
         self.bspDebugpins         = BspDebugpins.BspDebugpins()
@@ -46,6 +51,7 @@ class MoteHandler(threading.Thread):
         self.bspRadio             = BspRadio.BspRadio()
         self.bspRadiotimer        = BspRadiotimer.BspRadiotimer()
         self.bspUart              = BspUart.BspUart()
+        # commands
         self.commandCallbacks = {
             # board
             0 : self.bspBoard.cmd_init,
@@ -155,31 +161,44 @@ class MoteHandler(threading.Thread):
         self.log.info('starting')
         
         while(1):
+            # wait for a command
             try:
                 input = self.conn.recv(TCPRXBUFSIZE)
             except socket.error as err:
                 self.log.critical('connection error (err='+str(err)+')')
                 break
             
+            # log the info
             self.log.info('received input='+str(ord(input[0])))
+            
             if self.waitingForReply:
                 self.log.debug('This is a reply.')
                 self.response = input
                 self.waitingForReplySem.release()
             else:
-                self.log.debug('This is a response.')
+                self.log.debug('This is a command.')
                 self._handleReceivedCommand(input)
     
     #======================== public ==========================================
     
     def sendCommand(send,dataToSend):
+        
+        # update statistics
+        self.numTxCommands += 1
+        
+        # send command over connection
         self.conn.send(dataToSend)
+        
+        # wait for reply before returning
         self.waitingForReply = True
         self.waitingForReplySem.acquire()
     
     #======================== private =========================================
     
     def _handleReceivedCommand(self,input):
+        
+        # update statistics
+        self.numRxCommands += 1
         
         # apply the delay
         self.engine.pauseOrDelay()

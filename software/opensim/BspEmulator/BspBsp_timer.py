@@ -12,6 +12,9 @@ class BspBsp_timer(BspModule.BspModule):
         # store params
         
         # local variables
+        self.counterVal = 0
+        self.timerOn    = False
+        self.timerOn    = False
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspBsp_timer')
