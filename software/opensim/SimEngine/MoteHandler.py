@@ -15,6 +15,7 @@ from BspEmulator import BspLeds
 from BspEmulator import BspRadio
 from BspEmulator import BspRadiotimer
 from BspEmulator import BspUart
+from BspEmulator import BspSupply
 
 TCPRXBUFSIZE       = 4096    # size of the TCP reception buffer
 
@@ -27,6 +28,116 @@ class MoteHandler(threading.Thread):
     \brief Handle the connection of a mote.
     '''
     
+    commandIds = {
+        #===== from client to server
+        # board
+        'OPENSIM_CMD_board_init'                      : 0,
+        'OPENSIM_CMD_board_sleep'                     : 1,
+        # bsp_timer
+        'OPENSIM_CMD_bsp_timer_init'                  : 2,
+        'OPENSIM_CMD_bsp_timer_reset'                 : 3,
+        'OPENSIM_CMD_bsp_timer_scheduleIn'            : 4,
+        'OPENSIM_CMD_bsp_timer_cancel_schedule'       : 5,
+        # debugpins
+        'OPENSIM_CMD_debugpins_init'                  : 6,
+        'OPENSIM_CMD_debugpins_frame_toggle'          : 7,
+        'OPENSIM_CMD_debugpins_frame_clr'             : 8,
+        'OPENSIM_CMD_debugpins_frame_set'             : 9,
+        'OPENSIM_CMD_debugpins_slot_toggle'           : 10,
+        'OPENSIM_CMD_debugpins_slot_clr'              : 11,
+        'OPENSIM_CMD_debugpins_slot_set'              : 12,
+        'OPENSIM_CMD_debugpins_fsm_toggle'            : 13,
+        'OPENSIM_CMD_debugpins_fsm_clr'               : 14,
+        'OPENSIM_CMD_debugpins_fsm_set'               : 15,
+        'OPENSIM_CMD_debugpins_task_toggle'           : 16,
+        'OPENSIM_CMD_debugpins_task_clr'              : 17,
+        'OPENSIM_CMD_debugpins_task_set'              : 18,
+        'OPENSIM_CMD_debugpins_isr_toggle'            : 19,
+        'OPENSIM_CMD_debugpins_isr_clr'               : 20,
+        'OPENSIM_CMD_debugpins_isr_set'               : 21,
+        'OPENSIM_CMD_debugpins_radio_toggle'          : 22,
+        'OPENSIM_CMD_debugpins_radio_clr'             : 23,
+        'OPENSIM_CMD_debugpins_radio_set'             : 24,
+        # eui64
+        'OPENSIM_CMD_eui64_get'                       : 25,
+        # leds
+        'OPENSIM_CMD_leds_init'                       : 26,
+        'OPENSIM_CMD_leds_error_on'                   : 27,
+        'OPENSIM_CMD_leds_error_off'                  : 28,
+        'OPENSIM_CMD_leds_error_toggle'               : 29,
+        'OPENSIM_CMD_leds_error_isOn'                 : 30,
+        'OPENSIM_CMD_leds_radio_on'                   : 31,
+        'OPENSIM_CMD_leds_radio_off'                  : 32,
+        'OPENSIM_CMD_leds_radio_toggle'               : 33,
+        'OPENSIM_CMD_leds_radio_isOn'                 : 34,
+        'OPENSIM_CMD_leds_sync_on'                    : 35,
+        'OPENSIM_CMD_leds_sync_off'                   : 36,
+        'OPENSIM_CMD_leds_sync_toggle'                : 37,
+        'OPENSIM_CMD_leds_sync_isOn'                  : 38,
+        'OPENSIM_CMD_leds_debug_on'                   : 39,
+        'OPENSIM_CMD_leds_debug_off'                  : 40,
+        'OPENSIM_CMD_leds_debug_toggle'               : 41,
+        'OPENSIM_CMD_leds_debug_isOn'                 : 42,
+        'OPENSIM_CMD_leds_all_on'                     : 43,
+        'OPENSIM_CMD_leds_all_off'                    : 44,
+        'OPENSIM_CMD_leds_all_toggle'                 : 45,
+        'OPENSIM_CMD_leds_circular_shift'             : 46,
+        'OPENSIM_CMD_leds_increment'                  : 47,
+        # radio
+        'OPENSIM_CMD_radio_init'                      : 48,
+        'OPENSIM_CMD_radio_reset'                     : 49,
+        'OPENSIM_CMD_radio_startTimer'                : 50,
+        'OPENSIM_CMD_radio_getTimerValue'             : 51,
+        'OPENSIM_CMD_radio_setTimerPeriod'            : 52,
+        'OPENSIM_CMD_radio_getTimerPeriod'            : 53,
+        'OPENSIM_CMD_radio_setFrequency'              : 54,
+        'OPENSIM_CMD_radio_rfOn'                      : 55,
+        'OPENSIM_CMD_radio_rfOff'                     : 56,
+        'OPENSIM_CMD_radio_loadPacket'                : 57,
+        'OPENSIM_CMD_radio_txEnable'                  : 58,
+        'OPENSIM_CMD_radio_txNow'                     : 59,
+        'OPENSIM_CMD_radio_rxEnable'                  : 60,
+        'OPENSIM_CMD_radio_rxNow'                     : 61,
+        'OPENSIM_CMD_radio_getReceivedFrame'          : 62,
+        # radiotimer
+        'OPENSIM_CMD_radiotimer_init'                 : 63,
+        'OPENSIM_CMD_radiotimer_start'                : 64,
+        'OPENSIM_CMD_radiotimer_getValue'             : 65,
+        'OPENSIM_CMD_radiotimer_setPeriod'            : 66,
+        'OPENSIM_CMD_radiotimer_getPeriod'            : 67,
+        'OPENSIM_CMD_radiotimer_schedule'             : 68,
+        'OPENSIM_CMD_radiotimer_cancel'               : 69,
+        'OPENSIM_CMD_radiotimer_getCapturedTime'      : 70,
+        # uart
+        'OPENSIM_CMD_uart_init'                       : 71,
+        'OPENSIM_CMD_uart_enableInterrupts'           : 72,
+        'OPENSIM_CMD_uart_disableInterrupts'          : 73,
+        'OPENSIM_CMD_uart_clearRxInterrupts'          : 74,
+        'OPENSIM_CMD_uart_clearTxInterrupts'          : 75,
+        'OPENSIM_CMD_uart_writeByte'                  : 76,
+        'OPENSIM_CMD_uart_readByte'                   : 77,
+        # supply
+        #===== from server to client
+        # board
+        # bsp_timer
+        'OPENSIM_CMD_bsp_timer_isr'                   : 100,
+        # debugpins
+        # eui64
+        # leds
+        # radio
+        'OPENSIM_CMD_radio_isr_startFrame'            : 101,
+        'OPENSIM_CMD_radio_isr_endFrame'              : 102,
+        # radiotimer
+        'OPENSIM_CMD_radiotimer_isr_compare'          : 103,
+        'OPENSIM_CMD_radiotimer_isr_overflow'         : 104,
+        # uart
+        'OPENSIM_CMD_uart_isr_tx'                     : 105,
+        'OPENSIM_CMD_uart_isr_rx'                     : 106,
+        # supply
+        'OPENSIM_CMD_supply_on'                       : 107,
+        'OPENSIM_CMD_supply_off'                      : 108,
+    }
+    
     def __init__(self,engine,conn,addr,port):
         
         # store params
@@ -36,112 +147,107 @@ class MoteHandler(threading.Thread):
         self.port                 = port
         
         #=== local variables
-        # tcp sync
-        self.waitingForReplySem   = threading.Lock()
-        self.waitingForReply      = False
         # stats
         self.numRxCommands        = 0
         self.numTxCommands        = 0
         # bsp
-        self.bspSupply            = BspBoard.BspSupply()
-        self.bspBoard             = BspBoard.BspBoard()
-        self.bspBsp_timer         = BspBsp_timer.BspBsp_timer()
-        self.bspDebugpins         = BspDebugpins.BspDebugpins()
-        self.bspEui64             = BspEui64.BspEui64()
-        self.bspLeds              = BspLeds.BspLeds()
-        self.bspRadio             = BspRadio.BspRadio()
-        self.bspRadiotimer        = BspRadiotimer.BspRadiotimer()
-        self.bspUart              = BspUart.BspUart()
-        # commands
+        self.bspBoard             = BspBoard.BspBoard(self)
+        self.bspBsp_timer         = BspBsp_timer.BspBsp_timer(self)
+        self.bspDebugpins         = BspDebugpins.BspDebugpins(self)
+        self.bspEui64             = BspEui64.BspEui64(self)
+        self.bspLeds              = BspLeds.BspLeds(self)
+        self.bspRadio             = BspRadio.BspRadio(self)
+        self.bspRadiotimer        = BspRadiotimer.BspRadiotimer(self)
+        self.bspUart              = BspUart.BspUart(self)
+        self.bspSupply            = BspSupply.BspSupply(self)
         self.commandCallbacks = {
             # board
-            0 : self.bspBoard.cmd_init,
-            1 : self.bspBoard.cmd_sleep,
+            self.commandIds['OPENSIM_CMD_board_init']                : self.bspBoard.cmd_init,
+            self.commandIds['OPENSIM_CMD_board_sleep']               : self.bspBoard.cmd_sleep,
             # bsp_timer
-            2 : self.bspBsp_timer.cmd_init,
-            3 : self.bspBsp_timer.cmd_reset,
-            4 : self.bspBsp_timer.cmd_scheduleIn,
-            5 : self.bspBsp_timer.cmd_cancel_schedule,
+            self.commandIds['OPENSIM_CMD_bsp_timer_init']            : self.bspBsp_timer.cmd_init,
+            self.commandIds['OPENSIM_CMD_bsp_timer_reset']           : self.bspBsp_timer.cmd_reset,
+            self.commandIds['OPENSIM_CMD_bsp_timer_scheduleIn']      : self.bspBsp_timer.cmd_scheduleIn,
+            self.commandIds['OPENSIM_CMD_bsp_timer_cancel_schedule'] : self.bspBsp_timer.cmd_cancel_schedule,
             # debugpins
-            6 : self.bspDebugpins.cmd_init,
-            7 : self.bspDebugpins.cmd_frame_toggle,
-            8 : self.bspDebugpins.cmd_frame_clr,
-            9 : self.bspDebugpins.cmd_frame_set,
-            10: self.bspDebugpins.cmd_slot_toggle,
-            11: self.bspDebugpins.cmd_slot_clr,
-            12: self.bspDebugpins.cmd_slot_set,
-            13: self.bspDebugpins.cmd_fsm_toggle,
-            14: self.bspDebugpins.cmd_fsm_clr,
-            15: self.bspDebugpins.cmd_fsm_set,
-            16: self.bspDebugpins.cmd_task_toggle,
-            17: self.bspDebugpins.cmd_task_clr,
-            18: self.bspDebugpins.cmd_task_set,
-            19: self.bspDebugpins.cmd_isr_toggle,
-            20: self.bspDebugpins.cmd_isr_clr,
-            21: self.bspDebugpins.cmd_isr_set,
-            22: self.bspDebugpins.cmd_radio_toggle,
-            23: self.bspDebugpins.cmd_radio_clr,
-            24: self.bspDebugpins.cmd_radio_set,
+            self.commandIds['OPENSIM_CMD_debugpins_init']            : self.bspDebugpins.cmd_init,
+            self.commandIds['OPENSIM_CMD_debugpins_frame_toggle']    : self.bspDebugpins.cmd_frame_toggle,
+            self.commandIds['OPENSIM_CMD_debugpins_frame_clr']       : self.bspDebugpins.cmd_frame_clr,
+            self.commandIds['OPENSIM_CMD_debugpins_frame_set']       : self.bspDebugpins.cmd_frame_set,
+            self.commandIds['OPENSIM_CMD_debugpins_slot_toggle']     : self.bspDebugpins.cmd_slot_toggle,
+            self.commandIds['OPENSIM_CMD_debugpins_slot_clr']        : self.bspDebugpins.cmd_slot_clr,
+            self.commandIds['OPENSIM_CMD_debugpins_slot_set']        : self.bspDebugpins.cmd_slot_set,
+            self.commandIds['OPENSIM_CMD_debugpins_fsm_toggle']      : self.bspDebugpins.cmd_fsm_toggle,
+            self.commandIds['OPENSIM_CMD_debugpins_fsm_clr']         : self.bspDebugpins.cmd_fsm_clr,
+            self.commandIds['OPENSIM_CMD_debugpins_fsm_set']         : self.bspDebugpins.cmd_fsm_set,
+            self.commandIds['OPENSIM_CMD_debugpins_task_toggle']     : self.bspDebugpins.cmd_task_toggle,
+            self.commandIds['OPENSIM_CMD_debugpins_task_clr']        : self.bspDebugpins.cmd_task_clr,
+            self.commandIds['OPENSIM_CMD_debugpins_task_set']        : self.bspDebugpins.cmd_task_set,
+            self.commandIds['OPENSIM_CMD_debugpins_isr_toggle']      : self.bspDebugpins.cmd_isr_toggle,
+            self.commandIds['OPENSIM_CMD_debugpins_isr_clr']         : self.bspDebugpins.cmd_isr_clr,
+            self.commandIds['OPENSIM_CMD_debugpins_isr_set']         : self.bspDebugpins.cmd_isr_set,
+            self.commandIds['OPENSIM_CMD_debugpins_radio_toggle']    : self.bspDebugpins.cmd_radio_toggle,
+            self.commandIds['OPENSIM_CMD_debugpins_radio_clr']       : self.bspDebugpins.cmd_radio_clr,
+            self.commandIds['OPENSIM_CMD_debugpins_radio_set']       : self.bspDebugpins.cmd_radio_set,
             # eui64
-            25: self.bspEui64.cmd_get,
+            self.commandIds['OPENSIM_CMD_eui64_get']                 : self.bspEui64.cmd_get,
             # leds
-            26: self.bspLeds.cmd_init,
-            27: self.bspLeds.cmd_error_on,
-            28: self.bspLeds.cmd_error_off,
-            29: self.bspLeds.cmd_error_toggle,
-            30: self.bspLeds.cmd_error_isOn,
-            31: self.bspLeds.cmd_radio_on,
-            32: self.bspLeds.cmd_radio_off,
-            33: self.bspLeds.cmd_radio_toggle,
-            34: self.bspLeds.cmd_radio_isOn,
-            35: self.bspLeds.cmd_sync_on,
-            36: self.bspLeds.cmd_sync_off,
-            37: self.bspLeds.cmd_sync_toggle,
-            38: self.bspLeds.cmd_sync_isOn,
-            39: self.bspLeds.cmd_debug_on,
-            40: self.bspLeds.cmd_debug_off,
-            41: self.bspLeds.cmd_debug_toggle,
-            42: self.bspLeds.cmd_debug_isOn,
-            43: self.bspLeds.cmd_all_on,
-            44: self.bspLeds.cmd_all_off,
-            45: self.bspLeds.cmd_all_toggle,
-            46: self.bspLeds.cmd_circular_shift,
-            47: self.bspLeds.cmd_increment,
+            self.commandIds['OPENSIM_CMD_leds_init']                 : self.bspLeds.cmd_init,
+            self.commandIds['OPENSIM_CMD_leds_error_on']             : self.bspLeds.cmd_error_on,
+            self.commandIds['OPENSIM_CMD_leds_error_off']            : self.bspLeds.cmd_error_off,
+            self.commandIds['OPENSIM_CMD_leds_error_toggle']         : self.bspLeds.cmd_error_toggle,
+            self.commandIds['OPENSIM_CMD_leds_error_isOn']           : self.bspLeds.cmd_error_isOn,
+            self.commandIds['OPENSIM_CMD_leds_radio_on']             : self.bspLeds.cmd_radio_on,
+            self.commandIds['OPENSIM_CMD_leds_radio_off']            : self.bspLeds.cmd_radio_off,
+            self.commandIds['OPENSIM_CMD_leds_radio_toggle']         : self.bspLeds.cmd_radio_toggle,
+            self.commandIds['OPENSIM_CMD_leds_radio_isOn']           : self.bspLeds.cmd_radio_isOn,
+            self.commandIds['OPENSIM_CMD_leds_sync_on']              : self.bspLeds.cmd_sync_on,
+            self.commandIds['OPENSIM_CMD_leds_sync_off']             : self.bspLeds.cmd_sync_off,
+            self.commandIds['OPENSIM_CMD_leds_sync_toggle']          : self.bspLeds.cmd_sync_toggle,
+            self.commandIds['OPENSIM_CMD_leds_sync_isOn']            : self.bspLeds.cmd_sync_isOn,
+            self.commandIds['OPENSIM_CMD_leds_debug_on']             : self.bspLeds.cmd_debug_on,
+            self.commandIds['OPENSIM_CMD_leds_debug_off']            : self.bspLeds.cmd_debug_off,
+            self.commandIds['OPENSIM_CMD_leds_debug_toggle']         : self.bspLeds.cmd_debug_toggle,
+            self.commandIds['OPENSIM_CMD_leds_debug_isOn']           : self.bspLeds.cmd_debug_isOn,
+            self.commandIds['OPENSIM_CMD_leds_all_on']               : self.bspLeds.cmd_all_on,
+            self.commandIds['OPENSIM_CMD_leds_all_off']              : self.bspLeds.cmd_all_off,
+            self.commandIds['OPENSIM_CMD_leds_all_toggle']           : self.bspLeds.cmd_all_toggle,
+            self.commandIds['OPENSIM_CMD_leds_circular_shift']       : self.bspLeds.cmd_circular_shift,
+            self.commandIds['OPENSIM_CMD_leds_increment']            : self.bspLeds.cmd_increment,
             # radio
-            48: self.bspRadio.cmd_init,
-            49: self.bspRadio.cmd_reset,
-            50: self.bspRadio.cmd_startTimer,
-            51: self.bspRadio.cmd_getTimerValue,
-            52: self.bspRadio.cmd_setTimerPeriod,
-            53: self.bspRadio.cmd_getTimerPeriod,
-            54: self.bspRadio.cmd_setFrequency,
-            55: self.bspRadio.cmd_rfOn,
-            56: self.bspRadio.cmd_rfOff,
-            57: self.bspRadio.cmd_loadPacket,
-            58: self.bspRadio.cmd_txEnable,
-            59: self.bspRadio.cmd_txNow,
-            60: self.bspRadio.cmd_rxEnable,
-            61: self.bspRadio.cmd_rxNow,
-            62: self.bspRadio.cmd_getReceivedFrame,
+            self.commandIds['OPENSIM_CMD_radio_init']                : self.bspRadio.cmd_init,
+            self.commandIds['OPENSIM_CMD_radio_reset']               : self.bspRadio.cmd_reset,
+            self.commandIds['OPENSIM_CMD_radio_startTimer']          : self.bspRadio.cmd_startTimer,
+            self.commandIds['OPENSIM_CMD_radio_getTimerValue']       : self.bspRadio.cmd_getTimerValue,
+            self.commandIds['OPENSIM_CMD_radio_setTimerPeriod']      : self.bspRadio.cmd_setTimerPeriod,
+            self.commandIds['OPENSIM_CMD_radio_getTimerPeriod']      : self.bspRadio.cmd_getTimerPeriod,
+            self.commandIds['OPENSIM_CMD_radio_setFrequency']        : self.bspRadio.cmd_setFrequency,
+            self.commandIds['OPENSIM_CMD_radio_rfOn']                : self.bspRadio.cmd_rfOn,
+            self.commandIds['OPENSIM_CMD_radio_rfOff']               : self.bspRadio.cmd_rfOff,
+            self.commandIds['OPENSIM_CMD_radio_loadPacket']          : self.bspRadio.cmd_loadPacket,
+            self.commandIds['OPENSIM_CMD_radio_txEnable']            : self.bspRadio.cmd_txEnable,
+            self.commandIds['OPENSIM_CMD_radio_txNow']               : self.bspRadio.cmd_txNow,
+            self.commandIds['OPENSIM_CMD_radio_rxEnable']            : self.bspRadio.cmd_rxEnable,
+            self.commandIds['OPENSIM_CMD_radio_rxNow']               : self.bspRadio.cmd_rxNow,
+            self.commandIds['OPENSIM_CMD_radio_getReceivedFrame']    : self.bspRadio.cmd_getReceivedFrame,
             # radiotimer
-            63: self.bspRadiotimer.cmd_init,
-            64: self.bspRadiotimer.cmd_start,
-            65: self.bspRadiotimer.cmd_getValue,
-            66: self.bspRadiotimer.cmd_setPeriod,
-            67: self.bspRadiotimer.cmd_getPeriod,
-            68: self.bspRadiotimer.cmd_schedule,
-            69: self.bspRadiotimer.cmd_cancel,
-            70: self.bspRadiotimer.cmd_getCapturedTime,
+            self.commandIds['OPENSIM_CMD_radiotimer_init']           : self.bspRadiotimer.cmd_init,
+            self.commandIds['OPENSIM_CMD_radiotimer_start']          : self.bspRadiotimer.cmd_start,
+            self.commandIds['OPENSIM_CMD_radiotimer_getValue']       : self.bspRadiotimer.cmd_getValue,
+            self.commandIds['OPENSIM_CMD_radiotimer_setPeriod']      : self.bspRadiotimer.cmd_setPeriod,
+            self.commandIds['OPENSIM_CMD_radiotimer_getPeriod']      : self.bspRadiotimer.cmd_getPeriod,
+            self.commandIds['OPENSIM_CMD_radiotimer_schedule']       : self.bspRadiotimer.cmd_schedule,
+            self.commandIds['OPENSIM_CMD_radiotimer_cancel']         : self.bspRadiotimer.cmd_cancel,
+            self.commandIds['OPENSIM_CMD_radiotimer_getCapturedTime']: self.bspRadiotimer.cmd_getCapturedTime,
             # uart
-            71: self.bspUart.cmd_init,
-            72: self.bspUart.cmd_enableInterrupts,
-            73: self.bspUart.cmd_disableInterrupts,
-            74: self.bspUart.cmd_clearRxInterrupts,
-            75: self.bspUart.cmd_clearTxInterrupts,
-            76: self.bspUart.cmd_writeByte,
-            77: self.bspUart.cmd_readByte,
+            self.commandIds['OPENSIM_CMD_uart_init']                 : self.bspUart.cmd_init,
+            self.commandIds['OPENSIM_CMD_uart_enableInterrupts']     : self.bspUart.cmd_enableInterrupts,
+            self.commandIds['OPENSIM_CMD_uart_disableInterrupts']    : self.bspUart.cmd_disableInterrupts,
+            self.commandIds['OPENSIM_CMD_uart_clearRxInterrupts']    : self.bspUart.cmd_clearRxInterrupts,
+            self.commandIds['OPENSIM_CMD_uart_clearTxInterrupts']    : self.bspUart.cmd_clearTxInterrupts,
+            self.commandIds['OPENSIM_CMD_uart_writeByte']            : self.bspUart.cmd_writeByte,
+            self.commandIds['OPENSIM_CMD_uart_readByte']             : self.bspUart.cmd_readByte,
         }
-        
         # logging
         self.log   = logging.getLogger('MoteHandler')
         self.log.setLevel(logging.DEBUG)
@@ -172,27 +278,22 @@ class MoteHandler(threading.Thread):
             # log the info
             self.log.info('received input='+str(ord(input[0])))
             
-            if self.waitingForReply:
-                self.log.debug('This is a reply.')
-                self.response = input
-                self.waitingForReplySem.release()
-            else:
-                self.log.debug('This is a command.')
-                self._handleReceivedCommand(input)
-    
+            # handle the received packet
+            self._handleReceivedCommand(input)
+            
     #======================== public ==========================================
     
-    def sendCommand(send,dataToSend):
+    def sendCommand(self,commandId,params=[]):
         
         # update statistics
         self.numTxCommands += 1
         
         # send command over connection
+        dataToSend  = ''
+        dataToSend += chr(commandId)
+        for c in params:
+            dataToSend += chr(c)
         self.conn.send(dataToSend)
-        
-        # wait for reply before returning
-        self.waitingForReply = True
-        self.waitingForReplySem.acquire()
     
     #======================== private =========================================
     
@@ -204,18 +305,12 @@ class MoteHandler(threading.Thread):
         # apply the delay
         self.engine.pauseOrDelay()
         
-        # get the command id from the received command
-        cmdId = ord(input[0])
+        # get the command id and params from the received command
+        cmdId  = ord(input[0])
+        params = [ord(c) for c in input[1:]]
         
         # make sure I know what callback to call
         assert(cmdId in self.commandCallbacks)
         
         # call the callback
-        returnVal = self.commandCallbacks[cmdId]()
-        
-        # if the called function didn't return anything, assume return OK
-        if not returnVal:
-            returnVal = 0
-        
-        # send back the value returned by the callback
-        self.conn.send(chr(returnVal))
+        returnVal = self.commandCallbacks[cmdId](params)

@@ -24,15 +24,20 @@ class SimCli(threading.Thread):
         self.commands = []
         
         # register commands
+        self._registerCommand('boot',
+                              'b',
+                              'switch a mote on',
+                              '<moterank>',
+                              self._handleBoot)
         self._registerCommand('debugpins',
                               'dp',
-                              'print the current state of the leds',
-                              'debugpins',
+                              'print the current state of the debug pins',
+                              '<moterank>',
                               self._handleDebugpins)
         self._registerCommand('delay',
                               'd',
                               'introduce a delay between each event, in s',
-                              'delay <delay_in_s>',
+                              '<delay_in_s>',
                               self._handleDelay)
         self._registerCommand('help', 
                               'h',
@@ -42,7 +47,7 @@ class SimCli(threading.Thread):
         self._registerCommand('leds',
                               'l',
                               'print the current state of the leds',
-                              'leds <moterank>',
+                              '<moterank>',
                               self._handleLeds)
         self._registerCommand('nummotes',
                               'n',
@@ -134,19 +139,56 @@ class SimCli(threading.Thread):
         return False
     
     #=== command handlers
-    
+   
+    def _handleBoot(self,params):
+        # usage
+        if len(params)!=1:
+            self._printUsageFromName('boot')
+            return
+        
+        # filter errors
+        try:
+            rank = int(params[0])
+        except ValueError:
+            print 'invalid rank'
+            return
+        
+        try:
+            moteHandler = self.engine.getMoteHandler(rank)
+        except IndexError:
+            print 'invalid rank'
+            return
+        
+        moteHandler.bspSupply.switchOn()
+        
+        print 'OK'
+            
     def _handleDebugpins(self,params):
         # usage
-        if len(params)!=0:
+        if len(params)!=1:
             self._printUsageFromName('debugpins')
             return
         
+        # filter errors
+        try:
+            rank = int(params[0])
+        except ValueError:
+            print 'invalid rank'
+            return
+        
+        try:
+            moteHandler = self.engine.getMoteHandler(rank)
+        except IndexError:
+            print 'invalid rank'
+            return
+        pins        = moteHandler.bspDebugpins
+        
         output  = ''
-        output += '- frame: TODO\n'
-        output += '- slot:  TODO\n'
-        output += '- fsm:   TODO\n'
-        output += '- isr:   TODO\n'
-        output += '- radio: TODO\n'
+        output += '- frame: '+self._pinStateToString(pins.get_framePinHigh())+'\n'
+        output += '- slot:  '+self._pinStateToString(pins.get_slotPinHigh())+'\n'
+        output += '- fsm:   '+self._pinStateToString(pins.get_fsmPinHigh())+'\n'
+        output += '- isr:   '+self._pinStateToString(pins.get_isrPinHigh())+'\n'
+        output += '- radio: '+self._pinStateToString(pins.get_radioPinHigh())+'\n'
         print output
     
     def _handleDelay(self,params):
@@ -192,14 +234,18 @@ class SimCli(threading.Thread):
             print 'invalid rank'
             return
         
-        moteHandler = self.engine.getMoteHandler(rank)
+        try:
+            moteHandler = self.engine.getMoteHandler(rank)
+        except IndexError:
+            print 'invalid rank'
+            return
         leds        = moteHandler.bspLeds
         
         output  = ''
-        output += '- error: '+self._ledsStateToString(leds.get_errorLedOn())+'\n'
-        output += '- radio: '+self._ledsStateToString(leds.get_radioLedOn())+'\n'
-        output += '- sync:  '+self._ledsStateToString(leds.get_syncLedOn())+'\n'
-        output += '- debug: '+self._ledsStateToString(leds.get_debugLedOn())+'\n'
+        output += '- error: '+self._ledStateToString(leds.get_errorLedOn())+'\n'
+        output += '- radio: '+self._ledStateToString(leds.get_radioLedOn())+'\n'
+        output += '- sync:  '+self._ledStateToString(leds.get_syncLedOn())+'\n'
+        output += '- debug: '+self._ledStateToString(leds.get_debugLedOn())+'\n'
         print output
     
     def _handleNummotes(self,params):
@@ -240,8 +286,14 @@ class SimCli(threading.Thread):
     
     #======================== helpers =========================================
     
-    def _ledsStateToString(self,state):
+    def _ledStateToString(self,state):
         if state:
             return 'ON'
         else:
             return 'OFF'
+    
+    def _pinStateToString(self,state):
+        if state:
+            return 'HIGH'
+        else:
+            return 'LOW'

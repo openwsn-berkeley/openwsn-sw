@@ -7,9 +7,10 @@ class BspBoard(BspModule.BspModule):
     \brief Emulates the 'board' BSP module
     '''
     
-    def __init__(self):
+    def __init__(self,motehandler):
         
         # store params
+        self.motehandler = motehandler
         
         # local variables
         
@@ -20,7 +21,7 @@ class BspBoard(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_sleep(self):
+    def cmd_sleep(self,params):
         
         # log the activity
         self.log.debug('cmd_sleep')

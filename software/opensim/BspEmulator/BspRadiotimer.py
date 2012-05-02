@@ -7,9 +7,10 @@ class BspRadiotimer(BspModule.BspModule):
     \brief Emulates the 'radiotimer' BSP module
     '''
     
-    def __init__(self):
+    def __init__(self,motehandler):
         
         # store params
+        self.motehandler = motehandler
         
         # local variables
         
@@ -20,49 +21,49 @@ class BspRadiotimer(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_start(self):
+    def cmd_start(self,params):
         
         # log the activity
         self.log.debug('cmd_start')
         
         raise NotImplementedError()
     
-    def cmd_getValue(self):
+    def cmd_getValue(self,params):
         
         # log the activity
         self.log.debug('cmd_getValue')
         
         raise NotImplementedError()
     
-    def cmd_setPeriod(self):
+    def cmd_setPeriod(self,params):
         
         # log the activity
         self.log.debug('cmd_setPeriod')
         
         raise NotImplementedError()
     
-    def cmd_getPeriod(self):
+    def cmd_getPeriod(self,params):
         
         # log the activity
         self.log.debug('cmd_getPeriod')
         
         raise NotImplementedError()
     
-    def cmd_schedule(self):
+    def cmd_schedule(self,params):
         
         # log the activity
         self.log.debug('cmd_schedule')
         
         raise NotImplementedError()
     
-    def cmd_cancel(self):
+    def cmd_cancel(self,params):
         
         # log the activity
         self.log.debug('cmd_cancel')
         
         raise NotImplementedError()
     
-    def cmd_getCapturedTime(self):
+    def cmd_getCapturedTime(self,params):
         
         # log the activity
         self.log.debug('cmd_getCapturedTime')

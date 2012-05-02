@@ -7,9 +7,10 @@ class BspEui64(BspModule.BspModule):
     \brief Emulates the 'eui64' BSP module
     '''
     
-    def __init__(self):
+    def __init__(self,motehandler):
         
         # store params
+        self.motehandler = motehandler
         
         # local variables
         
@@ -20,7 +21,7 @@ class BspEui64(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_get(self):
+    def cmd_get(self,params):
         
         # log the activity
         self.log.debug('cmd_get')

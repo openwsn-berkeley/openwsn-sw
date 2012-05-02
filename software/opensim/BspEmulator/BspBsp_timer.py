@@ -7,9 +7,10 @@ class BspBsp_timer(BspModule.BspModule):
     \brief Emulates the 'bsp_timer' BSP module
     '''
     
-    def __init__(self):
+    def __init__(self,motehandler):
         
         # store params
+        self.motehandler = motehandler
         
         # local variables
         self.counterVal = 0
@@ -23,21 +24,21 @@ class BspBsp_timer(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_reset(self):
+    def cmd_reset(self,params):
         
         # log the activity
         self.log.debug('cmd_reset')
         
         raise NotImplementedError()
     
-    def cmd_scheduleIn(self):
+    def cmd_scheduleIn(self,params):
     
         # log the activity
         self.log.debug('cmd_scheduleIn')
         
         raise NotImplementedError()
     
-    def cmd_cancel_schedule(self):
+    def cmd_cancel_schedule(self,params):
         
         # log the activity
         self.log.debug('cmd_cancel_schedule')
@@ -45,6 +46,3 @@ class BspBsp_timer(BspModule.BspModule):
         raise NotImplementedError()
     
     #======================== private =========================================
-    
-    def getIsInitialized():
-       return self.isInitialized

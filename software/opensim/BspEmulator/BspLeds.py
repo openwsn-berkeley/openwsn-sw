@@ -7,9 +7,10 @@ class BspLeds(BspModule.BspModule):
     \brief Emulates the 'leds' BSP module
     '''
     
-    def __init__(self):
+    def __init__(self,motehandler):
         
         # store params
+        self.motehandler = motehandler
         
         # local variables
         self.errorLedOn      = False
@@ -24,7 +25,7 @@ class BspLeds(BspModule.BspModule):
     
     #=== commands
         
-    def cmd_error_on(self):
+    def cmd_error_on(self,params):
         
         # log the activity
         self.log.debug('cmd_error_on')
@@ -32,7 +33,7 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.errorLedOn = True
         
-    def cmd_error_off(self):
+    def cmd_error_off(self,params):
         
         # log the activity
         self.log.debug('cmd_error_off')
@@ -40,7 +41,7 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.errorLedOn = False
         
-    def cmd_error_toggle(self):
+    def cmd_error_toggle(self,params):
         
         # log the activity
         self.log.debug('cmd_error_toggle')
@@ -48,14 +49,14 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.errorLedOn = not self.errorLedOn
         
-    def cmd_error_isOn(self):
+    def cmd_error_isOn(self,params):
         
         # log the activity
         self.log.debug('cmd_error_isOn')
         
         raise NotImplementedError()
         
-    def cmd_radio_on(self):
+    def cmd_radio_on(self,params):
         
         # log the activity
         self.log.debug('cmd_radio_on')
@@ -63,7 +64,7 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.radioLedOn = True
         
-    def cmd_radio_off(self):
+    def cmd_radio_off(self,params):
         
         # log the activity
         self.log.debug('cmd_radio_off')
@@ -71,7 +72,7 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.radioLedOn = False
         
-    def cmd_radio_toggle(self):
+    def cmd_radio_toggle(self,params):
         
         # log the activity
         self.log.debug('cmd_radio_toggle')
@@ -79,14 +80,14 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.radioLedOn = not self.radioLedOn
         
-    def cmd_radio_isOn(self):
+    def cmd_radio_isOn(self,params):
         
         # log the activity
         self.log.debug('cmd_radio_isOn')
         
         raise NotImplementedError()
         
-    def cmd_sync_on(self):
+    def cmd_sync_on(self,params):
         
         # log the activity
         self.log.debug('cmd_sync_on')
@@ -94,7 +95,7 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.syncLedOn = True
         
-    def cmd_sync_off(self):
+    def cmd_sync_off(self,params):
         
         # log the activity
         self.log.debug('cmd_sync_off')
@@ -102,7 +103,7 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.syncLedOn = False
         
-    def cmd_sync_toggle(self):
+    def cmd_sync_toggle(self,params):
         
         # log the activity
         self.log.debug('cmd_sync_toggle')
@@ -110,14 +111,14 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.syncLedOn = not self.syncLedOn
         
-    def cmd_sync_isOn(self):
+    def cmd_sync_isOn(self,params):
         
         # log the activity
         self.log.debug('cmd_sync_isOn')
         
         raise NotImplementedError()
         
-    def cmd_debug_on(self):
+    def cmd_debug_on(self,params):
         
         # log the activity
         self.log.debug('cmd_debug_on')
@@ -125,7 +126,7 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.debugLedOn = True
         
-    def cmd_debug_off(self):
+    def cmd_debug_off(self,params):
         
         # log the activity
         self.log.debug('cmd_debug_off')
@@ -133,7 +134,7 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.debugLedOn = False
         
-    def cmd_debug_toggle(self):
+    def cmd_debug_toggle(self,params):
         
         # log the activity
         self.log.debug('cmd_debug_toggle')
@@ -141,14 +142,14 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.debugLedOn = not self.debugLedOn
         
-    def cmd_debug_isOn(self):
+    def cmd_debug_isOn(self,params):
         
         # log the activity
         self.log.debug('cmd_debug_isOn')
         
         raise NotImplementedError()
         
-    def cmd_all_on(self):
+    def cmd_all_on(self,params):
         
         # log the activity
         self.log.debug('cmd_all_on')
@@ -159,7 +160,7 @@ class BspLeds(BspModule.BspModule):
         self.syncLedOn       = True
         self.debugLedOn      = True
         
-    def cmd_all_off(self):
+    def cmd_all_off(self,params):
         
         # log the activity
         self.log.debug('cmd_all_off')
@@ -170,7 +171,7 @@ class BspLeds(BspModule.BspModule):
         self.syncLedOn       = False
         self.debugLedOn      = False
         
-    def cmd_all_toggle(self):
+    def cmd_all_toggle(self,params):
         
         # log the activity
         self.log.debug('cmd_all_toggle')
@@ -181,7 +182,7 @@ class BspLeds(BspModule.BspModule):
         self.syncLedOn       = not self.syncLedOn
         self.debugLedOn      = not self.debugLedOn
         
-    def cmd_circular_shift(self):
+    def cmd_circular_shift(self,params):
         
         # log the activity
         self.log.debug('cmd_circular_shift')
@@ -194,7 +195,7 @@ class BspLeds(BspModule.BspModule):
                              self.debugLedOn, \
                              self.errorLedOn)
         
-    def cmd_increment(self):
+    def cmd_increment(self,params):
         
         # log the activity
         self.log.debug('cmd_increment')

@@ -7,9 +7,10 @@ class BspSupply(BspModule.BspModule):
     \brief Emulates the mote's power supply
     '''
     
-    def __init__(self):
+    def __init__(self,motehandler):
         
         # store params
+        self.motehandler = motehandler
         
         # local variables
         self.moteOn = False
@@ -30,6 +31,9 @@ class BspSupply(BspModule.BspModule):
         
         # change local variable
         self.moteOn = True
+        
+        # send command to mote
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_supply_on'])
     
     def switchOff(self):
         
