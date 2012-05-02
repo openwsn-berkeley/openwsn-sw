@@ -37,7 +37,6 @@ class BspBoard(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_sleep')
         
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_board_sleep'])
+        raise NotImplementedError()
     
     #======================== private =========================================
