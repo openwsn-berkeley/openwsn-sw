@@ -35,14 +35,15 @@ class MoteHandler(threading.Thread):
         self.addr                 = addr
         self.port                 = port
         
-        # local variables
-        # synchronizing
+        #=== local variables
+        # tcp sync
         self.waitingForReplySem   = threading.Lock()
         self.waitingForReply      = False
         # stats
         self.numRxCommands        = 0
         self.numTxCommands        = 0
         # bsp
+        self.bspSupply            = BspBoard.BspSupply()
         self.bspBoard             = BspBoard.BspBoard()
         self.bspBsp_timer         = BspBsp_timer.BspBsp_timer()
         self.bspDebugpins         = BspDebugpins.BspDebugpins()

@@ -39,11 +39,16 @@ class SimCli(threading.Thread):
                               'print this menu',
                               '',
                               self._handleHelp)
-        self._registerCommand('leds', 
+        self._registerCommand('leds',
                               'l',
                               'print the current state of the leds',
-                              'leds',
+                              'leds <moterank>',
                               self._handleLeds)
+        self._registerCommand('nummotes',
+                              'n',
+                              'print the number of mote connected to the engine',
+                              'nummotes',
+                              self._handleNummotes)
         self._registerCommand('pause',
                               'p',
                               'pause the execution',
@@ -176,16 +181,34 @@ class SimCli(threading.Thread):
         
     def _handleLeds(self,params):
         # usage
-        if len(params)!=0:
+        if len(params)!=1:
             self._printUsageFromName('leds')
             return
         
+        # filter errors
+        try:
+            rank = int(params[0])
+        except ValueError:
+            print 'invalid rank'
+            return
+        
+        moteHandler = self.engine.getMoteHandler(rank)
+        leds        = moteHandler.bspLeds
+        
         output  = ''
-        output += '- error: TODO\n'
-        output += '- radio: TODO\n'
-        output += '- sync:  TODO\n'
-        output += '- debug: TODO\n'
+        output += '- error: '+self._ledsStateToString(leds.get_errorLedOn())+'\n'
+        output += '- radio: '+self._ledsStateToString(leds.get_radioLedOn())+'\n'
+        output += '- sync:  '+self._ledsStateToString(leds.get_syncLedOn())+'\n'
+        output += '- debug: '+self._ledsStateToString(leds.get_debugLedOn())+'\n'
         print output
+    
+    def _handleNummotes(self,params):
+        # usage
+        if len(params)!=0:
+            self._printUsageFromName('nummotes')
+            return
+        
+        print self.engine.getNumMotes()
         
     def _handlePause(self,params):
         # usage
@@ -216,3 +239,9 @@ class SimCli(threading.Thread):
         self.engine.resume()
     
     #======================== helpers =========================================
+    
+    def _ledsStateToString(self,state):
+        if state:
+            return 'ON'
+        else:
+            return 'OFF'

@@ -62,4 +62,9 @@ class DaemonThread(threading.Thread):
             
             # hand over connection to moteHandler
             moteHandler = MoteHandler(self.engine,conn,addr[0],addr[1])
+            
+            # indicate to the engine the new mote's handler
+            self.engine.indicateNewMote(moteHandler)
+            
+            # start the new mote handler
             moteHandler.start()

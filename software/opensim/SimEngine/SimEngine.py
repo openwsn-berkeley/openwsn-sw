@@ -34,7 +34,7 @@ class SimEngine(object):
         self.moteHandlers         = []
         self.pauseSem             = threading.Lock()
         self.isPaused             = False
-        self.delay              = 0
+        self.delay                = 0
         
         # logging
         self.log                  = logging.getLogger('SimEngine')
@@ -54,13 +54,17 @@ class SimEngine(object):
         self.daemonThreadHandler.start()
         
         # start motes
+        '''
         for i in range(self.nummotes):
             subprocess.Popen(self.motebin)
+        '''
         
         # start CLI threads
         self.cliHandler.start()
     
     #======================== public ==========================================
+    
+    #=== controlling the execution
     
     def setDelay(self,delay):
         self.delay = delay
@@ -81,6 +85,19 @@ class SimEngine(object):
             self.pauseSem.release()
         else:
             time.sleep(self.delay)
+    
+    #=== called from the DaemonThread
+    
+    def indicateNewMote(self,moteHandler):
+        self.moteHandlers.append(moteHandler)
+    
+    #=== getting information about the system
+    
+    def getNumMotes(self):
+        return len(self.moteHandlers)
+    
+    def getMoteHandler(self,rank):
+        return self.moteHandlers[rank]
     
     #======================== private =========================================
     

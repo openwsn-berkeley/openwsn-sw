@@ -219,15 +219,15 @@ class BspLeds(BspModule.BspModule):
     #=== getters
     
     def get_errorLedOn(self):
-        return errorLedOn
+        return self.errorLedOn
     
     def get_radioLedOn(self):
-        return radioLedOn
+        return self.radioLedOn
     
     def get_syncLedOn(self):
-        return syncLedOn
+        return self.syncLedOn
     
     def get_debugLedOn(self):
-        return debugLedOn
+        return self.debugLedOn
     
     #======================== private =========================================
