@@ -21,6 +21,17 @@ class BspRadiotimer(BspModule.BspModule):
     
     #=== commands
     
+    def cmd_init(self,params):
+        
+        # log the activity
+        self.log.debug('cmd_init')
+        
+        # remember that module has been intialized
+        self.isInitialized = True
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_init'])
+    
     def cmd_start(self,params):
         
         # log the activity

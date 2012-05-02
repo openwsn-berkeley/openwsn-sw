@@ -25,15 +25,6 @@ class BspModule(object):
     
     #======================== public ==========================================
     
-    #=== commands
-    
-    def cmd_init(self):
-        # log the activity
-        self.log.debug('cmd_init')
-        
-        # remember that module has been intialized
-        self.isInitialized = True
-    
     #=== getters
     
     def getIsInitialized():

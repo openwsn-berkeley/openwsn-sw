@@ -21,6 +21,17 @@ class BspRadio(BspModule.BspModule):
     
     #=== commands
     
+    def cmd_init(self,params):
+        
+        # log the activity
+        self.log.debug('cmd_init')
+        
+        # remember that module has been intialized
+        self.isInitialized = True
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_init'])
+    
     def cmd_reset(self,params):
         
         # log the activity
