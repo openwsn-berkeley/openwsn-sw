@@ -33,6 +33,9 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.errorLedOn = True
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_error_on'])
+        
     def cmd_error_off(self,params):
         
         # log the activity
@@ -41,6 +44,9 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.errorLedOn = False
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_error_off'])
+        
     def cmd_error_toggle(self,params):
         
         # log the activity
@@ -48,6 +54,9 @@ class BspLeds(BspModule.BspModule):
         
         # change the internal state
         self.errorLedOn = not self.errorLedOn
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_error_toggle'])
         
     def cmd_error_isOn(self,params):
         
@@ -64,6 +73,9 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.radioLedOn = True
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_radio_on'])
+        
     def cmd_radio_off(self,params):
         
         # log the activity
@@ -72,6 +84,9 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.radioLedOn = False
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_radio_off'])
+        
     def cmd_radio_toggle(self,params):
         
         # log the activity
@@ -79,6 +94,9 @@ class BspLeds(BspModule.BspModule):
         
         # change the internal state
         self.radioLedOn = not self.radioLedOn
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_radio_toggle'])
         
     def cmd_radio_isOn(self,params):
         
@@ -95,6 +113,9 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.syncLedOn = True
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_sync_on'])
+        
     def cmd_sync_off(self,params):
         
         # log the activity
@@ -103,6 +124,9 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.syncLedOn = False
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_sync_off'])
+        
     def cmd_sync_toggle(self,params):
         
         # log the activity
@@ -110,6 +134,9 @@ class BspLeds(BspModule.BspModule):
         
         # change the internal state
         self.syncLedOn = not self.syncLedOn
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_sync_toggle'])
         
     def cmd_sync_isOn(self,params):
         
@@ -126,6 +153,9 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.debugLedOn = True
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_debug_on'])
+        
     def cmd_debug_off(self,params):
         
         # log the activity
@@ -134,6 +164,9 @@ class BspLeds(BspModule.BspModule):
         # change the internal state
         self.debugLedOn = False
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_debug_off'])
+        
     def cmd_debug_toggle(self,params):
         
         # log the activity
@@ -141,6 +174,9 @@ class BspLeds(BspModule.BspModule):
         
         # change the internal state
         self.debugLedOn = not self.debugLedOn
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_debug_toggle'])
         
     def cmd_debug_isOn(self,params):
         
@@ -160,6 +196,9 @@ class BspLeds(BspModule.BspModule):
         self.syncLedOn       = True
         self.debugLedOn      = True
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_all_on'])
+        
     def cmd_all_off(self,params):
         
         # log the activity
@@ -171,6 +210,9 @@ class BspLeds(BspModule.BspModule):
         self.syncLedOn       = False
         self.debugLedOn      = False
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_all_off'])
+        
     def cmd_all_toggle(self,params):
         
         # log the activity
@@ -181,6 +223,9 @@ class BspLeds(BspModule.BspModule):
         self.radioLedOn      = not self.radioLedOn
         self.syncLedOn       = not self.syncLedOn
         self.debugLedOn      = not self.debugLedOn
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_all_toggle'])
         
     def cmd_circular_shift(self,params):
         
@@ -195,6 +240,9 @@ class BspLeds(BspModule.BspModule):
                              self.debugLedOn, \
                              self.errorLedOn)
         
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_circular_shift'])
+        
     def cmd_increment(self,params):
         
         # log the activity
@@ -202,20 +250,26 @@ class BspLeds(BspModule.BspModule):
         
         # get the current value
         val  = 0
-        rank = 1
-        for i in [self.debugLedOn,self.syncLedOn,self.radioLedOn,self.errorLedOn]:
-            if i:
-                val  += pow(2,rank)
-                rank += 1
+        if self.errorLedOn:
+            val += 0x08
+        if self.radioLedOn:
+            val += 0x04
+        if self.syncLedOn:
+            val += 0x02
+        if self.debugLedOn:
+            val += 0x01
         
         # increment
-        val = (val+1)%16
+        val = (val+1)%0xf
         
         # apply back
-        self.errorLedOn = (val & 1<<3)
-        self.radioLedOn = (val & 1<<2)
-        self.syncLedOn  = (val & 1<<1)
-        self.debugLedOn = (val & 1<<0)
+        self.errorLedOn = ((val & 0x08)!=0)
+        self.radioLedOn = ((val & 0x04)!=0)
+        self.syncLedOn  = ((val & 0x02)!=0)
+        self.debugLedOn = ((val & 0x01)!=0)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_increment'])
     
     #=== getters
     

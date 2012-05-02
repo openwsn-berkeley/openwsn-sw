@@ -275,8 +275,8 @@ class MoteHandler(threading.Thread):
                 self.log.critical('connection error (err='+str(err)+')')
                 break
             
-            # log the info
-            self.log.info('received input='+str(ord(input[0])))
+            # make sure I received something
+            assert(len(input)>0)
             
             # handle the received packet
             self._handleReceivedCommand(input)
