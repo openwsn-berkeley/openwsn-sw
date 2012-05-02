@@ -34,6 +34,7 @@ class SimEngine(object):
         self.moteHandlers         = []
         self.pauseSem             = threading.Lock()
         self.isPaused             = False
+        self.stopAfterSteps       = None
         self.delay                = 0
         
         # logging
@@ -64,7 +65,7 @@ class SimEngine(object):
     
     #======================== public ==========================================
     
-    #=== controlling the execution
+    #=== controlling execution speed
     
     def setDelay(self,delay):
         self.delay = delay
@@ -74,7 +75,14 @@ class SimEngine(object):
             self.pauseSem.acquire()
             self.isPaused = True
     
+    def step(self,numSteps):
+        self.stopAfterSteps = numSteps
+        if self.isPaused:
+            self.pauseSem.release()
+            self.isPaused = False
+    
     def resume(self):
+        self.stopAfterSteps = None
         if self.isPaused:
             self.pauseSem.release()
             self.isPaused = False
@@ -85,6 +93,14 @@ class SimEngine(object):
             self.pauseSem.release()
         else:
             time.sleep(self.delay)
+            
+        if self.stopAfterSteps!=None:
+            if self.stopAfterSteps>0:
+                self.stopAfterSteps -= 1
+            if self.stopAfterSteps==0:
+                self.pause()
+        
+        assert(self.stopAfterSteps==None or self.stopAfterSteps>=0)
     
     #=== called from the DaemonThread
     

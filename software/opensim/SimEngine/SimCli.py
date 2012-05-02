@@ -69,6 +69,11 @@ class SimCli(threading.Thread):
                               'resume the execution',
                               '',
                               self._handleResume)
+        self._registerCommand('step',
+                              's',
+                              'execute a number of steps, then pause',
+                              '<numsteps>',
+                              self._handleStep)
         
         # logging
         self.log           = logging.getLogger('SimCli')
@@ -283,6 +288,22 @@ class SimCli(threading.Thread):
         
         # pause the engine
         self.engine.resume()
+    
+    def _handleStep(self,params):
+        # usage
+        if len(params)!=1:
+            self._printUsageFromName('step')
+            return
+        
+        # filter errors
+        try:
+            numsteps = int(params[0])
+        except ValueError:
+            print 'invalid numsteps'
+            return
+        
+        # pause the engine
+        self.engine.step(numsteps)
     
     #======================== helpers =========================================
     
