@@ -291,16 +291,19 @@ class SimCli(threading.Thread):
     
     def _handleStep(self,params):
         # usage
-        if len(params)!=1:
+        if len(params)>1:
             self._printUsageFromName('step')
             return
         
-        # filter errors
-        try:
-            numsteps = int(params[0])
-        except ValueError:
-            print 'invalid numsteps'
-            return
+        # get params
+        if len(params)==0:
+            numsteps = 1
+        else:
+            try:
+                numsteps = int(params[0])
+            except ValueError:
+                print 'invalid numsteps'
+                return
         
         # pause the engine
         self.engine.step(numsteps)
