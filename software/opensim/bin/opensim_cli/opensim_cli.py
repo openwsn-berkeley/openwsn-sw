@@ -25,6 +25,16 @@ for loggerName in ['SimEngine',
                    'SimCli',
                    'DaemonThread',
                    'MoteHandler',
+                   'BspBoard',
+                   'BspBsp_timer',
+                   'BspDebugpins',
+                   'BspEui64',
+                   'BspLeds',
+                   'BspModule',
+                   'BspRadio',
+                   'BspRadiotimer',
+                   'BspSupply',
+                   'BspUart',
                    ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
