@@ -24,6 +24,11 @@ class SimCli(threading.Thread):
         self.commands = []
         
         # register commands
+        self._registerCommand('bootall',
+                              'ba',
+                              'switch all motes on',
+                              '',
+                              self._handleBootall)
         self._registerCommand('boot',
                               'b',
                               'switch a mote on',
@@ -144,7 +149,19 @@ class SimCli(threading.Thread):
         return False
     
     #=== command handlers
-   
+    
+    def _handleBootall(self,params):
+        # usage
+        if len(params)!=0:
+            self._printUsageFromName('bootall')
+            return
+        
+        for moteId in range(self.engine.getNumMotes()):
+            moteHandler = self.engine.getMoteHandler(moteId)
+            moteHandler.bspSupply.switchOn()
+        
+        print 'OK'
+    
     def _handleBoot(self,params):
         # usage
         if len(params)!=1:
