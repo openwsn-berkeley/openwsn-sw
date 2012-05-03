@@ -22,6 +22,8 @@ class BspUart(BspModule.BspModule):
     #=== commands
     
     def cmd_init(self,params):
+        '''emulates
+           void uart_init()'''
         
         # log the activity
         self.log.debug('cmd_init')
@@ -33,6 +35,8 @@ class BspUart(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_uart_init'])
     
     def cmd_enableInterrupts(self,params):
+        '''emulates
+           void uart_enableInterrupts()'''
         
         # log the activity
         self.log.debug('cmd_enableInterrupts')
@@ -40,6 +44,8 @@ class BspUart(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_disableInterrupts(self,params):
+        '''emulates
+           void uart_disableInterrupts()'''
         
         # log the activity
         self.log.debug('cmd_disableInterrupts')
@@ -47,6 +53,8 @@ class BspUart(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_clearRxInterrupts(self,params):
+        '''emulates
+           void uart_clearRxInterrupts()'''
         
         # log the activity
         self.log.debug('cmd_clearRxInterrupts')
@@ -54,6 +62,8 @@ class BspUart(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_clearTxInterrupts(self,params):
+        '''emulates
+           void uart_clearTxInterrupts()'''
         
         # log the activity
         self.log.debug('cmd_clearTxInterrupts')
@@ -61,6 +71,8 @@ class BspUart(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_writeByte(self,params):
+        '''emulates
+           void uart_writeByte(uint8_t byteToWrite)'''
         
         # log the activity
         self.log.debug('cmd_writeByte')
@@ -68,6 +80,8 @@ class BspUart(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_readByte(self,params):
+        '''emulates
+           uint8_t uart_readByte()'''
         
         # log the activity
         self.log.debug('cmd_readByte')

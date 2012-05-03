@@ -22,9 +22,14 @@ class BspBoard(BspModule.BspModule):
     #=== commands
     
     def cmd_init(self,params):
+        '''emulates:
+           void board_init()'''
         
         # log the activity
         self.log.debug('cmd_init')
+        
+        # make sure length of params is expected
+        assert(len(params)==0)
         
         # remember that module has been intialized
         self.isInitialized = True
@@ -33,9 +38,14 @@ class BspBoard(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_board_init'])
     
     def cmd_sleep(self,params):
+        '''emulates
+           void board_init()'''
         
         # log the activity
         self.log.debug('cmd_sleep')
+        
+        # make sure length of params is expected
+        assert(len(params)==0)
         
         raise NotImplementedError()
     

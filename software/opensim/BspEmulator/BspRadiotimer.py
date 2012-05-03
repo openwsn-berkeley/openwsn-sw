@@ -22,6 +22,8 @@ class BspRadiotimer(BspModule.BspModule):
     #=== commands
     
     def cmd_init(self,params):
+        '''emulates
+           void radiotimer_init()'''
         
         # log the activity
         self.log.debug('cmd_init')
@@ -33,6 +35,8 @@ class BspRadiotimer(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_init'])
     
     def cmd_start(self,params):
+        '''emulates
+           void radiotimer_start(uint16_t period)'''
         
         # log the activity
         self.log.debug('cmd_start')
@@ -40,6 +44,8 @@ class BspRadiotimer(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_getValue(self,params):
+        '''emulates
+           uint16_t radiotimer_getValue()'''
         
         # log the activity
         self.log.debug('cmd_getValue')
@@ -47,6 +53,8 @@ class BspRadiotimer(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_setPeriod(self,params):
+        '''emulates
+           void radiotimer_setPeriod(uint16_t period)'''
         
         # log the activity
         self.log.debug('cmd_setPeriod')
@@ -54,6 +62,8 @@ class BspRadiotimer(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_getPeriod(self,params):
+        '''emulates
+           uint16_t radiotimer_getPeriod()'''
         
         # log the activity
         self.log.debug('cmd_getPeriod')
@@ -61,6 +71,8 @@ class BspRadiotimer(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_schedule(self,params):
+        '''emulates
+           void radiotimer_schedule(uint16_t offset)'''
         
         # log the activity
         self.log.debug('cmd_schedule')
@@ -68,6 +80,8 @@ class BspRadiotimer(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_cancel(self,params):
+        '''emulates
+           void radiotimer_cancel()'''
         
         # log the activity
         self.log.debug('cmd_cancel')
@@ -75,6 +89,8 @@ class BspRadiotimer(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_getCapturedTime(self,params):
+        '''emulates
+           uint16_t radiotimer_getCapturedTime()'''
         
         # log the activity
         self.log.debug('cmd_getCapturedTime')

@@ -26,6 +26,8 @@ class BspLeds(BspModule.BspModule):
     #=== commands
     
     def cmd_init(self,params):
+        '''emulates
+           void leds_init()'''
         
         # log the activity
         self.log.debug('cmd_init')
@@ -37,6 +39,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_init'])
         
     def cmd_error_on(self,params):
+        '''emulates
+           void leds_error_on()'''
         
         # log the activity
         self.log.debug('cmd_error_on')
@@ -48,6 +52,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_error_on'])
         
     def cmd_error_off(self,params):
+        '''emulates
+           void leds_error_off()'''
         
         # log the activity
         self.log.debug('cmd_error_off')
@@ -59,6 +65,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_error_off'])
         
     def cmd_error_toggle(self,params):
+        '''emulates
+           void leds_error_toggle()'''
         
         # log the activity
         self.log.debug('cmd_error_toggle')
@@ -70,6 +78,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_error_toggle'])
         
     def cmd_error_isOn(self,params):
+        '''emulates
+           uint8_t leds_error_isOn()'''
         
         # log the activity
         self.log.debug('cmd_error_isOn')
@@ -77,6 +87,8 @@ class BspLeds(BspModule.BspModule):
         raise NotImplementedError()
         
     def cmd_radio_on(self,params):
+        '''emulates
+           void leds_radio_on()'''
         
         # log the activity
         self.log.debug('cmd_radio_on')
@@ -88,6 +100,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_radio_on'])
         
     def cmd_radio_off(self,params):
+        '''emulates
+           void leds_radio_off()'''
         
         # log the activity
         self.log.debug('cmd_radio_off')
@@ -99,6 +113,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_radio_off'])
         
     def cmd_radio_toggle(self,params):
+        '''emulates
+           void leds_radio_toggle()'''
         
         # log the activity
         self.log.debug('cmd_radio_toggle')
@@ -110,6 +126,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_radio_toggle'])
         
     def cmd_radio_isOn(self,params):
+        '''emulates
+           uint8_t leds_radio_isOn()'''
         
         # log the activity
         self.log.debug('cmd_radio_isOn')
@@ -117,6 +135,8 @@ class BspLeds(BspModule.BspModule):
         raise NotImplementedError()
         
     def cmd_sync_on(self,params):
+        '''emulates
+           void leds_sync_on()'''
         
         # log the activity
         self.log.debug('cmd_sync_on')
@@ -128,6 +148,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_sync_on'])
         
     def cmd_sync_off(self,params):
+        '''emulates
+           void leds_sync_off()'''
         
         # log the activity
         self.log.debug('cmd_sync_off')
@@ -139,6 +161,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_sync_off'])
         
     def cmd_sync_toggle(self,params):
+        '''emulates
+           void leds_sync_toggle()'''
         
         # log the activity
         self.log.debug('cmd_sync_toggle')
@@ -150,6 +174,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_sync_toggle'])
         
     def cmd_sync_isOn(self,params):
+        '''emulates
+           uint8_t leds_sync_isOn()'''
         
         # log the activity
         self.log.debug('cmd_sync_isOn')
@@ -157,6 +183,8 @@ class BspLeds(BspModule.BspModule):
         raise NotImplementedError()
         
     def cmd_debug_on(self,params):
+        '''emulates
+           void leds_debug_on()'''
         
         # log the activity
         self.log.debug('cmd_debug_on')
@@ -168,6 +196,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_debug_on'])
         
     def cmd_debug_off(self,params):
+        '''emulates
+           void leds_debug_off()'''
         
         # log the activity
         self.log.debug('cmd_debug_off')
@@ -179,6 +209,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_debug_off'])
         
     def cmd_debug_toggle(self,params):
+        '''emulates
+           void leds_debug_toggle()'''
         
         # log the activity
         self.log.debug('cmd_debug_toggle')
@@ -190,6 +222,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_debug_toggle'])
         
     def cmd_debug_isOn(self,params):
+        '''emulates
+           uint8_t leds_debug_isOn()'''
         
         # log the activity
         self.log.debug('cmd_debug_isOn')
@@ -197,6 +231,8 @@ class BspLeds(BspModule.BspModule):
         raise NotImplementedError()
         
     def cmd_all_on(self,params):
+        '''emulates'
+           void leds_all_on()'''
         
         # log the activity
         self.log.debug('cmd_all_on')
@@ -211,6 +247,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_all_on'])
         
     def cmd_all_off(self,params):
+        '''emulates
+           void leds_all_off()'''
         
         # log the activity
         self.log.debug('cmd_all_off')
@@ -225,6 +263,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_all_off'])
         
     def cmd_all_toggle(self,params):
+        '''emulates
+           void leds_all_toggle()'''
         
         # log the activity
         self.log.debug('cmd_all_toggle')
@@ -239,6 +279,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_all_toggle'])
         
     def cmd_circular_shift(self,params):
+        '''emulates
+           void leds_circular_shift()'''
         
         # log the activity
         self.log.debug('cmd_circular_shift')
@@ -255,6 +297,8 @@ class BspLeds(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_leds_circular_shift'])
         
     def cmd_increment(self,params):
+        '''emulates
+           void leds_increment()'''
         
         # log the activity
         self.log.debug('cmd_increment')

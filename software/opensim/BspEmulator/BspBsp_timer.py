@@ -25,6 +25,8 @@ class BspBsp_timer(BspModule.BspModule):
     #=== commands
     
     def cmd_init(self,params):
+        '''emulates
+           void bsp_timer_init()'''
         
         # log the activity
         self.log.debug('cmd_init')
@@ -36,6 +38,8 @@ class BspBsp_timer(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_init'])
     
     def cmd_reset(self,params):
+        '''emulates
+           void bsp_timer_reset()'''
         
         # log the activity
         self.log.debug('cmd_reset')
@@ -43,6 +47,8 @@ class BspBsp_timer(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_scheduleIn(self,params):
+        '''emulates
+           void bsp_timer_scheduleIn(PORT_TIMER_WIDTH delayTicks)'''
     
         # log the activity
         self.log.debug('cmd_scheduleIn')
@@ -50,6 +56,8 @@ class BspBsp_timer(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_cancel_schedule(self,params):
+        '''emulates
+           void bsp_timer_cancel_schedule()'''
         
         # log the activity
         self.log.debug('cmd_cancel_schedule')

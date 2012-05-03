@@ -22,6 +22,8 @@ class BspRadio(BspModule.BspModule):
     #=== commands
     
     def cmd_init(self,params):
+        '''emulates
+           void radio_init()'''
         
         # log the activity
         self.log.debug('cmd_init')
@@ -33,6 +35,8 @@ class BspRadio(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_init'])
     
     def cmd_reset(self,params):
+        '''emulates
+           void radio_reset()'''
         
         # log the activity
         self.log.debug('cmd_reset')
@@ -40,6 +44,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_startTimer(self,params):
+        '''emulates
+           void radio_startTimer(PORT_TIMER_WIDTH period)'''
         
         # log the activity
         self.log.debug('cmd_startTimer')
@@ -47,6 +53,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_getTimerValue(self,params):
+        '''emulates
+           PORT_TIMER_WIDTH radio_getTimerValue()'''
         
         # log the activity
         self.log.debug('cmd_getTimerValue')
@@ -54,6 +62,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_setTimerPeriod(self,params):
+        '''emulates
+           void radio_setTimerPeriod(PORT_TIMER_WIDTH period)'''
         
         # log the activity
         self.log.debug('cmd_setTimerPeriod')
@@ -61,6 +71,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_getTimerPeriod(self,params):
+        '''emulates
+           PORT_TIMER_WIDTH radio_getTimerPeriod()'''
         
         # log the activity
         self.log.debug('cmd_getTimerPeriod')
@@ -68,6 +80,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_setFrequency(self,params):
+        '''emulates
+           void radio_setFrequency(uint8_t frequency)'''
         
         # log the activity
         self.log.debug('cmd_setFrequency')
@@ -75,6 +89,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_rfOn(self,params):
+        '''emulates
+           void radio_rfOn()'''
         
         # log the activity
         self.log.debug('cmd_rfOn')
@@ -82,6 +98,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_rfOff(self,params):
+        '''emulates
+           void radio_rfOff()'''
         
         # log the activity
         self.log.debug('cmd_rfOff')
@@ -89,6 +107,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_loadPacket(self,params):
+        '''emulates
+           void radio_loadPacket(uint8_t* packet, uint8_t len)'''
         
         # log the activity
         self.log.debug('cmd_loadPacket')
@@ -96,6 +116,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_txEnable(self,params):
+        '''emulates
+           void radio_txEnable()'''
         
         # log the activity
         self.log.debug('cmd_txEnable')
@@ -103,6 +125,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_txNow(self,params):
+        '''emulates
+           void radio_txNow()'''
         
         # log the activity
         self.log.debug('cmd_txNow')
@@ -110,6 +134,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_rxEnable(self,params):
+        '''emulates
+           void radio_rxEnable()'''
         
         # log the activity
         self.log.debug('cmd_rxEnable')
@@ -117,6 +143,8 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_rxNow(self,params):
+        '''emulates
+           void radio_rxNow()'''
         
         # log the activity
         self.log.debug('cmd_rxNow')
@@ -124,6 +152,13 @@ class BspRadio(BspModule.BspModule):
         raise NotImplementedError()
     
     def cmd_getReceivedFrame(self,params):
+        '''emulates
+           void radio_getReceivedFrame(uint8_t* pBufRead,
+                                       uint8_t* pLenRead,
+                                       uint8_t  maxBufLen,
+                                        int8_t* pRssi,
+                                       uint8_t* pLqi,
+                                       uint8_t* pCrc)'''
         
         # log the activity
         self.log.debug('cmd_getReceivedFrame')

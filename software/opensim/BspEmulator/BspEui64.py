@@ -22,6 +22,8 @@ class BspEui64(BspModule.BspModule):
     #=== commands
     
     def cmd_get(self,params):
+        '''emulates
+           void eui64_get(uint8_t* addressToWrite)'''
         
         # log the activity
         self.log.debug('cmd_get')
