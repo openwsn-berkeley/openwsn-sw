@@ -39,6 +39,13 @@ class TimeLine(object):
         return self.currentTime
     
     def scheduleEvent(self,atTime,cb,desc):
+        '''
+        \brief Add an event into the timeline
+        
+        \param atTime The time at which this event should be called.
+        \param cd     The function to call when this event happens.
+        \param desc   A unique description (a string) of this event.
+        '''
         
         # log
         self.log.debug('scheduling '+desc+' at '+str(atTime))
@@ -59,8 +66,38 @@ class TimeLine(object):
         
         # insert the new event
         self.timeline.insert(i,newEvent)
+        
+        self.log.debug(self._printTimeline())
+    
+    def nextEvent(self):
+        '''
+        \brief Advance in the queue of events.
+        '''
+        
+        # detect the end of the simulation
+        if len(self.timeline)==0:
+            self.log.warning('end of simulation reached at '+str(self.getCurrentTime))
+            raise StopIteration
+        
+        # pop the event at the head of the timeline
+        event = self.timeline.pop(0)
+        
+        # record the current time
+        self.currentTime = event.atTime
+        
+        # log
+        self.log.debug('executing event '+str(event.desc)+' at '+str(event.atTime))
+        
+        # call the event's callback
+        event.cb()
     
     #======================== private =========================================
+    
+    def _printTimeline(self):
+        output  = ''
+        for event in self.timeline:
+            output += '\n'+str(event.atTime)+' '+str(event.desc)
+        return output
     
     #======================== helpers =========================================
     

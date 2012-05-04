@@ -7,10 +7,11 @@ class BspBoard(BspModule.BspModule):
     \brief Emulates the 'board' BSP module
     '''
     
-    def __init__(self,motehandler):
+    def __init__(self,motehandler,timeline):
         
         # store params
         self.motehandler = motehandler
+        self.timeline    = timeline
         
         # local variables
         
@@ -46,6 +47,9 @@ class BspBoard(BspModule.BspModule):
         
         # make sure length of params is expected
         assert(len(params)==0)
+        
+        # have the timeline advance to the next event
+        self.timeline.nextEvent()
         
         raise NotImplementedError()
     

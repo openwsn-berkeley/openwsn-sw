@@ -158,7 +158,9 @@ class MoteHandler(threading.Thread):
                                             self.engine.timeline,
                                             32768)
         # bsp
-        self.bspBoard             = BspBoard.BspBoard(self)
+        self.bspBoard             = BspBoard.BspBoard(
+                                            self,
+                                            self.engine.timeline)
         self.bspBsp_timer         = BspBsp_timer.BspBsp_timer(self)
         self.bspDebugpins         = BspDebugpins.BspDebugpins(self)
         self.bspEui64             = BspEui64.BspEui64(self)
