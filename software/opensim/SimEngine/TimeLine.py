@@ -65,9 +65,7 @@ class TimeLine(object):
             i += 1
         
         # insert the new event
-        self.timeline.insert(i,newEvent)
-        
-        self.log.debug(self._printTimeline())
+        self.timeline.insert(i-1,newEvent)
     
     def nextEvent(self):
         '''
