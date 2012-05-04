@@ -65,6 +65,28 @@ class HwCrystal(HwModule.HwModule):
         
         return timeLastTick+numticks*period
     
+    def getTicksSince(self,eventTime):
+        '''
+        \brief Return the number of ticks since some timestamp.
+        
+        \params eventTime The time of the event of interest.
+        
+        \returns The number of ticks since the time passed.
+        '''
+        
+        currentTime          = self.timeline.getCurrentTime()
+        
+        if eventTime>currentTime:
+            raise ValueError
+        
+        timeLastTick         = self.getTimeLastTick()
+        
+        if eventTime>timeLastTick:
+            return 0
+        
+        period               = self._getPeriod()
+        return math.floor(float(timeLastTick-eventTime)/float(period))
+    
     #======================== private =========================================
     
     def _getPeriod(self):

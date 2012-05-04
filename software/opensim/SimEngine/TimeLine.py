@@ -48,8 +48,8 @@ class TimeLine(object):
         
         # remove any event already the queue with same description
         for i in range(len(self.timeline)):
-            if timeline[i].desc==desc:
-                timeline.pop(i)
+            if self.timeline[i].desc==desc:
+                self.timeline.pop(i)
                 break
         
         # look for where to put this event

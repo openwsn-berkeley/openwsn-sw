@@ -9,16 +9,20 @@ class BspRadiotimer(BspModule.BspModule):
     '''
     
     INTR_OVERFLOW = 'radiotimer.overflow'
+    INTR_COMPARE  = 'radiotimer.compare'
     
     def __init__(self,motehandler,timeline,hwCrystal):
         
         # store params
-        self.motehandler = motehandler
-        self.timeline    = timeline
-        self.hwCrystal   = hwCrystal
+        self.motehandler     = motehandler
+        self.timeline        = timeline
+        self.hwCrystal       = hwCrystal
         
         # local variables
-        self.startTime   = None
+        self.running         = False   # whether the counter is currently running
+        self.timeLastReset   = None    # time at last counter reset
+        self.period          = None    # counter period
+        self.compareArmed    = False  # whether the compare is armed
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspRadiotimer')
@@ -45,21 +49,24 @@ class BspRadiotimer(BspModule.BspModule):
            void radiotimer_start(uint16_t period)'''
         
         # unpack the parameters
-        (period,)            = struct.unpack('<H', params)
+        (self.period,)            = struct.unpack('<H', params)
         
         # log the activity
-        self.log.debug('cmd_start period='+str(period))
+        self.log.debug('cmd_start period='+str(self.period))
         
-        # remember the timestamp of tick 0
-        self.startTime       = self.hwCrystal.getTimeLastTick()
+        # remember the time of last reset
+        self.timeLastReset   = self.hwCrystal.getTimeLastTick()
         
         # calculate time at overflow event (in 'period' ticks)
-        self.overflowTime    = self.hwCrystal.getTimeIn(period)
+        overflowTime         = self.hwCrystal.getTimeIn(self.period)
         
         # schedule overflow event
-        self.timeline.scheduleEvent(self.overflowTime,
+        self.timeline.scheduleEvent(overflowTime,
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
+
+        # the counter is now running
+        self.running         = True
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_start'])
@@ -95,10 +102,34 @@ class BspRadiotimer(BspModule.BspModule):
         '''emulates
            void radiotimer_schedule(uint16_t offset)'''
         
-        # log the activity
-        self.log.debug('cmd_schedule')
+        # unpack the parameters
+        (offset,)            = struct.unpack('<H', params)
         
-        raise NotImplementedError()
+        # log the activity
+        self.log.debug('cmd_schedule offset='+str(offset))
+        
+        # get current counter value
+        counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
+        
+        # how many ticks until compare event
+        if counterVal<offset:
+            ticksBeforeEvent = offset-counterVal
+        else:
+            ticksBeforeEvent = self.period-counterVal+offset
+        
+        # calculate time at overflow event
+        compareTime          = self.hwCrystal.getTimeIn(ticksBeforeEvent)
+        
+        # schedule compare event
+        self.timeline.scheduleEvent(compareTime,
+                                    self.intr_compare,
+                                    self.INTR_COMPARE)
+                                    
+        # the compare is now scheduled
+        self.compareArmed    = True
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_schedule'])
     
     def cmd_cancel(self,params):
         '''emulates
@@ -121,7 +152,10 @@ class BspRadiotimer(BspModule.BspModule):
     #===== interrupts
     
     def intr_overflow(self):
-        print "poipoipoipoi int_overflow"
+        raise NotImplementedError()
+    
+    def intr_compare(self):
+        raise NotImplementedError()
     
     #======================== private =========================================
     
