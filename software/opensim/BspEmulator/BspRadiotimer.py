@@ -8,12 +8,17 @@ class BspRadiotimer(BspModule.BspModule):
     \brief Emulates the 'radiotimer' BSP module
     '''
     
-    def __init__(self,motehandler):
+    INTR_OVERFLOW = 'radiotimer.overflow'
+    
+    def __init__(self,motehandler,timeline,hwCrystal):
         
         # store params
         self.motehandler = motehandler
+        self.timeline    = timeline
+        self.hwCrystal   = hwCrystal
         
         # local variables
+        self.startTime   = None
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspRadiotimer')
@@ -40,12 +45,24 @@ class BspRadiotimer(BspModule.BspModule):
            void radiotimer_start(uint16_t period)'''
         
         # unpack the parameters
-        (period) = struct.unpack('<H', params)
+        (period,)            = struct.unpack('<H', params)
         
         # log the activity
-        self.log.debug('cmd_start '+str(period))
+        self.log.debug('cmd_start period='+str(period))
         
-        raise NotImplementedError()
+        # remember the timestamp of tick 0
+        self.startTime       = self.hwCrystal.getTimeLastTick()
+        
+        # calculate time at overflow event (in 'period' ticks)
+        self.overflowTime    = self.hwCrystal.getTimeIn(period)
+        
+        # schedule overflow event
+        self.timeline.scheduleEvent(self.overflowTime,
+                                    self.intr_overflow,
+                                    self.INTR_OVERFLOW)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_start'])
     
     def cmd_getValue(self,params):
         '''emulates
@@ -101,4 +118,11 @@ class BspRadiotimer(BspModule.BspModule):
         
         raise NotImplementedError()
     
+    #===== interrupts
+    
+    def intr_overflow(self):
+        print "poipoipoipoi int_overflow"
+    
     #======================== private =========================================
+    
+    

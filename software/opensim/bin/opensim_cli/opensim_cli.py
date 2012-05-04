@@ -21,10 +21,16 @@ logHandler  = logging.handlers.RotatingFileHandler(logFileName,
                                                maxBytes=2000000,
                                                backupCount=5,)
 logHandler.setFormatter(logging.Formatter(LOG_FORMAT))
-for loggerName in ['SimEngine',
+for loggerName in [# core
+                   'SimEngine',
+                   'MoteHandler',
+                   'Timeline',
                    'SimCli',
                    'DaemonThread',
-                   'MoteHandler',
+                   # hw
+                   'HwSupply',
+                   'HwCrystal',
+                   # bsp
                    'BspBoard',
                    'BspBsp_timer',
                    'BspDebugpins',
@@ -34,7 +40,6 @@ for loggerName in ['SimEngine',
                    'BspRadio',
                    'BspRadiotimer',
                    'BspUart',
-                   'HwSupply',
                    ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)

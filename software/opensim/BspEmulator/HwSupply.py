@@ -32,6 +32,9 @@ class HwSupply(HwModule.HwModule):
         # change local variable
         self.moteOn = True
         
+        # have the crystal start now
+        self.motehandler.hwCrystal.start()
+        
         # send command to mote
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_supply_on'])
     

@@ -151,6 +151,12 @@ class MoteHandler(threading.Thread):
         # stats
         self.numRxCommands        = 0
         self.numTxCommands        = 0
+        # hw
+        self.hwSupply             = HwSupply.HwSupply(self)
+        self.hwCrystal            = HwCrystal.HwCrystal(
+                                            self,
+                                            self.engine.timeline,
+                                            32768)
         # bsp
         self.bspBoard             = BspBoard.BspBoard(self)
         self.bspBsp_timer         = BspBsp_timer.BspBsp_timer(self)
@@ -158,10 +164,12 @@ class MoteHandler(threading.Thread):
         self.bspEui64             = BspEui64.BspEui64(self)
         self.bspLeds              = BspLeds.BspLeds(self)
         self.bspRadio             = BspRadio.BspRadio(self)
-        self.bspRadiotimer        = BspRadiotimer.BspRadiotimer(self)
+        self.bspRadiotimer        = BspRadiotimer.BspRadiotimer(
+                                            self,
+                                            self.engine.timeline,
+                                            self.hwCrystal)
         self.bspUart              = BspUart.BspUart(self)
-        self.hwSupply             = HwSupply.HwSupply(self)
-        self.hwCrystal            = HwCrystal.HwCrystal(self,32768)
+        
         self.commandCallbacks = {
             # board
             self.commandIds['OPENSIM_CMD_board_init']                : self.bspBoard.cmd_init,
