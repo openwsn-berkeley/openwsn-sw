@@ -158,7 +158,7 @@ class SimCli(threading.Thread):
         
         for moteId in range(self.engine.getNumMotes()):
             moteHandler = self.engine.getMoteHandler(moteId)
-            moteHandler.bspSupply.switchOn()
+            moteHandler.hwSupply.switchOn()
         
         print 'OK'
     
@@ -181,7 +181,7 @@ class SimCli(threading.Thread):
             print 'invalid rank'
             return
         
-        moteHandler.bspSupply.switchOn()
+        moteHandler.hwSupply.switchOn()
         
         print 'OK'
             

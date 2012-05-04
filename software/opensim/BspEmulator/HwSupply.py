@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import BspModule
+import HwModule
 
-class BspSupply(BspModule.BspModule):
+class HwSupply(HwModule.HwModule):
     '''
     \brief Emulates the mote's power supply
     '''
@@ -16,7 +16,7 @@ class BspSupply(BspModule.BspModule):
         self.moteOn = False
         
         # initialize the parent
-        BspModule.BspModule.__init__(self,'BspSupply')
+        HwModule.HwModule.__init__(self,'HwSupply')
     
     #======================== public ==========================================
     

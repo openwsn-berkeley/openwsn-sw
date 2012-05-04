@@ -15,7 +15,7 @@ from BspEmulator import BspLeds
 from BspEmulator import BspRadio
 from BspEmulator import BspRadiotimer
 from BspEmulator import BspUart
-from BspEmulator import BspSupply
+from BspEmulator import HwSupply
 
 TCPRXBUFSIZE       = 4096    # size of the TCP reception buffer
 
@@ -159,7 +159,7 @@ class MoteHandler(threading.Thread):
         self.bspRadio             = BspRadio.BspRadio(self)
         self.bspRadiotimer        = BspRadiotimer.BspRadiotimer(self)
         self.bspUart              = BspUart.BspUart(self)
-        self.bspSupply            = BspSupply.BspSupply(self)
+        self.hwSupply             = HwSupply.HwSupply(self)
         self.commandCallbacks = {
             # board
             self.commandIds['OPENSIM_CMD_board_init']                : self.bspBoard.cmd_init,

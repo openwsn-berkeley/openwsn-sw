@@ -33,8 +33,8 @@ for loggerName in ['SimEngine',
                    'BspModule',
                    'BspRadio',
                    'BspRadiotimer',
-                   'BspSupply',
                    'BspUart',
+                   'HwSupply',
                    ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
