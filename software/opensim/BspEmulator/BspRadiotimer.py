@@ -8,8 +8,8 @@ class BspRadiotimer(BspModule.BspModule):
     \brief Emulates the 'radiotimer' BSP module
     '''
     
-    INTR_OVERFLOW = 'radiotimer.overflow'
     INTR_COMPARE  = 'radiotimer.compare'
+    INTR_OVERFLOW = 'radiotimer.overflow'
     
     def __init__(self,motehandler,timeline,hwCrystal):
         
@@ -22,7 +22,7 @@ class BspRadiotimer(BspModule.BspModule):
         self.running         = False   # whether the counter is currently running
         self.timeLastReset   = None    # time at last counter reset
         self.period          = None    # counter period
-        self.compareArmed    = False  # whether the compare is armed
+        self.compareArmed    = False   # whether the compare is armed
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspRadiotimer')
@@ -151,11 +151,13 @@ class BspRadiotimer(BspModule.BspModule):
     
     #===== interrupts
     
-    def intr_overflow(self):
-        raise NotImplementedError()
-    
     def intr_compare(self):
-        raise NotImplementedError()
+        # send interrupt to mote
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_isr_compare'])
+    
+    def intr_overflow(self):
+        # send interrupt to mote
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_isr_overflow'])
     
     #======================== private =========================================
     

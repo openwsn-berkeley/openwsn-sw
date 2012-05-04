@@ -50,7 +50,5 @@ class BspBoard(BspModule.BspModule):
         
         # have the timeline advance to the next event
         self.timeline.nextEvent()
-        
-        raise NotImplementedError()
     
     #======================== private =========================================
