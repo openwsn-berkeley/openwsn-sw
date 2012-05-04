@@ -16,6 +16,7 @@ from BspEmulator import BspRadio
 from BspEmulator import BspRadiotimer
 from BspEmulator import BspUart
 from BspEmulator import HwSupply
+from BspEmulator import HwCrystal
 
 TCPRXBUFSIZE       = 4096    # size of the TCP reception buffer
 
@@ -160,6 +161,7 @@ class MoteHandler(threading.Thread):
         self.bspRadiotimer        = BspRadiotimer.BspRadiotimer(self)
         self.bspUart              = BspUart.BspUart(self)
         self.hwSupply             = HwSupply.HwSupply(self)
+        self.hwCrystal            = HwCrystal.HwCrystal(self,32768)
         self.commandCallbacks = {
             # board
             self.commandIds['OPENSIM_CMD_board_init']                : self.bspBoard.cmd_init,
@@ -307,7 +309,8 @@ class MoteHandler(threading.Thread):
         
         # get the command id and params from the received command
         cmdId  = ord(input[0])
-        params = [ord(c) for c in input[1:]]
+        #params = [ord(c) for c in input[1:]]
+        params = input[1:]
         
         # make sure I know what callback to call
         assert(cmdId in self.commandCallbacks)

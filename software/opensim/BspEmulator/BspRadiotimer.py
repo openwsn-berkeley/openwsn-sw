@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import struct
 import BspModule
 
 class BspRadiotimer(BspModule.BspModule):
@@ -38,8 +39,11 @@ class BspRadiotimer(BspModule.BspModule):
         '''emulates
            void radiotimer_start(uint16_t period)'''
         
+        # unpack the parameters
+        (period) = struct.unpack('<H', params)
+        
         # log the activity
-        self.log.debug('cmd_start')
+        self.log.debug('cmd_start '+str(period))
         
         raise NotImplementedError()
     
