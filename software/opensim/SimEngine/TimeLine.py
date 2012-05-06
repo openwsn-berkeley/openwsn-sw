@@ -50,6 +50,9 @@ class TimeLine(object):
         # log
         self.log.debug('scheduling '+desc+' at '+str(atTime))
         
+        # make sure that I'm scheduling an event in the future
+        assert(self.currentTime<=atTime)
+        
         # create a new event
         newEvent = TimeLineEvent(atTime,cb,desc)
         
@@ -74,11 +77,17 @@ class TimeLine(object):
         
         # detect the end of the simulation
         if len(self.timeline)==0:
-            self.log.warning('end of simulation reached at '+str(self.getCurrentTime))
-            raise StopIteration
+            output  = ''
+            output += 'end of simulation reached\n'
+            output += ' - currentTime='+str(self.getCurrentTime())+'\n'
+            self.log.warning(output)
+            raise StopIteration(output)
         
         # pop the event at the head of the timeline
         event = self.timeline.pop(0)
+        
+        # make sure that this event is later in time than the previous
+        assert(self.currentTime<=event.atTime)
         
         # record the current time
         self.currentTime = event.atTime

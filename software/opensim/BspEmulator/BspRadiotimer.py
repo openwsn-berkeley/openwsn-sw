@@ -152,10 +152,32 @@ class BspRadiotimer(BspModule.BspModule):
     #===== interrupts
     
     def intr_compare(self):
+        '''
+        \brief A compare event happened.
+        '''
+        
+        # reschedule the next compare event
+        # Note: as long as radiotimer_cancel() is not called, the intr_compare
+        #       will fire every self.period
+        nextCompareTime      = self.hwCrystal.getTimeIn(self.period)
+        self.timeline.scheduleEvent(nextCompareTime,
+                                    self.intr_compare,
+                                    self.INTR_COMPARE)
+        
         # send interrupt to mote
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_isr_compare'])
     
     def intr_overflow(self):
+        # remember the time of this reset; needed internally to schedule further events
+        self.timeLastReset   = self.hwCrystal.getTimeLastTick()
+        
+        # reschedule the next overflow event
+        # Note: the intr_overflow will fire every self.period
+        nextOverflowTime     = self.hwCrystal.getTimeIn(self.period)
+        self.timeline.scheduleEvent(nextOverflowTime,
+                                    self.intr_overflow,
+                                    self.INTR_OVERFLOW)
+    
         # send interrupt to mote
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_isr_overflow'])
     

@@ -74,18 +74,21 @@ class HwCrystal(HwModule.HwModule):
         \returns The number of ticks since the time passed.
         '''
         
+        # get the current time
         currentTime          = self.timeline.getCurrentTime()
         
-        if eventTime>currentTime:
-            raise ValueError
+        # make sure that eventTime passed is in the past
+        assert(eventTime<=currentTime)
         
+        # get the time of the last tick
         timeLastTick         = self.getTimeLastTick()
         
+        # return the number of ticks
         if eventTime>timeLastTick:
             return 0
-        
-        period               = self._getPeriod()
-        return math.floor(float(timeLastTick-eventTime)/float(period))
+        else:
+            period               = self._getPeriod()
+            return math.floor(float(timeLastTick-eventTime)/float(period))
     
     #======================== private =========================================
     

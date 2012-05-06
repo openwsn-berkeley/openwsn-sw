@@ -79,6 +79,11 @@ class SimCli(threading.Thread):
                               'execute a number of steps, then pause',
                               '<numsteps>',
                               self._handleStep)
+        self._registerCommand('time',
+                              't',
+                              'Returns the current simulated time, in seconds. ',
+                              '',
+                              self._handleTime)
         
         # logging
         self.log           = logging.getLogger('SimCli')
@@ -324,6 +329,15 @@ class SimCli(threading.Thread):
         
         # pause the engine
         self.engine.step(numsteps)
+    
+    def _handleTime(self,params):
+        # usage
+        if len(params)!=0:
+            self._printUsageFromName('time')
+            return
+        
+        # get the current time
+        print self.engine.timeline.getCurrentTime()
     
     #======================== helpers =========================================
     
