@@ -74,7 +74,10 @@ public class StatusPanel extends JPanel implements Runnable {
 	}
 	
 	public void run() {
-		if (CurrentMonitor.dev == null) CurrentMonitor.me.connectToDevice();
+		if (CurrentMonitor.dev == null) {
+			CurrentMonitor.error("Not connected to device");
+			return;
+		}
 		
 		try {
 			while(stat_update_thread != null) {

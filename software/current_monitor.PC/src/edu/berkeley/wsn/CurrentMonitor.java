@@ -78,6 +78,7 @@ public class CurrentMonitor  extends JFrame{
 	JPanel connect_tab = new JPanel(new BorderLayout());
 	{
 		Box h1 = Box.createHorizontalBox();
+		h1.add(new JLabel("USB Connection: "));
 		h1.add(connect_button);
 		h1.add(Box.createHorizontalGlue());
 		connect_tab.add(h1,BorderLayout.NORTH);

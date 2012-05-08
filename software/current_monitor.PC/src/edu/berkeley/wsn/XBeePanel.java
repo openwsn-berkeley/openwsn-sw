@@ -60,7 +60,7 @@ public class XBeePanel extends JPanel {
 	JButton delete_AT_button = new JButton("Delete AT setting");
 	{
 		delete_AT_button.setEnabled(false);
-		delete_configuration_button.addActionListener(new ActionListener(){
+		delete_AT_button.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent arg0) {
 				deleteAT();
 			}
@@ -214,6 +214,9 @@ public class XBeePanel extends JPanel {
 		int idx = register_list.getSelectedRow();
 		if ( idx >= 0 && idx < register_list_model.getRowCount() ) {
 			register_list_model.removeRow(idx);
+			int config_no = configuration_list.getSelectedRow();
+			configs.get(config_no).at_settings.remove(idx);
+			
 		}
 	}
 

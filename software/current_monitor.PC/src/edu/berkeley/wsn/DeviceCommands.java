@@ -9,8 +9,9 @@ import java.awt.event.*;
 
 import javax.swing.event.*;
 import javax.swing.border.*;
-
-
+import com.rapplogic.*; 
+import com.rapplogic.xbee.*;
+import com.rapplogic.xbee.api.*;
 
 public class DeviceCommands {
 	public static interface CmdDefs { 
@@ -38,9 +39,11 @@ public class DeviceCommands {
 	CurrentMonitor parent;
 	static int sequence_number = 1;
 	
+	XBee xbee = new XBee();
+	
 	
 	public DeviceCommands(CurrentMonitor p) {
-		parent = p;
+		parent = p;		
 	}
 	
 	public void pause(){
@@ -59,13 +62,13 @@ public class DeviceCommands {
 	
 	public synchronized byte[] sendRcvPayload(byte[] payload) {
 
-		
+		/*
 		System.out.print("-> [");
 		for ( byte b : payload ) {
 			System.out.print(Integer.toHexString(0xFF&b)+", ");
 		}
 		System.out.println("]");
-		
+		*/
 		sequence_number++;
 		
 		int num_segments = (payload.length-1) / (EP_SIZE-HEADER_SIZE) + 1;
@@ -76,11 +79,11 @@ public class DeviceCommands {
 		int backed_up = 0;
 		try {
 			while(true != false) {
-				parent.dev.readBulk(parent.EP_IN, packet, EP_SIZE, 500, false);
+				parent.dev.readBulk(parent.EP_IN, packet, EP_SIZE, 5, false);
 				backed_up++;
 			}
 		} catch (ch.ntb.usb.USBTimeoutException exp) {
-			System.out.println(backed_up+" backed up packets");
+			//System.out.println(backed_up+" backed up packets");
 		} catch (ch.ntb.usb.USBException exp) {
 			exp.printStackTrace();
 			return null;			
@@ -161,13 +164,13 @@ public class DeviceCommands {
 			System.err.println("Communication error: Invalid packet detected");
 			return null;
 		}
-		
+		/*
 		System.out.print("<- [");
 		for ( byte b : retval ) {
 			System.out.print(Integer.toHexString(0xFF&b)+", ");
 		}
 		System.out.println("]");
-		
+		*/
 		
 		return retval;
 	}

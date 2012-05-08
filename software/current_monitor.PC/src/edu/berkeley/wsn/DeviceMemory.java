@@ -55,9 +55,11 @@ public class DeviceMemory {
 		byte[] d2 = new byte[length];
 		System.arraycopy(data, 4, d2, 0, (data.length - 4 < length)?data.length-4:length);
 		int pos = data.length-4;
+		int amt = 0;
 		while (pos < length) {
 			data = CurrentMonitor.commands.sendRcv(DeviceCommands.CmdDefs.FLASH_CONTINUE_READ);
-			System.arraycopy(data, 0, d2, pos, (data.length+pos<length)?data.length:length-pos);
+			System.arraycopy(data, 0, d2, pos,amt = ((data.length+pos<length)?data.length:length-pos));
+			pos += amt;
 		}
 		CurrentMonitor.commands.sendRcv(DeviceCommands.CmdDefs.FLASH_STOP_READ);
 		
