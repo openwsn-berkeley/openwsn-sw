@@ -38,6 +38,9 @@ class BspRadiotimer(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_init')
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # remember that module has been intialized
         self.isInitialized = True
         
