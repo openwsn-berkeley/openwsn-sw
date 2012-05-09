@@ -295,6 +295,12 @@ class MoteHandler(threading.Thread):
             
     #======================== public ==========================================
     
+    def setId(self,id):
+        self.id = id
+    
+    def setLocation(self,location):
+        self.location = location
+    
     def sendCommand(self,commandId,params=[]):
         
         # update statistics

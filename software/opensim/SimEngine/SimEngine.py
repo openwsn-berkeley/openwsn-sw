@@ -7,10 +7,12 @@ import time
 import os
 import subprocess
 
-import DaemonThread
-import SimCli
 import TimeLine
 import Propagation
+import IdManager
+import LocationManager
+import DaemonThread
+import SimCli
 
 PATH_TO_BIN = os.path.join('..','..','..','..','firmware','openos','projects','common')
 BIN_BSP_LEDS = os.path.join(PATH_TO_BIN,'01bsp_leds','bsp_leds')
@@ -36,6 +38,8 @@ class SimEngine(object):
         self.moteHandlers         = []
         self.timeline             = TimeLine.TimeLine()
         self.propagation          = Propagation.Propagation()
+        self.idmanager            = IdManager.IdManager()
+        self.locationmanager      = LocationManager.LocationManager() 
         self.pauseSem             = threading.Lock()
         self.isPaused             = False
         self.stopAfterSteps       = None
@@ -109,6 +113,14 @@ class SimEngine(object):
     #=== called from the DaemonThread
     
     def indicateNewMote(self,moteHandler):
+        
+        # assign an ID to this mote
+        moteHandler.setId(self.idmanager.getId())
+        
+        # assign a location to this mote
+        moteHandler.setLocation(self.locationmanager.getLocation())
+        
+        # add this mote to my list of motes
         self.moteHandlers.append(moteHandler)
     
     #=== getting information about the system

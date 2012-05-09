@@ -26,6 +26,8 @@ for loggerName in [# core
                    'MoteHandler',
                    'Timeline',
                    'Propagation',
+                   'IdManager',
+                   'LocationManager',
                    'SimCli',
                    'DaemonThread',
                    # hw
