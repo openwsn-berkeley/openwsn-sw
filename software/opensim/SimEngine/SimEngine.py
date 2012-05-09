@@ -10,6 +10,7 @@ import subprocess
 import DaemonThread
 import SimCli
 import TimeLine
+import Propagation
 
 PATH_TO_BIN = os.path.join('..','..','..','..','firmware','openos','projects','common')
 BIN_BSP_LEDS = os.path.join(PATH_TO_BIN,'01bsp_leds','bsp_leds')
@@ -34,6 +35,7 @@ class SimEngine(object):
         # local variables
         self.moteHandlers         = []
         self.timeline             = TimeLine.TimeLine()
+        self.propagation          = Propagation.Propagation()
         self.pauseSem             = threading.Lock()
         self.isPaused             = False
         self.stopAfterSteps       = None

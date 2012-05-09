@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import struct
 import BspModule
 
 class RadioState:
