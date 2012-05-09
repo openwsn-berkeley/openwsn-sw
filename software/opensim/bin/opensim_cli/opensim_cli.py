@@ -25,6 +25,7 @@ for loggerName in [# core
                    'SimEngine',
                    'MoteHandler',
                    'Timeline',
+                   'Propagation',
                    'SimCli',
                    'DaemonThread',
                    # hw

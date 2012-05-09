@@ -31,10 +31,8 @@ class BspRadio(BspModule.BspModule):
         
         # local variables
         self.state       = RadioState.STOPPED
-        self.frequency   = None
-        self.isRfOn      = False
-        self.txEnabled   = False
-        self.rxEnabled   = False
+        self.frequency   = None   # frequency the radio is tuned to
+        self.isRfOn      = False  # radio is on
         self.txBuf       = []
         self.rxBuf       = []
         
@@ -133,6 +131,12 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_setFrequency frequency='+str(self.frequency))
         
+        # change state
+        self.state         = RadioState.SETTING_FREQUENCY
+        
+        # change state
+        self.state         = RadioState.FREQUENCY_SET
+        
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_setFrequency'])
     
@@ -162,8 +166,14 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_rfOff')
         
+        # change state
+        self.state         = RadioState.TURNING_OFF
+        
         # update local variable
-        self.isRfOff = True
+        self.isRfOn = False
+        
+        # change state
+        self.state         = RadioState.RFOFF
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rfOff'])
@@ -175,10 +185,16 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_loadPacket')
         
+        # change state
+        self.state         = RadioState.LOADING_PACKET
+        
         # update local variable
         self.txBuf = []
         for c in params:
             self.txBuf.append(ord(c))
+        
+        # change state
+        self.state         = RadioState.PACKET_LOADED
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_loadPacket'])
@@ -187,14 +203,20 @@ class BspRadio(BspModule.BspModule):
         '''emulates
            void radio_txEnable()'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_txEnable')
         
         # make sure that radio is on
         assert(self.isRfOn)
         
-        # update local variable
-        self.txEnabled = True
+        # change state
+        self.state         = RadioState.ENABLING_TX
+        
+        # change state
+        self.state         = RadioState.TX_ENABLED
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_txEnable'])
@@ -203,14 +225,24 @@ class BspRadio(BspModule.BspModule):
         '''emulates
            void radio_txNow()'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_txNow')
         
-        raise NotImplementedError()
+        # change state
+        self.state         = RadioState.TRANSMITTING
+        
+        # indicate transmission to propagation model
+        poipoipoi
     
     def cmd_rxEnable(self,params):
         '''emulates
            void radio_rxEnable()'''
+        
+        # make sure length of params is expected
+        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_rxEnable')
@@ -218,8 +250,8 @@ class BspRadio(BspModule.BspModule):
         # make sure that radio is on
         assert(self.isRfOn)
         
-        # update local variable
-        self.rxEnabled = True
+        # change state
+        self.state         = RadioState.ENABLING_RX
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rxEnable'])
@@ -228,10 +260,14 @@ class BspRadio(BspModule.BspModule):
         '''emulates
            void radio_rxNow()'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_rxNow')
         
-        raise NotImplementedError()
+        # change state
+        self.state         = RadioState.LISTENING
     
     def cmd_getReceivedFrame(self,params):
         '''emulates
