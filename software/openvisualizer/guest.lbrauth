@@ -1,0 +1,14 @@
+# the IPv4 address of the LBR you try to connect to
+LBRADDR = lbr.openwsn.me
+
+# the TCP port of the LBR
+LBRPORT = 80
+
+# your private key
+MYPRIVATEKEY = 1234
+
+# the LBR's public key
+LBRPUBLICKEY = 1234
+
+# network name
+NETNAME = guest
