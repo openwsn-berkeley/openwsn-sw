@@ -18,8 +18,9 @@ class BspBsp_timer(BspModule.BspModule):
         self.hwCrystal       = hwCrystal
         
         # local variables
+        self.timerRunning    = False
         self.counterVal      = 0
-        self.compareArmed    = False    
+        self.compareArmed    = False
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspBsp_timer')
@@ -48,7 +49,21 @@ class BspBsp_timer(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_reset')
         
-        raise NotImplementedError()
+        # cancel the compare event
+        self.compareArmed    = False
+        numCanceled = self.timeline.cancelEvent(self.INTR_COMPARE)
+        
+        # make sure that I did not cancel more than 1 events
+        assert(numCanceled<=1)
+        
+        # reset the counter value
+        self.counterVal      = 0
+        
+        # the timer is not running
+        self.timerRunning    = False
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_reset'])
     
     def cmd_scheduleIn(self,params):
         '''emulates

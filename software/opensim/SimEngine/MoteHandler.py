@@ -185,6 +185,7 @@ class MoteHandler(threading.Thread):
             self.commandIds['OPENSIM_CMD_bsp_timer_reset']           : self.bspBsp_timer.cmd_reset,
             self.commandIds['OPENSIM_CMD_bsp_timer_scheduleIn']      : self.bspBsp_timer.cmd_scheduleIn,
             self.commandIds['OPENSIM_CMD_bsp_timer_cancel_schedule'] : self.bspBsp_timer.cmd_cancel_schedule,
+            self.commandIds['OPENSIM_CMD_bsp_timer_get_currentValue']: self.bspBsp_timer.cmd_get_currentValue,
             # debugpins
             self.commandIds['OPENSIM_CMD_debugpins_init']            : self.bspDebugpins.cmd_init,
             self.commandIds['OPENSIM_CMD_debugpins_frame_toggle']    : self.bspDebugpins.cmd_frame_toggle,
