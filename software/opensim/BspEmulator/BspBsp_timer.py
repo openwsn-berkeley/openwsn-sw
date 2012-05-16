@@ -64,4 +64,13 @@ class BspBsp_timer(BspModule.BspModule):
         
         raise NotImplementedError()
     
+    def cmd_get_currentValue(self,params):
+        '''emulates
+           uin16_t bsp_timer_get_currentValue()'''
+        
+        # log the activity
+        self.log.debug('cmd_get_currentValue')
+        
+        raise NotImplementedError()
+    
     #======================== private =========================================
