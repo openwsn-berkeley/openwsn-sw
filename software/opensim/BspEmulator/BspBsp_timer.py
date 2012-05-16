@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import struct
 import BspModule
 
 class BspBsp_timer(BspModule.BspModule):
@@ -7,15 +8,18 @@ class BspBsp_timer(BspModule.BspModule):
     \brief Emulates the 'bsp_timer' BSP module
     '''
     
-    def __init__(self,motehandler):
+    INTR_COMPARE  = 'bsp_timer.compare'
+    
+    def __init__(self,motehandler,timeline,hwCrystal):
         
         # store params
-        self.motehandler = motehandler
+        self.motehandler     = motehandler
+        self.timeline        = timeline
+        self.hwCrystal       = hwCrystal
         
         # local variables
-        self.counterVal = 0
-        self.timerOn    = False
-        self.timerOn    = False
+        self.counterVal      = 0
+        self.compareArmed    = False    
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspBsp_timer')
@@ -49,11 +53,26 @@ class BspBsp_timer(BspModule.BspModule):
     def cmd_scheduleIn(self,params):
         '''emulates
            void bsp_timer_scheduleIn(PORT_TIMER_WIDTH delayTicks)'''
-    
-        # log the activity
-        self.log.debug('cmd_scheduleIn')
         
-        raise NotImplementedError()
+        # unpack the parameters
+        (self.delayTicks,)        = struct.unpack('<H', params)
+        
+        # log the activity
+        self.log.debug('cmd_scheduleIn delayTicks='+str(self.delayTicks))
+        
+        # calculate time at overflow event (in 'period' ticks)
+        compareTime               = self.hwCrystal.getTimeIn((self.delayTicks%0xffff))
+        
+        # schedule compare event
+        self.timeline.scheduleEvent(compareTime,
+                                    self.intr_compare,
+                                    self.INTR_COMPARE)
+        
+        # the compare is now scheduled
+        self.compareArmed         = True
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_scheduleIn'])
     
     def cmd_cancel_schedule(self,params):
         '''emulates
@@ -72,5 +91,15 @@ class BspBsp_timer(BspModule.BspModule):
         self.log.debug('cmd_get_currentValue')
         
         raise NotImplementedError()
+    
+    #===== interrupts
+    
+    def intr_compare(self):
+        '''
+        \brief A compare event happened.
+        '''
+        
+        # send interrupt to mote
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_isr'])
     
     #======================== private =========================================
