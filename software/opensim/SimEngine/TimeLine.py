@@ -69,6 +69,33 @@ class TimeLine(object):
         
         # insert the new event
         self.timeline.insert(i-1,newEvent)
+        
+    def cancelEvent(self,desc):
+        '''
+        \brief Cancels all events identified by their description
+        
+        \param desc   A unique description (a string) of this event.
+        
+        \returns The number of events canceled.
+        '''
+        
+        # log
+        self.log.debug('cancelEvent '+desc)
+        
+        # initialize return variable
+        numEventsCanceled = 0
+        
+        # remove any event already the queue with same description
+        i = 0
+        while i<len(self.timeline):
+            if self.timeline[i].desc==desc:
+                self.timeline.pop(i)
+                numEventsCanceled += 1
+            else:
+                i += 1
+        
+        # return the number of events canceled
+        return numEventsCanceled
     
     def nextEvent(self):
         '''

@@ -141,7 +141,14 @@ class BspRadiotimer(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_cancel')
         
-        raise NotImplementedError()
+        # cancel the compare event
+        numCanceled = self.timeline.cancelEvent(self.INTR_COMPARE)
+        
+        # make sure that I did not cancel more than 1
+        assert(numCanceled<=1)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_cancel'])
     
     def cmd_getCapturedTime(self,params):
         '''emulates
