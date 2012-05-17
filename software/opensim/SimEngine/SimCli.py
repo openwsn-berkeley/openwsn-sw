@@ -84,6 +84,11 @@ class SimCli(threading.Thread):
                               'Returns the current simulated time, in seconds. ',
                               '',
                               self._handleTime)
+        self._registerCommand('timeline',
+                              'tl',
+                              'Prints the events scheduled in the future on the timeline',
+                              '',
+                              self._handleTimeline)
         
         # logging
         self.log           = logging.getLogger('SimCli')
@@ -338,6 +343,14 @@ class SimCli(threading.Thread):
         
         # get the current time
         print self.engine.timeline.getCurrentTime()
+    
+    def _handleTimeline(self,params):
+        # usage
+        if len(params)!=0:
+            self._printUsageFromName('timeline')
+            return
+        
+        print '\n'.join(['- {0:.6f} {1}'.format(*c) for c in self.engine.timeline.getEvents()])
     
     #======================== helpers =========================================
     

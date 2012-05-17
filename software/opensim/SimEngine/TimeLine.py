@@ -14,6 +14,9 @@ class TimeLineEvent(object):
         self.cb         = cb
         self.desc       = desc
     
+    def __str__(self):
+        return '{0} {1}'.format(self.atTime,self.desc)
+    
 class TimeLine(object):
     '''
     \brief The timeline of the engine.
@@ -31,7 +34,6 @@ class TimeLine(object):
         self.log                  = logging.getLogger('Timeline')
         self.log.setLevel(logging.DEBUG)
         self.log.addHandler(NullLogHandler())
-        
     
     #======================== public ==========================================
     
@@ -64,11 +66,14 @@ class TimeLine(object):
         
         # look for where to put this event
         i = 0
-        while i<len(self.timeline) and newEvent.atTime<self.timeline[i].atTime:
-            i += 1
+        while i<len(self.timeline):
+            if newEvent.atTime>self.timeline[i].atTime:
+               i += 1
+            else:
+               break
         
         # insert the new event
-        self.timeline.insert(i-1,newEvent)
+        self.timeline.insert(i,newEvent)
         
     def cancelEvent(self,desc):
         '''
@@ -124,6 +129,9 @@ class TimeLine(object):
         
         # call the event's callback
         event.cb()
+        
+    def getEvents(self):
+        return [[ev.atTime,ev.desc] for ev in self.timeline]
     
     #======================== private =========================================
     

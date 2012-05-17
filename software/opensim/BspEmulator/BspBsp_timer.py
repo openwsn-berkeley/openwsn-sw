@@ -38,7 +38,7 @@ class BspBsp_timer(BspModule.BspModule):
         self.log.debug('cmd_init')
         
         # reset the timer
-        self.cmd_reset()
+        self._cmd_reset_internal()
         
         # remember the time of last reset
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
@@ -55,7 +55,7 @@ class BspBsp_timer(BspModule.BspModule):
         self.running         = True
         
         # remember that module has been intialized
-        self.isInitialized = True
+        self.isInitialized   = True
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_init'])
@@ -66,6 +66,13 @@ class BspBsp_timer(BspModule.BspModule):
         
         # log the activity
         self.log.debug('cmd_reset')
+        
+        self._cmd_reset_internal()
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_reset'])
+        
+    def _cmd_reset_internal(self):
         
         # cancel the compare event
         self.compareArmed    = False
@@ -90,9 +97,6 @@ class BspBsp_timer(BspModule.BspModule):
         self.timeline.scheduleEvent(overflowTime,
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_reset'])
     
     def cmd_scheduleIn(self,params):
         '''emulates
@@ -104,15 +108,17 @@ class BspBsp_timer(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_scheduleIn delayTicks='+str(self.delayTicks))
         
-        '''
-        poipoipoi
-        poipoipoi
-        poipoipoi
-        poipoipoi
-        '''
+        # get current counter value
+        counterVal                = self.hwCrystal.getTicksSince(self.timeLastReset)
+        
+        # how many ticks until compare event
+        if counterVal<self.delayTicks:
+            ticksBeforeEvent = self.delayTicks-counterVal
+        else:
+            ticksBeforeEvent = self.PERIOD-counterVal+self.delayTicks
         
         # calculate time at overflow event (in 'period' ticks)
-        compareTime               = self.hwCrystal.getTimeIn((self.delayTicks%0xffff))
+        compareTime               = self.hwCrystal.getTimeIn(ticksBeforeEvent)
         
         # schedule compare event
         self.timeline.scheduleEvent(compareTime,
@@ -172,6 +178,9 @@ class BspBsp_timer(BspModule.BspModule):
         self.timeline.scheduleEvent(nextOverflowTime,
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
+        
+        # have the timeline advance to the next event
+        self.timeline.nextEvent()
     
     def intr_compare(self):
         '''
