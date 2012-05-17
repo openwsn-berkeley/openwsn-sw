@@ -169,11 +169,15 @@ class MoteHandler(threading.Thread):
         self.bspDebugpins         = BspDebugpins.BspDebugpins(self)
         self.bspEui64             = BspEui64.BspEui64(self)
         self.bspLeds              = BspLeds.BspLeds(self)
-        self.bspRadio             = BspRadio.BspRadio(self)
         self.bspRadiotimer        = BspRadiotimer.BspRadiotimer(
                                             self,
                                             self.engine.timeline,
                                             self.hwCrystal)
+        self.bspRadio             = BspRadio.BspRadio(
+                                            self,
+                                            self.engine.timeline,
+                                            self.bspRadiotimer,
+                                            self.engine.propagation)
         self.bspUart              = BspUart.BspUart(self)
         
         self.commandCallbacks = {
@@ -302,9 +306,15 @@ class MoteHandler(threading.Thread):
     
     def setId(self,id):
         self.id = id
+        
+    def getId(self):
+        return self.id
     
     def setLocation(self,location):
         self.location = location
+    
+    def getLocation(self):
+        return self.location
     
     def sendCommand(self,commandId,params=[]):
         

@@ -50,7 +50,7 @@ class TimeLine(object):
         '''
         
         # log
-        self.log.debug('scheduling '+desc+' at '+str(atTime))
+        self.log.debug('scheduling {0} at {1:.6f}'.format(desc,atTime))
         
         # make sure that I'm scheduling an event in the future
         assert(self.currentTime<=atTime)
@@ -125,7 +125,7 @@ class TimeLine(object):
         self.currentTime = event.atTime
         
         # log
-        self.log.debug('executing event '+str(event.desc)+' at '+str(event.atTime))
+        self.log.debug('executing {0} at {1:.6f}'.format(event.desc,event.atTime))
         
         # call the event's callback
         event.cb()

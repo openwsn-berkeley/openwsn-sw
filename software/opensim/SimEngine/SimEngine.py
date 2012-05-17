@@ -37,7 +37,7 @@ class SimEngine(object):
         # local variables
         self.moteHandlers         = []
         self.timeline             = TimeLine.TimeLine()
-        self.propagation          = Propagation.Propagation()
+        self.propagation          = Propagation.Propagation(self.timeline)
         self.idmanager            = IdManager.IdManager()
         self.locationmanager      = LocationManager.LocationManager() 
         self.pauseSem             = threading.Lock()

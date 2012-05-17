@@ -162,7 +162,7 @@ class BspBsp_timer(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_cancel_schedule'],
                                      params)
     
-    #===== interrupts
+    #======================== interrupts ======================================
     
     def intr_overflow(self):
         '''

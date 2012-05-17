@@ -87,7 +87,7 @@ class HwCrystal(HwModule.HwModule):
         if eventTime>timeLastTick:
             return 0
         else:
-            period               = self._getPeriod()
+            period           = self._getPeriod()
             return int(math.floor(float(timeLastTick-eventTime)/float(period)))
     
     #======================== private =========================================

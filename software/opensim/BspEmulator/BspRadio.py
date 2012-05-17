@@ -24,17 +24,24 @@ class BspRadio(BspModule.BspModule):
     \brief Emulates the 'radio' BSP module
     '''
     
-    def __init__(self,motehandler):
+    INTR_STARTOFFRAME = 'radio.startofframe'
+    INTR_ENDOFFRAME   = 'radio.endofframe'
+    
+    def __init__(self,motehandler,timeline,radiotimer,propagation):
         
         # store params
         self.motehandler = motehandler
+        self.timeline    = timeline
+        self.radiotimer  = radiotimer
+        self.propagation = propagation
         
         # local variables
         self.state       = RadioState.STOPPED
         self.frequency   = None   # frequency the radio is tuned to
-        self.isRfOn      = False  # radio is on
+        self.isRfOn      = False  # radio is off
         self.txBuf       = []
         self.rxBuf       = []
+        self.delayTx     = 0.000214
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspRadio')
@@ -209,9 +216,6 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_txEnable')
         
-        # make sure that radio is on
-        assert(self.isRfOn)
-        
         # change state
         self.state         = RadioState.ENABLING_TX
         
@@ -232,10 +236,21 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_txNow')
         
         # change state
-        self.state         = RadioState.TRANSMITTING
+        self.state           = RadioState.TRANSMITTING
         
-        # indicate transmission to propagation model
-        poipoipoi
+        # get current time
+        currenttime          = self.timeline.getCurrentTime()
+        
+        # calculate when the "start of frame" event will take place
+        startOfFrameTime     = currenttime+self.delayTx
+        
+        # schedule "start of frame" event
+        self.timeline.scheduleEvent(startOfFrameTime,
+                                    self.intr_startOfFrame,
+                                    self.INTR_STARTOFFRAME)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_txNow'])
     
     def cmd_rxEnable(self,params):
         '''emulates
@@ -246,9 +261,6 @@ class BspRadio(BspModule.BspModule):
         
         # log the activity
         self.log.debug('cmd_rxEnable')
-        
-        # make sure that radio is on
-        assert(self.isRfOn)
         
         # change state
         self.state         = RadioState.ENABLING_RX
@@ -283,4 +295,38 @@ class BspRadio(BspModule.BspModule):
         
         raise NotImplementedError()
     
+    #======================== interrupts ======================================
+    
+    def intr_startOfFrame(self):
+        
+        # indicate transmission starts to propagation model
+        self.propagation.txStart(self.motehandler.getId(),
+                                 self.txBuf,
+                                 self.frequency)
+        
+        
+        # schedule the "end of frame" event
+        currentTime          = self.timeline.getCurrentTime()
+        endOfFrameTime       = currentTime+self._packetLengthToDuration(len(self.txBuf))
+        self.timeline.scheduleEvent(endOfFrameTime,
+                                    self.intr_endOfFrame,
+                                    self.INTR_ENDOFFRAME)
+        
+        # signal start of frame to mote
+        counterVal           = self.radiotimer.getCounterVal()
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_startFrame'],
+                                     [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+    
+    def intr_endOfFrame(self):
+        # indicate transmission end to propagation model
+        self.propagation.txEnd(self.motehandler.getId())
+        
+        # signal start of frame to mote
+        counterVal           = self.radiotimer.getCounterVal()
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_endFrame'],
+                                     [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+    
     #======================== private =========================================
+    
+    def _packetLengthToDuration(self,numBytes):
+        return float(numBytes*8)/250000.0

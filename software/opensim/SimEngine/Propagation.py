@@ -11,7 +11,7 @@ class Propagation(object):
     \brief The propagation model of the engine.
     '''
     
-    def __init__(self):
+    def __init__(self,timeline):
         
         # store params
         
@@ -25,8 +25,22 @@ class Propagation(object):
     
     #======================== public ==========================================
     
-    def packetSent(self,mote,packet,channel):
-        print "poipoipoi Propagation.packetSent"
+    def txStart(self,moteId,packet,channel):
+    
+        # log
+        self.log.info('txStart from {0} on channel {1}, {2} bytes'.format(
+                             moteId,
+                             channel,
+                             len(packet)))
+                             
+        #raise NotImplementedError()
+    
+    def txEnd(self,moteId):
+        
+        # log
+        self.log.info('txStop from {0}'.format(moteId))
+    
+        #raise NotImplementedError()
     
     #======================== private =========================================
     

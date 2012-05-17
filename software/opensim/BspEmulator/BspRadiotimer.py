@@ -20,7 +20,7 @@ class BspRadiotimer(BspModule.BspModule):
         
         # local variables
         self.running         = False   # whether the counter is currently running
-        self.timeLastReset   = None    # time at last counter reset
+        self.timeLastReset   = 0       # time at last counter reset
         self.period          = None    # counter period
         self.compareArmed    = False   # whether the compare is armed
         
@@ -157,7 +157,10 @@ class BspRadiotimer(BspModule.BspModule):
         
         raise NotImplementedError()
     
-    #===== interrupts
+    def getCounterVal(self):
+        return self.hwCrystal.getTicksSince(self.timeLastReset)
+    
+    #======================== interrupts ======================================
     
     def intr_compare(self):
         '''
