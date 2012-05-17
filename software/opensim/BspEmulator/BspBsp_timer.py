@@ -9,6 +9,8 @@ class BspBsp_timer(BspModule.BspModule):
     '''
     
     INTR_COMPARE  = 'bsp_timer.compare'
+    INTR_OVERFLOW = 'bsp_timer.overflow'
+    PERIOD        = 0xffff
     
     def __init__(self,motehandler,timeline,hwCrystal):
         
@@ -19,7 +21,6 @@ class BspBsp_timer(BspModule.BspModule):
         
         # local variables
         self.timerRunning    = False
-        self.counterVal      = 0
         self.compareArmed    = False
         
         # initialize the parent
@@ -35,6 +36,23 @@ class BspBsp_timer(BspModule.BspModule):
         
         # log the activity
         self.log.debug('cmd_init')
+        
+        # reset the timer
+        self.cmd_reset()
+        
+        # remember the time of last reset
+        self.timeLastReset   = self.hwCrystal.getTimeLastTick()
+        
+        # calculate time at overflow event (in 'PERIOD' ticks)
+        overflowTime         = self.hwCrystal.getTimeIn(self.PERIOD)
+        
+        # schedule overflow event
+        self.timeline.scheduleEvent(overflowTime,
+                                    self.intr_overflow,
+                                    self.INTR_OVERFLOW)
+
+        # the counter is now running
+        self.running         = True
         
         # remember that module has been intialized
         self.isInitialized = True
@@ -52,15 +70,26 @@ class BspBsp_timer(BspModule.BspModule):
         # cancel the compare event
         self.compareArmed    = False
         numCanceled = self.timeline.cancelEvent(self.INTR_COMPARE)
+        assert(numCanceled<=1)
         
-        # make sure that I did not cancel more than 1 events
+        # cancel the (internal) overflow event
+        self.timerRunning    = False
+        numCanceled = self.timeline.cancelEvent(self.INTR_OVERFLOW)
         assert(numCanceled<=1)
         
         # reset the counter value
         self.counterVal      = 0
         
-        # the timer is not running
-        self.timerRunning    = False
+        # remember the time of last reset
+        self.timeLastReset   = self.hwCrystal.getTimeLastTick()
+        
+        # calculate time at overflow event (in 'PERIOD' ticks)
+        overflowTime         = self.hwCrystal.getTimeIn(self.PERIOD)
+        
+        # schedule overflow event
+        self.timeline.scheduleEvent(overflowTime,
+                                    self.intr_overflow,
+                                    self.INTR_OVERFLOW)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_reset'])
@@ -74,6 +103,13 @@ class BspBsp_timer(BspModule.BspModule):
         
         # log the activity
         self.log.debug('cmd_scheduleIn delayTicks='+str(self.delayTicks))
+        
+        '''
+        poipoipoi
+        poipoipoi
+        poipoipoi
+        poipoipoi
+        '''
         
         # calculate time at overflow event (in 'period' ticks)
         compareTime               = self.hwCrystal.getTimeIn((self.delayTicks%0xffff))
@@ -96,7 +132,12 @@ class BspBsp_timer(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_cancel_schedule')
         
-        raise NotImplementedError()
+        # cancel the compare event
+        numCanceled = self.timeline.cancelEvent(self.INTR_COMPARE)
+        assert(numCanceled<=1)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_cancel_schedule'])
     
     def cmd_get_currentValue(self,params):
         '''emulates
@@ -105,9 +146,32 @@ class BspBsp_timer(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_get_currentValue')
         
-        raise NotImplementedError()
+        # get current counter value
+        counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
+        
+        # respond
+        params = []
+        for i in struct.pack('<H',counterVal):
+            params.append(ord(i))
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_cancel_schedule'],
+                                     params)
     
     #===== interrupts
+    
+    def intr_overflow(self):
+        '''
+        \brief An (internal) overflow event happened.
+        '''
+        
+        # remember the time of this reset; needed internally to schedule further events
+        self.timeLastReset   = self.hwCrystal.getTimeLastTick()
+        
+        # reschedule the next overflow event
+        # Note: the intr_overflow will fire every self.PERIOD
+        nextOverflowTime     = self.hwCrystal.getTimeIn(self.PERIOD)
+        self.timeline.scheduleEvent(nextOverflowTime,
+                                    self.intr_overflow,
+                                    self.INTR_OVERFLOW)
     
     def intr_compare(self):
         '''
