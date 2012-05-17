@@ -143,8 +143,6 @@ class BspRadiotimer(BspModule.BspModule):
         
         # cancel the compare event
         numCanceled = self.timeline.cancelEvent(self.INTR_COMPARE)
-        
-        # make sure that I did not cancel more than 1
         assert(numCanceled<=1)
         
         # respond
@@ -178,6 +176,10 @@ class BspRadiotimer(BspModule.BspModule):
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_isr_compare'])
     
     def intr_overflow(self):
+        '''
+        \brief An overflow event happened.
+        '''
+        
         # remember the time of this reset; needed internally to schedule further events
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
         
