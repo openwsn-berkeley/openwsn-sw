@@ -180,7 +180,7 @@ class BspBsp_timer(BspModule.BspModule):
                                     self.INTR_OVERFLOW)
         
         # have the timeline advance to the next event
-        self.timeline.nextEvent()
+        return True
     
     def intr_compare(self):
         '''
