@@ -65,6 +65,7 @@ class BspRadiotimer(BspModule.BspModule):
         
         # schedule overflow event
         self.timeline.scheduleEvent(overflowTime,
+                                    self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
 
@@ -125,6 +126,7 @@ class BspRadiotimer(BspModule.BspModule):
         
         # schedule compare event
         self.timeline.scheduleEvent(compareTime,
+                                    self.motehandler.getId(),
                                     self.intr_compare,
                                     self.INTR_COMPARE)
                                     
@@ -142,7 +144,8 @@ class BspRadiotimer(BspModule.BspModule):
         self.log.debug('cmd_cancel')
         
         # cancel the compare event
-        numCanceled = self.timeline.cancelEvent(self.INTR_COMPARE)
+        numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
+                                                self.INTR_COMPARE)
         assert(numCanceled<=1)
         
         # respond
@@ -172,6 +175,7 @@ class BspRadiotimer(BspModule.BspModule):
         #       will fire every self.period
         nextCompareTime      = self.hwCrystal.getTimeIn(self.period)
         self.timeline.scheduleEvent(nextCompareTime,
+                                    self.motehandler.getId(),
                                     self.intr_compare,
                                     self.INTR_COMPARE)
         
@@ -190,6 +194,7 @@ class BspRadiotimer(BspModule.BspModule):
         # Note: the intr_overflow will fire every self.period
         nextOverflowTime     = self.hwCrystal.getTimeIn(self.period)
         self.timeline.scheduleEvent(nextOverflowTime,
+                                    self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
     

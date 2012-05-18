@@ -350,7 +350,7 @@ class SimCli(threading.Thread):
             self._printUsageFromName('timeline')
             return
         
-        print '\n'.join(['- {0:.6f} {1}'.format(*c) for c in self.engine.timeline.getEvents()])
+        print '\n'.join(['- {0:.6f} {2} @ {1}'.format(*c) for c in self.engine.timeline.getEvents()])
     
     #======================== helpers =========================================
     

@@ -20,6 +20,7 @@ class HwCrystal(HwModule.HwModule):
         # local variables
         self.drift           = float(random.uniform(-self.maxDrift,
                                                     +self.maxDrift))
+        self.tsTick          = self.timeline.getCurrentTime()
         
         # initialize the parent
         HwModule.HwModule.__init__(self,'HwCrystal')

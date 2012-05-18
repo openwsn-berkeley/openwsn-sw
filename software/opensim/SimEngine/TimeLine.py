@@ -9,13 +9,14 @@ class NullLogHandler(logging.Handler):
         
 class TimeLineEvent(object):
     
-    def __init__(self,atTime,cb,desc):
+    def __init__(self,moteId,atTime,cb,desc):
+        self.moteId     = moteId
         self.atTime     = atTime
         self.cb         = cb
         self.desc       = desc
     
     def __str__(self):
-        return '{0} {1}'.format(self.atTime,self.desc)
+        return '{0} {1}: {2}'.format(self.atTime,self.moteId,self.desc)
     
 class TimeLine(object):
     '''
@@ -40,7 +41,7 @@ class TimeLine(object):
     def getCurrentTime(self):
         return self.currentTime
     
-    def scheduleEvent(self,atTime,cb,desc):
+    def scheduleEvent(self,atTime,moteId,cb,desc):
         '''
         \brief Add an event into the timeline
         
@@ -53,14 +54,20 @@ class TimeLine(object):
         self.log.debug('scheduling {0} at {1:.6f}'.format(desc,atTime))
         
         # make sure that I'm scheduling an event in the future
-        assert(self.currentTime<=atTime)
+        try:
+            assert(self.currentTime<=atTime)
+        except AssertionError:
+            print "currentTime: "+str(self.currentTime)
+            print "atTime: "+str(atTime)
+            raise
         
         # create a new event
-        newEvent = TimeLineEvent(atTime,cb,desc)
+        newEvent = TimeLineEvent(moteId,atTime,cb,desc)
         
         # remove any event already the queue with same description
         for i in range(len(self.timeline)):
-            if self.timeline[i].desc==desc:
+            if (self.timeline[i].moteId==moteId and
+                self.timeline[i].desc==desc):
                 self.timeline.pop(i)
                 break
         
@@ -75,7 +82,7 @@ class TimeLine(object):
         # insert the new event
         self.timeline.insert(i,newEvent)
         
-    def cancelEvent(self,desc):
+    def cancelEvent(self,moteId,desc):
         '''
         \brief Cancels all events identified by their description
         
@@ -93,7 +100,10 @@ class TimeLine(object):
         # remove any event already the queue with same description
         i = 0
         while i<len(self.timeline):
-            if self.timeline[i].desc==desc:
+            if (
+                  self.timeline[i].moteId==moteId and
+                  self.timeline[i].desc==desc
+               ):
                 self.timeline.pop(i)
                 numEventsCanceled += 1
             else:
@@ -135,14 +145,14 @@ class TimeLine(object):
             goOn = event.cb()
         
     def getEvents(self):
-        return [[ev.atTime,ev.desc] for ev in self.timeline]
+        return [[ev.atTime,ev.moteId,ev.desc] for ev in self.timeline]
     
     #======================== private =========================================
     
     def _printTimeline(self):
         output  = ''
         for event in self.timeline:
-            output += '\n'+str(event.atTime)+' '+str(event.desc)
+            output += '\n'+str(event)
         return output
     
     #======================== helpers =========================================

@@ -246,6 +246,7 @@ class BspRadio(BspModule.BspModule):
         
         # schedule "start of frame" event
         self.timeline.scheduleEvent(startOfFrameTime,
+                                    self.motehandler.getId(),
                                     self.intr_startOfFrame,
                                     self.INTR_STARTOFFRAME)
         
@@ -309,6 +310,7 @@ class BspRadio(BspModule.BspModule):
         currentTime          = self.timeline.getCurrentTime()
         endOfFrameTime       = currentTime+self._packetLengthToDuration(len(self.txBuf))
         self.timeline.scheduleEvent(endOfFrameTime,
+                                    self.motehandler.getId(),
                                     self.intr_endOfFrame,
                                     self.INTR_ENDOFFRAME)
         

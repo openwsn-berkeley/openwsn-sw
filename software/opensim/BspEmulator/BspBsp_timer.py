@@ -22,6 +22,7 @@ class BspBsp_timer(BspModule.BspModule):
         # local variables
         self.timerRunning    = False
         self.compareArmed    = False
+        self.timeLastReset   = self.hwCrystal.getTimeLastTick()
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspBsp_timer')
@@ -48,6 +49,7 @@ class BspBsp_timer(BspModule.BspModule):
         
         # schedule overflow event
         self.timeline.scheduleEvent(overflowTime,
+                                    self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
 
@@ -76,12 +78,14 @@ class BspBsp_timer(BspModule.BspModule):
         
         # cancel the compare event
         self.compareArmed    = False
-        numCanceled = self.timeline.cancelEvent(self.INTR_COMPARE)
+        numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
+                                                self.INTR_COMPARE)
         assert(numCanceled<=1)
         
         # cancel the (internal) overflow event
         self.timerRunning    = False
-        numCanceled = self.timeline.cancelEvent(self.INTR_OVERFLOW)
+        numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
+                                                self.INTR_OVERFLOW)
         assert(numCanceled<=1)
         
         # reset the counter value
@@ -95,6 +99,7 @@ class BspBsp_timer(BspModule.BspModule):
         
         # schedule overflow event
         self.timeline.scheduleEvent(overflowTime,
+                                    self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
     
@@ -122,6 +127,7 @@ class BspBsp_timer(BspModule.BspModule):
         
         # schedule compare event
         self.timeline.scheduleEvent(compareTime,
+                                    self.motehandler.getId(),
                                     self.intr_compare,
                                     self.INTR_COMPARE)
         
@@ -139,7 +145,8 @@ class BspBsp_timer(BspModule.BspModule):
         self.log.debug('cmd_cancel_schedule')
         
         # cancel the compare event
-        numCanceled = self.timeline.cancelEvent(self.INTR_COMPARE)
+        numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
+                                                self.INTR_COMPARE)
         assert(numCanceled<=1)
         
         # respond
@@ -176,6 +183,7 @@ class BspBsp_timer(BspModule.BspModule):
         # Note: the intr_overflow will fire every self.PERIOD
         nextOverflowTime     = self.hwCrystal.getTimeIn(self.PERIOD)
         self.timeline.scheduleEvent(nextOverflowTime,
+                                    self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
         
