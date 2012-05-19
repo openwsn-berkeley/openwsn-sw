@@ -17,36 +17,10 @@ LOG_FORMAT  = "%(asctime)s [%(name)s:%(levelname)s] %(message)s"
 #============================ logging =========================================
 
 logFileName = 'logs/opensim.log'
-logHandler  = logging.handlers.RotatingFileHandler(logFileName,
+loghandler  = logging.handlers.RotatingFileHandler(logFileName,
                                                maxBytes=2000000,
                                                backupCount=5,)
-logHandler.setFormatter(logging.Formatter(LOG_FORMAT))
-for loggerName in [# core
-                   'SimEngine',
-                   'MoteHandler',
-                   'Timeline',
-                   'Propagation',
-                   'IdManager',
-                   'LocationManager',
-                   'SimCli',
-                   'DaemonThread',
-                   # hw
-                   'HwSupply',
-                   'HwCrystal',
-                   # bsp
-                   'BspBoard',
-                   'BspBsp_timer',
-                   'BspDebugpins',
-                   'BspEui64',
-                   'BspLeds',
-                   'BspModule',
-                   'BspRadio',
-                   'BspRadiotimer',
-                   'BspUart',
-                   ]:
-    temp = logging.getLogger(loggerName)
-    temp.setLevel(logging.DEBUG)
-    temp.addHandler(logHandler)
+loghandler.setFormatter(logging.Formatter(LOG_FORMAT))
 
 #============================ main ============================================
 
@@ -68,7 +42,7 @@ def main():
         nummotes = DEFAULT_NUM_MOTES
 
     # instantiate a SimEngine object
-    simengine = SimEngine.SimEngine(nummotes,logHandler)
+    simengine = SimEngine.SimEngine(loghandler,nummotes)
     simengine.start()
             
 if __name__ == "__main__":

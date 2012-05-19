@@ -5,7 +5,6 @@ import logging
 class NullLogHandler(logging.Handler):
     def emit(self, record):
         pass
-
         
 class TimeLineEvent(object):
     

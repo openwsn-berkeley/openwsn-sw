@@ -19,7 +19,7 @@ class BspModule(object):
         self.isInitialized = False
         
         # logging
-        self.log   = logging.getLogger(name)
+        self.log  = logging.getLogger(name+'_'+str(self.motehandler.getId()))
         self.log.setLevel(logging.DEBUG)
         self.log.addHandler(NullLogHandler())
     

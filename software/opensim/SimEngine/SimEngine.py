@@ -26,7 +26,7 @@ class SimEngine(object):
     \brief The main simulation engine.
     '''
     
-    def __init__(self,loghandler,nummotes=1,motebin=BIN_BSP_LEDS):
+    def __init__(self,loghandler=NullLogHandler,nummotes=1,motebin=BIN_BSP_LEDS):
         
         # store params
         self.loghandler           = loghandler
@@ -44,14 +44,28 @@ class SimEngine(object):
         self.stopAfterSteps       = None
         self.delay                = 0
         
-        # logging
+        # create daemon thread to handle connection of newly created motes
+        self.daemonThreadHandler  = DaemonThread.DaemonThread(self)
+        self.cliHandler           = SimCli.SimCli(self)
+        
+        # logging this module
         self.log                  = logging.getLogger('SimEngine')
         self.log.setLevel(logging.DEBUG)
         self.log.addHandler(NullLogHandler())
         
-        # create daemon thread to handle connection of newly created motes
-        self.daemonThreadHandler  = DaemonThread.DaemonThread(self)
-        self.cliHandler           = SimCli.SimCli(self)
+        # logging core modules
+        for loggerName in [
+                   'SimEngine',
+                   'Timeline',
+                   'Propagation',
+                   'IdManager',
+                   'LocationManager',
+                   'SimCli',
+                   'DaemonThread',
+                   ]:
+            temp = logging.getLogger(loggerName)
+            temp.setLevel(logging.DEBUG)
+            temp.addHandler(loghandler)
     
     def start(self):
         

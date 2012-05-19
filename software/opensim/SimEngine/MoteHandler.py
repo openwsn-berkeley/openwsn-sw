@@ -143,16 +143,17 @@ class MoteHandler(threading.Thread):
     def __init__(self,engine,conn,addr,port):
         
         # store params
-        self.engine               = engine
-        self.conn                 = conn
-        self.addr                 = addr
-        self.port                 = port
+        self.engine          = engine
+        self.conn            = conn
+        self.addr            = addr
+        self.port            = port
         
         # obtain an id and location for the new mote
-        self.id                   = self.engine.idmanager.getId()
-        self.location             = self.engine.locationmanager.getLocation()
+        self.id              = self.engine.idmanager.getId()
+        self.location        = self.engine.locationmanager.getLocation()
         
         #=== local variables
+        self.loghandler      = self.engine.loghandler
         # stats
         self.numRxCommands   = 0
         self.numTxCommands   = 0
@@ -168,7 +169,7 @@ class MoteHandler(threading.Thread):
         self.bspRadiotimer   = BspRadiotimer.BspRadiotimer(self.engine,self)
         self.bspRadio        = BspRadio.BspRadio(self.engine,self)
         self.bspUart         = BspUart.BspUart(self.engine,self)
-        
+        # callbacks
         self.commandCallbacks = {
             # board
             self.commandIds['OPENSIM_CMD_board_init']                : self.bspBoard.cmd_init,
@@ -258,10 +259,31 @@ class MoteHandler(threading.Thread):
             self.commandIds['OPENSIM_CMD_uart_writeByte']            : self.bspUart.cmd_writeByte,
             self.commandIds['OPENSIM_CMD_uart_readByte']             : self.bspUart.cmd_readByte,
         }
-        # logging
+        
+        # logging this module
         self.log   = logging.getLogger('MoteHandler_'+str(self.id))
         self.log.setLevel(logging.DEBUG)
         self.log.addHandler(NullLogHandler())
+        
+        # logging this mote's modules
+        for loggerName in [
+                   'MoteHandler_'+str(self.id),
+                   # hw
+                   'HwSupply_'+str(self.id),
+                   'HwCrystal_'+str(self.id),
+                   # bsp
+                   'BspBoard_'+str(self.id),
+                   'BspBsp_timer_'+str(self.id),
+                   'BspDebugpins_'+str(self.id),
+                   'BspEui64_'+str(self.id),
+                   'BspLeds_'+str(self.id),
+                   'BspRadiotimer_'+str(self.id),
+                   'BspRadio_'+str(self.id),
+                   'BspUart_'+str(self.id),
+                   ]:
+            temp = logging.getLogger(loggerName)
+            temp.setLevel(logging.DEBUG)
+            temp.addHandler(self.loghandler)
         
         # initialize parent class
         threading.Thread.__init__(self)
