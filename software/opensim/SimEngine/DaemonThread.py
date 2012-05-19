@@ -17,11 +17,14 @@ class DaemonThread(threading.Thread):
     \brief Thread waiting for new connections from motes over TCP.
     '''
     
-    def __init__(self,engine,port):
+    TCPPORT            = 14159
+    
+    def __init__(self,engine):
         
         # store variables
-        self.engine    = engine
-        self.port      = port
+        self.engine               = engine
+        
+        # local variables
         
         # logging
         self.log   = logging.getLogger('DaemonThread')
@@ -40,12 +43,12 @@ class DaemonThread(threading.Thread):
     def run(self):
         
         # log
-        self.log.info('starting on port='+str(self.port))
+        self.log.info('starting on port='+str(self.TCPPORT))
         
         # create socket to listen on
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.bind(('',self.port))
+            self.socket.bind(('',self.TCPPORT))
             self.socket.listen(TCPCONN_MAXBACKLOG)
         except Exception as err:
             self.log.debug('could not start listening, err='+str(err))
@@ -59,6 +62,10 @@ class DaemonThread(threading.Thread):
             
             # log connection attempt
             self.log.info("Connection attempt from "+str(addr))
+            
+            # get id
+            
+            # get location
             
             # hand over connection to moteHandler
             moteHandler = MoteHandler(self.engine,conn,addr[0],addr[1])

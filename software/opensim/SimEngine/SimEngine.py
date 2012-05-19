@@ -26,20 +26,19 @@ class SimEngine(object):
     \brief The main simulation engine.
     '''
     
-    TCPPORT            = 14159
-    
-    def __init__(self,nummotes=1,motebin=BIN_BSP_LEDS):
+    def __init__(self,loghandler,nummotes=1,motebin=BIN_BSP_LEDS):
         
         # store params
+        self.loghandler           = loghandler
         self.nummotes             = nummotes
         self.motebin              = motebin
         
         # local variables
         self.moteHandlers         = []
-        self.timeline             = TimeLine.TimeLine()
-        self.propagation          = Propagation.Propagation(self.timeline)
-        self.idmanager            = IdManager.IdManager()
-        self.locationmanager      = LocationManager.LocationManager() 
+        self.timeline             = TimeLine.TimeLine(self)
+        self.propagation          = Propagation.Propagation(self)
+        self.idmanager            = IdManager.IdManager(self)
+        self.locationmanager      = LocationManager.LocationManager(self) 
         self.pauseSem             = threading.Lock()
         self.isPaused             = False
         self.stopAfterSteps       = None
@@ -51,7 +50,7 @@ class SimEngine(object):
         self.log.addHandler(NullLogHandler())
         
         # create daemon thread to handle connection of newly created motes
-        self.daemonThreadHandler  = DaemonThread.DaemonThread(self,self.TCPPORT)
+        self.daemonThreadHandler  = DaemonThread.DaemonThread(self)
         self.cliHandler           = SimCli.SimCli(self)
     
     def start(self):
@@ -113,12 +112,6 @@ class SimEngine(object):
     #=== called from the DaemonThread
     
     def indicateNewMote(self,moteHandler):
-        
-        # assign an ID to this mote
-        moteHandler.setId(self.idmanager.getId())
-        
-        # assign a location to this mote
-        moteHandler.setLocation(self.locationmanager.getLocation())
         
         # add this mote to my list of motes
         self.moteHandlers.append(moteHandler)

@@ -148,37 +148,26 @@ class MoteHandler(threading.Thread):
         self.addr                 = addr
         self.port                 = port
         
+        # obtain an id and location for the new mote
+        self.id                   = self.engine.idmanager.getId()
+        self.location             = self.engine.locationmanager.getLocation()
+        
         #=== local variables
         # stats
-        self.numRxCommands        = 0
-        self.numTxCommands        = 0
+        self.numRxCommands   = 0
+        self.numTxCommands   = 0
         # hw
-        self.hwSupply             = HwSupply.HwSupply(self)
-        self.hwCrystal            = HwCrystal.HwCrystal(
-                                            self,
-                                            self.engine.timeline,
-                                            32768)
+        self.hwSupply        = HwSupply.HwSupply(self.engine,self)
+        self.hwCrystal       = HwCrystal.HwCrystal(self.engine,self)
         # bsp
-        self.bspBoard             = BspBoard.BspBoard(
-                                            self,
-                                            self.engine.timeline)
-        self.bspBsp_timer         = BspBsp_timer.BspBsp_timer(
-                                            self,
-                                            self.engine.timeline,
-                                            self.hwCrystal)
-        self.bspDebugpins         = BspDebugpins.BspDebugpins(self)
-        self.bspEui64             = BspEui64.BspEui64(self)
-        self.bspLeds              = BspLeds.BspLeds(self)
-        self.bspRadiotimer        = BspRadiotimer.BspRadiotimer(
-                                            self,
-                                            self.engine.timeline,
-                                            self.hwCrystal)
-        self.bspRadio             = BspRadio.BspRadio(
-                                            self,
-                                            self.engine.timeline,
-                                            self.bspRadiotimer,
-                                            self.engine.propagation)
-        self.bspUart              = BspUart.BspUart(self)
+        self.bspBoard        = BspBoard.BspBoard(self.engine,self)
+        self.bspBsp_timer    = BspBsp_timer.BspBsp_timer(self.engine,self)
+        self.bspDebugpins    = BspDebugpins.BspDebugpins(self.engine,self)
+        self.bspEui64        = BspEui64.BspEui64(self.engine,self)
+        self.bspLeds         = BspLeds.BspLeds(self.engine,self)
+        self.bspRadiotimer   = BspRadiotimer.BspRadiotimer(self.engine,self)
+        self.bspRadio        = BspRadio.BspRadio(self.engine,self)
+        self.bspUart         = BspUart.BspUart(self.engine,self)
         
         self.commandCallbacks = {
             # board
@@ -270,7 +259,7 @@ class MoteHandler(threading.Thread):
             self.commandIds['OPENSIM_CMD_uart_readByte']             : self.bspUart.cmd_readByte,
         }
         # logging
-        self.log   = logging.getLogger('MoteHandler')
+        self.log   = logging.getLogger('MoteHandler_'+str(self.id))
         self.log.setLevel(logging.DEBUG)
         self.log.addHandler(NullLogHandler())
         
@@ -304,14 +293,8 @@ class MoteHandler(threading.Thread):
             
     #======================== public ==========================================
     
-    def setId(self,id):
-        self.id = id
-        
     def getId(self):
         return self.id
-    
-    def setLocation(self,location):
-        self.location = location
     
     def getLocation(self):
         return self.location

@@ -23,9 +23,10 @@ class TimeLine(object):
     \brief The timeline of the engine.
     '''
     
-    def __init__(self):
+    def __init__(self,engine):
         
         # store params
+        self.engine               = engine
         
         # local variables
         self.currentTime          = 0   # current time
@@ -57,8 +58,11 @@ class TimeLine(object):
         try:
             assert(self.currentTime<=atTime)
         except AssertionError:
+            self.engine.pause()
             print "currentTime: "+str(self.currentTime)
-            print "atTime: "+str(atTime)
+            print "atTime:      "+str(atTime)
+            print "moteId:      "+str(moteId)
+            print "desc:        "+str(desc)
             raise
         
         # create a new event

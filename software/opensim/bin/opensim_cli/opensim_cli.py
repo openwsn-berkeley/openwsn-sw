@@ -68,7 +68,7 @@ def main():
         nummotes = DEFAULT_NUM_MOTES
 
     # instantiate a SimEngine object
-    simengine = SimEngine.SimEngine(nummotes)
+    simengine = SimEngine.SimEngine(nummotes,logHandler)
     simengine.start()
             
 if __name__ == "__main__":

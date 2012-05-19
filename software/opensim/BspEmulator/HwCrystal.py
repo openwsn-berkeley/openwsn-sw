@@ -9,13 +9,19 @@ class HwCrystal(HwModule.HwModule):
     \brief Emulates the mote's crystal.
     '''
     
-    def __init__(self,motehandler,timeline,frequency,maxDrift=0):
+    FREQUENCY = 32768
+    MAXDRIFT  = 0
+    
+    def __init__(self,engine,motehandler):
         
         # store params
+        self.engine          = engine
         self.motehandler     = motehandler
-        self.timeline        = timeline
-        self.frequency       = frequency
-        self.maxDrift        = maxDrift
+        
+        # local variables
+        self.timeline        = self.engine.timeline
+        self.frequency       = self.FREQUENCY
+        self.maxDrift        = self.MAXDRIFT
         
         # local variables
         self.drift           = float(random.uniform(-self.maxDrift,

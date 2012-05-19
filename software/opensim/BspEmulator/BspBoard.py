@@ -7,13 +7,14 @@ class BspBoard(BspModule.BspModule):
     \brief Emulates the 'board' BSP module
     '''
     
-    def __init__(self,motehandler,timeline):
+    def __init__(self,engine,motehandler):
         
         # store params
-        self.motehandler = motehandler
-        self.timeline    = timeline
+        self.engine          = engine
+        self.motehandler     = motehandler
         
         # local variables
+        self.timeline        = self.engine.timeline
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspBoard')

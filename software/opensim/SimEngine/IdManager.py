@@ -11,12 +11,13 @@ class IdManager(object):
     \brief The module which assigns ID to the motes.
     '''
     
-    def __init__(self):
+    def __init__(self,engine):
         
         # store params
+        self.engine               = engine
         
         # local variables
-        self.currentId = 0
+        self.currentId            = 0
         
         # logging
         self.log                  = logging.getLogger('IdManager')

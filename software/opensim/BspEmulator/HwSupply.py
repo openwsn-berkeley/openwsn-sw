@@ -7,10 +7,11 @@ class HwSupply(HwModule.HwModule):
     \brief Emulates the mote's power supply
     '''
     
-    def __init__(self,motehandler):
+    def __init__(self,engine,motehandler):
         
         # store params
-        self.motehandler = motehandler
+        self.engine          = engine
+        self.motehandler     = motehandler
         
         # local variables
         self.moteOn = False

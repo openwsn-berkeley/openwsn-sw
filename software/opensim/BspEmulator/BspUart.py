@@ -7,9 +7,10 @@ class BspUart(BspModule.BspModule):
     \brief Emulates the 'uart' BSP module
     '''
     
-    def __init__(self,motehandler):
+    def __init__(self,engine,motehandler):
         
         # store params
+        self.engine      = engine
         self.motehandler = motehandler
         
         # local variables

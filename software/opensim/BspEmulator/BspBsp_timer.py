@@ -12,14 +12,15 @@ class BspBsp_timer(BspModule.BspModule):
     INTR_OVERFLOW = 'bsp_timer.overflow'
     PERIOD        = 0xffff
     
-    def __init__(self,motehandler,timeline,hwCrystal):
+    def __init__(self,engine,motehandler):
         
         # store params
+        self.engine          = engine
         self.motehandler     = motehandler
-        self.timeline        = timeline
-        self.hwCrystal       = hwCrystal
         
         # local variables
+        self.timeline        = self.engine.timeline
+        self.hwCrystal       = self.motehandler.hwCrystal
         self.timerRunning    = False
         self.compareArmed    = False
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()

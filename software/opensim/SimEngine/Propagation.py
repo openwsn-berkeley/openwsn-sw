@@ -11,9 +11,10 @@ class Propagation(object):
     \brief The propagation model of the engine.
     '''
     
-    def __init__(self,timeline):
+    def __init__(self,engine):
         
         # store params
+        self.engine               = engine
         
         # local variables
         

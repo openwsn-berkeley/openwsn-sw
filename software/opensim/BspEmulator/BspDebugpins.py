@@ -7,10 +7,11 @@ class BspDebugpins(BspModule.BspModule):
     \brief Emulates the 'debugpins' BSP module
     '''
     
-    def __init__(self,motehandler):
+    def __init__(self,engine,motehandler):
         
         # store params
-        self.motehandler = motehandler
+        self.engine          = engine
+        self.motehandler     = motehandler
         
         # local variables
         self.framePinHigh    = False

@@ -27,13 +27,16 @@ class BspRadio(BspModule.BspModule):
     INTR_STARTOFFRAME = 'radio.startofframe'
     INTR_ENDOFFRAME   = 'radio.endofframe'
     
-    def __init__(self,motehandler,timeline,radiotimer,propagation):
+    def __init__(self,engine,motehandler):
         
         # store params
+        self.engine      = engine
         self.motehandler = motehandler
-        self.timeline    = timeline
-        self.radiotimer  = radiotimer
-        self.propagation = propagation
+        
+        # local variables
+        self.timeline    = self.engine.timeline
+        self.propagation = self.engine.propagation
+        self.radiotimer  = self.motehandler.bspRadiotimer
         
         # local variables
         self.state       = RadioState.STOPPED

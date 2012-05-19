@@ -12,9 +12,10 @@ class LocationManager(object):
     \brief The module which assigns locations to the motes.
     '''
     
-    def __init__(self):
+    def __init__(self,engine):
         
         # store params
+        self.engine               = engine
         
         # local variables
         

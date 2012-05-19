@@ -1,0 +1,16 @@
+<NotepadPlus>
+    <Session activeView="0">
+        <mainView activeIndex="8">
+            <File firstVisibleLine="39" xOffset="0" scrollWidth="711" startPos="2063" endPos="2063" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\bin\opensim_cli\opensim_cli.py" />
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="927" startPos="9720" endPos="9732" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\SimCli.py" />
+            <File firstVisibleLine="25" xOffset="0" scrollWidth="783" startPos="1046" endPos="1061" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\SimEngine.py" />
+            <File firstVisibleLine="10" xOffset="0" scrollWidth="711" startPos="542" endPos="548" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\TimeLine.py" />
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="711" startPos="321" endPos="321" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\Propagation.py" />
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="711" startPos="247" endPos="247" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\IdManager.py" />
+            <File firstVisibleLine="0" xOffset="0" scrollWidth="711" startPos="351" endPos="351" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\LocationManager.py" />
+            <File firstVisibleLine="41" xOffset="0" scrollWidth="675" startPos="1927" endPos="1927" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\DaemonThread.py" />
+            <File firstVisibleLine="153" xOffset="0" scrollWidth="990" startPos="16799" endPos="16799" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\MoteHandler.py" />
+        </mainView>
+        <subView activeIndex="0" />
+    </Session>
+</NotepadPlus>

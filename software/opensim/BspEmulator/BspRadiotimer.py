@@ -11,14 +11,15 @@ class BspRadiotimer(BspModule.BspModule):
     INTR_COMPARE  = 'radiotimer.compare'
     INTR_OVERFLOW = 'radiotimer.overflow'
     
-    def __init__(self,motehandler,timeline,hwCrystal):
+    def __init__(self,engine,motehandler):
         
         # store params
+        self.engine          = engine
         self.motehandler     = motehandler
-        self.timeline        = timeline
-        self.hwCrystal       = hwCrystal
         
         # local variables
+        self.timeline        = self.engine.timeline
+        self.hwCrystal       = self.motehandler.hwCrystal
         self.running         = False   # whether the counter is currently running
         self.timeLastReset   = 0       # time at last counter reset
         self.period          = None    # counter period
