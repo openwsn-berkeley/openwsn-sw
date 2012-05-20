@@ -191,7 +191,11 @@ class SimCli(threading.Thread):
             print 'invalid rank'
             return
         
-        moteHandler.hwSupply.switchOn()
+        # schedule the switchOn now
+        self.engine.timeline.scheduleEvent(self.engine.timeline.getCurrentTime(),
+                                           moteHandler.getId(),
+                                           moteHandler.hwSupply.switchOn,
+                                           moteHandler.hwSupply.INTR_SWITCHON)
         
         print 'OK'
             

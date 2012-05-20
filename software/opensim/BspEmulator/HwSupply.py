@@ -7,6 +7,8 @@ class HwSupply(HwModule.HwModule):
     \brief Emulates the mote's power supply
     '''
     
+    INTR_SWITCHON  = 'hw_supply.switchOn'
+    
     def __init__(self,engine,motehandler):
         
         # store params

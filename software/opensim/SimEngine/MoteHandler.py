@@ -261,7 +261,7 @@ class MoteHandler(threading.Thread):
         }
         
         # logging this module
-        self.log   = logging.getLogger('MoteHandler_'+str(self.id))
+        self.log             = logging.getLogger('MoteHandler_'+str(self.id))
         self.log.setLevel(logging.DEBUG)
         self.log.addHandler(NullLogHandler())
         
@@ -289,7 +289,7 @@ class MoteHandler(threading.Thread):
         threading.Thread.__init__(self)
         
         # set thread name
-        self.setName('MoteHandler')
+        self.setName('MoteHandler_'+str(self.id))
         
         # thread daemon mode
         self.setDaemon(True)
@@ -323,6 +323,9 @@ class MoteHandler(threading.Thread):
     
     def sendCommand(self,commandId,params=[]):
         
+        # log
+        self.log.debug('sending command='+self._cmdIdToName(commandId))
+        
         # update statistics
         self.numTxCommands += 1
         
@@ -337,19 +340,26 @@ class MoteHandler(threading.Thread):
     
     def _handleReceivedCommand(self,input):
         
-        # update statistics
-        self.numRxCommands += 1
-        
-        # apply the delay
-        self.engine.pauseOrDelay()
-        
         # get the command id and params from the received command
         cmdId  = ord(input[0])
-        #params = [ord(c) for c in input[1:]]
         params = input[1:]
+        
+        # log
+        self.log.debug('received command='+self._cmdIdToName(cmdId))
+        
+        # update statistics
+        self.numRxCommands += 1
         
         # make sure I know what callback to call
         assert(cmdId in self.commandCallbacks)
         
         # call the callback
         returnVal = self.commandCallbacks[cmdId](params)
+    
+    def _cmdIdToName(self,cmdId):
+        cmdName = 'unknow'
+        for k,v in self.commandIds.items():
+            if cmdId==v:
+                cmdName = k
+                break
+        return cmdName

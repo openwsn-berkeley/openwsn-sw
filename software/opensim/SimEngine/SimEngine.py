@@ -81,6 +81,9 @@ class SimEngine(object):
             subprocess.Popen(self.motebin)
         '''
         
+        # start timeline
+        self.timeline.start()
+        
         # start CLI threads
         self.cliHandler.start()
     
@@ -110,6 +113,7 @@ class SimEngine(object):
     
     def pauseOrDelay(self):
         if self.isPaused:
+            self.log.debug('pause')
             self.pauseSem.acquire()
             self.pauseSem.release()
         else:

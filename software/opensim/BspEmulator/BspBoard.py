@@ -50,6 +50,6 @@ class BspBoard(BspModule.BspModule):
         assert(len(params)==0)
         
         # have the timeline advance to the next event
-        self.timeline.nextEvent()
+        self.timeline.moteDone(self.motehandler.getId())
     
     #======================== private =========================================

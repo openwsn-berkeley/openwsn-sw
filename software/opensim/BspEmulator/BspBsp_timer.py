@@ -21,7 +21,7 @@ class BspBsp_timer(BspModule.BspModule):
         # local variables
         self.timeline        = self.engine.timeline
         self.hwCrystal       = self.motehandler.hwCrystal
-        self.timerRunning    = False
+        self.running         = False
         self.compareArmed    = False
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
         
@@ -47,13 +47,13 @@ class BspBsp_timer(BspModule.BspModule):
         
         # calculate time at overflow event (in 'PERIOD' ticks)
         overflowTime         = self.hwCrystal.getTimeIn(self.PERIOD)
-        
+        '''
         # schedule overflow event
         self.timeline.scheduleEvent(overflowTime,
                                     self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
-
+        '''
         # the counter is now running
         self.running         = True
         
@@ -84,7 +84,7 @@ class BspBsp_timer(BspModule.BspModule):
         assert(numCanceled<=1)
         
         # cancel the (internal) overflow event
-        self.timerRunning    = False
+        self.running         = False
         numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
                                                 self.INTR_OVERFLOW)
         assert(numCanceled<=1)
@@ -99,10 +99,12 @@ class BspBsp_timer(BspModule.BspModule):
         overflowTime         = self.hwCrystal.getTimeIn(self.PERIOD)
         
         # schedule overflow event
+        '''
         self.timeline.scheduleEvent(overflowTime,
                                     self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
+        '''
     
     def cmd_scheduleIn(self,params):
         '''emulates
@@ -180,16 +182,21 @@ class BspBsp_timer(BspModule.BspModule):
         # remember the time of this reset; needed internally to schedule further events
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
         
+        # log the activity
+        self.log.debug('timeLastReset='+str(self.timeLastReset))
+        self.log.debug('PERIOD='+str(self.PERIOD))
+        
         # reschedule the next overflow event
         # Note: the intr_overflow will fire every self.PERIOD
         nextOverflowTime     = self.hwCrystal.getTimeIn(self.PERIOD)
+        self.log.debug('nextOverflowTime='+str(nextOverflowTime))
         self.timeline.scheduleEvent(nextOverflowTime,
                                     self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
         
         # have the timeline advance to the next event
-        return True
+        self.timeline.moteDone(self.motehandler.getId())
     
     def intr_compare(self):
         '''

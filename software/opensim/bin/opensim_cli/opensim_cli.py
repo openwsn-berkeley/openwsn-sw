@@ -18,8 +18,9 @@ LOG_FORMAT  = "%(asctime)s [%(name)s:%(levelname)s] %(message)s"
 
 logFileName = 'logs/opensim.log'
 loghandler  = logging.handlers.RotatingFileHandler(logFileName,
-                                               maxBytes=2000000,
-                                               backupCount=5,)
+                                                   maxBytes=2000000,
+                                                   backupCount=5,
+                                                   mode='w')
 loghandler.setFormatter(logging.Formatter(LOG_FORMAT))
 
 #============================ main ============================================
