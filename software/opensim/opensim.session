@@ -1,29 +1,28 @@
 <NotepadPlus>
-    <Session activeView="0">
-        <mainView activeIndex="3">
-            <File firstVisibleLine="19" xOffset="0" scrollWidth="711" startPos="658" endPos="658" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\bin\opensim_cli\opensim_cli.py" />
-            <File firstVisibleLine="172" xOffset="0" scrollWidth="927" startPos="6765" endPos="6778" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\SimCli.py" />
-            <File firstVisibleLine="24" xOffset="0" scrollWidth="783" startPos="2174" endPos="2174" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\SimEngine.py" />
-            <File firstVisibleLine="24" xOffset="0" scrollWidth="837" startPos="762" endPos="762" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\TimeLine.py" />
-            <File firstVisibleLine="0" xOffset="0" scrollWidth="711" startPos="321" endPos="321" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\Propagation.py" />
+    <Session activeView="1">
+        <mainView activeIndex="7">
+            <File firstVisibleLine="4" xOffset="0" scrollWidth="712" startPos="40" endPos="40" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\bin\opensim_cli\opensim_cli.py" />
+            <File firstVisibleLine="95" xOffset="0" scrollWidth="783" startPos="3517" endPos="3531" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\SimEngine.py" />
+            <File firstVisibleLine="24" xOffset="0" scrollWidth="837" startPos="742" endPos="808" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\TimeLine.py" />
+            <File firstVisibleLine="19" xOffset="0" scrollWidth="711" startPos="1338" endPos="1338" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\Propagation.py" />
             <File firstVisibleLine="0" xOffset="0" scrollWidth="711" startPos="247" endPos="247" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\IdManager.py" />
             <File firstVisibleLine="0" xOffset="0" scrollWidth="711" startPos="351" endPos="351" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\LocationManager.py" />
             <File firstVisibleLine="0" xOffset="0" scrollWidth="675" startPos="1927" endPos="1927" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\DaemonThread.py" />
-            <File firstVisibleLine="328" xOffset="0" scrollWidth="990" startPos="18764" endPos="18764" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\MoteHandler.py" />
+            <File firstVisibleLine="333" xOffset="0" scrollWidth="990" startPos="18773" endPos="18773" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\SimEngine\MoteHandler.py" />
         </mainView>
-        <subView activeIndex="1">
+        <subView activeIndex="10">
             <File firstVisibleLine="0" xOffset="0" scrollWidth="632" startPos="446" endPos="377" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\HwModule.py" />
-            <File firstVisibleLine="15" xOffset="0" scrollWidth="720" startPos="593" endPos="601" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\HwSupply.py" />
-            <File firstVisibleLine="0" xOffset="0" scrollWidth="632" startPos="854" endPos="863" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\HwCrystal.py" />
+            <File firstVisibleLine="15" xOffset="0" scrollWidth="720" startPos="925" endPos="934" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\HwSupply.py" />
+            <File firstVisibleLine="12" xOffset="0" scrollWidth="720" startPos="586" endPos="591" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\HwCrystal.py" />
             <File firstVisibleLine="0" xOffset="162" scrollWidth="632" startPos="405" endPos="439" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspModule.py" />
-            <File firstVisibleLine="14" xOffset="0" scrollWidth="728" startPos="1313" endPos="1415" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspBoard.py" />
-            <File firstVisibleLine="0" xOffset="0" scrollWidth="848" startPos="199" endPos="164" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspBsp_timer.py" />
-            <File firstVisibleLine="0" xOffset="50" scrollWidth="760" startPos="643" endPos="655" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspDebugpins.py" />
-            <File firstVisibleLine="0" xOffset="0" scrollWidth="720" startPos="413" endPos="421" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspEui64.py" />
-            <File firstVisibleLine="0" xOffset="0" scrollWidth="720" startPos="559" endPos="566" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspLeds.py" />
-            <File firstVisibleLine="0" xOffset="0" scrollWidth="648" startPos="911" endPos="924" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspRadiotimer.py" />
-            <File firstVisibleLine="15" xOffset="0" scrollWidth="888" startPos="2213" endPos="2221" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspRadio.py" />
-            <File firstVisibleLine="0" xOffset="0" scrollWidth="720" startPos="403" endPos="410" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspUart.py" />
+            <File firstVisibleLine="144" xOffset="0" scrollWidth="848" startPos="5714" endPos="5976" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspBsp_timer.py" />
+            <File firstVisibleLine="13" xOffset="0" scrollWidth="728" startPos="832" endPos="761" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspBoard.py" />
+            <File firstVisibleLine="147" xOffset="0" scrollWidth="824" startPos="643" endPos="655" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspDebugpins.py" />
+            <File firstVisibleLine="1" xOffset="0" scrollWidth="720" startPos="413" endPos="421" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspEui64.py" />
+            <File firstVisibleLine="9" xOffset="0" scrollWidth="720" startPos="559" endPos="566" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspLeds.py" />
+            <File firstVisibleLine="12" xOffset="0" scrollWidth="768" startPos="911" endPos="924" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspRadiotimer.py" />
+            <File firstVisibleLine="297" xOffset="0" scrollWidth="888" startPos="10408" endPos="10408" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspRadio.py" />
+            <File firstVisibleLine="48" xOffset="0" scrollWidth="720" startPos="403" endPos="410" selMode="0" lang="Python" encoding="-1" filename="C:\open_software\openwsn\software\opensim\BspEmulator\BspUart.py" />
         </subView>
     </Session>
 </NotepadPlus>
