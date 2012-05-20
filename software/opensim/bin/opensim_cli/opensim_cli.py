@@ -26,25 +26,10 @@ loghandler.setFormatter(logging.Formatter(LOG_FORMAT))
 
 #============================ main ============================================
 
-DEFAULT_NUM_MOTES = 1
-
 def main():
-    if len(sys.argv)>2:
-        print 'usage: '+sys.argv[0]+' <nummotes>'
-        sys.exit(0)
     
-    # replace the prefix by the one passed as a variable
-    if len(sys.argv)==2:
-        try:
-            nummotes = int(sys.argv[1])
-        except ValueError:
-            print 'invalid number of motes'
-            sys.exit(0)
-    else:
-        nummotes = DEFAULT_NUM_MOTES
-
     # instantiate a SimEngine object
-    simengine        = SimEngine.SimEngine(loghandler,nummotes)
+    simengine        = SimEngine.SimEngine(loghandler)
     simengine.start()
     
     # instantiate the CLI interface

@@ -13,9 +13,6 @@ import IdManager
 import LocationManager
 import DaemonThread
 
-PATH_TO_BIN = os.path.join('..','..','..','..','firmware','openos','projects','common')
-BIN_BSP_LEDS = os.path.join(PATH_TO_BIN,'01bsp_leds','bsp_leds')
-
 class NullLogHandler(logging.Handler):
     def emit(self, record):
         pass
@@ -25,12 +22,10 @@ class SimEngine(object):
     \brief The main simulation engine.
     '''
     
-    def __init__(self,loghandler=NullLogHandler,nummotes=1,motebin=BIN_BSP_LEDS):
+    def __init__(self,loghandler=NullLogHandler):
         
         # store params
         self.loghandler           = loghandler
-        self.nummotes             = nummotes
-        self.motebin              = motebin
         
         # local variables
         self.moteHandlers         = []
@@ -72,12 +67,6 @@ class SimEngine(object):
         
         # start daemon thread (ready to accept connections)
         self.daemonThreadHandler.start()
-        
-        # start motes
-        '''
-        for i in range(self.nummotes):
-            subprocess.Popen(self.motebin)
-        '''
         
         # start timeline
         self.timeline.start()
