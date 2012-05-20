@@ -12,7 +12,6 @@ import Propagation
 import IdManager
 import LocationManager
 import DaemonThread
-import SimCli
 
 PATH_TO_BIN = os.path.join('..','..','..','..','firmware','openos','projects','common')
 BIN_BSP_LEDS = os.path.join(PATH_TO_BIN,'01bsp_leds','bsp_leds')
@@ -46,7 +45,6 @@ class SimEngine(object):
         
         # create daemon thread to handle connection of newly created motes
         self.daemonThreadHandler  = DaemonThread.DaemonThread(self)
-        self.cliHandler           = SimCli.SimCli(self)
         
         # logging this module
         self.log                  = logging.getLogger('SimEngine')
@@ -83,9 +81,6 @@ class SimEngine(object):
         
         # start timeline
         self.timeline.start()
-        
-        # start CLI threads
-        self.cliHandler.start()
     
     #======================== public ==========================================
     
