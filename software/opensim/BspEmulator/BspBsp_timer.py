@@ -10,7 +10,7 @@ class BspBsp_timer(BspModule.BspModule):
     
     INTR_COMPARE  = 'bsp_timer.compare'
     INTR_OVERFLOW = 'bsp_timer.overflow'
-    PERIOD        = 0xffff
+    PERIOD        = 32768
     
     def __init__(self,engine,motehandler):
         
@@ -47,13 +47,13 @@ class BspBsp_timer(BspModule.BspModule):
         
         # calculate time at overflow event (in 'PERIOD' ticks)
         overflowTime         = self.hwCrystal.getTimeIn(self.PERIOD)
-        '''
+        
         # schedule overflow event
         self.timeline.scheduleEvent(overflowTime,
                                     self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
-        '''
+        
         # the counter is now running
         self.running         = True
         
@@ -99,12 +99,11 @@ class BspBsp_timer(BspModule.BspModule):
         overflowTime         = self.hwCrystal.getTimeIn(self.PERIOD)
         
         # schedule overflow event
-        '''
+        
         self.timeline.scheduleEvent(overflowTime,
                                     self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
-        '''
     
     def cmd_scheduleIn(self,params):
         '''emulates
