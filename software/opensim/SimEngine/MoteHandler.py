@@ -354,7 +354,12 @@ class MoteHandler(threading.Thread):
         assert(cmdId in self.commandCallbacks)
         
         # call the callback
-        returnVal = self.commandCallbacks[cmdId](params)
+        try:
+            returnVal = self.commandCallbacks[cmdId](params)
+        except Exception as err:
+            self.log.critical(str(err))
+            self.engine.pause()
+            raise
     
     def _cmdIdToName(self,cmdId):
         cmdName = 'unknow'

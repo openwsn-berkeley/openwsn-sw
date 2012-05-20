@@ -22,7 +22,6 @@ class Propagation(object):
         self.log                  = logging.getLogger('Propagation')
         self.log.setLevel(logging.DEBUG)
         self.log.addHandler(NullLogHandler())
-        
     
     #======================== public ==========================================
     
@@ -33,15 +32,25 @@ class Propagation(object):
                              moteId,
                              channel,
                              len(packet)))
-                             
-        #raise NotImplementedError()
+        
+        # TODO: calculate rssi
+        
+        # indicate to each mote
+        for i in range(self.engine.getNumMotes()):
+            motehandler = self.engine.getMoteHandler(i)
+            if motehandler.getId()!=moteId:
+                motehandler.bspRadio.indicateTxStart(moteId,packet,channel)
     
     def txEnd(self,moteId):
         
         # log
         self.log.info('txStop from {0}'.format(moteId))
     
-        #raise NotImplementedError()
+        # indicate to each mote
+        for i in range(self.engine.getNumMotes()):
+            motehandler = self.engine.getMoteHandler(i)
+            if motehandler.getId()!=moteId:
+                motehandler.bspRadio.indicateTxEnd(moteId)
     
     #======================== private =========================================
     

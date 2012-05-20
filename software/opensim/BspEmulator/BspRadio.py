@@ -24,8 +24,10 @@ class BspRadio(BspModule.BspModule):
     \brief Emulates the 'radio' BSP module
     '''
     
-    INTR_STARTOFFRAME = 'radio.startofframe'
-    INTR_ENDOFFRAME   = 'radio.endofframe'
+    INTR_STARTOFFRAME_MOTE        = 'radio.startofframe_fromMote'
+    INTR_ENDOFFRAME_MOTE          = 'radio.endofframe_fromMote'
+    INTR_STARTOFFRAME_PROPAGATION = 'radio.startofframe_fromPropagation'
+    INTR_ENDOFFRAME_PROPAGATION   = 'radio.endofframe_fromPropagation'
     
     def __init__(self,engine,motehandler):
         
@@ -39,7 +41,6 @@ class BspRadio(BspModule.BspModule):
         self.radiotimer  = self.motehandler.bspRadiotimer
         
         # local variables
-        self.state       = RadioState.STOPPED
         self.frequency   = None   # frequency the radio is tuned to
         self.isRfOn      = False  # radio is off
         self.txBuf       = []
@@ -48,6 +49,9 @@ class BspRadio(BspModule.BspModule):
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspRadio')
+        
+        # set initial state
+        self._changeState(RadioState.STOPPED)
     
     #======================== public ==========================================
     
@@ -64,13 +68,13 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_init')
         
         # change state
-        self.state         = RadioState.STOPPED
+        self._changeState(RadioState.STOPPED)
         
         # remember that module has been intialized
         self.isInitialized = True
         
         # change state
-        self.state         = RadioState.RFOFF
+        self._changeState(RadioState.RFOFF)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_init'])
@@ -86,7 +90,7 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_reset')
         
         # change state
-        self.state         = RadioState.STOPPED
+        self._changeState(RadioState.STOPPED)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_reset'])
@@ -142,10 +146,10 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_setFrequency frequency='+str(self.frequency))
         
         # change state
-        self.state         = RadioState.SETTING_FREQUENCY
+        self._changeState(RadioState.SETTING_FREQUENCY)
         
         # change state
-        self.state         = RadioState.FREQUENCY_SET
+        self._changeState(RadioState.FREQUENCY_SET)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_setFrequency'])
@@ -177,13 +181,13 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_rfOff')
         
         # change state
-        self.state         = RadioState.TURNING_OFF
+        self._changeState(RadioState.TURNING_OFF)
         
         # update local variable
         self.isRfOn = False
         
         # change state
-        self.state         = RadioState.RFOFF
+        self._changeState(RadioState.RFOFF)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rfOff'])
@@ -193,18 +197,22 @@ class BspRadio(BspModule.BspModule):
            void radio_loadPacket(uint8_t* packet, uint8_t len)'''
         
         # log the activity
-        self.log.debug('cmd_loadPacket')
+        self.log.debug('cmd_loadPacket len={0}'.format(len(params)))
         
         # change state
-        self.state         = RadioState.LOADING_PACKET
+        self._changeState(RadioState.LOADING_PACKET)
         
         # update local variable
         self.txBuf = []
+        self.txBuf.append(len(params))
         for c in params:
             self.txBuf.append(ord(c))
         
+        # log
+        self.log.debug('txBuf={0}'.format(self.txBuf))
+        
         # change state
-        self.state         = RadioState.PACKET_LOADED
+        self._changeState(RadioState.PACKET_LOADED)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_loadPacket'])
@@ -220,10 +228,10 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_txEnable')
         
         # change state
-        self.state         = RadioState.ENABLING_TX
+        self._changeState(RadioState.ENABLING_TX)
         
         # change state
-        self.state         = RadioState.TX_ENABLED
+        self._changeState(RadioState.TX_ENABLED)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_txEnable'])
@@ -239,7 +247,7 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_txNow')
         
         # change state
-        self.state           = RadioState.TRANSMITTING
+        self._changeState(RadioState.TRANSMITTING)
         
         # get current time
         currenttime          = self.timeline.getCurrentTime()
@@ -250,8 +258,8 @@ class BspRadio(BspModule.BspModule):
         # schedule "start of frame" event
         self.timeline.scheduleEvent(startOfFrameTime,
                                     self.motehandler.getId(),
-                                    self.intr_startOfFrame,
-                                    self.INTR_STARTOFFRAME)
+                                    self.intr_startOfFrame_fromMote,
+                                    self.INTR_STARTOFFRAME_MOTE)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_txNow'])
@@ -267,7 +275,10 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_rxEnable')
         
         # change state
-        self.state         = RadioState.ENABLING_RX
+        self._changeState(RadioState.ENABLING_RX)
+        
+        # change state
+        self._changeState(RadioState.LISTENING)
         
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rxEnable'])
@@ -283,7 +294,7 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_rxNow')
         
         # change state
-        self.state         = RadioState.LISTENING
+        self._changeState(RadioState.LISTENING)
     
     def cmd_getReceivedFrame(self,params):
         '''emulates
@@ -297,41 +308,123 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_getReceivedFrame')
         
-        raise NotImplementedError()
+        #==== prepare response
+        # uint8_t rxBuffer[128];
+        params  = self.rxBuf[1:]
+        while len(params)<128:
+            params.append(0)
+        assert(len(params)==128)
+        # uint8_t len;
+        params.append(len(self.rxBuf))
+        assert(len(params)==128+1)
+        # int8_t rssi;
+        for i in struct.pack('<b',self.rssi):
+            params.append(ord(i))
+        assert(len(params)==128+1+1)
+        # uint8_t lqi;
+        for i in struct.pack('<b',self.lqi):
+            params.append(ord(i))
+        assert(len(params)==128+1+1+1)
+        # uint8_t crc;
+        if self.crcPasses:
+            params.append(1)
+        else:
+            params.append(0)
+        assert(len(params)==128+1+1+1+1)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_getReceivedFrame'],
+                                     params)
     
     #======================== interrupts ======================================
     
-    def intr_startOfFrame(self):
+    def intr_startOfFrame_fromMote(self):
         
         # indicate transmission starts to propagation model
         self.propagation.txStart(self.motehandler.getId(),
                                  self.txBuf,
                                  self.frequency)
         
-        
         # schedule the "end of frame" event
         currentTime          = self.timeline.getCurrentTime()
         endOfFrameTime       = currentTime+self._packetLengthToDuration(len(self.txBuf))
         self.timeline.scheduleEvent(endOfFrameTime,
                                     self.motehandler.getId(),
-                                    self.intr_endOfFrame,
-                                    self.INTR_ENDOFFRAME)
+                                    self.intr_endOfFrame_fromMote,
+                                    self.INTR_ENDOFFRAME_MOTE)
         
         # signal start of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_startFrame'],
                                      [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
     
-    def intr_endOfFrame(self):
-        # indicate transmission end to propagation model
-        self.propagation.txEnd(self.motehandler.getId())
+    def intr_startOfFrame_fromPropagation(self):
         
         # signal start of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_startFrame'],
+                                     [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+    
+    def intr_endOfFrame_fromMote(self):
+        # indicate transmission end to propagation model
+        self.propagation.txEnd(self.motehandler.getId())
+        
+        # signal end of frame to mote
+        counterVal           = self.radiotimer.getCounterVal()
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_endFrame'],
                                      [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+    
+    def intr_endOfFrame_fromPropagation(self):
+        
+        # signal end of frame to mote
+        counterVal           = self.radiotimer.getCounterVal()
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_endFrame'],
+                                     [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+    
+    #======================== indication from propagation =====================
+    
+    def indicateTxStart(self,moteId,packet,channel):
+    
+        self.log.debug('indicateTxStart from moteId={0} channel={1} len={2}'.format(
+            moteId,channel,len(packet)))
+    
+        if (self.isInitialized==True         and
+            self.state==RadioState.LISTENING and
+            self.frequency==channel):
+            self._changeState(RadioState.RECEIVING)
+            self.rxBuf       = packet
+            self.rssi        = -50
+            self.lqi         = 100
+            self.crcPasses   = True
+            
+            # log
+            self.log.debug('rxBuf={0}'.format(self.rxBuf))
+            
+            # schedule start of frame
+            self.timeline.scheduleEvent(self.timeline.getCurrentTime(),
+                                        self.motehandler.getId(),
+                                        self.intr_startOfFrame_fromPropagation,
+                                        self.INTR_STARTOFFRAME_PROPAGATION)
+    
+    def indicateTxEnd(self,moteId):
+        
+        self.log.debug('indicateTxEnd from moteId={0}'.format(moteId))
+        
+        if (self.isInitialized==True and
+            self.state==RadioState.RECEIVING):
+            self._changeState(RadioState.TXRX_DONE)
+            
+            # schedule end of frame
+            self.timeline.scheduleEvent(self.timeline.getCurrentTime(),
+                                        self.motehandler.getId(),
+                                        self.intr_endOfFrame_fromPropagation,
+                                        self.INTR_ENDOFFRAME_PROPAGATION)
     
     #======================== private =========================================
     
     def _packetLengthToDuration(self,numBytes):
         return float(numBytes*8)/250000.0
+        
+    def _changeState(self,newState):
+        self.state = newState
+        self.log.debug('state={0}'.format(self.state))
