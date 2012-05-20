@@ -313,18 +313,14 @@ class BspRadio(BspModule.BspModule):
         params  = self.rxBuf[1:]
         while len(params)<128:
             params.append(0)
-        assert(len(params)==128)
         # uint8_t len;
         params.append(len(self.rxBuf))
-        assert(len(params)==128+1)
         # int8_t rssi;
         for i in struct.pack('<b',self.rssi):
             params.append(ord(i))
-        assert(len(params)==128+1+1)
         # uint8_t lqi;
         for i in struct.pack('<b',self.lqi):
             params.append(ord(i))
-        assert(len(params)==128+1+1+1)
         # uint8_t crc;
         if self.crcPasses:
             params.append(1)
