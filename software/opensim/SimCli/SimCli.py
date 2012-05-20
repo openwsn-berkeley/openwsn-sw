@@ -174,16 +174,26 @@ class SimCli(threading.Thread):
     
     def _handleBoot(self,params):
         # usage
-        if len(params)!=1:
+        if (len(params)!=1 and len(params)!=2):
             self._printUsageFromName('boot')
             return
         
-        # filter errors
+        # param 0: mote rank
         try:
             rank = int(params[0])
         except ValueError:
             print 'invalid rank'
             return
+        
+        # param 1: boot delay, in second
+        if len(params)==2:
+            try:
+                bootdelay = float(params[1])
+            except ValueError:
+                print 'invalid boot delay'
+                return
+        else:
+            bootdelay = 0
         
         try:
             moteHandler = self.engine.getMoteHandler(rank)
@@ -192,7 +202,7 @@ class SimCli(threading.Thread):
             return
         
         # schedule the switchOn now
-        self.engine.timeline.scheduleEvent(self.engine.timeline.getCurrentTime(),
+        self.engine.timeline.scheduleEvent(self.engine.timeline.getCurrentTime()+bootdelay,
                                            moteHandler.getId(),
                                            moteHandler.hwSupply.switchOn,
                                            moteHandler.hwSupply.INTR_SWITCHON)

@@ -5,7 +5,7 @@ import BspModule
 
 class BspBsp_timer(BspModule.BspModule):
     '''
-    \brief Emulates the 'bsp_timer' BSP module
+    \brief Emulates the 'bsp_timer' BSP module.
     '''
     
     INTR_COMPARE  = 'bsp_timer.compare'

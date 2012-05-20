@@ -39,6 +39,9 @@ class HwCrystal(HwModule.HwModule):
         '''
         
         self.tsTick          = self.timeline.getCurrentTime()
+        
+        # log
+        self.log.debug('crystal starts at '+str(self.tsTick))
     
     def getTimeLastTick(self):
         '''
