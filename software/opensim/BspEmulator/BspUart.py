@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import struct
 import BspModule
 
 class BspUart(BspModule.BspModule):
@@ -10,10 +11,13 @@ class BspUart(BspModule.BspModule):
     def __init__(self,engine,motehandler):
         
         # store params
-        self.engine      = engine
-        self.motehandler = motehandler
+        self.engine               = engine
+        self.motehandler          = motehandler
         
         # local variables
+        self.interruptsEnabled    = False
+        self.txInterruptFlag      = False
+        self.rxInterruptFlag      = False
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspUart')
@@ -25,6 +29,9 @@ class BspUart(BspModule.BspModule):
     def cmd_init(self,params):
         '''emulates
            void uart_init()'''
+        
+        # make sure length of params is expected
+        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_init')
@@ -39,46 +46,83 @@ class BspUart(BspModule.BspModule):
         '''emulates
            void uart_enableInterrupts()'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_enableInterrupts')
         
-        raise NotImplementedError()
+        # update variables
+        self.interruptsEnabled    = True
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_uart_enableInterrupts'])
     
     def cmd_disableInterrupts(self,params):
         '''emulates
            void uart_disableInterrupts()'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_disableInterrupts')
         
-        raise NotImplementedError()
+        # update variables
+        self.interruptsEnabled    = False
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_uart_disableInterrupts'])
     
     def cmd_clearRxInterrupts(self,params):
         '''emulates
            void uart_clearRxInterrupts()'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_clearRxInterrupts')
         
-        raise NotImplementedError()
+        # update variables
+        self.rxInterruptFlag      = False
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_uart_clearRxInterrupts'])
     
     def cmd_clearTxInterrupts(self,params):
         '''emulates
            void uart_clearTxInterrupts()'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_clearTxInterrupts')
         
-        raise NotImplementedError()
+        # update variables
+        self.txInterruptFlag      = False
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_uart_clearTxInterrupts'])
     
     def cmd_writeByte(self,params):
         '''emulates
            void uart_writeByte(uint8_t byteToWrite)'''
         
-        # log the activity
-        self.log.debug('cmd_writeByte')
+        # unpack the parameters
+        (self.lastTxChar,)        = struct.unpack('<c', params)
         
-        raise NotImplementedError()
+        # log the activity
+        self.log.debug('cmd_writeByte lastTxChar='+str(self.lastTxChar))
+        
+        #print self.lastTxChar
+        
+        # set tx interrupt flag
+        self.txInterruptFlag      = True
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_uart_writeByte'])
     
     def cmd_readByte(self,params):
         '''emulates
