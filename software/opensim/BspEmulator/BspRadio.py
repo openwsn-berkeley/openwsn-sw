@@ -102,8 +102,12 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_startTimer')
         
-        # defer to radiotimer emulated BSPc(which sends answer)
-        self.motehandler.bspRadiotimer.cmd_start(params)
+        # defer to radiotimer
+        params = self.motehandler.bspRadiotimer.cmd_start(params,True)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_startTimer'],
+                                     params)
     
     def cmd_getTimerValue(self,params):
         '''emulates
@@ -112,8 +116,12 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_getTimerValue')
         
-        # defer to radiotimer emulated BSPc(which sends answer)
-        self.motehandler.bspRadiotimer.cmd_getValue(params)
+        # defer to radiotimer
+        params = self.motehandler.bspRadiotimer.cmd_getValue(params,True)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_getTimerValue'],
+                                     params)
     
     def cmd_setTimerPeriod(self,params):
         '''emulates
@@ -122,8 +130,12 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_setTimerPeriod')
         
-        # defer to radiotimer emulated BSPc(which sends answer)
-        self.motehandler.bspRadiotimer.cmd_setPeriod(params)
+        # defer to radiotimer
+        params = self.motehandler.bspRadiotimer.cmd_setPeriod(params,True)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_setTimerPeriod'],
+                                     params)
     
     def cmd_getTimerPeriod(self,params):
         '''emulates
@@ -132,8 +144,12 @@ class BspRadio(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_getTimerPeriod')
         
-        # defer to radiotimer emulated BSPc(which sends answer)
-        self.motehandler.bspRadiotimer.cmd_getPeriod(params)
+        # defer to radiotimer
+        params = self.motehandler.bspRadiotimer.cmd_getPeriod(params,True)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_getTimerPeriod'],
+                                     params)
     
     def cmd_setFrequency(self,params):
         '''emulates
@@ -295,6 +311,9 @@ class BspRadio(BspModule.BspModule):
         
         # change state
         self._changeState(RadioState.LISTENING)
+        
+        # respond
+        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rxNow'])
     
     def cmd_getReceivedFrame(self,params):
         '''emulates

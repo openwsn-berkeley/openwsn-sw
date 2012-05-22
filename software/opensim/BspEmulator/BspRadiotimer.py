@@ -10,6 +10,7 @@ class BspRadiotimer(BspModule.BspModule):
     
     INTR_COMPARE  = 'radiotimer.compare'
     INTR_OVERFLOW = 'radiotimer.overflow'
+    PERIOD        = 32768
     
     def __init__(self,engine,motehandler):
         
@@ -48,7 +49,7 @@ class BspRadiotimer(BspModule.BspModule):
         # respond
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_init'])
     
-    def cmd_start(self,params):
+    def cmd_start(self,params,internal=False):
         '''emulates
            void radiotimer_start(uint16_t period)'''
         
@@ -74,9 +75,12 @@ class BspRadiotimer(BspModule.BspModule):
         self.running         = True
         
         # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_start'])
+        if internal:
+            return []
+        else:
+            self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_start'])
     
-    def cmd_getValue(self,params):
+    def cmd_getValue(self,params,internal=False):
         '''emulates
            uint16_t radiotimer_getValue()'''
         
@@ -85,16 +89,41 @@ class BspRadiotimer(BspModule.BspModule):
         
         raise NotImplementedError()
     
-    def cmd_setPeriod(self,params):
+    def cmd_setPeriod(self,params,internal=False):
         '''emulates
            void radiotimer_setPeriod(uint16_t period)'''
         
-        # log the activity
-        self.log.debug('cmd_setPeriod')
+        # unpack the parameters
+        (self.period,)       = struct.unpack('<H', params)
         
-        raise NotImplementedError()
+        # log the activity
+        self.log.debug('cmd_setPeriod period='+str(self.period))
+        
+        # how many ticks since last reset
+        ticksSinceReset      = self.hwCrystal.getTicksSince(self.timeLastReset)
+        
+        # calculate time at overflow event (in 'period' ticks)
+        if ticksSinceReset<self.period:
+            ticksBeforeEvent = self.period-ticksSinceReset
+        else:
+            ticksBeforeEvent = self.PERIOD-ticksSinceReset+self.period
+        
+        # calculate time at overflow event (in 'period' ticks)
+        overflowTime         = self.hwCrystal.getTimeIn(ticksBeforeEvent)
+        
+        # schedule overflow event
+        self.timeline.scheduleEvent(overflowTime,
+                                    self.motehandler.getId(),
+                                    self.intr_overflow,
+                                    self.INTR_OVERFLOW)
+        
+        # respond
+        if internal:
+            return []
+        else:
+            self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_setPeriod'])
     
-    def cmd_getPeriod(self,params):
+    def cmd_getPeriod(self,params,internal=False):
         '''emulates
            uint16_t radiotimer_getPeriod()'''
         
