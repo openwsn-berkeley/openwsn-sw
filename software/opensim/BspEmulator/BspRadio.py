@@ -324,6 +324,9 @@ class BspRadio(BspModule.BspModule):
                                        uint8_t* pLqi,
                                        uint8_t* pCrc)'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_getReceivedFrame')
         
