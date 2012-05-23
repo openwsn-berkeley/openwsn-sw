@@ -4,6 +4,7 @@ from SimWindow   import SimWindow
 import SimTimebar
 import SimTabcontainer
 import SimTabBoot
+import SimTabStats
 import SimTabAbout
 
 class SimGui(object):
@@ -21,6 +22,10 @@ class SimGui(object):
         self.tabboot = SimTabBoot.SimTabBoot(self.tabcontainer.getContainer(),
                                              self.engine)
         self.tabcontainer.addTab(self.tabboot)
+        
+        self.tabstats = SimTabStats.SimTabStats(self.tabcontainer.getContainer(),
+                                                self.engine)
+        self.tabcontainer.addTab(self.tabstats)
         
         self.tababout = SimTabAbout.SimTabAbout(self.tabcontainer.getContainer())
         self.tabcontainer.addTab(self.tababout)

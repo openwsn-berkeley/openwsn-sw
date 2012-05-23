@@ -6,6 +6,17 @@ import threading
 class NullLogHandler(logging.Handler):
     def emit(self, record):
         pass
+
+class TimeLineStats(object):
+    
+    def __init__(self):
+        self.numEvents  = 0
+        
+    def incrementEvents(self):
+        self.numEvents += 1
+    
+    def getNumEvents(self):
+        return self.numEvents
         
 class TimeLineEvent(object):
     
@@ -36,6 +47,7 @@ class TimeLine(threading.Thread):
         self.firstEvent.acquire()
         self.moteBusy             = threading.Lock()
         self.moteBusy.acquire()
+        self.stats                = TimeLineStats()
         
         # logging
         self.log                  = logging.getLogger('Timeline')
@@ -61,6 +73,7 @@ class TimeLine(threading.Thread):
         # wait for the first event to be scheduled
         self.firstEvent.acquire()
         self.firstEventPassed = True
+        self.engine.indicateFirstEventPassed()
         
         # log
         self.log.debug('first event scheduled')
@@ -97,6 +110,9 @@ class TimeLine(threading.Thread):
             
             # wait for the mote to be done
             self.moteBusy.acquire()
+            
+            # update statistics
+            self.stats.incrementEvents()
             
             # apply the delay
             self.engine.pauseOrDelay()
@@ -194,6 +210,9 @@ class TimeLine(threading.Thread):
         
         # post the semaphore to timeline thread can go on
         self.moteBusy.release()
+    
+    def getStats(self):
+        return self.stats
     
     #======================== private =========================================
     

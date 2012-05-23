@@ -17,6 +17,27 @@ class NullLogHandler(logging.Handler):
     def emit(self, record):
         pass
 
+class SimEngineStats(object):
+    def __init__(self):
+        self.durationRunning = 0
+        self.running = False
+        self.txStart = None
+    
+    def indicateStart(self):
+        self.txStart = time.time()
+        self.running = True
+    
+    def indicateStop(self):
+        if self.txStart:
+            self.durationRunning += time.time()-self.txStart
+            self.running = False
+    
+    def getDurationRunning(self):
+        if self.running:
+            return self.durationRunning+(time.time()-self.txStart)
+        else:
+            return self.durationRunning
+
 class SimEngine(object):
     '''
     \brief The main simulation engine.
@@ -37,6 +58,7 @@ class SimEngine(object):
         self.isPaused             = False
         self.stopAfterSteps       = None
         self.delay                = 0
+        self.stats                = SimEngineStats()
         
         # create daemon thread to handle connection of newly created motes
         self.daemonThreadHandler  = DaemonThread.DaemonThread(self)
@@ -82,6 +104,7 @@ class SimEngine(object):
         if not self.isPaused:
             self.pauseSem.acquire()
             self.isPaused = True
+            self.stats.indicateStop()
     
     def step(self,numSteps):
         self.stopAfterSteps = numSteps
@@ -94,6 +117,7 @@ class SimEngine(object):
         if self.isPaused:
             self.pauseSem.release()
             self.isPaused = False
+            self.stats.indicateStart()
     
     def pauseOrDelay(self):
         if self.isPaused:
@@ -118,6 +142,11 @@ class SimEngine(object):
         # add this mote to my list of motes
         self.moteHandlers.append(moteHandler)
     
+    #=== called from timeline
+    
+    def indicateFirstEventPassed(self):
+        self.stats.indicateStart()
+    
     #=== getting information about the system
     
     def getNumMotes(self):
@@ -125,6 +154,9 @@ class SimEngine(object):
     
     def getMoteHandler(self,rank):
         return self.moteHandlers[rank]
+    
+    def getStats(self):
+        return self.stats
     
     #======================== private =========================================
     

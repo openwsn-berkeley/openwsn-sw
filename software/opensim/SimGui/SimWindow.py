@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import sys
 import Tkinter
 from SimStyle import SimStyle
 import sim_version

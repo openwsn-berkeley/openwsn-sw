@@ -17,7 +17,7 @@ class SimTabBoot(SimTab.SimTab):
         self.lines = []
         
         # init parent
-        SimTab.SimTab.__init__(self,container,'load')
+        SimTab.SimTab.__init__(self,container,'boot')
         
         self.after(self.UPDATEPERIOD,self._updateGui)
     

@@ -50,6 +50,9 @@ class SimTimebar(SimFrame.SimFrame):
         self.startstopButton.configure(command=self._pauseButtonPressed)
     
     def _updateCurrenttime(self):
+        
+        # update the current time label
         self.currentTimeLabel.configure(text='currentTime={0:.3f}'.format(self.engine.timeline.getCurrentTime()))
         
+        # schedule the next update
         self.currentTimeLabel.after(self.TIMELABEL_UPDATE_PERIOD,self._updateCurrenttime)
