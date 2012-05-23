@@ -37,11 +37,11 @@ class BspRadiotimer(BspModule.BspModule):
         '''emulates
            void radiotimer_init()'''
         
-        # log the activity
-        self.log.debug('cmd_init')
-        
         # make sure length of params is expected
         assert(len(params)==0)
+        
+        # log the activity
+        self.log.debug('cmd_init')
         
         # remember that module has been intialized
         self.isInitialized = True
@@ -84,10 +84,25 @@ class BspRadiotimer(BspModule.BspModule):
         '''emulates
            uint16_t radiotimer_getValue()'''
         
+        # make sure length of params is expected
+        assert(len(params)==0)
+        
         # log the activity
         self.log.debug('cmd_getValue')
         
-        raise NotImplementedError()
+        # get current counter value
+        counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
+        
+        # respond
+        params = []
+        for i in struct.pack('<H',counterVal):
+            params.append(ord(i))
+        # respond
+        if internal:
+            return params
+        else:
+            self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_getValue'],
+                                     params)
     
     def cmd_setPeriod(self,params,internal=False):
         '''emulates
@@ -130,7 +145,16 @@ class BspRadiotimer(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_getPeriod')
         
-        raise NotImplementedError()
+        # respond
+        params = []
+        for i in struct.pack('<H',self.period):
+            params.append(ord(i))
+        # respond
+        if internal:
+            return params
+        else:
+            self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_getPeriod'],
+                                     params)
     
     def cmd_schedule(self,params):
         '''emulates

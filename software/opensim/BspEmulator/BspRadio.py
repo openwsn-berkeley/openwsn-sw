@@ -212,6 +212,9 @@ class BspRadio(BspModule.BspModule):
         '''emulates
            void radio_loadPacket(uint8_t* packet, uint8_t len)'''
         
+        # make sure length of params is expected
+        assert(len(params)==127+1)
+        
         # log the activity
         self.log.debug('cmd_loadPacket len={0}'.format(len(params)))
         
@@ -219,10 +222,17 @@ class BspRadio(BspModule.BspModule):
         self._changeState(RadioState.LOADING_PACKET)
         
         # update local variable
+        length = ord(params[0])
+        print length
+        
         self.txBuf = []
-        self.txBuf.append(len(params))
-        for c in params:
-            self.txBuf.append(ord(c))
+        self.txBuf.append(length)
+        for i in range(1,length+1):
+            self.txBuf.append(ord(params[i]))
+        output = ''
+        for c in self.txBuf:
+            output += ' %.2x'%c
+        print output
         
         # log
         self.log.debug('txBuf={0}'.format(self.txBuf))
@@ -336,7 +346,7 @@ class BspRadio(BspModule.BspModule):
         while len(params)<128:
             params.append(0)
         # uint8_t len;
-        params.append(len(self.rxBuf))
+        params.append(len(self.rxBuf)-1)
         # int8_t rssi;
         for i in struct.pack('<b',self.rssi):
             params.append(ord(i))

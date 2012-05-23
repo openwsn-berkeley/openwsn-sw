@@ -2,6 +2,7 @@
 
 import struct
 import BspModule
+import serial
 
 class BspUart(BspModule.BspModule):
     '''
@@ -15,6 +16,7 @@ class BspUart(BspModule.BspModule):
         self.motehandler          = motehandler
         
         # local variables
+        #self.serialHandler        = serial.Serial('\\\\.\\CNCA0',baudrate=115200)
         self.interruptsEnabled    = False
         self.txInterruptFlag      = False
         self.rxInterruptFlag      = False
@@ -116,7 +118,8 @@ class BspUart(BspModule.BspModule):
         # log the activity
         self.log.debug('cmd_writeByte lastTxChar='+str(self.lastTxChar))
         
-        #print self.lastTxChar
+        # write to serial port
+        #self.serialHandler.write(self.lastTxChar)
         
         # set tx interrupt flag
         self.txInterruptFlag      = True
