@@ -334,7 +334,7 @@ class MoteHandler(threading.Thread):
         dataToSend += chr(commandId)
         for c in params:
             dataToSend += chr(c)
-        self.conn.send(dataToSend)
+        self.conn.sendall(dataToSend)
     
     #======================== private =========================================
     
