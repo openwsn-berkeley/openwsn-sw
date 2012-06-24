@@ -12,6 +12,8 @@ class openTranslator:
       filename = os.getcwd().split(os.sep)
       filename.pop()
       filename.pop()
+      filename.pop()
+      filename.pop()
       filename.append("firmware")
       filename.append("openos")
       filename.append("openwsn")
@@ -67,7 +69,7 @@ class openTranslator:
                   
                   self.errorCodes[int(match.group(2).strip(),16)] = errArray
       except:
-           print "Error reading openwsn.h. Tried reading: " +  str.join(os.sep, file)
+           print "Error reading openwsn.h. Tried reading {0}".format('/'.join(filename))
       
    def translateIEEE802154EState(sefl,state):
       if   (state== 0): return "S_SYNCHRONIZING"

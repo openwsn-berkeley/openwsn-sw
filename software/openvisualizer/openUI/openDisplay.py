@@ -2,9 +2,8 @@ import os, threading, datetime, sys
 import Tkinter
 import socket
 import binascii
-
-import openRecord
-import shared
+from processing import shared
+from processing import openRecord
 
 #========================= variables ==============================================================
 

@@ -1,6 +1,6 @@
 import os
 import sys
-import shared
+from processing import shared
 import threading
 import serial
 import socket

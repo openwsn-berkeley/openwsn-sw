@@ -1,7 +1,7 @@
 import sys
 
 from openTranslator import openTranslator
-import openDisplay
+from openUI         import openDisplay
 import shared
 import struct
 
