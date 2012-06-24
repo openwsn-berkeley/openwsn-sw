@@ -12,7 +12,7 @@ log = logging.getLogger('moteProbeUtils')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-def findSerialPortsNames():
+def findSerialPorts():
     '''
     \brief Return the names of the serial ports a mote is connected to.
     

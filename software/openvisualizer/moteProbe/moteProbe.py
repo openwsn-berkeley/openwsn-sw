@@ -12,24 +12,24 @@ log.addHandler(NullHandler())
 
 class moteProbe(object):
     
-    def __init__(self,serialport,socketport):
+    def __init__(self,serialport,tcpport):
         
         # log
         log.debug("create instance")
         
         # store params
         self.serialport = serialport
-        self.socketport = socketport
+        self.tcpport    = tcpport
         
         # log
         log.info("creating moteProbe attaching to {0}, listening to TCP port {1}".format(
                     self.serialport,
-                    self.socketport)
+                    self.tcpport)
                 )
         
         # declare serial and socket threads
         self.serialThread = moteProbeSerialThread.moteProbeSerialThread(self.serialport)
-        self.socketThread = moteProbeSocketThread.moteProbeSocketThread(self.socketport)
+        self.socketThread = moteProbeSocketThread.moteProbeSocketThread(self.tcpport)
         
         # inform one of another
         self.serialThread.setOtherThreadHandler(self.socketThread)
@@ -38,6 +38,13 @@ class moteProbe(object):
         # start threads
         self.serialThread.start()
         self.socketThread.start()
+    
+    #======================== public ==========================================
+    
+    def getTcpPort(self):
+        return self.tcpport
+    
+    #======================== private =========================================
 
 '''
 if this module is run by itself (i.e. not imported from OpenVisualizer),
