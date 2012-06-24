@@ -1,10 +1,21 @@
 import threading
 import socket
 
+import logging
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log = logging.getLogger('moteProbeSocketThread')
+log.setLevel(logging.ERROR)
+log.addHandler(NullHandler())
+
 class moteProbeSocketThread(threading.Thread):
     
     def __init__(self,socketport):
-    
+        
+        # log
+        log.debug("create instance")
+        
         # store params
         self.socketport      = socketport
         
@@ -20,6 +31,9 @@ class moteProbeSocketThread(threading.Thread):
     
     def run(self):
         
+        # log
+        log.debug("start running")
+        
         # attach to a socket on all interfaces of the computer
         self.socket.bind(('',self.socketport))
         
@@ -30,18 +44,20 @@ class moteProbeSocketThread(threading.Thread):
             # wait for OpenVisualizer to connect
             self.conn,self.addr = self.socket.accept()
             
-            # TODO log
-            print datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+': openVisualizer connection from '+str(self.addr)
+            # log
+            log.info("openVisualizer connection from {0}".format(self.addr))
             
             # read data sent from OpenVisualizer
             while True:
+                
                 try:
                     bytesReceived = self.conn.recv(4096)
                     self.otherThreadHandler.send(bytesReceived)
-                except socket.error:
+                except socket.error as err:
                 
-                    # TODO log
-                    print datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+': openVisualizer disconnected'
+                    # log
+                    log.info("openVisualizer disconnected")
+                    
                     self.conn = None
                     break
     

@@ -1,9 +1,20 @@
 import threading
 import serial
 
+import logging
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log = logging.getLogger('moteProbeSerialThread')
+log.setLevel(logging.ERROR)
+log.addHandler(NullHandler())
+
 class moteProbeSerialThread(threading.Thread):
 
     def __init__(self,serialport):
+        
+        # log
+        log.debug("create instance")
         
         # store params
         self.serialport           = serialport
@@ -22,14 +33,18 @@ class moteProbeSerialThread(threading.Thread):
         self.name                 = 'moteProbeSerialThread@'+self.serialport
     
     def run(self):
-        while True:    # open serial port
+        
+        # log
+        log.debug("start running")
+    
+        while True:     # open serial port
+            log.debug("open serial port")
             self.serial = serial.Serial(self.serialport,baudrate=115200)
             while True: # read bytes from serial port
                 try:
                     char = self.serial.read(1)
-                except:
-                    err = sys.exc_info()
-                    sys.stderr.write( "ERROR moteProbeSerialThread: %s (%s) \n" % (str(err[0]), str(err[1])))
+                except Exception as err:
+                    log.warning(err)
                     time.sleep(1)
                     break
                 else:
@@ -63,7 +78,7 @@ class moteProbeSerialThread(threading.Thread):
                                 # send to other thread
                                 self.otherThreadHandler.send(self.serialInput)
                     else:
-                        print 'ERROR [moteProbeSerialThread]: invalid state='+state
+                        raise SystemError("invalid state {0}".format(state))
     
     #======================== public ==========================================
     
@@ -74,7 +89,7 @@ class moteProbeSerialThread(threading.Thread):
         self.serialOutputLock.acquire()
         self.serialOutput += 'D'+ chr(len(self.serialOutput)) + bytesToSend
         if len(self.serialOutput)>200:
-            print 'WARNING [moteProbeSerialThread@'+self.serialport+'] serialOutput overflowing ('+str(len(self.serialOutput))+' bytes)'
+            log.warning("serialOutput overflowing ({0} bytes)".format(len(self.serialOutput)))
         self.serialOutputLock.release()
     
     #======================== private =========================================
