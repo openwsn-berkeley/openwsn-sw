@@ -2,12 +2,12 @@ import sys
 import os
 sys.path.insert(0, os.path.join(sys.path[0], '..', '..'))
 
-from moteProbe  import moteProbe
-#from lbrClient  import lbrClient
-from processing import shared
-from processing import moteConnector
-#from processing import openRecord
-#from openUI     import openDisplay
+from moteProbe     import moteProbe
+#from lbrClient     import lbrClient
+from processing    import shared
+from moteConnector import moteConnector
+#from processing    import openRecord
+#from openUI        import openDisplay
 
 def main():
     
