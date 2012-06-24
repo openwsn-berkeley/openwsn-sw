@@ -56,7 +56,8 @@ if __name__ == '__main__':
     logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
     for loggerName in ['moteProbe',
                        'moteProbeSerialThread',
-                       'moteProbeSocketThread']:
+                       'moteProbeSocketThread',
+                       'moteProbeUtils']:
         temp = logging.getLogger(loggerName)
         temp.setLevel(logging.DEBUG)
         temp.addHandler(logHandler)

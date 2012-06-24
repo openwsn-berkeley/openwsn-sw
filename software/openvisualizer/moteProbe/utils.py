@@ -1,8 +1,16 @@
 import os
-if os.name=='nt':       #windows
+if os.name=='nt':       # Windows
    import _winreg as winreg
-elif os.name=='posix':  #linux
+elif os.name=='posix':  # Linux
    import glob
+
+import logging
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log = logging.getLogger('moteProbeUtils')
+log.setLevel(logging.ERROR)
+log.addHandler(NullHandler())
 
 def findSerialPortsNames():
     '''
@@ -26,4 +34,8 @@ def findSerialPortsNames():
     elif os.name=='posix':
         serialport_names = glob.glob('/dev/ttyUSB*')
     serialport_names.sort()
+    
+    # log
+    log.debug("discovered following COM port: {0}".format(serialport_names))
+    
     return serialport_names
