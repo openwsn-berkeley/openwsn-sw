@@ -2,8 +2,12 @@ import sys
 import os
 sys.path.insert(0, os.path.join(sys.path[0], '..', '..'))
 
+import logging
+import logging.handlers
+
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
+from moteState     import moteState
 #from lbrClient     import lbrClient
 #from processing    import openRecord
 #from openUI        import openDisplay
@@ -31,6 +35,9 @@ def main():
     
     #===== moteState
     
+    for temp_moteConnector in moteConnector_handlers:
+       moteState_handlers.append(moteState.moteState(temp_moteConnector))
+    
     '''
     # create a recordElement and a displayElement for each motePortNetworkThread
     for key,value in shared.moteConnectors.iteritems():
@@ -41,11 +48,30 @@ def main():
     shared.lbrClientThread = lbrClient.lbrClientThread(shared.lbrFrame,
                                                        openDisplay.tkSemaphore)
     '''
-    # start moteConnectors, then lbrClient, then GUI (moteProbe are already started)
+    
+    # start threads
     for temp_moteConnector in moteConnector_handlers:
        temp_moteConnector.start()
     #shared.lbrClientThread.start()
     #openDisplay.startGUI()
+
+#============================ logging =========================================
+
+#============================ logging =========================================
+
+logHandler = logging.handlers.RotatingFileHandler('openVisualizes.log',
+                                               maxBytes=2000000,
+                                               backupCount=5,
+                                               mode='w'
+                                               )
+logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
+for loggerName in ['moteProbe',
+                   'moteConnector',
+                   'moteState',
+                   ]:
+    temp = logging.getLogger(loggerName)
+    temp.setLevel(logging.DEBUG)
+    temp.addHandler(logHandler)
     
 if __name__=="__main__":
     main()

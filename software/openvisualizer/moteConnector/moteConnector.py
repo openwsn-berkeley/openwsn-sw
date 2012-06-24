@@ -20,6 +20,8 @@ class moteConnector(threading.Thread):
         
         # local variables
         self.socket               = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.dataLock             = threading.Lock()
+        self.registrees           = []
         
         # log
         log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
@@ -38,14 +40,29 @@ class moteConnector(threading.Thread):
             try:
                 self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
                 while True:
-                    input = self.socket.recv(1024)
-                    print "TODO pass to openRecord"
-                    #openRecord.parseInput((self.moteProbeIp,self.moteProbeTcpPort),input)
+                    # retrieve the string of bytes from the socket
+                    inputString   = self.socket.recv(1024)
+                    
+                    # convert to a byte array
+                    input         = [ord(c) for c in inputString]
+                    
+                    # parse input
+                    parsedInput   = 
+                    
+                    # inform all registrees
+                    for registree in self.registrees:
+                        registree(input)
+                    
             except socket.error as err:
                 log.error(err)
                 pass
     
     #======================== public ==========================================
+    
+    def register(self,cb):
+        self.dataLock.acquire()
+        self.registrees.append(cb)
+        self.dataLock.release()
     
     def write(self,stringToWrite):
         try:

@@ -42,7 +42,7 @@ def parseInput(motePort,input):
    while True:
       if (len(input)<1):
          return
-      #byte 0 is the type of status message
+      #byte 0 is the type of message
       if   (input[0]=="S"):    #status
          if (len(input)<4):
             if (printParsingErrors):
