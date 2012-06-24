@@ -1,6 +1,8 @@
 import threading
 import socket
-#from   processing import openRecord
+
+import Parser
+import ParserException
 
 import logging
 class NullHandler(logging.Handler):
@@ -20,6 +22,7 @@ class moteConnector(threading.Thread):
         
         # local variables
         self.socket               = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.parser               = Parser.Parser()
         self.dataLock             = threading.Lock()
         self.registrees           = []
         
@@ -47,11 +50,17 @@ class moteConnector(threading.Thread):
                     input         = [ord(c) for c in inputString]
                     
                     # parse input
-                    parsedInput   = 
+                    try:
+                        parsedInput   = self.parser.parseInput(input)
+                    except ParserException as err:
+                        # log
+                        log.warning(str(err))
+                        # report as parsedInput
+                        parsedInput = err
                     
                     # inform all registrees
                     for registree in self.registrees:
-                        registree(input)
+                        registree(parsedInput)
                     
             except socket.error as err:
                 log.error(err)
