@@ -1,8 +1,9 @@
 import threading
 import socket
 
-import Parser
+import OpenParser
 import ParserException
+
 
 import logging
 class NullHandler(logging.Handler):
@@ -22,7 +23,7 @@ class moteConnector(threading.Thread):
         
         # local variables
         self.socket               = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.parser               = Parser.Parser()
+        self.parser               = OpenParser.OpenParser()
         self.dataLock             = threading.Lock()
         self.registrees           = []
         
@@ -44,19 +45,22 @@ class moteConnector(threading.Thread):
                 self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
                 while True:
                     # retrieve the string of bytes from the socket
-                    inputString   = self.socket.recv(1024)
+                    inputString        = self.socket.recv(1024)
                     
                     # convert to a byte array
-                    input         = [ord(c) for c in inputString]
+                    input              = [ord(c) for c in inputString]
+                    
+                    # log
+                    log.debug("received input={0}".format(input))
                     
                     # parse input
                     try:
-                        parsedInput   = self.parser.parseInput(input)
+                        parsedInput    = self.parser.parseInput(input)
                     except ParserException as err:
                         # log
                         log.warning(str(err))
                         # report as parsedInput
-                        parsedInput = err
+                        parsedInput    = err
                     
                     # inform all registrees
                     for registree in self.registrees:
