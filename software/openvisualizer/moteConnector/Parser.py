@@ -17,16 +17,16 @@ class ParsingKey(object):
         assert(val!=None)
         assert(parser!=None)
         
-        self.index  = index
-        self.val    = val
-        self.parser = parser
+        self.index      = index
+        self.val        = val
+        self.parser     = parser
     
     def __str__(self):
-        template = "{0}={1}"
-        output  = []
-        output += [template.format("index", self.index)]
-        output += [template.format("val",   self.val)]
-        output += [template.format("parser",self.parser)]
+        template        = "{0}={1}"
+        output          = []
+        output         += [template.format("index", self.index)]
+        output         += [template.format("val",   self.val)]
+        output         += [template.format("parser",self.parser)]
         return ' '.join(output)
 
 class Parser(object):
@@ -37,10 +37,11 @@ class Parser(object):
         log.debug("create instance")
         
         # store params
-        self.headerLength    = headerLength
+        self.headerLength         = headerLength
         
         # local variables
-        self.parsingKeys     = []
+        self.parsingKeys          = []
+        self.headerParsingKeys    = []
     
     #======================== public ==========================================
     
