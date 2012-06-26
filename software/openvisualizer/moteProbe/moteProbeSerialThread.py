@@ -23,8 +23,11 @@ class moteProbeSerialThread(threading.Thread):
         self.serialInput          = ''
         self.serialOutput         = ''
         self.serialOutputLock     = threading.Lock()
-        self.state                = 'WAIT_HEADER'
+        self.state                = 'HDLC_DONE_RECEIVING'
+		self.isStuffing           = False
         self.numdelimiter         = 0
+		self.crc                  = 0
+		self.fcs                  = 0 #crc is the one I get from the packet and fcs is the one I compute here
         
         # initialize the parent class
         threading.Thread.__init__(self)
@@ -48,38 +51,40 @@ class moteProbeSerialThread(threading.Thread):
                     time.sleep(1)
                     break
                 else:
-                    if    self.state == 'WAIT_HEADER':
-                        if char == '^':
-                            self.numdelimiter     += 1
-                        else:
-                            self.numdelimiter      = 0
-                        if self.numdelimiter==3:
-                            self.state             = 'RECEIVING_COMMAND'
-                            self.serialInput       = ''
-                            self.numdelimiter      = 0
-                    elif self.state == 'RECEIVING_COMMAND':
-                        self.serialInput = self.serialInput+char
-                        if char == '$':
-                            self.numdelimiter     += 1
-                        else:
-                            self.numdelimiter      = 0
-                        if self.numdelimiter==3:
-                            self.state             = 'WAIT_HEADER'
-                            self.numdelimiter      = 0
-                            self.serialInput       = self.serialInput.rstrip('$')
-                            #byte 0 is the type of status message
-                            if self.serialInput[0]=="R":     #request for data
-                                if (ord(self.serialInput[1])==200):  # byte 1 indicates free space in mote's input buffer
-                                    self.serialOutputLock.acquire()
-                                    self.serial.write(self.serialOutput)
-                                    self.serialOutput = ''
-                                    self.serialOutputLock.release()
-                            else:
-                                # send to other thread
-                                self.otherThreadHandler.send(self.serialInput)
+					if char == chr(0x7e):
+                        self.numdelimiter     += 1
+							
                     else:
-                        raise SystemError("invalid state {0}".format(state))
-    
+                        self.numdelimiter      = 0
+                    if (self.numdelimiter==1 and self.state == 'HDLC_DONE_RECEIVING'): #means we're just starting
+                        self.state             = 'HDLC_RECEIVING'
+                        self.serialInput       = ''
+                        self.numdelimiter      = 0
+                    elif (self.numdelimiter==0 and self.state == 'HDLC_RECEIVING'):
+						if (self.isStuffing ==True and char==chr(0x5e)):#0x5e
+							self.serialInput = self.serialInput+chr(0x7e)
+						elif (self.isStuffing ==True and char==chr(0x5d)):#0x5d
+							#do nothing; ignore this byte
+						else:
+							self.serialInput = self.serialInput+char
+					elif (self.numdelimiter==1 and  self.state == 'HDLC_RECEIVING'):#means we're done
+						self.state             = 'HDLC_DONE_RECEIVING'
+						#NOW DO THE CRC AND CALLBACK
+						fcs_calc(self,self.serialInput)
+						self.crc = self.serialInput[len(self.serialInput)-2] + (self.serialInput[len(self.serialInput)-1]<<8)
+						if self.crc == self.fcs:
+							self.serialInput = self.serialInput[0:-2]#remove the crc bytes
+							print(self.serialInput) #here do the appropriate action
+						else
+							#complain about bad crc
+							print('bad crc')
+						
+					#the next lines are for stuffing on the fly
+					if(char == chr(0x7d)):#0x7d
+						self.isStuffing = True
+					else:
+						self.isStuffing = False
+
     #======================== public ==========================================
     
     def setOtherThreadHandler(self,otherThreadHandler):
@@ -87,9 +92,45 @@ class moteProbeSerialThread(threading.Thread):
     
     def send(self,bytesToSend):
         self.serialOutputLock.acquire()
-        self.serialOutput += 'D'+ chr(len(self.serialOutput)) + bytesToSend
+        hdlcify(self,bytesToSend)
+		self.serialOutput = bytesToSend
         if len(self.serialOutput)>200:
             log.warning("serialOutput overflowing ({0} bytes)".format(len(self.serialOutput)))
         self.serialOutputLock.release()
     
     #======================== private =========================================
+	def fcs_calc(self,packet):
+		self.fcs = 65535 #0xffff
+		for count in range(len(packet)-2):
+			self.fcs=fcs_fcs16(self,packet[count])
+		self.fcs = ~self.fcs #one's complement
+			
+			
+	def fcs_fcs16(self,char):
+		v = (self.fcs ^ char) & 255;
+		for i in range(8):
+			v = ((v>>1)^0x8408) if (v&1) else (v>>1) #should it be v&&1??????
+		v = (self.fcs>>8)^v
+		return v
+		
+	def hdlcify(self,bytes):
+		#adding the frame check sequence
+		fcs_calc(self,bytes)
+		bytes = bytes + chr(self.fcs&0x00ff) + chr(self.fcs>>8)
+		#perform the stuffing
+		newbytes=''
+		counter = 0
+		for c in range(len(bytes)):
+			if bytes[counter]==chr(0x7e): #stuffing 7e
+				newbytes[counter]=chr(0x7d)
+				newbytes[counter+1]=chr(0x5e)
+				counter+=2
+			elif bytes[counter]==chr(0x7d): #stuffing 7d
+				newbytes[counter]=chr(0x7d)
+				newbytes[counter+1]=chr(0x5d)
+				counter+=2
+			else:
+				newbytes[counter] = bytes[counter]
+				counter+=1
+				
+		bytes = '~' + newbytes + '~' #add the first and last 7e
