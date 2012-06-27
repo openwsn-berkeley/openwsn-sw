@@ -4,7 +4,6 @@ import socket
 import OpenParser
 import ParserException
 
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -13,7 +12,16 @@ log = logging.getLogger('moteConnector')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+class moteConnectorRegistree(object):
+    def __init__(self,filter,cb):
+        self.filter = filter
+        self.cb     = cb
+
 class moteConnector(threading.Thread):
+    
+    TYPE_STATUS    = OpenParser.OpenParser.TYPE_STATUS
+    TYPE_ERROR     = OpenParser.OpenParser.TYPE_ERROR
+    TYPE_DATA      = OpenParser.OpenParser.TYPE_DATA
     
     def __init__(self,moteProbeIp,moteProbeTcpPort):
     
@@ -45,26 +53,29 @@ class moteConnector(threading.Thread):
                 self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
                 while True:
                     # retrieve the string of bytes from the socket
-                    inputString        = self.socket.recv(1024)
+                    inputString                  = self.socket.recv(1024)
                     
                     # convert to a byte array
-                    input              = [ord(c) for c in inputString]
+                    input                        = [ord(c) for c in inputString]
                     
                     # log
                     log.debug("received input={0}".format(input))
                     
                     # parse input
                     try:
-                        parsedInput    = self.parser.parseInput(input)
+                        (notifType,parsedNotif)  = self.parser.parseInput(input)
                     except ParserException as err:
                         # log
                         log.warning(str(err))
-                        # report as parsedInput
-                        parsedInput    = err
+                        # report as parsedNotif
+                        parsedNotif    = err
                     
                     # inform all registrees
+                    self.dataLock.acquire()
                     for registree in self.registrees:
-                        registree(parsedInput)
+                        if notifType in registree.filter:
+                            registree.cb(parsedNotif)
+                    self.dataLock.release()
                     
             except socket.error as err:
                 log.error(err)
@@ -72,9 +83,9 @@ class moteConnector(threading.Thread):
     
     #======================== public ==========================================
     
-    def register(self,cb):
+    def register(self,filter,cb):
         self.dataLock.acquire()
-        self.registrees.append(cb)
+        self.registrees.append(moteConnectorRegistree(filter,cb))
         self.dataLock.release()
     
     def write(self,stringToWrite):

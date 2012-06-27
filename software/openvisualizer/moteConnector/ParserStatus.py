@@ -223,7 +223,7 @@ class ParserStatus(Parser.Parser):
                 returnTuple = self.named_tuple[key.name](*fields)
                 
                 # log
-                log.debug("SUCCESS {0}".format(returnTuple))
+                log.debug("parsed into {0}".format(returnTuple))
                 
                 # map to name tuple
                 return returnTuple

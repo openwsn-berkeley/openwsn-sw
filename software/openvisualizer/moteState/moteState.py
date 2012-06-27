@@ -20,11 +20,16 @@ class moteState(object):
         # local variables
         
         # register with moteConnector
-        self.moteConnector.register(self.receivedData_notif)
+        self.moteConnector.register([self.moteConnector.TYPE_STATUS],
+                                    self.receivedData_notif)
     
     #======================== public ==========================================
     
-    def receivedData_notif(self,input):
-        print input
+    def receivedData_notif(self,notif):
+        
+        # log
+        log.debug("received {0}".format(notif))
+        
+        # TODO
     
     #======================== private =========================================
