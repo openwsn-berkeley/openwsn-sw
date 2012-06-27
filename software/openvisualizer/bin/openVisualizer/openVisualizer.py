@@ -59,7 +59,7 @@ def main():
 
 #============================ logging =========================================
 
-logHandler = logging.handlers.RotatingFileHandler('openVisualizes.log',
+logHandler = logging.handlers.RotatingFileHandler('openVisualizer.log',
                                                maxBytes=2000000,
                                                backupCount=5,
                                                mode='w'
@@ -68,6 +68,8 @@ logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] 
 for loggerName in ['moteProbe',
                    'moteConnector',
                    'OpenParser',
+                   'Parser',
+                   'ParserStatus',
                    'moteState',
                    ]:
     temp = logging.getLogger(loggerName)

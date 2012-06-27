@@ -75,7 +75,7 @@ if __name__ == '__main__':
     log.info(banner)
     
     # create and start mote probe instances
-    serialPortNames     = utils.findSerialPortsNames()
+    serialPortNames     = utils.findSerialPorts()
     port_numbers        = [8080+i for i in range(len(serialPortNames))]
     for (serialPortName,port_number) in zip(serialPortNames,port_numbers):
         moteProbe(serialPortName,port_number)

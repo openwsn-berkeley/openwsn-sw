@@ -14,11 +14,12 @@ import Parser
 
 class FieldParsingKey(object):
 
-    def __init__(self,index,val,structure,tuple):
+    def __init__(self,index,val,name,structure,fields):
         self.index      = index
         self.val        = val
+        self.name       = name
         self.structure  = structure
-        self.tuple      = tuple
+        self.fields     = fields
 
 class ParserStatus(Parser.Parser):
     
@@ -39,153 +40,189 @@ class ParserStatus(Parser.Parser):
         self._addFieldsParser   (
                                     3,
                                     0,
+                                    'IsSync',
                                     '<B',
-                                    collections.namedtuple(
-                                        'tuple_status_isSync',
-                                        [
-                                            'isSync',                          # B
-                                        ]
-                                    )
+                                    [
+                                        'isSync',                    # B
+                                    ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     1,
-                                    '<BBxHQHQ',
-                                    collections.namedtuple(
-                                        'tuple_status_idManager',
-                                        [
-                                            'isDAGroot',                       # B
-                                            'isBridge',                        # B
-                                                                               # x
-                                            'my16bID',                         # H
-                                            'my64bID',                         # Q
-                                            'myPANID',                         # H
-                                            'myPrefix',                        # Q
-                                        ]
-                                    )
+                                    'IdManager',
+                                    '<BBxHxxxxxxxxxxxxxxxQxxxxxxxxxHxxxxxxxxxxxxxxxQxxxxxxxx',
+                                    [
+                                        'isDAGroot',                 # B
+                                        'isBridge',                  # B
+                                                                     # x
+                                        'my16bID',                   # H
+                                                                     # xx xxxx xxxx xxxx
+                                                                     # x
+                                        'my64bID',                   # Q
+                                                                     #         xxxx xxxx
+                                                                     # x
+                                        'myPANID',                   # H
+                                                                     # xx xxxx xxxx xxxx
+                                                                     # x
+                                        'myPrefix',                  # Q
+                                                                     #         xxxx xxxx
+                                    ],
                                 )
         self._addFieldsParser   (   
                                     3,
                                     2,
+                                    'MyDagRank',
                                     '<B',
-                                    collections.namedtuple(
-                                        'tuple_status_myDagRank',
-                                        [
-                                            'myDAGrank',                       # B
-                                        ]
-                                    )
+                                    [
+                                        'myDAGrank',                 # B
+                                    ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     3,
+                                    'OutputBuffer',
                                     '<HH',
-                                    collections.namedtuple(
-                                        'tuple_status_outputBuffer',
-                                        [
-                                            'index_write',                     # H
-                                            'index_read',                      # H
-                                        ]
-                                    )
+                                    [
+                                        'index_write',               # H
+                                        'index_read',                # H
+                                    ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     4,
-                                    '<H',
-                                    collections.namedtuple(
-                                        'tuple_status_asn',
-                                        [
-                                            'asn',                             # H
-                                        ]
-                                    )
+                                    'Asn',
+                                    '<BHH',
+                                    [
+                                        'asn_4'                      # B
+                                        'asn_2_3'                    # H
+                                        'asn_0_1'                    # H
+                                    ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     5,
-                                    '<BxhhB',
-                                    collections.namedtuple(
-                                        'tuple_status_macStats',
-                                        [
-                                            'syncCounter',                     # B
-                                                                               # x
-                                            'minCorrection',                   # h
-                                            'maxCorrection',                   # h
-                                            'numDeSync'                        # B
-                                        ]
-                                    )
+                                    'MacStats',
+                                    '<BxhhBx',
+                                    [
+                                        'syncCounter',               # 1 B
+                                        'minCorrection',             # 2 h
+                                        'maxCorrection',             # 2 h
+                                                                     # 1 x
+                                        'numDeSync'                  # 1 B
+                                                                     # 1 x
+                                    ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     6,
-                                    '>xBBBBBBQxxxxxxxxBBB',
-                                    collections.namedtuple(
-                                        'tuple_status_scheduleRow',
-                                        [
-                                                                               # x
-                                            'type',                            # B
-                                            'shared',                          # B
-                                            'backoffExponent',                 # B
-                                            'backoff',                         # B
-                                            'channelOffset',                   # B
-                                            'addrType',                        # B
-                                            'neighbor',                        # Q
-                                                                               # xxxxxxx
-                                            'numRx',                           # B
-                                            'numTx',                           # B
-                                            'numTxACK'                         # B
-                                        ]
-                                    )
+                                    'ScheduleRow',
+                                    '>BHBBBBQxxxxxxxxBBBBBHHHxxxx',
+                                    [
+                                        'row',                       # B
+                                        'slotOffset',                # H 
+                                        'type',                      # B
+                                        'shared',                    # B
+                                        'channelOffset',             # B
+                                        'addrType',                  # B
+                                        'neighbor',                  # Q
+                                                                     # xxxxxxxx
+                                        'backoffExponent',           # B
+                                        'backoff',                   # B
+                                        'channelOffset',             # B
+                                        'numRx',                     # B
+                                        'lastUsedAsn_4'              # B
+                                        'lastUsedAsn_2_3'            # H
+                                        'lastUsedAsn_0_1'            # H
+                                        'next' ,                     # H
+                                                                     # xxxx
+                                    ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     7,
-                                    '<BB',
-                                    collections.namedtuple(
-                                        'tuple_status_queueRow',
-                                        [
-                                            'creator',                         # B
-                                            'owner',                           # B
-                                        ]
-                                    )
+                                    'QueueRow',
+                                    '<BBBBBBBBBBBBBBBBBBBB',
+                                    [
+                                        'creator_0',                 # B
+                                        'owner_0',                   # B
+                                        'creator_1',                 # B
+                                        'owner_1',                   # B
+                                        'creator_2',                 # B
+                                        'owner_2',                   # B
+                                        'creator_3',                 # B
+                                        'owner_3',                   # B
+                                        'creator_4',                 # B
+                                        'owner_4',                   # B
+                                        'creator_5',                 # B
+                                        'owner_5',                   # B
+                                        'creator_6',                 # B
+                                        'owner_6',                   # B
+                                        'creator_7',                 # B
+                                        'owner_7',                   # B
+                                        'creator_8',                 # B
+                                        'owner_8',                   # B
+                                        'creator_9',                 # B
+                                        'owner_9',                   # B
+                                    ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     8,
-                                    '>BBBBxQxxxxxxxxBbBBB',
-                                    collections.namedtuple(
-                                        'tuple_status_neighborsRow',
-                                        [
-                                            'rowNumber',                       # H
-                                            'used',                            # B
-                                            'parentPreference',                # B
-                                            'stableNeighbor',                  # B
-                                            'switchStabilityCounter',          # B
-                                                                               # x
-                                            'addr_64b',                        # Q
-                                                                               # xxxxxxx
-                                            'DAGrank',                         # B
-                                            'rssi',                            # b
-                                            'numRx',                           # B
-                                            'numTx',                           # B
-                                            'numTxACK',                        # B
-                                        ]
-                                    )
+                                    'NeighborsRow',
+                                    '>BBBBBxQxxxxxxxxBbBBBBHHxx',
+                                    [
+                                        'row',                       # B
+                                        'used',                      # B
+                                        'parentPreference',          # B
+                                        'stableNeighbor',            # B
+                                        'switchStabilityCounter',    # B
+                                                                     # x
+                                        'addr_64b',                  # Q
+                                                                     # xxxxxxx
+                                        'DAGrank',                   # B
+                                        'rssi',                      # b
+                                        'numRx',                     # B
+                                        'numTx',                     # B
+                                        'numTxACK',                  # B
+                                        'asn_4        '              # B
+                                        'asn_2_3'                    # H
+                                        'asn_0_1'                    # H
+                                                                     # xx
+                                    ],
                                 )
     
     #======================== public ==========================================
     
     def parseInput(self,input):
         
+        # log
+        log.debug("received input={0}".format(input))
+        
         # ensure input not short longer than header
         self._checkLength(input)
         
-        # parse the header
-        # TODO
+        # extract moteId and statusElem
+        (moteId,statusElem) = struct.unpack('<HB',''.join([chr(c) for c in input[:3]]))
+        input = input[3:]
+        
+        # log
+        log.debug("moteId={0} statusElem={1}".format(moteId,statusElem))
         
         # call the next header parser
         for key in self.fieldsParsingKeys:
-            if input[key.index]==key.val:
+            if statusElem==key.val:
+            
+                # log
+                log.debug("parsing {0} ({1} bytes) as {2}".format(input,len(input),key.name))
+                
+                # parse byte array
                 fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))
-                return key.tuple(*fields)
+                
+                # map to name tuple
+                # TODO
+                log.debug("SUCCESS {0}".format(fields))
+                
+                return None
         
         # if you get here, no key was found
         raise ParserException(ParserException.NO_KEY, "type={0} (\"{1}\")".format(
@@ -194,5 +231,5 @@ class ParserStatus(Parser.Parser):
     
     #======================== private =========================================
     
-    def _addFieldsParser(self,index=None,val=None,structure=None,tuple=None):
-        self.fieldsParsingKeys.append(FieldParsingKey(index,val,structure,tuple))
+    def _addFieldsParser(self,index=None,val=None,name=None,structure=None,fields=None):
+        self.fieldsParsingKeys.append(FieldParsingKey(index,val,name,structure,fields))

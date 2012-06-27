@@ -47,6 +47,9 @@ class Parser(object):
     
     def parseInput(self,input):
         
+        # log
+        log.debug("received input={0}".format(input))
+        
         # ensure input not short longer than header
         self._checkLength(input)
         
