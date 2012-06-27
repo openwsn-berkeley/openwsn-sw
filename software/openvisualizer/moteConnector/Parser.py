@@ -42,6 +42,7 @@ class Parser(object):
         # local variables
         self.parsingKeys          = []
         self.headerParsingKeys    = []
+        self.named_tuple          = {}
     
     #======================== public ==========================================
     

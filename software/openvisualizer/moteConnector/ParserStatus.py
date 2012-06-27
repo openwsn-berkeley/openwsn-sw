@@ -93,9 +93,9 @@ class ParserStatus(Parser.Parser):
                                     'Asn',
                                     '<BHH',
                                     [
-                                        'asn_4'                      # B
-                                        'asn_2_3'                    # H
-                                        'asn_0_1'                    # H
+                                        'asn_4',                     # B
+                                        'asn_2_3',                   # H
+                                        'asn_0_1',                   # H
                                     ],
                                 )
         self._addFieldsParser   (
@@ -116,7 +116,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '>BHBBBBQxxxxxxxxBBBBBHHHxxxx',
+                                    '>BHBBBBQxxxxxxxxBBBBBBHHHxxx',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
@@ -128,13 +128,14 @@ class ParserStatus(Parser.Parser):
                                                                      # xxxxxxxx
                                         'backoffExponent',           # B
                                         'backoff',                   # B
-                                        'channelOffset',             # B
                                         'numRx',                     # B
-                                        'lastUsedAsn_4'              # B
-                                        'lastUsedAsn_2_3'            # H
-                                        'lastUsedAsn_0_1'            # H
-                                        'next' ,                     # H
-                                                                     # xxxx
+                                        'numTx',                     # B
+                                        'numTxACK',                  # B
+                                        'lastUsedAsn_4',             # B
+                                        'lastUsedAsn_2_3',           # H
+                                        'lastUsedAsn_0_1',           # H
+                                        'next',                      # H
+                                                                     # xxx
                                     ],
                                 )
         self._addFieldsParser   (
@@ -178,15 +179,15 @@ class ParserStatus(Parser.Parser):
                                         'switchStabilityCounter',    # B
                                                                      # x
                                         'addr_64b',                  # Q
-                                                                     # xxxxxxx
+                                                                     # xxxxxxxx
                                         'DAGrank',                   # B
                                         'rssi',                      # b
                                         'numRx',                     # B
                                         'numTx',                     # B
                                         'numTxACK',                  # B
-                                        'asn_4        '              # B
-                                        'asn_2_3'                    # H
-                                        'asn_0_1'                    # H
+                                        'asn_4',                     # B
+                                        'asn_2_3',                   # H
+                                        'asn_0_1',                   # H
                                                                      # xx
                                     ],
                                 )
@@ -219,10 +220,13 @@ class ParserStatus(Parser.Parser):
                 fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))
                 
                 # map to name tuple
-                # TODO
-                log.debug("SUCCESS {0}".format(fields))
+                returnTuple = self.named_tuple[key.name](*fields)
                 
-                return None
+                # log
+                log.debug("SUCCESS {0}".format(returnTuple))
+                
+                # map to name tuple
+                return returnTuple
         
         # if you get here, no key was found
         raise ParserException(ParserException.NO_KEY, "type={0} (\"{1}\")".format(
@@ -232,4 +236,9 @@ class ParserStatus(Parser.Parser):
     #======================== private =========================================
     
     def _addFieldsParser(self,index=None,val=None,name=None,structure=None,fields=None):
+    
+        # add to fields parsing keys
         self.fieldsParsingKeys.append(FieldParsingKey(index,val,name,structure,fields))
+        
+        # define named tuple
+        self.named_tuple[name] = collections.namedtuple("Tuple_"+name, fields)
