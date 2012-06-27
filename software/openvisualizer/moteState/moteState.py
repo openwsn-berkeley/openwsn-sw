@@ -198,37 +198,5 @@ class moteState(object):
     
     #======================== private =========================================
     
-    #===== handlers
-    
-    def _handleOutputBuffer(self,notif):
-        print "TODO _handleOutputBuffer"
-    
-    def _handleAsn(self,notif):
-        print "TODO _handleAsn"
-    
-    def _handleMacStats(self,notif):
-        print "TODO _handleMacStats"
-    
-    def _handleScheduleRow(self,notif):
-        print "TODO _handleScheduleRow"
-    
-    def _handleQueueRow(self,notif):
-        print "TODO _handleQueueRow"
-    
-    def _handleNeighborsRow(self,notif):
-        print "TODO _handleNeighborsRow"
-    
-    def _handleIsSync(self,notif):
-        print "TODO _handleIsSync"
-    
-    def _handleIdManager(self,notif):
-        print "TODO _handleIdManager"
-    
-    def _handleMyDagRank(self,notif):
-        print "TODO _handleMyDagRank"
-    
-    
-    #===== helpers
-    
     def _isnamedtupleinstance(self,var,tupleInstance):
         return var._fields==tupleInstance._fields
