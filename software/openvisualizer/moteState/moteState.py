@@ -7,6 +7,7 @@ log = logging.getLogger('moteState')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+import copy
 import time
 import threading
 
@@ -196,6 +197,7 @@ class moteState(object):
         # log
         log.debug("received {0}".format(notif))
         
+        # lock the state data
         self.stateLock.acquire()
         
         # call handler
@@ -206,10 +208,20 @@ class moteState(object):
                 v(notif)
                 break
         
+        # unlock the state data
         self.stateLock.release()
         
         if found==False:
             raise SystemError("No handler for notif {0}".format(notif))
+    
+    def getStateElem(self,elemName):
+        assert(elemName in self.state)
+        
+        self.stateLock.acquire()
+        returnVal = copy.deepcopy(self.state)
+        self.stateLock.release()
+        
+        return returnVal
     
     #======================== private =========================================
     
