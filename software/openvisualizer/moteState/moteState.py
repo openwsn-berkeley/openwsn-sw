@@ -14,53 +14,57 @@ from moteConnector import ParserStatus
 
 class StateElem(object):
     def __init__(self):
-        self.numUpdates      = 0
+        self.numUpdates                = 0
     def update(self):
-        self.lastUpdated     = time.time()
-        self.numUpdates     += 1
+        self.lastUpdated               = time.time()
+        self.numUpdates               += 1
 
 class StateOutputBuffer(StateElem):
     def update(self,notif):
         StateElem.update(self)
-        self.index_write     = notif.index_write
-        self.index_read      = notif.index_read
+        self.index_write               = notif.index_write
+        self.index_read                = notif.index_read
 
 class StateAsn(StateElem):
     def update(self,notif):
         StateElem.update(self)
-        self.asn             = notif.asn_0_1<<12 + notif.asn_2_3<<4 + notif.asn_4
+        self.asn                       = notif.asn_0_1<<12 + \
+                                         notif.asn_2_3<<4  + \
+                                         notif.asn_4
 
 class StateMacStats(StateElem):
     def update(self,notif):
         StateElem.update(self)
-        self.syncCounter     = notif.syncCounter
-        self.minCorrection   = notif.minCorrection
-        self.maxCorrection   = notif.maxCorrection
-        self.numDeSync       = notif.numDeSync
+        self.syncCounter               = notif.syncCounter
+        self.minCorrection             = notif.minCorrection
+        self.maxCorrection             = notif.maxCorrection
+        self.numDeSync                 = notif.numDeSync
 
 class StateScheduleRow(StateElem):
 
     def update(self,notif):
         StateElem.update(self)
-        self.slotOffset      = notif.slotOffset
-        self.type            = notif.type
-        self.shared          = notif.shared
-        self.channelOffset   = notif.channelOffset
-        self.addrType        = notif.addrType
-        self.neighbor        = notif.neighbor
-        self.backoffExponent = notif.backoffExponent
-        self.backoff         = notif.backoff
-        self.numRx           = notif.numRx
-        self.numTx           = notif.numTx
-        self.numTxACK        = notif.numTxACK
-        self.lastUsedAsn     = notif.lastUsedAsn_0_1<<12 + notif.lastUsedAsn_2_3<<4 + notif.lastUsedAsn_4
+        self.slotOffset                = notif.slotOffset
+        self.type                      = notif.type
+        self.shared                    = notif.shared
+        self.channelOffset             = notif.channelOffset
+        self.addrType                  = notif.addrType
+        self.neighbor                  = notif.neighbor
+        self.backoffExponent           = notif.backoffExponent
+        self.backoff                   = notif.backoff
+        self.numRx                     = notif.numRx
+        self.numTx                     = notif.numTx
+        self.numTxACK                  = notif.numTxACK
+        self.lastUsedAsn               = notif.lastUsedAsn_0_1<<12 + \
+                                         notif.lastUsedAsn_2_3<<4  + \
+                                         notif.lastUsedAsn_4
 
 class StateQueueRow(StateElem):
     
     def update(self,creator,owner):
         StateElem.update(self)
-        self.creator         = creator
-        self.creator         = owner
+        self.creator                   = creator
+        self.creator                   = owner
 
 class StateQueue(StateElem):
     
@@ -88,44 +92,46 @@ class StateNeighborsRow(StateElem):
     
     def update(self,notif):
         StateElem.update(self)
-        self.used            = notif.used
+        self.used                      = notif.used
         self.parentPreference          = notif.parentPreference
-        self.stableNeighbor  = notif.stableNeighbor
+        self.stableNeighbor            = notif.stableNeighbor
         self.switchStabilityCounter    = notif.switchStabilityCounter
-        self.addr_64b        = notif.addr_64b
-        self.DAGrank         = notif.DAGrank
-        self.numRx           = notif.numRx
-        self.numTx           = notif.numTx
-        self.numTxACK        = notif.numTxACK
-        self.asn             = notif.asn_0_1<<12 + notif.asn_2_3<<4 + notif.asn_4
+        self.addr_64b                  = notif.addr_64b
+        self.DAGrank                   = notif.DAGrank
+        self.numRx                     = notif.numRx
+        self.numTx                     = notif.numTx
+        self.numTxACK                  = notif.numTxACK
+        self.asn                       = notif.asn_0_1<<12 + \
+                                         notif.asn_2_3<<4  + \
+                                         notif.asn_4
 
 class StateIsSync(StateElem):
     def update(self,notif):
         StateElem.update(self)
-        self.isSync          = notif.isSync
+        self.isSync                    = notif.isSync
 
 class StateIdManager(StateElem):
     def update(self,notif):
         StateElem.update(self)
-        self.isDAGroot       = notif.isDAGroot
-        self.isBridge        = notif.isBridge
-        self.my16bID         = notif.my16bID
-        self.my64bID         = notif.my64bID
-        self.myPANID         = notif.myPANID
-        self.myPrefix        = notif.myPrefix
+        self.isDAGroot                 = notif.isDAGroot
+        self.isBridge                  = notif.isBridge
+        self.my16bID                   = notif.my16bID
+        self.my64bID                   = notif.my64bID
+        self.myPANID                   = notif.myPANID
+        self.myPrefix                  = notif.myPrefix
 
 class StateMyDagRank(StateElem):
     def update(self,notif):
         StateElem.update(self)
-        self.myDAGrank       = notif.myDAGrank
+        self.myDAGrank                 = notif.myDAGrank
 
 class StateTable(StateElem):
 
     def __init__(self,rowClass):
         StateElem.__init__(self)
         
-        self.rowClass   = rowClass
-        self.table      = []
+        self.rowClass                  = rowClass
+        self.table                     = []
 
     def update(self,notif):
         StateElem.update(self)
@@ -141,33 +147,42 @@ class moteState(object):
         log.debug("create instance")
         
         # store params
-        self.moteConnector = moteConnector
+        self.moteConnector             = moteConnector
         
         # local variables
-        self.parserStatus  = ParserStatus.ParserStatus()
-        self.stateLock     = threading.Lock()
-        self.state         = {}
+        self.parserStatus              = ParserStatus.ParserStatus()
+        self.stateLock                 = threading.Lock()
+        self.state                     = {}
         
-        self.state['OutputBuffer']= StateOutputBuffer()
-        self.state['Asn']         = StateAsn()
-        self.state['MacStats']    = StateMacStats()
-        self.state['Schedule']    = StateTable(StateScheduleRow)
-        self.state['Queue']       = StateQueue()
-        self.state['Neighbors']   = StateTable(StateNeighborsRow)
-        self.state['IsSync']      = StateIsSync()
-        self.state['IdManager']   = StateIdManager()
-        self.state['MyDagRank']   = StateMyDagRank()
+        self.state['OutputBuffer']     = StateOutputBuffer()
+        self.state['Asn']              = StateAsn()
+        self.state['MacStats']         = StateMacStats()
+        self.state['Schedule']         = StateTable(StateScheduleRow)
+        self.state['Queue']            = StateQueue()
+        self.state['Neighbors']        = StateTable(StateNeighborsRow)
+        self.state['IsSync']           = StateIsSync()
+        self.state['IdManager']        = StateIdManager()
+        self.state['MyDagRank']        = StateMyDagRank()
         
         self.notifHandlers = {
-                self.parserStatus.named_tuple['OutputBuffer']: self.state['OutputBuffer'].update,
-                self.parserStatus.named_tuple['Asn']:          self.state['Asn'].update,
-                self.parserStatus.named_tuple['MacStats']:     self.state['MacStats'].update,
-                self.parserStatus.named_tuple['ScheduleRow']:  self.state['Schedule'].update,
-                self.parserStatus.named_tuple['QueueRow']:     self.state['Queue'].update,
-                self.parserStatus.named_tuple['NeighborsRow']: self.state['Neighbors'].update,
-                self.parserStatus.named_tuple['IsSync']:       self.state['IsSync'].update,
-                self.parserStatus.named_tuple['IdManager']:    self.state['IdManager'].update,
-                self.parserStatus.named_tuple['MyDagRank']:    self.state['MyDagRank'].update,
+                self.parserStatus.named_tuple['OutputBuffer']:
+                    self.state['OutputBuffer'].update,
+                self.parserStatus.named_tuple['Asn']:
+                    self.state['Asn'].update,
+                self.parserStatus.named_tuple['MacStats']:
+                    self.state['MacStats'].update,
+                self.parserStatus.named_tuple['ScheduleRow']:
+                    self.state['Schedule'].update,
+                self.parserStatus.named_tuple['QueueRow']:
+                    self.state['Queue'].update,
+                self.parserStatus.named_tuple['NeighborsRow']:
+                    self.state['Neighbors'].update,
+                self.parserStatus.named_tuple['IsSync']:
+                    self.state['IsSync'].update,
+                self.parserStatus.named_tuple['IdManager']:
+                    self.state['IdManager'].update,
+                self.parserStatus.named_tuple['MyDagRank']:
+                    self.state['MyDagRank'].update,
             }
         
         # register with moteConnector
