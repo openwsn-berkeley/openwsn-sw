@@ -37,8 +37,7 @@ class OpenCli(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name = name
-        self.setName('OpenCli')
+        self.name            = 'cli'
         
         # register system commands (user commands registers by child object)
         self._registerCommand_internal(
@@ -186,7 +185,18 @@ class OpenCli(threading.Thread):
         print '\n'.join(output)
     
     def _handleInternals(self,params):
-        print 'TODO'
+        output  = []
+        output += ['General status of the application']
+        output += ['']
+        output += ['current time: {0}'.format(time.ctime())]
+        output += ['']
+        output += ['{0} threads running:'.format(threading.activeCount())]
+        for t in threading.enumerate():
+            output += ['- {0}'.format(t.getName())]
+        output += ['']
+        output += ['This is thread {0}.'.format(threading.currentThread().getName())]
+        
+        print '\n'.join(output)
     
     def _handleQuit(self,params):
         
