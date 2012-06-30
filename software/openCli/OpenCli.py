@@ -18,9 +18,10 @@ class OpenCli(threading.Thread):
     CMD_LEVEL_USER   = "user"
     CMD_LEVEL_SYSTEM = "system"
     
-    def __init__(self,name,quit_cb):
+    def __init__(self,appName,quit_cb):
     
         # slot params
+        self.appName         = appName
         self.quit_cb         = quit_cb
         
         # local variables
@@ -63,7 +64,7 @@ class OpenCli(threading.Thread):
                 self._handleQuit)
         
     def run(self):
-        print '{0} - OpenWSN project\n'.format(self.name)
+        print '{0} - OpenWSN project\n'.format(self.appName)
         
         while self.goOn:
             
