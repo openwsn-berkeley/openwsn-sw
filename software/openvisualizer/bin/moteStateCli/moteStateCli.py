@@ -2,14 +2,31 @@ import sys
 import os
 if __name__=='__main__':
     cur_path = sys.path[0]
-    sys.path.insert(0, os.path.join(cur_path, '..', '..')) # openvisualizer/
+    sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
+    sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
 
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
+from OpenCli       import OpenCli
 
 LOCAL_ADDRESS  = '127.0.0.1'
 TCP_PORT_START = 8090
+
+class OpenStateCli(OpenCli):
+    
+    def __init__(self,moteProbe_handlers,moteConnector_handlers,moteState_handlers):
+        
+        # store params
+        self.moteProbe_handlers     = moteProbe_handlers
+        self.moteConnector_handlers = moteConnector_handlers
+        self.moteState_handlers     = moteState_handlers
+    
+        # initialize parent class
+        OpenCli.__init__(self,"mote State CLI",self.quit_cb)
+    
+    def quit_cb(self):
+        print "poipoipoipoi"
 
 def main():
     
@@ -31,16 +48,20 @@ def main():
     for mc in moteConnector_handlers:
        moteState_handlers.append(moteState.moteState(mc))
     
-    # TODO create and start everything GUI
+    # create an open CLI
+    cli = OpenStateCli(moteProbe_handlers,
+                       moteConnector_handlers,
+                       moteState_handlers)
     
     # start threads
     for mc in moteConnector_handlers:
        mc.start()
+    cli.start()
     
 #============================ application logging =============================
 import logging
 import logging.handlers
-logHandler = logging.handlers.RotatingFileHandler('openVisualizer.log',
+logHandler = logging.handlers.RotatingFileHandler('moteStateCli.log',
                                                   maxBytes=2000000,
                                                   backupCount=5,
                                                   mode='w')
@@ -51,6 +72,7 @@ for loggerName in ['moteProbe',
                    'Parser',
                    'ParserStatus',
                    'moteState',
+                   'OpenCli',
                    ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
