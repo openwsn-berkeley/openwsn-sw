@@ -26,7 +26,11 @@ class OpenStateCli(OpenCli):
         OpenCli.__init__(self,"mote State CLI",self.quit_cb)
     
     def quit_cb(self):
-        print "poipoipoipoi"
+        
+        for mc in self.moteConnector_handlers:
+           mc.quit()
+        for mb in self.moteProbe_handlers:
+           mb.quit()
 
 def main():
     

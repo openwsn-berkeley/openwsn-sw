@@ -34,6 +34,7 @@ class moteConnector(threading.Thread):
         self.parser               = OpenParser.OpenParser()
         self.dataLock             = threading.Lock()
         self.registrees           = []
+        self.goOn                 = True
         
         # log
         log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
@@ -48,7 +49,7 @@ class moteConnector(threading.Thread):
         # log
         log.debug("starting to run")
     
-        while True:
+        while self.goOn:
             try:
                 self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
                 while True:
@@ -94,5 +95,8 @@ class moteConnector(threading.Thread):
         except socket.error:
             log.error(err)
             pass
+    
+    def quit(self):
+        raise NotImplementedError()
     
     #======================== private =========================================

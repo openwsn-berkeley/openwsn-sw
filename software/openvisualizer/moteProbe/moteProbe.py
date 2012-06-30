@@ -43,6 +43,9 @@ class moteProbe(object):
     
     def getTcpPort(self):
         return self.tcpport
+        
+    def quit(self):
+        raise NotImplementedError()
     
     #======================== private =========================================
 
