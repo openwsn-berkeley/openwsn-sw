@@ -38,7 +38,7 @@ class OpenCli(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name            = 'cli'
+        self.name            = 'OpenCli'
         
         # register system commands (user commands registers by child object)
         self._registerCommand_internal(
