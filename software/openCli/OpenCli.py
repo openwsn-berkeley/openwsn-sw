@@ -5,6 +5,7 @@ import threading
 import logging
 import binascii
 import time
+from   datetime import timedelta
 
 class NullLogHandler(logging.Handler):
     def emit(self, record):
@@ -62,9 +63,18 @@ class OpenCli(threading.Thread):
                 'quit this application',
                 [],
                 self._handleQuit)
+        self._registerCommand_internal(
+                self.CMD_LEVEL_SYSTEM,
+                'uptime',
+                'ut',
+                'how long this application has been running',
+                [],
+                self._handleUptime)
         
     def run(self):
         print '{0} - OpenWSN project\n'.format(self.appName)
+        
+        self.startTime = time.time()
         
         while self.goOn:
             
@@ -206,6 +216,15 @@ class OpenCli(threading.Thread):
         
         # kill this thead
         self.goOn = False
+    
+    def _handleUptime(self,params):
+        
+        upTime = timedelta(seconds=time.time()-self.startTime)
+        
+        print 'Running since {0} ({1} ago)'.format(
+                time.strftime("%m/%d/%Y %H:%M:%S",time.localtime(self.startTime)),
+                upTime)
+    
     
     #======================== helpers =========================================
     
