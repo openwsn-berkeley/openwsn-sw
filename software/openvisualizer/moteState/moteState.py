@@ -12,6 +12,7 @@ import time
 import threading
 
 from moteConnector import ParserStatus
+from moteConnector import MoteConnectorConsumer
 
 class StateElem(object):
     
@@ -153,7 +154,7 @@ class StateTable(StateElem):
             self.table.append(self.rowClass())
         self.table[notif.row].update(notif)
 
-class moteState(object):
+class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
     
     ST_OUPUTBUFFER      = 'OutputBuffer'
     ST_ASN              = 'Asn'
@@ -175,6 +176,11 @@ class moteState(object):
         
         # store params
         self.moteConnector                  = moteConnector
+        
+        # initialize parent class
+        MoteConnectorConsumer.MoteConnectorConsumer.__init__(self,self.moteConnector,
+                                                                  [self.moteConnector.TYPE_STATUS],
+                                                                  self._receivedData_notif)
         
         # local variables
         self.parserStatus                   = ParserStatus.ParserStatus()
@@ -211,34 +217,8 @@ class moteState(object):
                 self.parserStatus.named_tuple[self.ST_MYDAGRANK]:
                     self.state[self.ST_MYDAGRANK].update,
             }
-        
-        # register with moteConnector
-        self.moteConnector.register([self.moteConnector.TYPE_STATUS],
-                                    self.receivedData_notif)
     
     #======================== public ==========================================
-    
-    def receivedData_notif(self,notif):
-        
-        # log
-        log.debug("received {0}".format(notif))
-        
-        # lock the state data
-        self.stateLock.acquire()
-        
-        # call handler
-        found = False
-        for k,v in self.notifHandlers.items():
-            if self._isnamedtupleinstance(notif,k):
-                found = True
-                v(notif)
-                break
-        
-        # unlock the state data
-        self.stateLock.release()
-        
-        if found==False:
-            raise SystemError("No handler for notif {0}".format(notif))
     
     def getStateElem(self,elemName):
         
@@ -260,6 +240,28 @@ class moteState(object):
         return returnVal
     
     #======================== private =========================================
+    
+    def _receivedData_notif(self,notif):
+        
+        # log
+        log.debug("received {0}".format(notif))
+        
+        # lock the state data
+        self.stateLock.acquire()
+        
+        # call handler
+        found = False
+        for k,v in self.notifHandlers.items():
+            if self._isnamedtupleinstance(notif,k):
+                found = True
+                v(notif)
+                break
+        
+        # unlock the state data
+        self.stateLock.release()
+        
+        if found==False:
+            raise SystemError("No handler for notif {0}".format(notif))
     
     def _isnamedtupleinstance(self,var,tupleInstance):
         return var._fields==tupleInstance._fields
