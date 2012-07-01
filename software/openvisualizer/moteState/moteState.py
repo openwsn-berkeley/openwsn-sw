@@ -19,6 +19,10 @@ class StateElem(object):
     def update(self):
         self.lastUpdated               = time.time()
         self.numUpdates               += 1
+    def __str__(self):
+        members = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("__")]
+        output = ["{0:>20}: {1}".format(m,getattr(self,m)) for m in members]
+        return '\n'.join(output)
 
 class StateOutputBuffer(StateElem):
     def update(self,notif):
