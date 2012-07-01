@@ -10,6 +10,7 @@ log.addHandler(NullHandler())
 import copy
 import time
 import threading
+import pprint
 
 from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
@@ -23,10 +24,20 @@ class StateElem(object):
         self.lastUpdated               = time.time()
         self.numUpdates               += 1
     
+    def getData(self):
+        memberNames = [attr for attr in dir(self) if not callable(getattr(self,attr)) and not attr.startswith("__")]
+        returnVal = {}
+        for mn in memberNames:
+            ma = getattr(self,mn)
+            if isinstance(ma,(list, tuple)):
+                returnVal[mn] = [m.getData() for m in ma]
+            else:
+                returnVal[mn] = ma
+        return returnVal
+    
     def __str__(self):
-        members = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("__")]
-        output = ["{0:>20}: {1}".format(m,getattr(self,m)) for m in members]
-        return '\n'.join(output)
+        pp = pprint.PrettyPrinter(indent=3)
+        return pp.pformat(self.getData())
 
 class StateOutputBuffer(StateElem):
     
