@@ -14,23 +14,28 @@ import threading
 from moteConnector import ParserStatus
 
 class StateElem(object):
+    
     def __init__(self):
         self.numUpdates                = 0
+    
     def update(self):
         self.lastUpdated               = time.time()
         self.numUpdates               += 1
+    
     def __str__(self):
         members = [attr for attr in dir(self) if not callable(attr) and not attr.startswith("__")]
         output = ["{0:>20}: {1}".format(m,getattr(self,m)) for m in members]
         return '\n'.join(output)
 
 class StateOutputBuffer(StateElem):
+    
     def update(self,notif):
         StateElem.update(self)
         self.index_write               = notif.index_write
         self.index_read                = notif.index_read
 
 class StateAsn(StateElem):
+    
     def update(self,notif):
         StateElem.update(self)
         self.asn                       = notif.asn_0_1<<12 + \
@@ -38,6 +43,7 @@ class StateAsn(StateElem):
                                          notif.asn_4
 
 class StateMacStats(StateElem):
+    
     def update(self,notif):
         StateElem.update(self)
         self.syncCounter               = notif.syncCounter
@@ -111,11 +117,13 @@ class StateNeighborsRow(StateElem):
                                          notif.asn_4
 
 class StateIsSync(StateElem):
+    
     def update(self,notif):
         StateElem.update(self)
         self.isSync                    = notif.isSync
 
 class StateIdManager(StateElem):
+    
     def update(self,notif):
         StateElem.update(self)
         self.isDAGroot                 = notif.isDAGroot
@@ -126,6 +134,7 @@ class StateIdManager(StateElem):
         self.myPrefix                  = notif.myPrefix
 
 class StateMyDagRank(StateElem):
+    
     def update(self,notif):
         StateElem.update(self)
         self.myDAGrank                 = notif.myDAGrank
@@ -165,22 +174,22 @@ class moteState(object):
         log.debug("create instance")
         
         # store params
-        self.moteConnector             = moteConnector
+        self.moteConnector                  = moteConnector
         
         # local variables
-        self.parserStatus              = ParserStatus.ParserStatus()
-        self.stateLock                 = threading.Lock()
-        self.state                     = {}
+        self.parserStatus                   = ParserStatus.ParserStatus()
+        self.stateLock                      = threading.Lock()
+        self.state                          = {}
         
-        self.state[self.ST_OUPUTBUFFER]= StateOutputBuffer()
-        self.state[self.ST_ASN]        = StateAsn()
-        self.state[self.ST_MACSTATS]   = StateMacStats()
-        self.state[self.ST_SCHEDULE]   = StateTable(StateScheduleRow)
-        self.state[self.ST_QUEUE]      = StateQueue()
-        self.state[self.ST_NEIGHBORS]  = StateTable(StateNeighborsRow)
-        self.state[self.ST_ISSYNC]     = StateIsSync()
-        self.state[self.ST_IDMANAGER]  = StateIdManager()
-        self.state[self.ST_MYDAGRANK]  = StateMyDagRank()
+        self.state[self.ST_OUPUTBUFFER]     = StateOutputBuffer()
+        self.state[self.ST_ASN]             = StateAsn()
+        self.state[self.ST_MACSTATS]        = StateMacStats()
+        self.state[self.ST_SCHEDULE]        = StateTable(StateScheduleRow)
+        self.state[self.ST_QUEUE]           = StateQueue()
+        self.state[self.ST_NEIGHBORS]       = StateTable(StateNeighborsRow)
+        self.state[self.ST_ISSYNC]          = StateIsSync()
+        self.state[self.ST_IDMANAGER]       = StateIdManager()
+        self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         
         self.notifHandlers = {
                 self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
