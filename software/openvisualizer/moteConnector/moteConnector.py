@@ -1,5 +1,6 @@
 import threading
 import socket
+import Queue
 
 import OpenParser
 import ParserException
@@ -14,9 +15,23 @@ log.addHandler(NullHandler())
 
 class moteConnectorRegistree(object):
     
-    def __init__(self,filter,cb):
-        self.filter = filter
-        self.cb     = cb
+    QUEUESIZE = 100
+    
+    def __init__(self,filter):
+        self._filter    = filter
+        self.dataQueue  = Queue.Queue(self.QUEUESIZE)
+        
+    def getQueue(self):
+        return self.dataQueue
+    
+    def getFilter(self):
+        return self._filter
+    
+    def indicate(self,data):
+        if self.dataQueue.full():
+            raise SystemError("Queue is full")
+        
+        self.dataQueue.put(data)
 
 class moteConnector(threading.Thread):
     
@@ -75,8 +90,8 @@ class moteConnector(threading.Thread):
                     # inform all registrees
                     self.dataLock.acquire()
                     for registree in self.registrees:
-                        if notifType in registree.filter:
-                            registree.cb(parsedNotif)
+                        if notifType in registree.getFilter():
+                            registree.indicate(parsedNotif)
                     self.dataLock.release()
                     
             except socket.error as err:
@@ -85,10 +100,15 @@ class moteConnector(threading.Thread):
     
     #======================== public ==========================================
     
-    def register(self,filter,cb):
+    def register(self,filter):
+        
         self.dataLock.acquire()
-        self.registrees.append(moteConnectorRegistree(filter,cb))
+        newRegistree = moteConnectorRegistree(filter)
+        dataQueue    = newRegistree.getQueue()
+        self.registrees.append(newRegistree)
         self.dataLock.release()
+        
+        return dataQueue
     
     def write(self,stringToWrite):
         try:

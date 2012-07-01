@@ -91,6 +91,8 @@ def main():
                        moteState_handlers)
     
     # start threads
+    for ms in moteState_handlers:
+       ms.start()
     for mc in moteConnector_handlers:
        mc.start()
     cli.start()

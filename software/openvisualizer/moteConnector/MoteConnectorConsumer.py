@@ -23,20 +23,33 @@ class MoteConnectorConsumer(threading.Thread):
         self.moteConnector = moteConnector
         self.dataType      = dataType
         self.notifCallback = notifCallback
+        self.dataQueue     = self.moteConnector.register(
+                                self.dataType,
+                             )
+        
+        # initialize parent class
+        threading.Thread.__init__(self)
+        
+        # give this thread a name
+        self.name          = 'MoteConnectorConsumer'
         
         # local variables
         self.goOn = True
-        
-        # register with moteConnector
-        self.moteConnector.register([self.moteConnector.TYPE_STATUS],
-                                    self.notifCallback)
     
     def run(self):
         # log
         log.debug("starting to run")
     
         while self.goOn:
-            print "poipoipoi"
+        
+            # get data from the queue
+            newData = self.dataQueue.get()
+            
+            # log
+            log.debug("got data: {0}".format(newData))
+            
+            # call the callback
+            self.notifCallback(newData)
     
     #======================== public ==========================================
     
