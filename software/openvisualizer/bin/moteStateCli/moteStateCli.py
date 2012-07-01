@@ -23,9 +23,42 @@ class OpenStateCli(OpenCli):
         self.moteState_handlers     = moteState_handlers
     
         # initialize parent class
-        OpenCli.__init__(self,"mote State CLI",self.quit_cb)
+        OpenCli.__init__(self,"mote State CLI",self._quit_cb)
+        
+        # add commands
+        self.registerCommand('list',
+                             'l',
+                             'list available states',
+                             [],
+                             self._handlerList)
+        self.registerCommand('state',
+                             's',
+                             'prints some state',
+                             ['state parameter'],
+                             self._handlerState)
     
-    def quit_cb(self):
+    #======================== public ==========================================
+    
+    #======================== private =========================================
+    
+    #===== callbacks
+    def _handlerList(self,params):
+        for ms in self.moteState_handlers:
+            output  = []
+            output += ['available states:']
+            output += [' - {0}'.format(s) for s in ms.getStateElemNames()]
+            print '\n'.join(output)
+    
+    def _handlerState(self,params):
+        for ms in self.moteState_handlers:
+            try:
+                print ms.getStateElem(params[0])
+            except ValueError as err:
+                print err
+    
+    #===== helpers
+    
+    def _quit_cb(self):
         
         for mc in self.moteConnector_handlers:
            mc.quit()

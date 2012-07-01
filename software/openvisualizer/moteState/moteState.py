@@ -215,10 +215,20 @@ class moteState(object):
             raise SystemError("No handler for notif {0}".format(notif))
     
     def getStateElem(self,elemName):
-        assert(elemName in self.state)
+        
+        if elemName not in self.state:
+            raise ValueError('No state called {0}'.format(elemName))
         
         self.stateLock.acquire()
-        returnVal = copy.deepcopy(self.state)
+        returnVal = copy.deepcopy(self.state[elemName])
+        self.stateLock.release()
+        
+        return returnVal
+    
+    def getStateElemNames(self):
+        
+        self.stateLock.acquire()
+        returnVal = self.state.keys()
         self.stateLock.release()
         
         return returnVal
