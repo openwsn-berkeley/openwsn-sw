@@ -51,11 +51,11 @@ class OpenCli(threading.Thread):
                 self._handleHelp)
         self._registerCommand_internal(
                 self.CMD_LEVEL_SYSTEM,
-                'internals',
-                'int',
-                'displays general information about the internals of this application',
+                'info',
+                'i',
+                'information about this application',
                 [],
-                self._handleInternals)
+                self._handleInfo)
         self._registerCommand_internal(
                 self.CMD_LEVEL_SYSTEM,
                 'quit',
@@ -195,7 +195,7 @@ class OpenCli(threading.Thread):
         
         print '\n'.join(output)
     
-    def _handleInternals(self,params):
+    def _handleInfo(self,params):
         output  = []
         output += ['General status of the application']
         output += ['']
