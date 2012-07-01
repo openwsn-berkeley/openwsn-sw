@@ -13,6 +13,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 class moteConnectorRegistree(object):
+    
     def __init__(self,filter,cb):
         self.filter = filter
         self.cb     = cb
