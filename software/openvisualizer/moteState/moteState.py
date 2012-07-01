@@ -146,6 +146,19 @@ class StateTable(StateElem):
 
 class moteState(object):
     
+    ST_OUPUTBUFFER      = 'OutputBuffer'
+    ST_ASN              = 'Asn'
+    ST_MACSTATS         = 'MacStats'
+    ST_SCHEDULEROW      = 'ScheduleRow'
+    ST_SCHEDULE         = 'Schedule'
+    ST_QUEUEROW         = 'QueueRow'
+    ST_QUEUE            = 'Queue'
+    ST_NEIGHBORSROW     = 'NeighborsRow'
+    ST_NEIGHBORS        = 'Neighbors'
+    ST_ISSYNC           = 'IsSync'
+    ST_IDMANAGER        = 'IdManager'
+    ST_MYDAGRANK        = 'MyDagRank'
+    
     def __init__(self,moteConnector):
         
         # log
@@ -159,35 +172,35 @@ class moteState(object):
         self.stateLock                 = threading.Lock()
         self.state                     = {}
         
-        self.state['OutputBuffer']     = StateOutputBuffer()
-        self.state['Asn']              = StateAsn()
-        self.state['MacStats']         = StateMacStats()
-        self.state['Schedule']         = StateTable(StateScheduleRow)
-        self.state['Queue']            = StateQueue()
-        self.state['Neighbors']        = StateTable(StateNeighborsRow)
-        self.state['IsSync']           = StateIsSync()
-        self.state['IdManager']        = StateIdManager()
-        self.state['MyDagRank']        = StateMyDagRank()
+        self.state[self.ST_OUPUTBUFFER]= StateOutputBuffer()
+        self.state[self.ST_ASN]        = StateAsn()
+        self.state[self.ST_MACSTATS]   = StateMacStats()
+        self.state[self.ST_SCHEDULE]   = StateTable(StateScheduleRow)
+        self.state[self.ST_QUEUE]      = StateQueue()
+        self.state[self.ST_NEIGHBORS]  = StateTable(StateNeighborsRow)
+        self.state[self.ST_ISSYNC]     = StateIsSync()
+        self.state[self.ST_IDMANAGER]  = StateIdManager()
+        self.state[self.ST_MYDAGRANK]  = StateMyDagRank()
         
         self.notifHandlers = {
-                self.parserStatus.named_tuple['OutputBuffer']:
-                    self.state['OutputBuffer'].update,
-                self.parserStatus.named_tuple['Asn']:
-                    self.state['Asn'].update,
-                self.parserStatus.named_tuple['MacStats']:
-                    self.state['MacStats'].update,
-                self.parserStatus.named_tuple['ScheduleRow']:
-                    self.state['Schedule'].update,
-                self.parserStatus.named_tuple['QueueRow']:
-                    self.state['Queue'].update,
-                self.parserStatus.named_tuple['NeighborsRow']:
-                    self.state['Neighbors'].update,
-                self.parserStatus.named_tuple['IsSync']:
-                    self.state['IsSync'].update,
-                self.parserStatus.named_tuple['IdManager']:
-                    self.state['IdManager'].update,
-                self.parserStatus.named_tuple['MyDagRank']:
-                    self.state['MyDagRank'].update,
+                self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
+                    self.state[self.ST_OUPUTBUFFER].update,
+                self.parserStatus.named_tuple[self.ST_ASN]:
+                    self.state[self.ST_ASN].update,
+                self.parserStatus.named_tuple[self.ST_MACSTATS]:
+                    self.state[self.ST_MACSTATS].update,
+                self.parserStatus.named_tuple[self.ST_SCHEDULEROW]:
+                    self.state[self.ST_SCHEDULE].update,
+                self.parserStatus.named_tuple[self.ST_QUEUEROW]:
+                    self.state[self.ST_QUEUE].update,
+                self.parserStatus.named_tuple[self.ST_NEIGHBORSROW]:
+                    self.state[self.ST_NEIGHBORS].update,
+                self.parserStatus.named_tuple[self.ST_ISSYNC]:
+                    self.state[self.ST_ISSYNC].update,
+                self.parserStatus.named_tuple[self.ST_IDMANAGER]:
+                    self.state[self.ST_IDMANAGER].update,
+                self.parserStatus.named_tuple[self.ST_MYDAGRANK]:
+                    self.state[self.ST_MYDAGRANK].update,
             }
         
         # register with moteConnector
