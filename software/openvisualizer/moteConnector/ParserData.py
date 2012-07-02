@@ -22,4 +22,7 @@ class ParserData(Parser.Parser):
     
     #======================== public ==========================================
     
+    def parseInput(self,input):
+        raise ParserException(ParserException.NOT_IMPLEMENTED)
+    
     #======================== private =========================================
