@@ -116,7 +116,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '>BHBBBBQxxxxxxxxBBBBBBHHHxxx',
+                                    '<BxHBBBBQxxxxxxxxBBBBBxBHHxH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
