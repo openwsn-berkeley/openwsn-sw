@@ -46,7 +46,8 @@ class OpenTable(Tkinter.Frame):
             assert(isinstance(row,dict))    # each entry in the list is a dictionnary
         
         # make sure at least one row
-        assert(len(data)>0)
+        if len(data)==0:
+            return
         
         # if this is the first call, populate the column names
         if not self.columnNames:

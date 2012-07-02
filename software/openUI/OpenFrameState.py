@@ -4,7 +4,7 @@ import OpenGuiLib
 
 class OpenFrameState(OpenFrame.OpenFrame):
     
-    def __init__(self,guiParent,width=None,height=None,frameName="frame",row=0,column=0):
+    def __init__(self,guiParent,width=None,height=None,frameName="frame",row=0,column=0,columnspan=1):
         
         # store params
         self.guiParent       = guiParent
@@ -18,23 +18,23 @@ class OpenFrameState(OpenFrame.OpenFrame):
                                           height=height,
                                           frameName=frameName,
                                           row=row,
-                                          column=column)
+                                          column=column,
+                                          columnspan=columnspan,)
         
         # local variables
         self.updatePeriod    = None
         
-        # metadata label
-        temp = OpenGuiLib.HeaderLabel(self,text="data")
-        temp.grid(row=0,column=0)
+        temp = OpenGuiLib.HeaderLabel(self.container,text="data")
+        #temp.grid(row=0,column=0)
         
-        self.data = OpenTable.OpenTable(self)
+        self.data = OpenTable.OpenTable(self.container)
         self.data.grid(row=1,column=0)
         
-        temp = OpenGuiLib.HeaderLabel(self,text="meta")
-        temp.grid(row=2,column=0)
+        temp = OpenGuiLib.HeaderLabel(self.container,text="meta")
+        #temp.grid(row=2,column=0)
         
-        self.meta = OpenTable.OpenTable(self)
-        self.meta.grid(row=3,column=0)
+        self.meta = OpenTable.OpenTable(self.container)
+        #self.meta.grid(row=3,column=0)
         
     #======================== public ==========================================
     
@@ -76,21 +76,25 @@ if __name__=='__main__':
     examplewindow      = OpenWindow.OpenWindow("OpenFrameState")
     
     exampleframestate  = OpenFrameState(examplewindow,
-                                       frameName='exampleframestate',
-                                       row=0,
-                                       column=0)
+                                        frameName='exampleframestate',
+                                        row=0,
+                                        column=0)
     exampleframestate.show()
     exampleframestate.update(
         {
-            'data': {
-                        'data1': 'dA1',
-                        'data2': 'dA2',
-                        'data3': 'dA3',
-                    },
-            'meta': {
-                        'meta1': 'm1',
-                        'meta2': 'm2',
-                    },
+            'data': [
+                        {
+                            'data1': 'dA1',
+                            'data2': 'dA2',
+                            'data3': 'dA3',
+                        },
+                    ],
+            'meta': [
+                        {
+                            'meta1': 'm1',
+                            'meta2': 'm2',
+                        },
+                    ],
         }
     )
     

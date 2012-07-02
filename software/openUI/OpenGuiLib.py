@@ -13,7 +13,8 @@ class HeaderLabel(Tkinter.Label):
     def __init__(self,guiParent,text=''):
         Tkinter.Label.__init__(self,guiParent,
                                     text=text,
-                                    font=Style.FONT_HEADER,)
+                                    font=Style.FONT_HEADER,
+                                    bg=Style.COLOR_BG,)
                                     
     def grid(self,row=0,column=0):
         Tkinter.Label.grid(self,row=row,
