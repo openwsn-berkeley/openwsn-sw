@@ -28,7 +28,7 @@ class OpenTable(Tkinter.Frame):
         self.guiParent       = guiParent
         
         # initialize parent class
-        Tkinter.Frame.__init__(self)
+        Tkinter.Frame.__init__(self,guiParent)
         
         # local variables
         self.cells           = []
