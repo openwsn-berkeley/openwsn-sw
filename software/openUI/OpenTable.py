@@ -1,16 +1,18 @@
 import Tkinter
+import OpenGuiLib
 
-class OpenTableCell(Tkinter.Label):
+class OpenTableCell(OpenGuiLib.TableCell):
     
-    def __init__(self,guiParent,row,column):
+    def __init__(self,guiParent,cellType,row,column):
         
         # store params
         self.guiParent = guiParent
         self.row       = row
         self.column    = column
+        self.cellType  = cellType
         
         # initialize parent class
-        Tkinter.Label.__init__(self,self.guiParent)
+        OpenGuiLib.TableCell.__init__(self,self.guiParent,self.cellType)
         
         # grid
         self.grid(row=self.row,column=self.column)
@@ -59,31 +61,31 @@ class OpenTable(Tkinter.Frame):
         
         # write the header row
         rowCounter = 0
-        self._writeRow(0,self.columnNames)
+        self._writeRow(0,self.columnNames,OpenTableCell.HEADER)
         rowCounter += 1
         
         # write the data rows
         for row in data:
-            self._writeRow(rowCounter,[row[columnName] for columnName in self.columnNames])
+            self._writeRow(rowCounter,[row[columnName] for columnName in self.columnNames],OpenTableCell.BODY)
             rowCounter += 1
         
     #======================== private =========================================
     
-    def _writeRow(self,rowCounter,rowData):
+    def _writeRow(self,rowCounter,rowData,rowType):
         assert(self.columnNames>0)
         
         if len(self.cells)<rowCounter+1:
-            self._addRow()
+            self._addRow(rowType)
         
         assert(len(self.cells)>=rowCounter+1)
         
         for columnCounter in range(len(rowData)):
             self.cells[rowCounter][columnCounter].setText(str(rowData[columnCounter]))
     
-    def _addRow(self):
+    def _addRow(self,rowType):
         assert(self.columnNames>0)
     
-        self.cells.append([OpenTableCell(self,len(self.cells),col) for col in range(len(self.columnNames))])
+        self.cells.append([OpenTableCell(self,rowType,len(self.cells),col) for col in range(len(self.columnNames))])
 
 ###############################################################################
 

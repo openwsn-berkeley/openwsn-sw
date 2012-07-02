@@ -1,6 +1,6 @@
 import OpenFrame
 import OpenTable
-import Tkinter
+import OpenGuiLib
 
 class OpenFrameState(OpenFrame.OpenFrame):
     
@@ -24,13 +24,13 @@ class OpenFrameState(OpenFrame.OpenFrame):
         self.updatePeriod    = None
         
         # metadata label
-        temp = Tkinter.Label(self,text="data")
+        temp = OpenGuiLib.HeaderLabel(self,text="data")
         temp.grid(row=0,column=0)
         
         self.data = OpenTable.OpenTable(self)
         self.data.grid(row=1,column=0)
         
-        temp = Tkinter.Label(self,text="meta")
+        temp = OpenGuiLib.HeaderLabel(self,text="meta")
         temp.grid(row=2,column=0)
         
         self.meta = OpenTable.OpenTable(self)
