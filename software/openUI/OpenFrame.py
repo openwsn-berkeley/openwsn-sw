@@ -2,7 +2,7 @@ import Tkinter
 
 class OpenFrame(Tkinter.Frame):
     
-    def __init__(self,guiParent,width,height,frameName="frame",row=0,column=0):
+    def __init__(self,guiParent,width=None,height=None,frameName="frame",row=0,column=0):
         
         # store params
         self.guiParent       = guiParent

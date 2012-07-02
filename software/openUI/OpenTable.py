@@ -20,21 +20,24 @@ class OpenTableCell(Tkinter.Label):
         
         self.configure(text=newText)
     
-class OpenTable(object):
+class OpenTable(Tkinter.Frame):
     
     def __init__(self,guiParent):
         
         # store params
         self.guiParent       = guiParent
         
+        # initialize parent class
+        Tkinter.Frame.__init__(self)
+        
         # local variables
         self.cells           = []
         self.columnNames     = []
-        
+    
     #======================== public ==========================================
     
     def update(self,data):
-    
+        
         # make sure data is formatted right
         assert(isinstance(data,list))       # data is a list
         for row in data:
@@ -80,7 +83,7 @@ class OpenTable(object):
     def _addRow(self):
         assert(self.columnNames>0)
     
-        self.cells.append([OpenTableCell(self.guiParent,len(self.cells),col) for col in range(len(self.columnNames))])
+        self.cells.append([OpenTableCell(self,len(self.cells),col) for col in range(len(self.columnNames))])
 
 ###############################################################################
 
@@ -90,6 +93,7 @@ if __name__=='__main__':
     examplewindow = OpenWindow.OpenWindow("OpenTable")
     
     exampletable  = OpenTable(examplewindow)
+    exampletable.grid()
     exampletable.update([
                             {
                                 'col1': '1a',
