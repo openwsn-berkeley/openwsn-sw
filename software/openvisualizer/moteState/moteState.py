@@ -183,6 +183,7 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
     ST_ISSYNC           = 'IsSync'
     ST_IDMANAGER        = 'IdManager'
     ST_MYDAGRANK        = 'MyDagRank'
+    ALL_STATES          = [ST_OUPUTBUFFER,ST_ASN,ST_MACSTATS,ST_SCHEDULE,ST_QUEUE,ST_NEIGHBORS,ST_ISSYNC,ST_IDMANAGER,ST_MYDAGRANK]
     
     def __init__(self,moteConnector):
         

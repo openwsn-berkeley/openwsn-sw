@@ -24,19 +24,31 @@ class MoteStateGui(object):
         self.moteProbe_handlers     = moteProbe_handlers
         self.moteConnector_handlers = moteConnector_handlers
         self.moteState_handlers     = moteState_handlers
-    
+        
+        # local variables
+        self.stateFrames            = {}
+        
         self.window     = OpenWindow.OpenWindow("mote state GUI")
         
-        self.frameAsn   = OpenFrameState.OpenFrameState(
-                            self.window,
-                            frameName='Asn',
-                            row=0,
-                            column=0)
-        self.frameAsn.startAutoUpdate(
-                    self.GUI_UPDATE_PERIOD,
-                    self.moteState_handlers[0].getStateElem,
-                    ('Asn',))
-        self.frameAsn.show()
+        rowCounter = 0
+        for stateType in [moteState.moteState.ST_ASN,
+                          moteState.moteState.ST_IDMANAGER,
+                          moteState.moteState.ST_ISSYNC,
+                          moteState.moteState.ST_OUPUTBUFFER,
+                         ]:
+            self.stateFrames[stateType]   = OpenFrameState.OpenFrameState(
+                                                self.window,
+                                                frameName=stateType,
+                                                row=rowCounter,
+                                                column=0
+                                            )
+            self.stateFrames[stateType].startAutoUpdate(
+                                                self.GUI_UPDATE_PERIOD,
+                                                self.moteState_handlers[0].getStateElem,
+                                                (stateType,)
+                                            )
+            self.stateFrames[stateType].show()
+            rowCounter += 1
     
     #======================== public ==========================================
     
