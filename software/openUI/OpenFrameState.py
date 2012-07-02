@@ -20,6 +20,9 @@ class OpenFrameState(OpenFrame.OpenFrame):
                                           row=row,
                                           column=column)
         
+        # local variables
+        self.updatePeriod    = None
+        
         # metadata label
         temp = Tkinter.Label(self,text="data")
         temp.grid(row=0,column=0)
@@ -35,14 +38,35 @@ class OpenFrameState(OpenFrame.OpenFrame):
         
     #======================== public ==========================================
     
-    def update(self,dataAndMeta):
-        assert('data' in dataAndMeta)
-        assert('meta' in dataAndMeta)
+    def startAutoUpdate(self,updatePeriod,updateFunc,updateParams):
+        self.updatePeriod    = updatePeriod
+        self.updateFunc      = updateFunc
+        self.updateParams    = updateParams
         
-        self.data.update(dataAndMeta['data'])
-        self.meta.update(dataAndMeta['meta'])
+        self.after(self.updatePeriod,self._cb_autoUpdate)
+    
+    def stopAutoUpdate(self):
+        self.updatePeriod    = None
+    
+    def update(self,dataAndMeta):
+        
+        assert(isinstance(dataAndMeta,dict))
+        assert('meta' in dataAndMeta)
+        assert(isinstance(dataAndMeta['meta'],(list,dict)))
+        assert('data' in dataAndMeta)
+        assert(isinstance(dataAndMeta['data'],(list,dict)))
+        
+        self.data.update([dataAndMeta['data']])
+        self.meta.update([dataAndMeta['meta']])
     
     #======================== private =========================================
+    
+    def _cb_autoUpdate(self):
+        
+        self.update(self.updateFunc(*self.updateParams).getData())
+        
+        if self.updatePeriod:
+            self.after(self.updatePeriod,self._cb_autoUpdate)
     
 ###############################################################################
 
@@ -58,24 +82,15 @@ if __name__=='__main__':
     exampleframestate.show()
     exampleframestate.update(
         {
-            'data': [
-                        {
-                            'data1': 'dA1',
-                            'data2': 'dA2',
-                            'data3': 'dA3',
-                        },
-                        {
-                            'data1': 'dB1',
-                            'data2': 'dB2',
-                            'data3': 'dB3',
-                        },
-                    ],
-            'meta': [
-                        {
-                            'meta1': 'm1',
-                            'meta2': 'm2',
-                        },
-                    ],
+            'data': {
+                        'data1': 'dA1',
+                        'data2': 'dA2',
+                        'data3': 'dA3',
+                    },
+            'meta': {
+                        'meta1': 'm1',
+                        'meta2': 'm2',
+                    },
         }
     )
     

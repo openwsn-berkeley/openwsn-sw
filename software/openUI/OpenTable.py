@@ -78,7 +78,7 @@ class OpenTable(Tkinter.Frame):
         assert(len(self.cells)>=rowCounter+1)
         
         for columnCounter in range(len(rowData)):
-            self.cells[rowCounter][columnCounter].setText(rowData[columnCounter])
+            self.cells[rowCounter][columnCounter].setText(str(rowData[columnCounter]))
     
     def _addRow(self):
         assert(self.columnNames>0)

@@ -3,17 +3,20 @@ import os
 if __name__=='__main__':
     cur_path = sys.path[0]
     sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
-    sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
+    sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openUI'))     # openUI/
 
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
-from OpenCli       import OpenCli
+import OpenWindow
+import OpenFrameState
 
 LOCAL_ADDRESS  = '127.0.0.1'
 TCP_PORT_START = 8090
 
-class MoteStateGui(OpenCli):
+class MoteStateGui(object):
+    
+    GUI_UPDATE_PERIOD = 500
     
     def __init__(self,moteProbe_handlers,moteConnector_handlers,moteState_handlers):
         
@@ -22,48 +25,25 @@ class MoteStateGui(OpenCli):
         self.moteConnector_handlers = moteConnector_handlers
         self.moteState_handlers     = moteState_handlers
     
-        # initialize parent class
-        OpenCli.__init__(self,"mote State CLI",self._quit_cb)
+        self.window     = OpenWindow.OpenWindow("mote state GUI")
         
-        # add commands
-        self.registerCommand('list',
-                             'l',
-                             'list available states',
-                             [],
-                             self._handlerList)
-        self.registerCommand('state',
-                             's',
-                             'prints some state',
-                             ['state parameter'],
-                             self._handlerState)
+        self.frameAsn   = OpenFrameState.OpenFrameState(
+                            self.window,
+                            frameName='Asn',
+                            row=0,
+                            column=0)
+        self.frameAsn.startAutoUpdate(
+                    self.GUI_UPDATE_PERIOD,
+                    self.moteState_handlers[0].getStateElem,
+                    ('Asn',))
+        self.frameAsn.show()
     
     #======================== public ==========================================
     
+    def start(self):
+        self.window.startGui()
+    
     #======================== private =========================================
-    
-    #===== callbacks
-    def _handlerList(self,params):
-        for ms in self.moteState_handlers:
-            output  = []
-            output += ['available states:']
-            output += [' - {0}'.format(s) for s in ms.getStateElemNames()]
-            print '\n'.join(output)
-    
-    def _handlerState(self,params):
-        for ms in self.moteState_handlers:
-            try:
-                print ms.getStateElem(params[0])
-            except ValueError as err:
-                print err
-    
-    #===== helpers
-    
-    def _quit_cb(self):
-        
-        for mc in self.moteConnector_handlers:
-           mc.quit()
-        for mb in self.moteProbe_handlers:
-           mb.quit()
 
 def main():
     
