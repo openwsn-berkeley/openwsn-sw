@@ -13,7 +13,7 @@ from OpenCli       import OpenCli
 LOCAL_ADDRESS  = '127.0.0.1'
 TCP_PORT_START = 8090
 
-class MoteStateCli(OpenCli):
+class MoteStateGui(OpenCli):
     
     def __init__(self,moteProbe_handlers,moteConnector_handlers,moteState_handlers):
         
@@ -85,8 +85,8 @@ def main():
     for mc in moteConnector_handlers:
        moteState_handlers.append(moteState.moteState(mc))
     
-    # create an open CLI
-    cli = MoteStateCli(moteProbe_handlers,
+    # create an open GUI
+    gui = MoteStateGui(moteProbe_handlers,
                        moteConnector_handlers,
                        moteState_handlers)
     
@@ -95,12 +95,12 @@ def main():
        ms.start()
     for mc in moteConnector_handlers:
        mc.start()
-    cli.start()
+    gui.start()
     
 #============================ application logging =============================
 import logging
 import logging.handlers
-logHandler = logging.handlers.RotatingFileHandler('moteStateCli.log',
+logHandler = logging.handlers.RotatingFileHandler('moteStateGui.log',
                                                   maxBytes=2000000,
                                                   backupCount=5,
                                                   mode='w')
