@@ -52,12 +52,12 @@ class OpenFrameState(OpenFrame.OpenFrame):
         
         assert(isinstance(dataAndMeta,dict))
         assert('meta' in dataAndMeta)
-        assert(isinstance(dataAndMeta['meta'],(list,dict)))
+        assert(isinstance(dataAndMeta['meta'],list))
         assert('data' in dataAndMeta)
-        assert(isinstance(dataAndMeta['data'],(list,dict)))
+        assert(isinstance(dataAndMeta['data'],list))
         
-        self.data.update([dataAndMeta['data']])
-        self.meta.update([dataAndMeta['meta']])
+        self.data.update(dataAndMeta['data'])
+        self.meta.update(dataAndMeta['meta'])
     
     #======================== private =========================================
     

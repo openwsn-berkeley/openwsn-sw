@@ -31,10 +31,16 @@ class MoteStateGui(object):
         self.window     = OpenWindow.OpenWindow("mote state GUI")
         
         rowCounter = 0
-        for stateType in [moteState.moteState.ST_ASN,
-                          moteState.moteState.ST_IDMANAGER,
-                          moteState.moteState.ST_ISSYNC,
-                          moteState.moteState.ST_OUPUTBUFFER,
+        for stateType in [
+                            moteState.moteState.ST_OUPUTBUFFER,
+                            moteState.moteState.ST_ASN,
+                            moteState.moteState.ST_MACSTATS,
+                            moteState.moteState.ST_SCHEDULE,
+                            moteState.moteState.ST_QUEUE,
+                            moteState.moteState.ST_NEIGHBORS,
+                            moteState.moteState.ST_ISSYNC,
+                            moteState.moteState.ST_IDMANAGER,
+                            moteState.moteState.ST_MYDAGRANK,
                          ]:
             self.stateFrames[stateType]   = OpenFrameState.OpenFrameState(
                                                 self.window,
