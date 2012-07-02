@@ -18,21 +18,26 @@ from moteConnector import MoteConnectorConsumer
 class StateElem(object):
     
     def __init__(self):
-        self.numUpdates                = 0
+        self.meta                      = {}
+        self.data                      = {}
+        
+        self.meta['numUpdates']        = 0
     
     def update(self):
-        self.lastUpdated               = time.time()
-        self.numUpdates               += 1
+        self.meta['lastUpdated']       = time.time()
+        self.meta['numUpdates']       += 1
     
     def getData(self):
-        memberNames = [attr for attr in dir(self) if not callable(getattr(self,attr)) and not attr.startswith("__")]
+        
         returnVal = {}
-        for mn in memberNames:
-            ma = getattr(self,mn)
-            if isinstance(ma,(list, tuple)):
-                returnVal[mn] = [m.getData() for m in ma]
+        returnVal['meta'] = copy.deepcopy(self.meta)
+        returnVal['data'] = {}
+        for k,v in self.data.items():
+            if isinstance(v,(list, tuple)):
+                returnVal['data'][k] = [m.getData() for m in v]
             else:
-                returnVal[mn] = ma
+                returnVal['data'][k] = v
+        
         return returnVal
     
     def __str__(self):
@@ -43,14 +48,14 @@ class StateOutputBuffer(StateElem):
     
     def update(self,notif):
         StateElem.update(self)
-        self.index_write               = notif.index_write
-        self.index_read                = notif.index_read
+        self.data['index_write']       = notif.index_write
+        self.data['index_read']        = notif.index_read
 
 class StateAsn(StateElem):
     
     def update(self,notif):
         StateElem.update(self)
-        self.asn                       = notif.asn_0_1<<12 + \
+        self.data['asn']               = notif.asn_0_1<<12 + \
                                          notif.asn_2_3<<4  + \
                                          notif.asn_4
 
@@ -58,27 +63,27 @@ class StateMacStats(StateElem):
     
     def update(self,notif):
         StateElem.update(self)
-        self.syncCounter               = notif.syncCounter
-        self.minCorrection             = notif.minCorrection
-        self.maxCorrection             = notif.maxCorrection
-        self.numDeSync                 = notif.numDeSync
+        self.data['syncCounter']       = notif.syncCounter
+        self.data['minCorrection']     = notif.minCorrection
+        self.data['maxCorrection']     = notif.maxCorrection
+        self.data['numDeSync']         = notif.numDeSync
 
 class StateScheduleRow(StateElem):
 
     def update(self,notif):
         StateElem.update(self)
-        self.slotOffset                = notif.slotOffset
-        self.type                      = notif.type
-        self.shared                    = notif.shared
-        self.channelOffset             = notif.channelOffset
-        self.addrType                  = notif.addrType
-        self.neighbor                  = notif.neighbor
-        self.backoffExponent           = notif.backoffExponent
-        self.backoff                   = notif.backoff
-        self.numRx                     = notif.numRx
-        self.numTx                     = notif.numTx
-        self.numTxACK                  = notif.numTxACK
-        self.lastUsedAsn               = notif.lastUsedAsn_0_1<<12 + \
+        self.data['slotOffset']        = notif.slotOffset
+        self.data['type']              = notif.type
+        self.data['shared']            = notif.shared
+        self.data['channelOffset']     = notif.channelOffset
+        self.data['addrType']          = notif.addrType
+        self.data['neighbor']          = notif.neighbor
+        self.data['backoffExponent']   = notif.backoffExponent
+        self.data['backoff']           = notif.backoff
+        self.data['numRx']             = notif.numRx
+        self.data['numTx']             = notif.numTx
+        self.data['numTxACK']          = notif.numTxACK
+        self.data['lastUsedAsn']       = notif.lastUsedAsn_0_1<<12 + \
                                          notif.lastUsedAsn_2_3<<4  + \
                                          notif.lastUsedAsn_4
 
@@ -86,84 +91,83 @@ class StateQueueRow(StateElem):
     
     def update(self,creator,owner):
         StateElem.update(self)
-        self.creator                   = creator
-        self.creator                   = owner
+        self.data['creator']           = creator
+        self.data['owner']             = owner
 
 class StateQueue(StateElem):
     
     def __init__(self):
         StateElem.__init__(self)
         
-        self.table = []
+        self.data['table'] = []
         for i in range(10):
-            self.table.append(StateQueueRow())
+            self.data['table'].append(StateQueueRow())
     
     def update(self,notif):
         StateElem.update(self)
-        self.table[0].update(notif.creator_0,notif.owner_0)
-        self.table[1].update(notif.creator_1,notif.owner_1)
-        self.table[2].update(notif.creator_2,notif.owner_2)
-        self.table[3].update(notif.creator_3,notif.owner_3)
-        self.table[4].update(notif.creator_4,notif.owner_4)
-        self.table[5].update(notif.creator_5,notif.owner_5)
-        self.table[6].update(notif.creator_6,notif.owner_6)
-        self.table[7].update(notif.creator_7,notif.owner_7)
-        self.table[8].update(notif.creator_8,notif.owner_8)
-        self.table[9].update(notif.creator_9,notif.owner_9)
+        self.data['table'][0].update(notif.creator_0,notif.owner_0)
+        self.data['table'][1].update(notif.creator_1,notif.owner_1)
+        self.data['table'][2].update(notif.creator_2,notif.owner_2)
+        self.data['table'][3].update(notif.creator_3,notif.owner_3)
+        self.data['table'][4].update(notif.creator_4,notif.owner_4)
+        self.data['table'][5].update(notif.creator_5,notif.owner_5)
+        self.data['table'][6].update(notif.creator_6,notif.owner_6)
+        self.data['table'][7].update(notif.creator_7,notif.owner_7)
+        self.data['table'][8].update(notif.creator_8,notif.owner_8)
+        self.data['table'][9].update(notif.creator_9,notif.owner_9)
 
 class StateNeighborsRow(StateElem):
     
     def update(self,notif):
         StateElem.update(self)
-        self.used                      = notif.used
-        self.parentPreference          = notif.parentPreference
-        self.stableNeighbor            = notif.stableNeighbor
-        self.switchStabilityCounter    = notif.switchStabilityCounter
-        self.addr_64b                  = notif.addr_64b
-        self.DAGrank                   = notif.DAGrank
-        self.numRx                     = notif.numRx
-        self.numTx                     = notif.numTx
-        self.numTxACK                  = notif.numTxACK
-        self.asn                       = notif.asn_0_1<<12 + \
-                                         notif.asn_2_3<<4  + \
-                                         notif.asn_4
+        self.data['used']                   = notif.used
+        self.data['parentPreference']       = notif.parentPreference
+        self.data['stableNeighbor']         = notif.stableNeighbor
+        self.data['switchStabilityCounter'] = notif.switchStabilityCounter
+        self.data['addr_64b']               = notif.addr_64b
+        self.data['DAGrank']                = notif.DAGrank
+        self.data['numRx']                  = notif.numRx
+        self.data['numTx']                  = notif.numTx
+        self.data['numTxACK']               = notif.numTxACK
+        self.data['asn']                    = notif.asn_0_1<<12 + \
+                                              notif.asn_2_3<<4  + \
+                                              notif.asn_4
 
 class StateIsSync(StateElem):
     
     def update(self,notif):
         StateElem.update(self)
-        self.isSync                    = notif.isSync
+        self.data['isSync']            = notif.isSync
 
 class StateIdManager(StateElem):
     
     def update(self,notif):
         StateElem.update(self)
-        self.isDAGroot                 = notif.isDAGroot
-        self.isBridge                  = notif.isBridge
-        self.my16bID                   = notif.my16bID
-        self.my64bID                   = notif.my64bID
-        self.myPANID                   = notif.myPANID
-        self.myPrefix                  = notif.myPrefix
+        self.data['isDAGroot']         = notif.isDAGroot
+        self.data['isBridge']          = notif.isBridge
+        self.data['my16bID']           = notif.my16bID
+        self.data['my64bID']           = notif.my64bID
+        self.data['myPANID']           = notif.myPANID
+        self.data['myPrefix']          = notif.myPrefix
 
 class StateMyDagRank(StateElem):
     
     def update(self,notif):
         StateElem.update(self)
-        self.myDAGrank                 = notif.myDAGrank
+        self.data['myDAGrank']         = notif.myDAGrank
 
 class StateTable(StateElem):
 
     def __init__(self,rowClass):
         StateElem.__init__(self)
-        
-        self.rowClass                  = rowClass
-        self.table                     = []
+        self.meta['rowClass']          = rowClass
+        self.data['table']             = []
 
     def update(self,notif):
         StateElem.update(self)
-        while len(self.table)<notif.row+1:
-            self.table.append(self.rowClass())
-        self.table[notif.row].update(notif)
+        while len(self.data['table'])<notif.row+1:
+            self.data['table'].append(self.meta['rowClass']())
+        self.data['table'][notif.row].update(notif)
 
 class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
     
