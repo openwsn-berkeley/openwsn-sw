@@ -170,7 +170,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     8,
                                     'NeighborsRow',
-                                    '>BBBBBxQxxxxxxxxBbBBBBHHxx',
+                                    '>BxBBBBQxxxxxxxxBbBBBBHHxx',
                                     [
                                         'row',                       # B
                                         'used',                      # B
