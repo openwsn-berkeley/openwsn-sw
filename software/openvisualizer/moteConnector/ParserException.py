@@ -6,13 +6,15 @@ class ParserException(Exception):
     UNKNOWN_OPTION   = 3
     NO_KEY           = 4
     NOT_IMPLEMENTED  = 5
+    DESERIALIZE      = 6
     
     descriptions = { 
         GENERIC:        'generic parsing error',
         TOO_SHORT:      'input too short',
         UNKNOWN_OPTION: 'no parser key',
         NO_KEY:         'no key',
-        NOT_IMPLEMENTED:'not implemented'
+        NOT_IMPLEMENTED:'not implemented',
+        DESERIALIZE:    'deserialization error',
     }
     
     def __init__(self,errorCode,details=None):

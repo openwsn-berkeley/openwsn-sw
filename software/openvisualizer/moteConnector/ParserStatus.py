@@ -202,8 +202,13 @@ class ParserStatus(Parser.Parser):
         # ensure input not short longer than header
         self._checkLength(input)
         
+        headerBytes = input[:3]
+        
         # extract moteId and statusElem
-        (moteId,statusElem) = struct.unpack('<HB',''.join([chr(c) for c in input[:3]]))
+        try:
+           (moteId,statusElem) = struct.unpack('<HB',''.join([chr(c) for c in headerBytes]))
+        except struct.error:
+            raise ParserException(ParserException.DESERIALIZE,"could not extract moteId and statusElem from {0}".format(headerBytes))
         input = input[3:]
         
         # log
