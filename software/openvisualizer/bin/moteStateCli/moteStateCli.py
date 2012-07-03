@@ -110,6 +110,7 @@ for loggerName in ['moteProbe',
                    'OpenParser',
                    'Parser',
                    'ParserStatus',
+                   'ParserData',
                    'moteState',
                    'OpenCli',
                    ]:
