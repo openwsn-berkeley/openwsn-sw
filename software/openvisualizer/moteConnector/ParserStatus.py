@@ -222,7 +222,17 @@ class ParserStatus(Parser.Parser):
                 log.debug("parsing {0} ({1} bytes) as {2}".format(input,len(input),key.name))
                 
                 # parse byte array
-                fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))
+                try:
+                    fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))
+                except struct.error:
+                    raise ParserException(
+                            ParserException.DESERIALIZE,
+                            "could not extract tuple {0} by applying {1} to {2}".format(
+                                key.name,
+                                key.structure,
+                                input,
+                            )
+                        )
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
