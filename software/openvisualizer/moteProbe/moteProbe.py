@@ -14,9 +14,6 @@ class moteProbe(object):
     
     def __init__(self,serialport,tcpport):
         
-        # log
-        log.debug("create instance")
-        
         # store params
         self.serialport = serialport
         self.tcpport    = tcpport

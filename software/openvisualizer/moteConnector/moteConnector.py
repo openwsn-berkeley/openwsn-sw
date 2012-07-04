@@ -40,7 +40,10 @@ class moteConnector(threading.Thread):
     TYPE_DATA      = OpenParser.OpenParser.TYPE_DATA
     
     def __init__(self,moteProbeIp,moteProbeTcpPort):
-    
+        
+        # log
+        log.debug("creating instance")
+        
         # store params
         self.moteProbeIp          = moteProbeIp
         self.moteProbeTcpPort     = moteProbeTcpPort
@@ -51,9 +54,6 @@ class moteConnector(threading.Thread):
         self.dataLock             = threading.Lock()
         self.registrees           = []
         self.goOn                 = True
-        
-        # log
-        log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
         
         # initialize parent class
         threading.Thread.__init__(self)
@@ -67,6 +67,10 @@ class moteConnector(threading.Thread):
     
         while self.goOn:
             try:
+                # log
+                log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
+                
+                # connect
                 self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
                 while True:
                     # retrieve the string of bytes from the socket
