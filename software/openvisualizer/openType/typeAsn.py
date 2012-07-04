@@ -3,7 +3,7 @@ import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('openType')
+log = logging.getLogger('typeAsn')
 log.setLevel(logging.DEBUG)
 log.addHandler(NullHandler())
 
@@ -22,9 +22,6 @@ class typeAsn(openType.openType):
         output  = []
         output += ['0x']
         output += [''.join(["%.2x"%b for b in self.asn])]
-        #output += [' (']
-        #output += [str()]
-        #output += [')']
         return ''.join(output)
     
     #======================== public ==========================================
