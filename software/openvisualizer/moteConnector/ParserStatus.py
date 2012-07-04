@@ -116,16 +116,16 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '<BxHBBBBQxxxxxxxxBBBBBxBHHxH',
+                                    '<BxHBBBBQQBBBBBxBHHxH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
                                         'type',                      # B
                                         'shared',                    # B
                                         'channelOffset',             # B
-                                        'addrType',                  # B
-                                        'neighbor',                  # Q
-                                                                     # xxxxxxxx
+                                        'neighbor_type',             # B
+                                        'neighbor_bodyH',            # Q
+                                        'neighbor_bodyL',            # Q
                                         'backoffExponent',           # B
                                         'backoff',                   # B
                                         'numRx',                     # B

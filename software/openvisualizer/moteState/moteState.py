@@ -98,8 +98,11 @@ class StateScheduleRow(StateElem):
         self.data[0]['type']           = notif.type
         self.data[0]['shared']         = notif.shared
         self.data[0]['channelOffset']  = notif.channelOffset
-        self.data[0]['addrType']       = notif.addrType
-        self.data[0]['neighbor']       = notif.neighbor
+        if 'neighbor' not in self.data[0]:
+            self.data[0]['neighbor']    = typeAddr.typeAddr()
+        self.data[0]['neighbor'].update(notif.neighbor_type,
+                                        notif.neighbor_bodyH,
+                                        notif.neighbor_bodyL)
         self.data[0]['backoffExponent']= notif.backoffExponent
         self.data[0]['backoff']        = notif.backoff
         self.data[0]['numRx']          = notif.numRx

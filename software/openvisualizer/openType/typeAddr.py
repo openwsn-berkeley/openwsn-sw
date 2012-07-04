@@ -74,10 +74,10 @@ class typeAddr(openType.openType):
             self.addr = [fullAddr[7],fullAddr[5]]
         elif type==self.ADDR_PREFIX:
             self.desc = 'prefix'
-            self.addr = fullAddr
+            self.addr = fullAddr[:8]
         elif type==self.ADDR_ANYCAST:
             self.desc = 'anycast'
-            self.addr = fullAddr
+            self.addr = None
         else:
             self.desc = 'unknown'
             self.addr = None
