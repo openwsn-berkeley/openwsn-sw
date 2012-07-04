@@ -14,6 +14,7 @@ import pprint
 
 from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
+from openType      import typeAsn
 
 class StateElem(object):
     
@@ -70,9 +71,11 @@ class StateAsn(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['asn']            = notif.asn_0_1<<12 + \
-                                         notif.asn_2_3<<4  + \
-                                         notif.asn_4
+        if 'asn' not in self.data[0]:
+            self.data[0]['asn']        = typeAsn.typeAsn()
+        self.data[0]['asn'].update(notif.asn_0_1,
+                                   notif.asn_2_3,
+                                   notif.asn_4)
 
 class StateMacStats(StateElem):
     
@@ -97,14 +100,16 @@ class StateScheduleRow(StateElem):
         self.data[0]['channelOffset']  = notif.channelOffset
         self.data[0]['addrType']       = notif.addrType
         self.data[0]['neighbor']       = notif.neighbor
-        self.data[0]['backoffExponent']     = notif.backoffExponent
+        self.data[0]['backoffExponent']= notif.backoffExponent
         self.data[0]['backoff']        = notif.backoff
         self.data[0]['numRx']          = notif.numRx
         self.data[0]['numTx']          = notif.numTx
         self.data[0]['numTxACK']       = notif.numTxACK
-        self.data[0]['lastUsedAsn']    = notif.lastUsedAsn_0_1<<12 + \
-                                         notif.lastUsedAsn_2_3<<4  + \
-                                         notif.lastUsedAsn_4
+        if 'lastUsedAsn' not in self.data[0]:
+            self.data[0]['lastUsedAsn']=typeAsn.typeAsn()
+        self.data[0]['lastUsedAsn'].update(notif.lastUsedAsn_0_1,
+                                           notif.lastUsedAsn_2_3,
+                                           notif.lastUsedAsn_4)
 
 class StateQueueRow(StateElem):
     
@@ -151,9 +156,11 @@ class StateNeighborsRow(StateElem):
         self.data[0]['numRx']          = notif.numRx
         self.data[0]['numTx']          = notif.numTx
         self.data[0]['numTxACK']       = notif.numTxACK
-        self.data[0]['asn']            = notif.asn_0_1<<12 + \
-                                         notif.asn_2_3<<4  + \
-                                         notif.asn_4
+        if 'asn' not in self.data[0]:
+            self.data[0]['asn']        = typeAsn.typeAsn()
+        self.data[0]['asn'].update(notif.asn_0_1,
+                                   notif.asn_2_3,
+                                   notif.asn_4)
 
 class StateIsSync(StateElem):
     
