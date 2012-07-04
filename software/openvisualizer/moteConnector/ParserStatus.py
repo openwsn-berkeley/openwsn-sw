@@ -50,22 +50,22 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     1,
                                     'IdManager',
-                                    '<BBxHxxxxxxxxxxxxxxxQxxxxxxxxxHxxxxxxxxxxxxxxxQxxxxxxxx',
+                                    '<BBBQQBQQBQQBQQ',
                                     [
                                         'isDAGroot',                 # B
                                         'isBridge',                  # B
-                                                                     # x
-                                        'my16bID',                   # H
-                                                                     # xx xxxx xxxx xxxx
-                                                                     # x
-                                        'my64bID',                   # Q
-                                                                     #         xxxx xxxx
-                                                                     # x
-                                        'myPANID',                   # H
-                                                                     # xx xxxx xxxx xxxx
-                                                                     # x
-                                        'myPrefix',                  # Q
-                                                                     #         xxxx xxxx
+                                        'my16bID_type',              # B
+                                        'my16bID_bodyH',             # Q
+                                        'my16bID_bodyL',             # Q
+                                        'my64bID_type',              # B
+                                        'my64bID_bodyH',             # Q
+                                        'my64bID_bodyL',             # Q
+                                        'myPANID_type',              # B
+                                        'myPANID_bodyH',             # Q
+                                        'myPANID_bodyL',             # Q
+                                        'myPrefix_type',             # B
+                                        'myPrefix_bodyH',            # Q
+                                        'myPrefix_bodyL',            # Q
                                     ],
                                 )
         self._addFieldsParser   (   

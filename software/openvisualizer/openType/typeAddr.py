@@ -28,7 +28,7 @@ class typeAddr(openType.openType):
     
     def __str__(self):
         output  = []
-        if self.addr
+        if self.addr:
            output += ['-'.join(["%.2x"%b for b in self.addr])]
         output += [' (']
         output += [self.desc]
@@ -37,29 +37,47 @@ class typeAddr(openType.openType):
     
     #======================== public ==========================================
     
-    def update(self,type,body):
+    def update(self,type,bodyH,bodyL):
+        fullAddr = [
+                        bodyH>>(4*7) & 0xff,
+                        bodyH>>(4*6) & 0xff,
+                        bodyH>>(4*5) & 0xff,
+                        bodyH>>(4*4) & 0xff,
+                        bodyH>>(4*3) & 0xff,
+                        bodyH>>(4*2) & 0xff,
+                        bodyH>>(4*1) & 0xff,
+                        bodyH>>(4*0) & 0xff,
+                        bodyL>>(4*7) & 0xff,
+                        bodyL>>(4*6) & 0xff,
+                        bodyL>>(4*5) & 0xff,
+                        bodyL>>(4*4) & 0xff,
+                        bodyL>>(4*3) & 0xff,
+                        bodyL>>(4*2) & 0xff,
+                        bodyL>>(4*1) & 0xff,
+                        bodyL>>(4*0) & 0xff,
+                   ]
         self.type = type
         if   type==self.ADDR_NONE:
             self.desc = 'None'
             self.addr = None
         elif type==self.ADDR_16B:
             self.desc = '16b'
-            self.addr = None
+            self.addr = [fullAddr[7],fullAddr[5]]
         elif type==self.ADDR_64B:
             self.desc = '64b'
-            self.addr = None
+            self.addr = fullAddr
         elif type==self.ADDR_128B:
             self.desc = '128b'
-            self.addr = None
+            self.addr = fullAddr
         elif type==self.ADDR_PANID:
             self.desc = 'panId'
-            self.addr = None
+            self.addr = [fullAddr[7],fullAddr[5]]
         elif type==self.ADDR_PREFIX:
             self.desc = 'prefix'
-            self.addr = None
+            self.addr = fullAddr
         elif type==self.ADDR_ANYCAST:
             self.desc = 'anycast'
-            self.addr = None
+            self.addr = fullAddr
         else:
             self.desc = 'unknown'
             self.addr = None

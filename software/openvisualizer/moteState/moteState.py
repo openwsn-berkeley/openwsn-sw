@@ -14,7 +14,7 @@ import pprint
 
 from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
-from openType      import typeAsn
+from openType      import typeAsn, typeAddr
 
 class StateElem(object):
     
@@ -178,10 +178,26 @@ class StateIdManager(StateElem):
             self.data.append({})
         self.data[0]['isDAGroot']      = notif.isDAGroot
         self.data[0]['isBridge']       = notif.isBridge
-        self.data[0]['my16bID']        = notif.my16bID
-        self.data[0]['my64bID']        = notif.my64bID
-        self.data[0]['myPANID']        = notif.myPANID
-        self.data[0]['myPrefix']       = notif.myPrefix
+        if 'my16bID' not in self.data[0]:
+            self.data[0]['my16bID']    = typeAddr.typeAddr()
+        self.data[0]['my16bID'].update(notif.my16bID_type,
+                                       notif.my16bID_bodyH,
+                                       notif.my16bID_bodyL)
+        if 'my64bID' not in self.data[0]:
+            self.data[0]['my64bID']    = typeAddr.typeAddr()
+        self.data[0]['my64bID'].update(notif.my64bID_type,
+                                       notif.my64bID_bodyH,
+                                       notif.my64bID_bodyL)
+        if 'myPANID' not in self.data[0]:
+            self.data[0]['myPANID']    = typeAddr.typeAddr()
+        self.data[0]['myPANID'].update(notif.myPANID_type,
+                                       notif.myPANID_bodyH,
+                                       notif.myPANID_bodyL)
+        if 'myPrefix' not in self.data[0]:
+            self.data[0]['myPrefix']    = typeAddr.typeAddr()
+        self.data[0]['myPrefix'].update(notif.myPrefix_type,
+                                        notif.myPrefix_bodyH,
+                                        notif.myPrefix_bodyL)
 
 class StateMyDagRank(StateElem):
     
