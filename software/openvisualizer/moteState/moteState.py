@@ -170,6 +170,7 @@ class StateNeighborsRow(StateElem):
                                     notif.addr_bodyH,
                                     notif.addr_bodyL)
         self.data[0]['DAGrank']        = notif.DAGrank
+        self.data[0]['rssi']           = notif.rssi
         self.data[0]['numRx']          = notif.numRx
         self.data[0]['numTx']          = notif.numTx
         self.data[0]['numTxACK']       = notif.numTxACK
