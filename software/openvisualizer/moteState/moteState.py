@@ -14,7 +14,9 @@ import pprint
 
 from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
-from openType      import typeAsn, typeAddr
+from openType      import typeAsn,     \
+                          typeAddr,    \
+                          typeCellType
 
 class StateElem(object):
     
@@ -95,11 +97,13 @@ class StateScheduleRow(StateElem):
         if len(self.data)==0:
             self.data.append({})
         self.data[0]['slotOffset']     = notif.slotOffset
-        self.data[0]['type']           = notif.type
+        if 'type' not in self.data[0]:
+            self.data[0]['type']       = typeCellType.typeCellType()
+        self.data[0]['type'].update(notif.type)
         self.data[0]['shared']         = notif.shared
         self.data[0]['channelOffset']  = notif.channelOffset
         if 'neighbor' not in self.data[0]:
-            self.data[0]['neighbor']    = typeAddr.typeAddr()
+            self.data[0]['neighbor']   = typeAddr.typeAddr()
         self.data[0]['neighbor'].update(notif.neighbor_type,
                                         notif.neighbor_bodyH,
                                         notif.neighbor_bodyL)
@@ -154,7 +158,11 @@ class StateNeighborsRow(StateElem):
         self.data[0]['parentPreference']    = notif.parentPreference
         self.data[0]['stableNeighbor']      = notif.stableNeighbor
         self.data[0]['switchStabilityCounter']   = notif.switchStabilityCounter
-        self.data[0]['addr_64b']       = notif.addr_64b
+        if 'addr' not in self.data[0]:
+            self.data[0]['addr']   = typeAddr.typeAddr()
+        self.data[0]['addr'].update(notif.addr_type,
+                                    notif.addr_bodyH,
+                                    notif.addr_bodyL)
         self.data[0]['DAGrank']        = notif.DAGrank
         self.data[0]['numRx']          = notif.numRx
         self.data[0]['numTx']          = notif.numTx

@@ -170,16 +170,16 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     8,
                                     'NeighborsRow',
-                                    '>BxBBBBQxxxxxxxxBbBBBBHHxx',
+                                    '>BBBBBBQQBbBBBBHHxx',
                                     [
                                         'row',                       # B
                                         'used',                      # B
                                         'parentPreference',          # B
                                         'stableNeighbor',            # B
                                         'switchStabilityCounter',    # B
-                                                                     # x
-                                        'addr_64b',                  # Q
-                                                                     # xxxxxxxx
+                                        'addr_type',                 # B
+                                        'addr_bodyH',                # Q
+                                        'addr_bodyL',                # Q
                                         'DAGrank',                   # B
                                         'rssi',                      # b
                                         'numRx',                     # B
@@ -224,13 +224,15 @@ class ParserStatus(Parser.Parser):
                 # parse byte array
                 try:
                     fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))
-                except struct.error:
+                except struct.error as err:
                     raise ParserException(
                             ParserException.DESERIALIZE,
-                            "could not extract tuple {0} by applying {1} to {2}".format(
+                            "could not extract tuple {0} by applying {1} to {2} ({3} bytes); error: {4}".format(
                                 key.name,
                                 key.structure,
                                 input,
+                                len(input),
+                                str(err)
                             )
                         )
                 
