@@ -14,10 +14,11 @@ import pprint
 
 from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
-from openType      import typeAsn,     \
-                          typeAddr,    \
-                          typeCellType,\
-                          typeComponent
+from openType      import typeAsn,          \
+                          typeAddr,         \
+                          typeCellType,     \
+                          typeComponent,    \
+                          typeRssi
 
 class StateElem(object):
     
@@ -171,7 +172,9 @@ class StateNeighborsRow(StateElem):
                                     notif.addr_bodyH,
                                     notif.addr_bodyL)
         self.data[0]['DAGrank']        = notif.DAGrank
-        self.data[0]['rssi']           = notif.rssi
+        if 'rssi' not in self.data[0]:
+            self.data[0]['rssi']       = typeRssi.typeRssi()
+        self.data[0]['rssi'].update(notif.rssi)
         self.data[0]['numRx']          = notif.numRx
         self.data[0]['numTx']          = notif.numTx
         self.data[0]['numTxACK']       = notif.numTxACK
