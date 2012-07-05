@@ -91,7 +91,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     4,
                                     'Asn',
-                                    '<BHH',
+                                    '<BxHH',
                                     [
                                         'asn_4',                     # B
                                         'asn_2_3',                   # H
@@ -170,9 +170,10 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     8,
                                     'NeighborsRow',
-                                    '>BBBBBBQQBbBBBBHHxx',
+                                    '<BxBBBBBQQBbBBBBxHH',
                                     [
                                         'row',                       # B
+                                                                     # x
                                         'used',                      # B
                                         'parentPreference',          # B
                                         'stableNeighbor',            # B
@@ -186,9 +187,9 @@ class ParserStatus(Parser.Parser):
                                         'numTx',                     # B
                                         'numTxACK',                  # B
                                         'asn_4',                     # B
+                                                                     # x
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
-                                                                     # xx
                                     ],
                                 )
     
