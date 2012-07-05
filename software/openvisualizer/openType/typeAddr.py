@@ -39,22 +39,22 @@ class typeAddr(openType.openType):
     
     def update(self,type,bodyH,bodyL):
         fullAddr = [
-                        bodyH>>(4*7) & 0xff,
-                        bodyH>>(4*6) & 0xff,
-                        bodyH>>(4*5) & 0xff,
-                        bodyH>>(4*4) & 0xff,
-                        bodyH>>(4*3) & 0xff,
-                        bodyH>>(4*2) & 0xff,
-                        bodyH>>(4*1) & 0xff,
-                        bodyH>>(4*0) & 0xff,
-                        bodyL>>(4*7) & 0xff,
-                        bodyL>>(4*6) & 0xff,
-                        bodyL>>(4*5) & 0xff,
-                        bodyL>>(4*4) & 0xff,
-                        bodyL>>(4*3) & 0xff,
-                        bodyL>>(4*2) & 0xff,
-                        bodyL>>(4*1) & 0xff,
-                        bodyL>>(4*0) & 0xff,
+                        bodyH>>(8*0) & 0xff,
+                        bodyH>>(8*1) & 0xff,
+                        bodyH>>(8*2) & 0xff,
+                        bodyH>>(8*3) & 0xff,
+                        bodyH>>(8*4) & 0xff,
+                        bodyH>>(8*5) & 0xff,
+                        bodyH>>(8*6) & 0xff,
+                        bodyH>>(8*7) & 0xff,
+                        bodyL>>(8*0) & 0xff,
+                        bodyL>>(8*1) & 0xff,
+                        bodyL>>(8*2) & 0xff,
+                        bodyL>>(8*3) & 0xff,
+                        bodyL>>(8*4) & 0xff,
+                        bodyL>>(8*5) & 0xff,
+                        bodyL>>(8*6) & 0xff,
+                        bodyL>>(8*7) & 0xff,
                    ]
         self.type = type
         if   type==self.ADDR_NONE:
@@ -62,16 +62,16 @@ class typeAddr(openType.openType):
             self.addr = None
         elif type==self.ADDR_16B:
             self.desc = '16b'
-            self.addr = [fullAddr[7],fullAddr[5]]
+            self.addr = fullAddr[:2]
         elif type==self.ADDR_64B:
             self.desc = '64b'
-            self.addr = fullAddr
+            self.addr = fullAddr[:8]
         elif type==self.ADDR_128B:
             self.desc = '128b'
             self.addr = fullAddr
         elif type==self.ADDR_PANID:
             self.desc = 'panId'
-            self.addr = [fullAddr[7],fullAddr[5]]
+            self.addr = fullAddr[:2]
         elif type==self.ADDR_PREFIX:
             self.desc = 'prefix'
             self.addr = fullAddr[:8]
