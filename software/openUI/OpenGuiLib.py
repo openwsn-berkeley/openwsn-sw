@@ -5,9 +5,37 @@ class Style(object):
     COLOR_BG       = 'white'
     BORDER_COLOR   = '222222'
     
+    ERROR_COLOR    = 'red'
+    OK_COLOR       = 'green'
+    
     FONT_HEADER    = ("Helvetica",8,"bold")
     FONT_NORMAL    = ("Helvetica",8,"normal")
     
+class OpenLabel(Tkinter.Label):
+    def __init__(self,guiParent,text=''):
+        Tkinter.Label.__init__(self,guiParent,
+                                    text=text,
+                                    font=Style.FONT_NORMAL,
+                                    bg=Style.COLOR_BG,)
+                                    
+    def grid(self,row=0,column=0):
+        Tkinter.Label.grid(self,row=row,
+                               column=column,
+                               sticky=Tkinter.W)
+
+class OpenButton(Tkinter.Button):
+    def __init__(self,guiParent,text,command):
+        Tkinter.Button.__init__(self,guiParent,
+                                     text=text,
+                                     command=command,
+                                     font=Style.FONT_NORMAL,
+                                     bg=Style.COLOR_BG,)
+                                    
+    def grid(self,row=0,column=0,columnspan=1):
+        Tkinter.Button.grid(self,row=row,
+                                 column=column,
+                                 columnspan=columnspan,
+                                 sticky=Tkinter.W)
     
 class HeaderLabel(Tkinter.Label):
     def __init__(self,guiParent,text=''):
