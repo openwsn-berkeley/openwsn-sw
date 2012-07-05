@@ -11,6 +11,8 @@ from moteState     import moteState
 import OpenWindow
 import OpenFrameState
 
+import Tkinter
+
 LOCAL_ADDRESS  = '127.0.0.1'
 TCP_PORT_START = 8090
 
@@ -31,34 +33,42 @@ class MoteStateGui(object):
         self.window     = OpenWindow.OpenWindow("mote state GUI")
         
         frameOrganization = [
-            (moteState.moteState.ST_IDMANAGER,   0, 0, 1),
-            (moteState.moteState.ST_ASN,         0, 1, 1),
-            (moteState.moteState.ST_MACSTATS,    0, 2, 1),
-            
-            (moteState.moteState.ST_SCHEDULE,    1, 0, 3),
-            
-            (moteState.moteState.ST_NEIGHBORS,   2, 0, 2),
-            (moteState.moteState.ST_QUEUE,       2, 2, 1),
-            
-            (moteState.moteState.ST_ISSYNC,      3, 0, 1),
-            (moteState.moteState.ST_MYDAGRANK,   3, 1, 1),
-            (moteState.moteState.ST_OUPUTBUFFER, 3, 2, 1),
+            [
+                moteState.moteState.ST_ISSYNC,
+                moteState.moteState.ST_ASN,
+                moteState.moteState.ST_MYDAGRANK,
+                moteState.moteState.ST_OUPUTBUFFER,
+            ],
+            [
+                moteState.moteState.ST_IDMANAGER,
+                moteState.moteState.ST_MACSTATS,
+            ],
+            [
+                moteState.moteState.ST_SCHEDULE,
+            ],
+            [
+                moteState.moteState.ST_NEIGHBORS,
+                moteState.moteState.ST_QUEUE,
+            ],
         ]
         
-        for (stateType,row,column,columnspan) in frameOrganization:
-            self.stateFrames[stateType]   = OpenFrameState.OpenFrameState(
-                                                self.window,
-                                                frameName=stateType,
-                                                row=row,
-                                                column=column,
-                                                columnspan=columnspan,
-                                            )
-            self.stateFrames[stateType].startAutoUpdate(
-                                                self.GUI_UPDATE_PERIOD,
-                                                self.moteState_handlers[0].getStateElem,
-                                                (stateType,)
-                                            )
-            self.stateFrames[stateType].show()
+        for row in range(len(frameOrganization)):
+            tempRowFrame = Tkinter.Frame(self.window)
+            tempRowFrame.grid(row=row)
+            for column in range(len(frameOrganization[row])):
+                stateType = frameOrganization[row][column]
+                self.stateFrames[stateType]   = OpenFrameState.OpenFrameState(
+                                                    tempRowFrame,
+                                                    frameName=stateType,
+                                                    row=0,
+                                                    column=column
+                                                )
+                self.stateFrames[stateType].startAutoUpdate(
+                                                    self.GUI_UPDATE_PERIOD,
+                                                    self.moteState_handlers[0].getStateElem,
+                                                    (stateType,)
+                                                )
+                self.stateFrames[stateType].show()
     
     #======================== public ==========================================
     

@@ -3,6 +3,8 @@ import OpenGuiLib
 
 class OpenFrame(Tkinter.Frame):
     
+    PADDING = 3
+    
     def __init__(self,guiParent,width=None,height=None,frameName="frame",row=0,column=0,columnspan=1):
         
         # store params
@@ -29,7 +31,11 @@ class OpenFrame(Tkinter.Frame):
     #======================== public ==========================================
     
     def show(self):
-        self.grid(row=self.row,column=self.column,columnspan=self.columnspan)
+        self.grid(row=self.row,
+                  column=self.column,
+                  columnspan=self.columnspan,
+                  padx=self.PADDING,
+                  pady=self.PADDING)
     
     def hide(self):
         self.grid_forget()
