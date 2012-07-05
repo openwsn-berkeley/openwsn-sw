@@ -19,10 +19,7 @@ class typeAsn(openType.openType):
         openType.openType.__init__(self)
     
     def __str__(self):
-        output  = []
-        output += ['0x']
-        output += [''.join(["%.2x"%b for b in self.asn])]
-        return ''.join(output)
+        return '0x{0}'.format(''.join(["%.2x"%b for b in self.asn]))
     
     #======================== public ==========================================
     

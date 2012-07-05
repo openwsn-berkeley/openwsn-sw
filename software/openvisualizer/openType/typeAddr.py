@@ -30,9 +30,7 @@ class typeAddr(openType.openType):
         output  = []
         if self.addr:
            output += ['-'.join(["%.2x"%b for b in self.addr])]
-        output += [' (']
-        output += [self.desc]
-        output += [')']
+        output += [' ({0})'.format(self.desc)]
         return ''.join(output)
     
     #======================== public ==========================================

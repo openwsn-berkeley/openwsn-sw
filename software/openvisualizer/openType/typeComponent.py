@@ -65,12 +65,7 @@ class typeComponent(openType.openType):
         openType.openType.__init__(self)
     
     def __str__(self):
-        output  = []
-        output += [str(self.type)]
-        output += [' (']
-        output += [self.desc]
-        output += [')']
-        return ''.join(output)
+        return '{0} ({1})'.format(self.type,self.desc)
     
     #======================== public ==========================================
     
