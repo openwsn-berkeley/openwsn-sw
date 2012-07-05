@@ -28,11 +28,11 @@ class typeAsn(openType.openType):
     
     def update(self,byte0_1,byte2_3,byte4):
         self.asn =  [
-                        byte0_1>>8,
-                        byte0_1%256,
+                        byte4,
                         byte2_3>>8,
                         byte2_3%256,
-                        byte4,
+                        byte0_1>>8,
+                        byte0_1%256,
                     ]
     
     #======================== private =========================================
