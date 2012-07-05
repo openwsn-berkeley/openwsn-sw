@@ -16,7 +16,8 @@ from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
 from openType      import typeAsn,     \
                           typeAddr,    \
-                          typeCellType
+                          typeCellType,\
+                          typeComponent
 
 class StateElem(object):
     
@@ -124,8 +125,13 @@ class StateQueueRow(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['creator']        = creator
-        self.data[0]['owner']          = owner
+        
+        if 'creator' not in self.data[0]:
+            self.data[0]['creator']=typeComponent.typeComponent()
+        self.data[0]['creator'].update(creator)
+        if 'owner' not in self.data[0]:
+            self.data[0]['owner']=typeComponent.typeComponent()
+        self.data[0]['owner'].update(owner)
 
 class StateQueue(StateElem):
     
