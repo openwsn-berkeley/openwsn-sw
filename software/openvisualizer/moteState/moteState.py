@@ -26,6 +26,7 @@ class StateElem(object):
         self.data                      = []
         
         self.meta[0]['numUpdates']     = 0
+        self.meta[0]['lastUpdated']    = None
     
     def update(self):
         self.meta[0]['lastUpdated']    = time.time()
