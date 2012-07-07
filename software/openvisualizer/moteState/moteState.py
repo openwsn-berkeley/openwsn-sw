@@ -44,28 +44,28 @@ class StateElem(object):
         self.meta[0]['lastUpdated']    = time.time()
         self.meta[0]['numUpdates']    += 1
     
-    def toDict(self):
-        returnVal = {}
-        returnVal['meta'] = self._convertToDict(self.meta)
-        returnVal['data'] = self._convertToDict(self.data)
-        return returnVal
-    
     def toJson(self):
-        return json.dumps(self.toDict(),sort_keys=True,indent=4)
+        return json.dumps(self._toDict(),sort_keys=True,indent=4)
     
     def __str__(self):
         return self.toJson()
     
     #======================== private =========================================
     
-    def _convertToDict(self,elem):
+    def _toDict(self):
+        returnVal = {}
+        returnVal['meta'] = self._elemToDict(self.meta)
+        returnVal['data'] = self._elemToDict(self.data)
+        return returnVal
+    
+    def _elemToDict(self,elem):
         returnval = []
         for rowNum in range(len(elem)):
             if   isinstance(elem[rowNum],dict):
                 returnval.append({})
                 for k,v in elem[rowNum].items():
                     if isinstance(v,(list, tuple)):
-                        returnval[-1][k] = [m.toDict() for m in v]
+                        returnval[-1][k] = [m._toDict() for m in v]
                     else:
                         if   isinstance(v,openType.openType):
                            returnval[-1][k] = str(v)
@@ -74,7 +74,7 @@ class StateElem(object):
                         else:
                            returnval[-1][k] = v
             elif isinstance(elem[rowNum],StateElem):
-                parsedRow = elem[rowNum].toDict()
+                parsedRow = elem[rowNum]._toDict()
                 assert('data' in parsedRow)
                 assert(len(parsedRow['data'])<2)
                 if len(parsedRow['data'])==1:

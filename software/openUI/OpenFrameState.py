@@ -1,3 +1,5 @@
+import json
+
 import OpenFrame
 import OpenTable
 import OpenGuiLib
@@ -63,7 +65,7 @@ class OpenFrameState(OpenFrame.OpenFrame):
     
     def _cb_autoUpdate(self):
         
-        self.update(self.updateFunc(*self.updateParams).toDict())
+        self.update(json.loads(self.updateFunc(*self.updateParams).toJson()))
         
         if self.updatePeriod:
             self.after(self.updatePeriod,self._cb_autoUpdate)
