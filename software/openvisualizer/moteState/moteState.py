@@ -65,7 +65,7 @@ class StateElem(object):
                 returnval.append({})
                 for k,v in elem[rowNum].items():
                     if isinstance(v,(list, tuple)):
-                        returnval[-1][k] = [m._toDict() for m in v]
+                        returnval[-1][k]    = [m._toDict() for m in v]
                     else:
                         if   isinstance(v,openType.openType):
                            returnval[-1][k] = str(v)
@@ -89,8 +89,8 @@ class StateOutputBuffer(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['index_write']    = notif.index_write
-        self.data[0]['index_read']     = notif.index_read
+        self.data[0]['index_write']         = notif.index_write
+        self.data[0]['index_read']          = notif.index_read
 
 class StateAsn(StateElem):
     
@@ -99,7 +99,7 @@ class StateAsn(StateElem):
         if len(self.data)==0:
             self.data.append({})
         if 'asn' not in self.data[0]:
-            self.data[0]['asn']        = typeAsn.typeAsn()
+            self.data[0]['asn']             = typeAsn.typeAsn()
         self.data[0]['asn'].update(notif.asn_0_1,
                                    notif.asn_2_3,
                                    notif.asn_4)
@@ -110,10 +110,10 @@ class StateMacStats(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['syncCounter']    = notif.syncCounter
-        self.data[0]['minCorrection']  = notif.minCorrection
-        self.data[0]['maxCorrection']  = notif.maxCorrection
-        self.data[0]['numDeSync']      = notif.numDeSync
+        self.data[0]['syncCounter']         = notif.syncCounter
+        self.data[0]['minCorrection']       = notif.minCorrection
+        self.data[0]['maxCorrection']       = notif.maxCorrection
+        self.data[0]['numDeSync']           = notif.numDeSync
 
 class StateScheduleRow(StateElem):
 
@@ -121,24 +121,24 @@ class StateScheduleRow(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['slotOffset']     = notif.slotOffset
+        self.data[0]['slotOffset']          = notif.slotOffset
         if 'type' not in self.data[0]:
-            self.data[0]['type']       = typeCellType.typeCellType()
+            self.data[0]['type']            = typeCellType.typeCellType()
         self.data[0]['type'].update(notif.type)
-        self.data[0]['shared']         = notif.shared
-        self.data[0]['channelOffset']  = notif.channelOffset
+        self.data[0]['shared']              = notif.shared
+        self.data[0]['channelOffset']       = notif.channelOffset
         if 'neighbor' not in self.data[0]:
-            self.data[0]['neighbor']   = typeAddr.typeAddr()
+            self.data[0]['neighbor']        = typeAddr.typeAddr()
         self.data[0]['neighbor'].update(notif.neighbor_type,
                                         notif.neighbor_bodyH,
                                         notif.neighbor_bodyL)
-        self.data[0]['backoffExponent']= notif.backoffExponent
-        self.data[0]['backoff']        = notif.backoff
-        self.data[0]['numRx']          = notif.numRx
-        self.data[0]['numTx']          = notif.numTx
-        self.data[0]['numTxACK']       = notif.numTxACK
+        self.data[0]['backoffExponent']     = notif.backoffExponent
+        self.data[0]['backoff']             = notif.backoff
+        self.data[0]['numRx']               = notif.numRx
+        self.data[0]['numTx']               = notif.numTx
+        self.data[0]['numTxACK']            = notif.numTxACK
         if 'lastUsedAsn' not in self.data[0]:
-            self.data[0]['lastUsedAsn']=typeAsn.typeAsn()
+            self.data[0]['lastUsedAsn']     = typeAsn.typeAsn()
         self.data[0]['lastUsedAsn'].update(notif.lastUsedAsn_0_1,
                                            notif.lastUsedAsn_2_3,
                                            notif.lastUsedAsn_4)
@@ -151,10 +151,10 @@ class StateQueueRow(StateElem):
             self.data.append({})
         
         if 'creator' not in self.data[0]:
-            self.data[0]['creator']=typeComponent.typeComponent()
+            self.data[0]['creator']         = typeComponent.typeComponent()
         self.data[0]['creator'].update(creator)
         if 'owner' not in self.data[0]:
-            self.data[0]['owner']=typeComponent.typeComponent()
+            self.data[0]['owner']           = typeComponent.typeComponent()
         self.data[0]['owner'].update(owner)
 
 class StateQueue(StateElem):
@@ -184,24 +184,24 @@ class StateNeighborsRow(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['used']           = notif.used
-        self.data[0]['parentPreference']    = notif.parentPreference
-        self.data[0]['stableNeighbor']      = notif.stableNeighbor
+        self.data[0]['used']                     = notif.used
+        self.data[0]['parentPreference']         = notif.parentPreference
+        self.data[0]['stableNeighbor']           = notif.stableNeighbor
         self.data[0]['switchStabilityCounter']   = notif.switchStabilityCounter
         if 'addr' not in self.data[0]:
-            self.data[0]['addr']   = typeAddr.typeAddr()
+            self.data[0]['addr']                 = typeAddr.typeAddr()
         self.data[0]['addr'].update(notif.addr_type,
                                     notif.addr_bodyH,
                                     notif.addr_bodyL)
-        self.data[0]['DAGrank']        = notif.DAGrank
+        self.data[0]['DAGrank']                  = notif.DAGrank
         if 'rssi' not in self.data[0]:
-            self.data[0]['rssi']       = typeRssi.typeRssi()
+            self.data[0]['rssi']                 = typeRssi.typeRssi()
         self.data[0]['rssi'].update(notif.rssi)
-        self.data[0]['numRx']          = notif.numRx
-        self.data[0]['numTx']          = notif.numTx
-        self.data[0]['numTxACK']       = notif.numTxACK
+        self.data[0]['numRx']                    = notif.numRx
+        self.data[0]['numTx']                    = notif.numTx
+        self.data[0]['numTxACK']                 = notif.numTxACK
         if 'asn' not in self.data[0]:
-            self.data[0]['asn']        = typeAsn.typeAsn()
+            self.data[0]['asn']                  = typeAsn.typeAsn()
         self.data[0]['asn'].update(notif.asn_0_1,
                                    notif.asn_2_3,
                                    notif.asn_4)
@@ -212,7 +212,7 @@ class StateIsSync(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['isSync']         = notif.isSync
+        self.data[0]['isSync']              = notif.isSync
 
 class StateIdManager(StateElem):
     
@@ -220,25 +220,25 @@ class StateIdManager(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['isDAGroot']      = notif.isDAGroot
-        self.data[0]['isBridge']       = notif.isBridge
+        self.data[0]['isDAGroot']           = notif.isDAGroot
+        self.data[0]['isBridge']            = notif.isBridge
         if 'my16bID' not in self.data[0]:
-            self.data[0]['my16bID']    = typeAddr.typeAddr()
+            self.data[0]['my16bID']         = typeAddr.typeAddr()
         self.data[0]['my16bID'].update(notif.my16bID_type,
                                        notif.my16bID_bodyH,
                                        notif.my16bID_bodyL)
         if 'my64bID' not in self.data[0]:
-            self.data[0]['my64bID']    = typeAddr.typeAddr()
+            self.data[0]['my64bID']         = typeAddr.typeAddr()
         self.data[0]['my64bID'].update(notif.my64bID_type,
                                        notif.my64bID_bodyH,
                                        notif.my64bID_bodyL)
         if 'myPANID' not in self.data[0]:
-            self.data[0]['myPANID']    = typeAddr.typeAddr()
+            self.data[0]['myPANID']         = typeAddr.typeAddr()
         self.data[0]['myPANID'].update(notif.myPANID_type,
                                        notif.myPANID_bodyH,
                                        notif.myPANID_bodyL)
         if 'myPrefix' not in self.data[0]:
-            self.data[0]['myPrefix']    = typeAddr.typeAddr()
+            self.data[0]['myPrefix']        = typeAddr.typeAddr()
         self.data[0]['myPrefix'].update(notif.myPrefix_type,
                                         notif.myPrefix_bodyH,
                                         notif.myPrefix_bodyL)
@@ -249,14 +249,14 @@ class StateMyDagRank(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['myDAGrank']      = notif.myDAGrank
+        self.data[0]['myDAGrank']           = notif.myDAGrank
 
 class StateTable(StateElem):
 
     def __init__(self,rowClass):
         StateElem.__init__(self)
-        self.meta[0]['rowClass']       = rowClass
-        self.data                      = []
+        self.meta[0]['rowClass']            = rowClass
+        self.data                           = []
 
     def update(self,notif):
         StateElem.update(self)
@@ -278,7 +278,15 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
     ST_ISSYNC           = 'IsSync'
     ST_IDMANAGER        = 'IdManager'
     ST_MYDAGRANK        = 'MyDagRank'
-    ALL_STATES          = [ST_OUPUTBUFFER,ST_ASN,ST_MACSTATS,ST_SCHEDULE,ST_QUEUE,ST_NEIGHBORS,ST_ISSYNC,ST_IDMANAGER,ST_MYDAGRANK]
+    ALL_STATES          = [ST_OUPUTBUFFER,
+                           ST_ASN,
+                           ST_MACSTATS,
+                           ST_SCHEDULE,
+                           ST_QUEUE,
+                           ST_NEIGHBORS,
+                           ST_ISSYNC,
+                           ST_IDMANAGER, 
+                           ST_MYDAGRANK]
     
     def __init__(self,moteConnector):
         
