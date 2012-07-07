@@ -11,15 +11,24 @@ import copy
 import time
 import threading
 import pprint
+import json
 
 from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
-from openType      import typeAsn,          \
+from openType      import openType,         \
+                          typeAsn,          \
                           typeAddr,         \
                           typeCellType,     \
                           typeComponent,    \
                           typeRssi
 
+class OpenEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if   isinstance(obj, (StateElem,openType.openType)):
+            return { obj.__class__.__name__: obj.__dict__ }
+        else:
+            return super(OpenEncoder, self).default(obj)
+                          
 class StateElem(object):
     
     def __init__(self):
@@ -29,37 +38,50 @@ class StateElem(object):
         self.meta[0]['numUpdates']     = 0
         self.meta[0]['lastUpdated']    = None
     
+    #======================== public ==========================================
+    
     def update(self):
         self.meta[0]['lastUpdated']    = time.time()
         self.meta[0]['numUpdates']    += 1
     
-    def getData(self):
-        
+    def toDict(self):
         returnVal = {}
-        returnVal['meta'] = copy.deepcopy(self.meta)
-        returnVal['data'] = []
-        for rowNum in range(len(self.data)):
-            if   isinstance(self.data[rowNum],dict):
-                returnVal['data'].append({})
-                for k,v in self.data[rowNum].items():
+        returnVal['meta'] = self._convertToDict(self.meta)
+        returnVal['data'] = self._convertToDict(self.data)
+        return returnVal
+    
+    def toJson(self):
+        return json.dumps(self.toDict(),sort_keys=True,indent=4)
+    
+    def __str__(self):
+        return self.toJson()
+    
+    #======================== private =========================================
+    
+    def _convertToDict(self,elem):
+        returnval = []
+        for rowNum in range(len(elem)):
+            if   isinstance(elem[rowNum],dict):
+                returnval.append({})
+                for k,v in elem[rowNum].items():
                     if isinstance(v,(list, tuple)):
-                        returnVal['data'][-1][k] = [m.getData() for m in v]
+                        returnval[-1][k] = [m.toDict() for m in v]
                     else:
-                        returnVal['data'][-1][k] = v
-            elif isinstance(self.data[rowNum],StateElem):
-                parsedRow = self.data[rowNum].getData()
+                        if   isinstance(v,openType.openType):
+                           returnval[-1][k] = str(v)
+                        elif isinstance(v,type):
+                           returnval[-1][k] = v.__name__
+                        else:
+                           returnval[-1][k] = v
+            elif isinstance(elem[rowNum],StateElem):
+                parsedRow = elem[rowNum].toDict()
                 assert('data' in parsedRow)
                 assert(len(parsedRow['data'])<2)
                 if len(parsedRow['data'])==1:
-                    returnVal['data'].append(parsedRow['data'][0])
+                    returnval.append(parsedRow['data'][0])
             else:
-                raise SystemError("can not parse elem of type {0}".format(type(self.data[rowNum])))
-        
-        return returnVal
-    
-    def __str__(self):
-        pp = pprint.PrettyPrinter(indent=3)
-        return pp.pformat(self.getData())
+                raise SystemError("can not parse elem of type {0}".format(type(elem[rowNum])))
+        return returnval
 
 class StateOutputBuffer(StateElem):
     
@@ -309,21 +331,21 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
     
     #======================== public ==========================================
     
+    def getStateElemNames(self):
+        
+        self.stateLock.acquire()
+        returnVal = self.state.keys()
+        self.stateLock.release()
+        
+        return returnVal
+    
     def getStateElem(self,elemName):
         
         if elemName not in self.state:
             raise ValueError('No state called {0}'.format(elemName))
         
         self.stateLock.acquire()
-        returnVal = copy.deepcopy(self.state[elemName])
-        self.stateLock.release()
-        
-        return returnVal
-    
-    def getStateElemNames(self):
-        
-        self.stateLock.acquire()
-        returnVal = self.state.keys()
+        returnVal = self.state[elemName]
         self.stateLock.release()
         
         return returnVal

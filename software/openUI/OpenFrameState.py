@@ -63,7 +63,7 @@ class OpenFrameState(OpenFrame.OpenFrame):
     
     def _cb_autoUpdate(self):
         
-        self.update(self.updateFunc(*self.updateParams).getData())
+        self.update(self.updateFunc(*self.updateParams).toDict())
         
         if self.updatePeriod:
             self.after(self.updatePeriod,self._cb_autoUpdate)

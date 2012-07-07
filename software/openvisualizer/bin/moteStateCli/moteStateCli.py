@@ -42,6 +42,7 @@ class MoteStateCli(OpenCli):
     #======================== private =========================================
     
     #===== callbacks
+    
     def _handlerList(self,params):
         for ms in self.moteState_handlers:
             output  = []
