@@ -110,7 +110,8 @@ class OpenCli(threading.Thread):
                 if len(params[1:])==len(cmdParams):
                     cmdCallback(params[1:])
                 else:
-                    self._printUsageFromName(params[0])
+                    if not self._printUsageFromName(params[0]):
+                        self._printUsageFromAlias(params[0])
             else:
                 print ' unknown command or alias \''+params[0]+'\''
     
