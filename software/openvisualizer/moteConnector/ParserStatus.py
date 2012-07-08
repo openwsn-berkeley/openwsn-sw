@@ -210,10 +210,12 @@ class ParserStatus(Parser.Parser):
            (moteId,statusElem) = struct.unpack('<HB',''.join([chr(c) for c in headerBytes]))
         except struct.error:
             raise ParserException(ParserException.DESERIALIZE,"could not extract moteId and statusElem from {0}".format(headerBytes))
-        input = input[3:]
         
         # log
         log.debug("moteId={0} statusElem={1}".format(moteId,statusElem))
+        
+        # jump the header bytes
+        input = input[3:]
         
         # call the next header parser
         for key in self.fieldsParsingKeys:

@@ -23,6 +23,10 @@ class ParserError(Parser.Parser):
     #======================== public ==========================================
     
     def parseInput(self,input):
-        raise ParserException(ParserException.NOT_IMPLEMENTED)
+        
+        # log
+        log.debug("received data {0}".format(input))
+        
+        raise ParserException(ParserException.NOT_IMPLEMENTED,"ParserError.parseInput")
     
     #======================== private =========================================
