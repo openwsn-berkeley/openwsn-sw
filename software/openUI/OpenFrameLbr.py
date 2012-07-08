@@ -7,9 +7,14 @@ import re
 
 class OpenFrameLbr(OpenFrame.OpenFrame):
     
-    def __init__(self,guiParent,width=None,height=None,frameName="connect to the LBR",row=0,column=0,columnspan=1):
+    def __init__(self,guiParent,
+                      connectParams_cb,
+                      width=None,height=None,
+                      frameName="connect to the LBR",
+                      row=0,column=0,columnspan=1):
         
         # store params
+        self.connectParams_cb = connectParams_cb
         
         # initialize the parent class
         OpenFrame.OpenFrame.__init__(self,guiParent,
@@ -81,14 +86,6 @@ class OpenFrameLbr(OpenFrame.OpenFrame):
     
     def _retrieveConnectionDetails(self):
         
-        # retrieve information from lbr authentication file
-        connectParams = self._getReadAuthenticationFile()
-        
-        print connectParams
-    
-    #======================== helpers =========================================
-    
-    def _getReadAuthenticationFile(self):
         # open authentication file
         authFile = tkFileDialog.askopenfile(
                         mode        ='r',
@@ -100,6 +97,9 @@ class OpenFrameLbr(OpenFrame.OpenFrame):
                                         ("All types", "*.*"),
                                     ]
                     )
+        if not authFile:
+            return
+        
         # parse authentication file
         connectParams = {}
         for line in authFile:
@@ -112,17 +112,22 @@ class OpenFrameLbr(OpenFrame.OpenFrame):
                 except ValueError:
                     connectParams[key] =     val
         
-        # return the parameters I've found in the file
-        return connectParams
+        # call the callback
+        self.connectParams_cb(connectParams)
 
 ###############################################################################
 
 if __name__=='__main__':
+
+    def _indicateConnectParams(connectParams):
+        print "_indicateConnectParams connectParams={0}".format(connectParams)
+
     import OpenWindow
     
     examplewindow      = OpenWindow.OpenWindow("OpenFrameLbr")
     
-    exampleframelbr    = OpenFrameLbr(examplewindow)
+    exampleframelbr    = OpenFrameLbr(examplewindow,
+                                      _indicateConnectParams)
     exampleframelbr.show()
     
     examplewindow.startGui()
