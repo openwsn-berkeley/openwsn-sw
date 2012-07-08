@@ -13,21 +13,20 @@ import copy
 
 class lbrClientMoteConnectorConsumer(MoteConnectorConsumer.MoteConnectorConsumer):
     
-    def __init__(self,moteConnector):
+    def __init__(self,moteConnector,receivedData_cb):
         
         # log
         log.debug("create instance")
         
         # store params
         self.moteConnector   = moteConnector
+        self.receivedData_cb = receivedData_cb
+        
         
         # initialize parent class
         MoteConnectorConsumer.MoteConnectorConsumer.__init__(self,self.moteConnector,
                                                                   [self.moteConnector.TYPE_DATA],
-                                                                  self._receivedData_notif)
-    
-    def _receivedData_notif(self,data):
-        print "lbrClientMoteConnectorConsumer data={0}".format(data)
+                                                                  self.receivedData_cb)
 
 class lbrClient(threading.Thread):
     
@@ -50,7 +49,8 @@ class lbrClient(threading.Thread):
         self.statsLock            = threading.Lock()
         self.stats                = {}
         self.connectSem           = threading.Lock()
-        self.connectorConsumer    = lbrClientMoteConnectorConsumer(self.moteConnector)
+        self.connectorConsumer    = lbrClientMoteConnectorConsumer(self.moteConnector,
+                                                                   self.send)
         
         # reset the statistics
         self._resetStats()
@@ -225,23 +225,33 @@ class lbrClient(threading.Thread):
             self.connectSem.acquire()
         
         # reset the statistics (includes setting to disconnected)
-        self._resetStats()
+        self._resetStats(disconnectReason=reason)
         
         # close the TCP session
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
     
-    def _receivedData_notif(self,data):
-        print data
-    
     def send(self,lowpan):
         try:
             if self._isConnected():
-                self.socket.send(chr(0)+chr(0)+chr(0)+chr(0)+chr(0)+chr(0)+chr(0)+chr(0)+lowpan)
+                
+                # add 8 bytes of 0
+                lowpan = [0]*8 + lowpan
+                
+                # convert to string
+                lowpan = ''.join([chr(b) for b in lowpan])
+                
+                # send to LBR
+                self.socket.send(lowpan)
                 
                 # increment statistics
-                self._incrementStats('sentPackets')
-                self._incrementStats('sentBytes', step=len(lowpan)+8)
+                self._incrementStats('packetsSentOk')
+                self._incrementStats('bytesSentOk', step=len(lowpan))
+            
+            else:
+                # increment statistics
+                self._incrementStats('packetsSentFailed')
+                self._incrementStats('bytesSentFailed', step=len(lowpan))
                 
         except socket.error as err:
             log.error('socket error while sending: {0}'.format(err))
@@ -255,21 +265,26 @@ class lbrClient(threading.Thread):
     
     #======================== private =========================================
     
-    def _resetStats(self):
+    #===== stats handling
+    
+    def _resetStats(self,disconnectReason=None):
         
         # log
         log.debug("resetting stats")
         
         self.statsLock.acquire()
-        self.stats['status']           = self.STATUS_DISCONNECTED
-        self.stats['lbrAddr']          = None
-        self.stats['lbrPort']          = None
-        self.stats['netname']          = None
-        self.stats['prefix']           = None
-        self.stats['sentPackets']      = 0
-        self.stats['sentBytes']        = 0
-        self.stats['receivedPackets']  = 0
-        self.stats['receivedBytes']    = 0
+        self.stats['disconnectReason']      = disconnectReason
+        self.stats['status']                = self.STATUS_DISCONNECTED
+        self.stats['lbrAddr']               = None
+        self.stats['lbrPort']               = None
+        self.stats['netname']               = None
+        self.stats['prefix']                = None
+        self.stats['packetsSentOk']         = 0
+        self.stats['bytesSentOk']           = 0
+        self.stats['packetsSentFailed']     = 0
+        self.stats['bytesSentFailed']       = 0
+        self.stats['receivedPackets']       = 0
+        self.stats['receivedBytes']         = 0
         self.statsLock.release()
     
     def _isConnected(self):
@@ -292,10 +307,12 @@ class lbrClient(threading.Thread):
         self.statsLock.release()
     
     def _incrementStats(self,statsName,step=1):
-        assert (statsName in ['receivedPackets',
-                              'receivedBytes',
-                              'sentPackets',
-                              'sentBytes'])
+        assert (statsName in ['packetsSentOk',
+                              'bytesSentOk',
+                              'packetsSentFailed',
+                              'bytesSentFailed',
+                              'receivedPackets',
+                              'receivedBytes'])
         
         self.statsLock.acquire()
         self.stats[statsName] += step
