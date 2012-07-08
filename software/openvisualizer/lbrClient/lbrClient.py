@@ -31,6 +31,9 @@ class lbrClient(threading.Thread):
         self.stats           = {}
         self.connectSem      = threading.Lock()
         
+        # reset the statistics
+        self._resetStats()
+        
         # acquire the connectSem, so the thread doesn't start listening
         self.connectSem.acquire()
         
@@ -94,7 +97,7 @@ class lbrClient(threading.Thread):
     def connect(self,lbrAddr,lbrPort,netname):
         
         # log
-        log.debug("connecting to {2}@{0}:{1}",format(lbrAddr,lbrPort,netname))
+        log.debug("connecting to {2}@{0}:{1}".format(lbrAddr,lbrPort,netname))
         
         # store connection params
         self._updateConnectParams(lbrAddr,lbrPort,netname)
@@ -105,11 +108,14 @@ class lbrClient(threading.Thread):
         # create TCP socket to connect to LBR
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.socket.connect((_getConnectParam('lbrAddr'),_getConnectParam('lbrPort')))
-        except:
+            self.socket.connect((self._getConnectParam('lbrAddr'),
+                                 self._getConnectParam('lbrPort')))
+        except socket.error:
             
             # disconnect
-            self.disconnect('Could not open socket to LBR@{0}:{1}'.format(self.lbrAddr,self.lbrPort))
+            self.disconnect('Could not open socket to LBR@{0}:{1}'.format(
+                self._getConnectParam('lbrAddr'),
+                self._getConnectParam('lbrPort')))
             
             # abort connection
             return
@@ -144,7 +150,7 @@ class lbrClient(threading.Thread):
             return
         
         # ---N---> send netname
-        self.socket.send('N'+self.netname)
+        self.socket.send('N'+self._getConnectParam('netname'))
         
         # <--N---- receive netname
         try:
@@ -214,7 +220,7 @@ class lbrClient(threading.Thread):
         except socket.error as err:
             log.error('socket error while sending: {0}'.format(err))
     
-    def getStats():
+    def getStats(self):
         self.statsLock.acquire()
         returnVal = copy.deepcopy(self.stats)
         self.statsLock.release()
@@ -230,6 +236,9 @@ class lbrClient(threading.Thread):
         
         self.statsLock.acquire()
         self.stats['status']           = self.STATUS_DISCONNECTED
+        self.stats['lbrAddr']          = None
+        self.stats['lbrPort']          = None
+        self.stats['netname']          = None
         self.stats['prefix']           = None
         self.stats['sentPackets']      = 0
         self.stats['sentBytes']        = 0
@@ -245,7 +254,6 @@ class lbrClient(threading.Thread):
         return returnVal
     
     def _updateStatus(self,newStatus):
-        
         assert (newStatus in [self.STATUS_DISCONNECTED,
                               self.STATUS_CONNECTING,
                               self.STATUS_AUTHENTICATING,
@@ -258,7 +266,6 @@ class lbrClient(threading.Thread):
         self.statsLock.release()
     
     def _incrementStats(self,statsName,step=1):
-        
         assert (statsName in ['receivedPackets',
                               'receivedBytes',
                               'sentPackets',
@@ -286,6 +293,7 @@ class lbrClient(threading.Thread):
         return returnVal
     
     def _storePrefix(self,prefix):
+        
         self.statsLock.acquire()
         self.stats['prefix'] = prefix
         self.statsLock.release()
