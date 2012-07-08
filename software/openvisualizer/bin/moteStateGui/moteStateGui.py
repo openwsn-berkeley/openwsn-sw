@@ -25,14 +25,14 @@ class MoteStateGui(object):
     def __init__(self,moteProbe_handlers,
                       moteConnector_handlers,
                       moteState_handlers,
-                      lbrClient_handler,
+                      lbrClient_handlers,
                       lbrConnectParams_cb):
         
         # store params
         self.moteProbe_handlers     = moteProbe_handlers
         self.moteConnector_handlers = moteConnector_handlers
         self.moteState_handlers     = moteState_handlers
-        self.lbrClient_handler      = lbrClient_handler
+        self.lbrClient_handlers     = lbrClient_handlers
         self.lbrConnectParams_cb    = lbrConnectParams_cb
         
         # local variables
@@ -84,7 +84,7 @@ class MoteStateGui(object):
         #===== frameLbr
         
         self.frameLbr = OpenFrameLbr.OpenFrameLbr(self.window,
-                                                  self.lbrClient_handler,
+                                                  self.lbrClient_handlers[0],
                                                   self.lbrConnectParams_cb,
                                                   row=1)
         self.frameLbr.show()
@@ -102,7 +102,7 @@ class MoteStateGui_app(object):
         self.moteProbe_handlers        = []
         self.moteConnector_handlers    = []
         self.moteState_handlers        = []
-        self.lbrClient_handler         = lbrClient.lbrClient()
+        self.lbrClient_handlers        = []
         
         # create a moteProbe for each mote connected to this computer
         serialPorts    = moteProbe.utils.findSerialPorts()
@@ -118,14 +118,20 @@ class MoteStateGui_app(object):
         for mc in self.moteConnector_handlers:
            self.moteState_handlers.append(moteState.moteState(mc))
         
+        # create an lbrClient for each moteConnector
+        for mc in self.moteConnector_handlers:
+           self.lbrClient_handlers.append(lbrClient.lbrClient(mc))
+        
         # create an open GUI
         gui = MoteStateGui(self.moteProbe_handlers,
                            self.moteConnector_handlers,
                            self.moteState_handlers,
-                           self.lbrClient_handler,
+                           self.lbrClient_handlers,
                            self.indicateConnectParams)
         
         # start threads
+        for lc in self.lbrClient_handlers:
+           lc.start()
         for ms in self.moteState_handlers:
            ms.start()
         for mc in self.moteConnector_handlers:
@@ -136,9 +142,9 @@ class MoteStateGui_app(object):
     
     def indicateConnectParams(self,connectParams):
         try:
-            self.lbrClient_handler.connect(connectParams['LBRADDR'],
-                                           connectParams['LBRPORT'],
-                                           connectParams['USERNAME'])
+            self.lbrClient_handlers[0].connect(connectParams['LBRADDR'],
+                                               connectParams['LBRPORT'],
+                                               connectParams['USERNAME'])
         except KeyError:
             log.error("malformed connectParams={0}".format(connectParams))
     

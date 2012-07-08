@@ -7,8 +7,28 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
+from moteConnector import MoteConnectorConsumer
 import socket
 import copy
+
+class lbrClientMoteConnectorConsumer(MoteConnectorConsumer.MoteConnectorConsumer):
+    
+    def __init__(self,moteConnector):
+        
+        # log
+        log.debug("create instance")
+        
+        # store params
+        self.moteConnector   = moteConnector
+        
+        # initialize parent class
+        MoteConnectorConsumer.MoteConnectorConsumer.__init__(self,self.moteConnector,
+                                                                  [self.moteConnector.TYPE_DATA],
+                                                                  self._receivedData_notif)
+    
+    def _receivedData_notif(self,data):
+        print "lbrClientMoteConnectorConsumer data={0}".format(data)
+    
 
 class lbrClient(threading.Thread):
     
@@ -19,17 +39,19 @@ class lbrClient(threading.Thread):
     
     AUTHTIMEOUT              = 5.0
     
-    def __init__(self):
+    def __init__(self,moteConnector):
     
         # store params
+        self.moteConnector   = moteConnector
         
         # log
         log.debug("creating instance")
         
         # local variables
-        self.statsLock       = threading.Lock()
-        self.stats           = {}
-        self.connectSem      = threading.Lock()
+        self.statsLock            = threading.Lock()
+        self.stats                = {}
+        self.connectSem           = threading.Lock()
+        self.connectorConsumer    = lbrClientMoteConnectorConsumer(self.moteConnector)
         
         # reset the statistics
         self._resetStats()
@@ -47,6 +69,9 @@ class lbrClient(threading.Thread):
         
         # log
         log.debug("starting to run")
+        
+        #start the moteConnectorConsumer
+        self.connectorConsumer.start()
         
         while True:
             # reset the statistics
@@ -84,8 +109,7 @@ class lbrClient(threading.Thread):
                         continue
                     
                     # look for the connected mote which is a bridge
-                    if shared.portBridgeMote!=None:
-                        shared.moteConnectors[shared.portBridgeMote].write(input)
+                    self.moteConnector.write(input)
             
             except socket.error as err:
                
@@ -207,6 +231,9 @@ class lbrClient(threading.Thread):
         # close the TCP session
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
+    
+    def _receivedData_notif(self,data):
+        print data
     
     def send(self,lowpan):
         try:
