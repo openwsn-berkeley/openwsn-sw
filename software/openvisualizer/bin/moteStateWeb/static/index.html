@@ -1,0 +1,60 @@
+<html>
+<head>
+    <title>OpenWSN tables</title>
+    <script type="text/javascript" src="http://d3js.org/d3.v2.js"></script>
+</head>
+<table>
+    <thead></thead>
+    <tbody></tbody>
+</table>
+<script type="text/javascript">
+
+getMoteState();
+
+function getMoteState() {
+   d3.json("http://127.0.0.1:8080/moteState/Schedule", plotTable);
+}
+
+function plotTable(json) {
+   // we're only interested in the 'data' portion of the json
+   data     = json.data
+   
+   // remove all the rows from the table (useful when reloading data)
+   d3.select("tbody").selectAll("tr").remove();
+   
+   // fill in the header to the table
+   var th = d3.select("thead").selectAll("th")
+            .data(jsonToArray(data[0]))
+          .enter().append("th")
+            .text(function(d) { return d[0]; })
+   
+   // create the rows
+   var tr = d3.select("tbody").selectAll("tr")
+            .data(data)
+          .enter().append("tr")
+   
+   // create the cells
+   var td = tr.selectAll("td")
+            .data(function(d) { return jsonToArray(d); })
+          .enter().append("td")
+            .text(function(d) { return d[1]; });
+   
+   // reload the data after some delay
+   setTimeout("getMoteState()",1000);
+}
+
+function jsonKeyValueToArray(k, v) {return [k, v];}
+
+function jsonToArray(json) {
+    var ret = new Array();
+    var key;
+    for (key in json) {
+        if (json.hasOwnProperty(key)) {
+            ret.push(jsonKeyValueToArray(key, json[key]));
+        }
+    }
+    return ret;
+};
+</script>
+</body>
+</html> 
