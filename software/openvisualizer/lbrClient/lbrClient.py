@@ -28,7 +28,6 @@ class lbrClientMoteConnectorConsumer(MoteConnectorConsumer.MoteConnectorConsumer
     
     def _receivedData_notif(self,data):
         print "lbrClientMoteConnectorConsumer data={0}".format(data)
-    
 
 class lbrClient(threading.Thread):
     
