@@ -110,7 +110,7 @@ class OpenFrameLbr(OpenFrame.OpenFrame):
                 try:
                     connectParams[key] = int(val)
                 except ValueError:
-                    connectParams[key] =     val
+                    connectParams[key] = val
         
         # call the callback
         self.connectParams_cb(connectParams)
