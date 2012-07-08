@@ -1,47 +1,45 @@
+import logging
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log = logging.getLogger('lbrClient')
+log.setLevel(logging.ERROR)
+log.addHandler(NullHandler())
+
 import threading
 import socket
 import binascii
-import Tkinter
 import tkFileDialog
 import tkMessageBox
 import re
 
-AUTHTIMEOUT = 5.0 # max number of seconds to wait for an authentication packet
-
 class lbrClient(threading.Thread):
     
-    def __init__(self,frame,tkSem):
-        print "creating lbrClientThread"
-        self.varLock           = threading.BoundedSemaphore()
+    ## max number of seconds to wait for an authentication packet
+    AUTHTIMEOUT = 5.0
+    
+    def __init__(self):
+    
+        # log
+        log.debug("creating instance")
+        
+        self.varLock           = threading.Lock()
         self.isConnected       = False
-        self.connectSem        = threading.BoundedSemaphore()
+        self.connectSem        = threading.Lock()
         self.connectSem.acquire()
-        self.tkSem             = tkSem
-        self.frame             = frame
-        self.tkSem.acquire()
-        self.lbrPrefixLabel    = Tkinter.Label(self.frame,width=20)
-        self.lbrPrefixLabel.grid(row=0,column=0,columnspan=2)
-        Tkinter.Label(self.frame,text='status:',justify=Tkinter.RIGHT,anchor=Tkinter.E).grid(row=1,column=0)
-        self.lbrStatusLabel    = Tkinter.Label(self.frame)
-        self.lbrStatusLabel.grid(row=1,column=1)
-        Tkinter.Label(self.frame,text='sent to LBR:',justify=Tkinter.RIGHT,anchor=Tkinter.E).grid(row=2,column=0)
-        self.lbrSentLabel      = Tkinter.Label(self.frame)
-        self.lbrSentLabel.grid(row=2,column=1)
-        Tkinter.Label(self.frame,text='received from LBR:',justify=Tkinter.RIGHT,anchor=Tkinter.E).grid(row=3,column=0)
-        self.lbrReceivedLabel  = Tkinter.Label(self.frame)
-        self.lbrReceivedLabel.grid(row=3,column=1)
-        self.connectButton     = Tkinter.Button(self.frame,text="Connect to LBR",command=self.connect)
-        self.connectButton.grid(row=4,column=0,columnspan=2)
-        self.tkSem.release()
+        
         self.sentColor         = 'red'
         self.receivedColor     = 'red'
         threading.Thread.__init__(self)
         self.setName('lbrClientThread')
     
     def run(self):
+        
+        # log
+        log.debug("starting to run")
+        
         while True:
             self.resetStats()
-            self.displayStats()
             self.connectSem.acquire()
             self.connectSem.release()
             try:
@@ -57,7 +55,6 @@ class lbrClient(threading.Thread):
                     #update statistics
                     self.receivedPackets += 1
                     self.receivedBytes   += len(input)
-                    self.displayStats()
                     # handle received data
                     # the data received from the LBR should be:
                     # - first 8 bytes: EUI64 of the final destination
@@ -74,36 +71,21 @@ class lbrClient(threading.Thread):
                             self.receivedColor = 'orange'
                         else:
                             self.receivedColor = 'red'
-                        self.tkSem.acquire()
-                        self.lbrReceivedLabel.config(background=self.receivedColor)
-                        self.tkSem.release()
             except socket.error:
                print 'poipoipoipoi'
                self.disconnect()
     
     def resetStats(self):
+        
+        # log
+        log.debug("resetting stats")
+    
         self.prefix          = ''
         self.status          = 'disconnected'
         self.sentPackets     = 0
         self.sentBytes       = 0
         self.receivedPackets = 0
         self.receivedBytes   = 0
-    
-    def displayStats(self):
-        self.tkSem.acquire()
-        self.lbrPrefixLabel.config(text=self.prefix)
-        self.lbrStatusLabel.config(text=self.status)
-        tempString  =      str(self.sentPackets)+' pkts'
-        tempString += ', '+str(self.sentBytes)  +' B '
-        if self.sentPackets!=0:
-            tempString += ' ('+str(self.sentBytes/self.sentPackets)+' B/pkt ) '
-        self.lbrSentLabel.config(text=tempString)
-        tempString  =      str(self.receivedPackets)+' pkts'
-        tempString += ', '+str(self.receivedBytes)  +' B '
-        if self.receivedPackets!=0:
-            tempString += ' ('+str(self.receivedBytes/self.receivedPackets)+'B/pkt) '
-        self.lbrReceivedLabel.config(text=tempString)
-        self.tkSem.release()
     
     def connect(self):
         # open authentication file
@@ -133,7 +115,6 @@ class lbrClient(threading.Thread):
             return
         # update stats
         self.status          = 'connecting'
-        self.displayStats()
         # create TCP socket to connect to LBR
         try:
             self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -148,8 +129,7 @@ class lbrClient(threading.Thread):
             return
         # update stats
         self.status          = 'authenticating'
-        self.displayStats()
-        self.socket.settimeout(AUTHTIMEOUT) # listen for at most AUTHTIMEOUT seconds
+        self.socket.settimeout(self.AUTHTIMEOUT) # listen for at most AUTHTIMEOUT seconds
         # ---S---> send security capability
         self.socket.send('S'+chr(0))
         # <---S--- listen for (same) security capability
@@ -210,11 +190,6 @@ class lbrClient(threading.Thread):
         # update GUI elements
         self.prefix = self.prefix
         self.status = 'connected to LBR@'+self.lbrAddr+':'+str(self.lbrPort)
-        self.displayStats()
-        self.tkSem.acquire()
-        self.connectButton.configure(text="Disconnect from LBR")
-        self.connectButton.configure(command=self.disconnect)
-        self.tkSem.release()
         # release semaphore so task can start running
         self.varLock.acquire()
         self.isConnected = True
@@ -232,7 +207,6 @@ class lbrClient(threading.Thread):
         self.socket.close()
         # update GUI elements
         self.resetStats()
-        self.displayStats()
         self.connectButton.configure(text="Connect to LBR")
         self.connectButton.configure(command=self.connect)
     
@@ -242,21 +216,14 @@ class lbrClient(threading.Thread):
         self.varLock.release()
         try:
             if tempIsConnected==True:
-                self.tkSem.acquire()
-                self.lbrSentLabel.config(background='green')
-                self.tkSem.release()
                 self.socket.send(chr(0)+chr(0)+chr(0)+chr(0)+chr(0)+chr(0)+chr(0)+chr(0)+lowpan)
                 self.sentPackets += 1
                 self.sentBytes   += len(lowpan)+8
-                self.displayStats()
             else:
                 if self.sentColor=='red':
                     self.sentColor = 'orange'
                 else:
                     self.sentColor = 'red'
-                self.tkSem.acquire()
-                self.lbrSentLabel.config(background=self.sentColor)
-                self.tkSem.release()
         except socket.error:
             print 'ERROR: socket error while sending'
             pass
