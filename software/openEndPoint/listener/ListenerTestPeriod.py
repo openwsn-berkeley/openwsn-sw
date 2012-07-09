@@ -7,6 +7,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import random
+import time
 
 import Listener
 
@@ -27,7 +28,7 @@ class ListenerTestPeriod(Listener.Listener):
         if not self.goOn:
             raise TearDownError()
         
-        time.sleep(self.period)
+        time.sleep(float(self.period)/1000.0)
         
         if not self.goOn:
             raise TearDownError()

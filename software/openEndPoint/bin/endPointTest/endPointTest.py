@@ -14,7 +14,7 @@ from   listener    import ListenerTestPeriod
 from   epparser    import ParserOneNum
 from   publisher   import PublisherScreen
 
-PERIOD_MS     = 1000
+PERIOD_MS = 1000
 
 class endPointTestCli(OpenCli.OpenCli):
 
