@@ -10,7 +10,8 @@ import threading
 import Queue
 
 import EngineStats
-from   EngineException import OutputUnavailableException
+from   EngineException import OutputUnavailableException,  \
+                              ParsingException
 
 class ProcessingEngine(threading.Thread):
     

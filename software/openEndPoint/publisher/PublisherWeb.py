@@ -14,22 +14,26 @@ import Publisher
 
 webDataSource = None
 
-class dataResource(object):
-    def GET(self):
-        global webDataSource
-        
-        #web.header('Content-Type', 'text/json')
-        return webDataSource.getData()
-
 class index(object):
     def GET(self):
         return "Hello, World!"
+class allData(object):
+    def GET(self):
+        global webDataSource
+        #web.header('Content-Type', 'text/json')
+        return webDataSource.getAllData()
+class lastData(object):
+    def GET(self):
+        global webDataSource
+        #web.header('Content-Type', 'text/json')
+        return webDataSource.getLastData()
 
 class OpenWebApp(web.application):
     
     urls = (
-        '/',      'index',
-        '/data/', 'dataResource',
+        '/',     'index',
+        '/all',  'allData',
+        '/last', 'lastData',
     )
     
     def __init__(self, dataSource):
@@ -72,11 +76,18 @@ class DataQueue(object):
             self.data.pop(0)
         self.dataLock.release()
         
-    def getData(self):
+    def getAllData(self):
         self.dataLock.acquire()
         returnVal = json.dumps(self.data,sort_keys=True,indent=4)
         self.dataLock.release()
-        
+        return returnVal
+    
+    def getLastData(self):
+        self.dataLock.acquire()
+        returnVal = json.dumps([self.data[-1]['value']],
+                               sort_keys=True,
+                               indent=4)
+        self.dataLock.release()
         return returnVal
 
 class PublisherWeb(Publisher.Publisher):
@@ -114,8 +125,11 @@ class PublisherWeb(Publisher.Publisher):
         # add to data
         self.dataQueue.push(timestamp,data)
         
-    def getData(self):
-        return self.dataQueue.getData()
+    def getAllData(self):
+        return self.dataQueue.getAllData()
+    
+    def getLastData(self):
+        return self.dataQueue.getLastData()
     
     #======================== private =========================================
     

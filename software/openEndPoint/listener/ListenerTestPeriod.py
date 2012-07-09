@@ -33,9 +33,9 @@ class ListenerTestPeriod(Listener.Listener):
         if not self.goOn:
             raise TearDownError()
         
-        return (time.time(),                # timestampe
-                ('testHarness'),            # source
-                [b for b in range(10)])     # data
+        return (time.time(),                                   # timestampe
+                ('testHarness'),                               # source
+                [random.randint(0,255) for b in range(2)])     # data
     
     def stop(self):
         # declare that this thread has to stop

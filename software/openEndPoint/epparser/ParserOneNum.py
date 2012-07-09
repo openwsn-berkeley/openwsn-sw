@@ -13,8 +13,15 @@ class ParserOneNum(Parser.Parser):
     #======================== public ==========================================
     
     def parse(self,data):
-        returnVal              = {}
-        returnVal['valString'] = '0x{0}'.format(''.join(["%.2x"%b for b in data]))
+        returnVal          = {}
+        returnVal['value'] = 0
+        for i in range(len(data)):
+            returnVal['value'] += data[i]<<(8*(len(data)-1-i))
+        
+        '''
+        print "{0} --> {1}".format([hex(b) for b in data],
+                                    hex(returnVal['value']))
+        '''
         
         return returnVal
     
