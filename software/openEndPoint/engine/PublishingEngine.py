@@ -41,6 +41,8 @@ class PublishingEngine(threading.Thread):
         # log
         log.debug('starting')
         
+        self.publisher.run()
+        
         while self.goOn:
             
             # block until reading data from the input queue
