@@ -6,6 +6,7 @@ log = logging.getLogger('EngineStats')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+import threading
 import copy
 
 class EngineStats(object) :
