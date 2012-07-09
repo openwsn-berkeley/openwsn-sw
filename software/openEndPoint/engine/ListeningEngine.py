@@ -58,7 +58,7 @@ class ListeningEngine(threading.Thread):
             
             # pass on to output
             try:
-                self.output_cb(timestamp,source,data)
+                self.output_cb((timestamp,source,data))
             except OutputUnavailableException:
                 self.stats.increment('numOutFail')
             else:

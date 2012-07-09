@@ -10,7 +10,7 @@ class Publisher(object):
     
     #======================== public ==========================================
     
-    def publish(self,data):
+    def publish(self,timestamp,source,data):
         raise NotImplemeterError()
     
     #======================== private =========================================

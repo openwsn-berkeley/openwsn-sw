@@ -46,14 +46,14 @@ class ProcessingEngine(threading.Thread):
         while self.goOn:
             
             # block until reading data from the input queue
-            data = self.inputQueue.get()
+            (timestamp,source,data) = self.inputQueue.get()
             
             # increment stats
             self.stats.increment('numIn')
             
             # parse
             try:
-                parsedData = self.parser.parse()
+                parsedData = self.parser.parse(data)
             except ParsingException:
                 # increment stats
                 self.stats.increment('numParseFail')
@@ -63,7 +63,7 @@ class ProcessingEngine(threading.Thread):
                 
                 # call the callbacks
                 for cb in self.output_cbs:
-                    cb(parsedData)
+                    cb((timestamp,source,parsedData))
     
     #======================== public ==========================================
     

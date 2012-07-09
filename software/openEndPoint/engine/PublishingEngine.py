@@ -10,7 +10,8 @@ import threading
 import Queue
 
 import EngineStats
-from   EngineException import OutputUnavailableException
+from   EngineException import OutputUnavailableException,  \
+                              PublishingException
 
 class PublishingEngine(threading.Thread):
     
@@ -43,14 +44,14 @@ class PublishingEngine(threading.Thread):
         while self.goOn:
             
             # block until reading data from the input queue
-            data = self.inputQueue.get()
+            (timestamp,source,data) = self.inputQueue.get()
             
             # increment stats
             self.stats.increment('numIn')
             
             # publish
             try:
-                self.publisher.publish()
+                self.publisher.publish(timestamp,source,data)
             except PublishingException:
                 # increment stats
                 self.stats.increment('numPublishedFail')

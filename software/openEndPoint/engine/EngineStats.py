@@ -19,6 +19,9 @@ class EngineStats(object) :
         # local variables
         self.statsLock = threading.Lock()
         self.stats     = {}
+        
+        # reset stats
+        self.reset()
     
     def __str__(self):
         return '\n'.join(["- {0}: {1}".format(k,v) for (k,v) in self.stats.items()])
