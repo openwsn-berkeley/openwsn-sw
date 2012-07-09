@@ -6,6 +6,9 @@ log = logging.getLogger('ListenerUdp')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+import socket
+import time
+
 import Listener
 
 class ListenerUdp(Listener.Listener):
@@ -44,11 +47,16 @@ class ListenerUdp(Listener.Listener):
                 log.error("no data read from socket")
                 return
             if not self.goOn:
+                log.warning("goOn is false; tearing down")
                 raise TearDownError()
             
-            return (time.time,              # timestampe
-                    (conn[0],conn[1]),      # source
-                    [ord(b) for b in raw])  # data
+            timestamp = time.time()
+            source    = (conn[0],conn[1])
+            data      = [ord(b) for b in raw]
+            
+            log.debug("got {2} from {1} at {0}".format(timestamp,source,data))
+            
+            return (timestamp,source,data)
     
     def stop(self):
         # declare that this thread has to stop
