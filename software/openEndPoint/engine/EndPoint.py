@@ -54,3 +54,10 @@ class EndPoint(object):
         # close the listening thread. This will propagate to the processing
         # and publishing threads.
         self.listeningEngine.stop()
+    
+    def getStats(self):
+        return  {
+            'listeningEngine'     : self.listeningEngine.getStats(),
+            'processingEngine'    : self.processingEngine.getStats(),
+            'publisherEngines'    : [pub.getStats() for pub in self.publisherEngines],
+        }

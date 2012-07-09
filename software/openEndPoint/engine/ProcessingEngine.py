@@ -73,4 +73,7 @@ class ProcessingEngine(threading.Thread):
         except Queue.Full:
             raise OutputUnavailableException()
     
+    def getStats(self):
+        return self.stats.getStats()
+    
     #======================== private =========================================

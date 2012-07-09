@@ -67,4 +67,7 @@ class ListeningEngine(threading.Thread):
     def stop(self):
         self.listener.stop()
     
+    def getStats(self):
+        return self.stats.getStats()
+    
     #======================== private =========================================

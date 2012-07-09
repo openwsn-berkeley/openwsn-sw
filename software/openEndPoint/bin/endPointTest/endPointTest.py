@@ -8,7 +8,7 @@ if __name__=='__main__':
 import logging
 import logging.handlers
 
-import OpenCli
+from   engine      import EndPointCli
 from   engine      import EndPoint
 from   listener    import ListenerTestPeriod
 from   epparser    import ParserOneNum
@@ -16,18 +16,12 @@ from   publisher   import PublisherScreen
 
 PERIOD_MS = 1000
 
-class endPointTestCli(OpenCli.OpenCli):
-
+class endPointTestCli(EndPointCli.EndPointCli):
+    
     def __init__(self,endPoint):
         
-        # store params
-        self.endPoint     = endPoint
-        
         # initialize parent class
-        OpenCli.OpenCli.__init__(self,"endPoint test",self.quit_cb)
-    
-    def quit_cb(self):
-        self.endPoint.stop()
+        EndPointCli.EndPointCli.__init__(self,endPoint,"end point test")
 
 def main():
     
