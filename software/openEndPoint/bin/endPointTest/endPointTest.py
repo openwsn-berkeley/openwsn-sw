@@ -2,17 +2,19 @@ import os
 import sys
 if __name__=='__main__':
     cur_path = sys.path[0]
-    sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openEndPoint/
     sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
+    sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openEndPoint/
 
+print sys.path
+    
 import logging
 import logging.handlers
 
 import OpenCli
-from   engine import EndPoint
-from   listener         import ListenerTestPeriod
-from   parser           import ParserOneNum
-from   publisher        import PublisherScreen
+from   engine      import EndPoint
+from   listener    import ListenerTestPeriod
+from   parser      import ParserOneNum
+from   publisher   import PublisherScreen
 
 PERIOD_MS     = 1000
 

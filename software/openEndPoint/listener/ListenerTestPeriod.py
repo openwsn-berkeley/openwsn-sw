@@ -8,9 +8,11 @@ log.addHandler(NullHandler())
 
 import random
 
-class ListenerTestPeriod(object):
+import Listener
 
-    def __init__(self,period)
+class ListenerTestPeriod(Listener.Listener):
+
+    def __init__(self,period):
         
         # store params
         self.period     = period

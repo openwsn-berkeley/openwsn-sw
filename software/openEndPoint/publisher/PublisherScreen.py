@@ -6,7 +6,9 @@ log = logging.getLogger('PublisherScreen')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-class PublisherScreen(object):
+import Publisher
+
+class PublisherScreen(Publisher.Publisher):
     
     #======================== public ==========================================
     

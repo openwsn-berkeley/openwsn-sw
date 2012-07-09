@@ -6,6 +6,8 @@ log = logging.getLogger('PublishingEngine')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+import threading
+
 from EngineException import OutputUnavailableException
 
 class PublishingEngine(threading.Thread):

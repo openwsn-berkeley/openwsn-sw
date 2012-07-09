@@ -6,7 +6,9 @@ log = logging.getLogger('ParserOneNum')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-class ParserOneNum(object):
+import Parser
+
+class ParserOneNum(Parser.Parser):
     
     #======================== public ==========================================
     
