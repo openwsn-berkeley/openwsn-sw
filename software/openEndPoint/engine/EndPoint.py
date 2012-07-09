@@ -6,7 +6,7 @@ log = logging.getLogger('EndPoint')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-import ListenerEngine
+import ListeningEngine
 import ProcessingEngine
 import PublishingEngine
 
@@ -15,7 +15,7 @@ class EndPoint(object):
     def __init__(self,listener,parser,publishers):
         
         # store params
-        self.listenerEngine       = None
+        self.listeningEngine      = None
         self.listener             = listener
         self.processingEngine     = None
         self.parser               = parser
@@ -37,8 +37,8 @@ class EndPoint(object):
                                                                   input_functions)
         
         # listeningEngine
-        self.listenerEngine = ListenerEngine.ListenerEngine(self.listener,
-                                                            self.processingEngine.indicateData)
+        self.listeningEngine = ListeningEngine.ListeningEngine(self.listener,
+                                                              self.processingEngine.indicateData)
         
     def start(self):
     
@@ -48,9 +48,9 @@ class EndPoint(object):
         for pub in self.publisherEngines:
             pub.start()
         self.processingEngine.start()
-        self.listenerEngine.start()
+        self.listeningEngine.start()
     
     def stop(self):
         # close the listening thread. This will propagate to the processing
         # and publishing threads.
-        self.listenerEngine.stop()
+        self.listeningEngine.stop()

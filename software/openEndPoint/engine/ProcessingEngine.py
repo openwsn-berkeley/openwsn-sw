@@ -7,8 +7,10 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
+import Queue
 
-from EngineException import OutputUnavailableException
+import EngineStats
+from   EngineException import OutputUnavailableException
 
 class ProcessingEngine(threading.Thread):
     
@@ -29,7 +31,7 @@ class ProcessingEngine(threading.Thread):
         
         # local variables
         self.goOn       = True
-        self.inputQueue = Queue()
+        self.inputQueue = Queue.Queue()
         self.stats      = EngineStats.EngineStats(['numIn',
                                                    'numParseOk',
                                                    'numParseFail',
