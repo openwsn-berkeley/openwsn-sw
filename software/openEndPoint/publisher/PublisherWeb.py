@@ -9,23 +9,27 @@ log.addHandler(NullHandler())
 import threading
 import web
 import json
+import random
 
 import Publisher
 
 webDataSource = None
+webTemplate   = None
 
 class index(object):
     def GET(self):
-        return "Hello, World!"
+        global webTemplate
+        #raise web.seeother('/static/index.html')
+        return webTemplate.googlegauge()
 class allData(object):
     def GET(self):
         global webDataSource
-        #web.header('Content-Type', 'text/json')
+        web.header('Content-Type', 'text/json')
         return webDataSource.getAllData()
 class lastData(object):
     def GET(self):
         global webDataSource
-        #web.header('Content-Type', 'text/json')
+        web.header('Content-Type', 'text/json')
         return webDataSource.getLastData()
 
 class OpenWebApp(web.application):
@@ -38,8 +42,10 @@ class OpenWebApp(web.application):
     
     def __init__(self, dataSource):
         global webDataSource
+        global webTemplate
         
         webDataSource = dataSource
+        webTemplate   = web.template.render('templates/')
         
         # initialize parent class
         web.application.__init__(self,self.urls,globals())
@@ -57,6 +63,7 @@ class OpenWebAppThread(threading.Thread):
         self.openWebApp = OpenWebApp(dataSource)
     
     def run(self):
+        # start web app
         self.openWebApp.run()
         
 class DataQueue(object):
@@ -83,11 +90,21 @@ class DataQueue(object):
         return returnVal
     
     def getLastData(self):
+        
         self.dataLock.acquire()
-        returnVal = json.dumps([self.data[-1]['value']],
-                               sort_keys=True,
-                               indent=4)
+        if self.data:
+            lastVal = self.data[-1]['value'];
+        else:
+            lastVal = 0;
         self.dataLock.release()
+        
+        data = {
+            'cols': [{'id': 'label', 'label': 'Label', 'type': 'string'},
+                     {'id': 'value', 'label': 'Value', 'type': 'number'}],
+            'rows': [{'c':[{'v': ''}, {'v': lastVal}]},],
+        }
+        returnVal = json.dumps(data)
+        
         return returnVal
 
 class PublisherWeb(Publisher.Publisher):
