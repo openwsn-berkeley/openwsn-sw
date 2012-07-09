@@ -21,7 +21,7 @@ class ListeningEngine(threading.Thread):
         self.output_cb  = output_cb
         
         # log
-        self.debug("creating instance")
+        log.debug("creating instance")
         
         # initialize parent class
         threading.Thread.__init__(self)

@@ -21,13 +21,13 @@ class endPointTestCli(OpenCli.OpenCli):
     def __init__(self,endPoint):
         
         # store params
-        self.moteProbe_handlers     = moteProbe_handlers
+        self.endPoint     = endPoint
         
         # initialize parent class
         OpenCli.OpenCli.__init__(self,"endPoint test",self.quit_cb)
     
     def quit_cb(self):
-        endPoint.stop()
+        self.endPoint.stop()
 
 def main():
     
