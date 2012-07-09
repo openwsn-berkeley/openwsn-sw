@@ -17,7 +17,7 @@ from   publisher   import PublisherWeb
 
 UDP_PORT = 5683
 
-class endPointLayerdebugCli(EndPointCli.EndPointCli):
+class EpLayerdebugWeb(EndPointCli.EndPointCli):
     
     def __init__(self,endPoint):
         
@@ -38,13 +38,13 @@ def main():
     endPoint.start()
     
     # create an openCLI
-    cli = endPointLayerdebugCli(endPoint)
+    cli = EpLayerdebugWeb(endPoint)
     cli.start()
     
 if __name__=='__main__':
     
     # setup loggin
-    logHandler = logging.handlers.RotatingFileHandler('endPointTest.log',
+    logHandler = logging.handlers.RotatingFileHandler('EpLayerdebugWeb.log',
                                                       maxBytes=2000000,
                                                       backupCount=5,
                                                       mode='w')

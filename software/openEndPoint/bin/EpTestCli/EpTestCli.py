@@ -16,7 +16,7 @@ from   publisher   import PublisherScreen
 
 PERIOD_MS = 1000
 
-class endPointTestCli(EndPointCli.EndPointCli):
+class EpTestCli(EndPointCli.EndPointCli):
     
     def __init__(self,endPoint):
         
@@ -36,13 +36,13 @@ def main():
     endPoint.start()
     
     # create an openCLI
-    cli = endPointTestCli(endPoint)
+    cli = EpTestCli(endPoint)
     cli.start()
     
 if __name__=='__main__':
     
     # setup loggin
-    logHandler = logging.handlers.RotatingFileHandler('endPointTest.log',
+    logHandler = logging.handlers.RotatingFileHandler('EpTestCli.log',
                                                       maxBytes=2000000,
                                                       backupCount=5,
                                                       mode='w')

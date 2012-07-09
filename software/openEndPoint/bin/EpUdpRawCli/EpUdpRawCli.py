@@ -16,7 +16,7 @@ from   publisher   import PublisherScreen
 
 UDP_PORT = 61000
 
-class endPointUdpRawCli(EndPointCli.EndPointCli):
+class EpUdpRawCli(EndPointCli.EndPointCli):
     
     def __init__(self,endPoint):
         
@@ -36,13 +36,13 @@ def main():
     endPoint.start()
     
     # create an openCLI
-    cli = endPointUdpRawCli(endPoint)
+    cli = EpUdpRawCli(endPoint)
     cli.start()
     
 if __name__=='__main__':
     
     # setup loggin
-    logHandler = logging.handlers.RotatingFileHandler('endPointTest.log',
+    logHandler = logging.handlers.RotatingFileHandler('EpUdpRawCli.log',
                                                       maxBytes=2000000,
                                                       backupCount=5,
                                                       mode='w')
