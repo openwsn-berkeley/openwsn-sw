@@ -111,8 +111,6 @@ class PublisherWeb(Publisher.Publisher):
                                                source,
                                                data))
         
-        print data
-        
         # add to data
         self.dataQueue.push(timestamp,data)
         
