@@ -29,7 +29,7 @@ class EndPoint(object):
         input_functions = []
         for publisher in self.publishers:
             tempEngine = PublishingEngine.PublishingEngine(publisher)
-            self.publishers.append(tempEngine)
+            self.publisherEngines.append(tempEngine)
             input_functions.append(tempEngine.indicateData)
         
         # processingEngine

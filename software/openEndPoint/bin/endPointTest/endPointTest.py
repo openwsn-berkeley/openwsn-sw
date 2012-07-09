@@ -36,8 +36,8 @@ def main():
                         ListenerTestPeriod.ListenerTestPeriod(PERIOD_MS),      # listener
                         ParserOneNum.ParserOneNum(),                           # parser
                         [                                                      # publishers
-                            PublisherScreen.PublisherScreen()
-                        ]
+                            PublisherScreen.PublisherScreen(),
+                        ],
                     )
     endPoint.start()
     
