@@ -12,17 +12,16 @@ class Payload:
    
     #Payload
     def getPayload(self):
-        return self.__payload
+        return self._payload
 
     def setPayload(self, payload):
-        self.__payload = payload      
+        self._payload = payload      
        
     def toJSON(self):
         json=JSONWrapper.JSONWrapper()
         return json.json_repr(self)
 
     def __str__( self ):
-       return self.toJSON(self)
+       return self.toJSON()
 
-    def __repr__( self ):
-       return self.toJSON(self)
+    

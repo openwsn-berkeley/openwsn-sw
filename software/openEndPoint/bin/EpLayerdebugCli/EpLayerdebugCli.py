@@ -29,7 +29,6 @@ def main():
     # create an endpoint
     endPoint  = EndPoint.EndPoint(
                         ListenerUdp.ListenerUdp(UDP_PORT),                     # listener
-                        #ParserOneNum.ParserOneNum(),                           # parser
                         ParserCoap.ParserCoap(),                           # parser
                         [                                                      # publishers
                             PublisherScreen.PublisherScreen(),

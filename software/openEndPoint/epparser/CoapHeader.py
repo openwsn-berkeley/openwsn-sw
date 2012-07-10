@@ -11,45 +11,45 @@ class CoapHeader:
 
     #Version
     def getVersion(self):
-        return self.__version
+        return self._version
 
     def setVersion(self, version):
-        self.__version = version
+        self._version = version
 
     #Type
     def getType(self):
-        return self.__type
+        return self._type
 
     def setType(self, type):
-        self.__type = type
+        self._type = type
 
     #Option
     def getOption(self):
-        return self.__option
+        return self._option
 
     def setOption(self, option):
-        self.__option = option
+        self._option = option
 
     #Code
     def getCode(self):
-        return self.__code
+        return self._code
 
     def setCode(self, code):
-        self.__code = code
+        self._code = code
    
     #Code
     def getMID(self):
-        return self.__mId
+        return self._mId
 
     def setMID(self, mId):
-        self.__mId = mId
+        self._mId = mId
     
     #OptionList
     def getOptionList(self):
-        return self.__optionList
+        return self._optionList
 
     def setOptionList(self, optionList):
-        self.__optionList = optionList      
+        self._optionList = optionList      
 
 #TODO check this error
 #File " ..... /software/openEndPoint/bin/EpLayerdebugCli/../../epparser/CoapHeader.py", line 62, in __repr__
@@ -61,9 +61,7 @@ class CoapHeader:
         return json.json_repr(self)
 
     def __str__( self ):
-       return self.toJSON(self)
+       return self.toJSON()
 
-    def __repr__( self ):
-       return self.toJSON(self)
        
     

@@ -21,15 +21,15 @@ class JSONWrapper():
       elif isinstance(obj, dict):
 	 obj = obj.copy()
          for key in obj:
-            obj[key] = __serialize(obj[key])
+            obj[key] = self._serialize(obj[key])
             return obj
       elif isinstance(obj, list):
-         return [__serialize(item) for item in obj]
+         return [self._serialize(item) for item in obj]
       elif isinstance(obj, tuple):
-         return tuple(__serialize([item for item in obj]))
+         return tuple(self._serialize([item for item in obj]))
       elif hasattr(obj, '__dict__'):
-         return __serialize(obj.__dict__)
+         return self._serialize(obj.__dict__)
       else:
-         return repr(obj) # Don't know how to handle, convert to string
+         return str(obj) # Don't know how to handle, convert to string
 	  
 

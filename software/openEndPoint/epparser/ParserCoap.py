@@ -24,7 +24,8 @@ class ParserCoap(Parser.Parser):
 	log.debug('parsing coap header')
    
         header = CoapHeader.CoapHeader()
-#vader.vader
+#vader.vader -- I have doubts here. Should I use ord?? Look commented code versus non commented (the difference is ord)
+
         #Header elements
 #        header.setVersion(int((ord(data[0])& 0xc0) >> 6))
 #        header.setType(int((ord(data[0])& 0x30) >> 4))
@@ -50,7 +51,7 @@ class ParserCoap(Parser.Parser):
             optionNumber = optionDelta
             if (i > 0):
                optionNumber = optionDelta + optionList[i-1][0]
-#vader.vader
+#vader.vader -- idem as previous comment regarding ord.
             #length = int(ord(data[option_pointer])&0b00001111)
             length = int((data[option_pointer])&0b00001111)
             print data[option_pointer+1:option_pointer+length+1]
@@ -58,10 +59,7 @@ class ParserCoap(Parser.Parser):
             option_desc = "" #string describing option
 	    try:
                 #try to get a string to associate with the option code, if none exists use the number
-                #option_payload = int(ord(option_payload))
-		#vader.vader
-                #option_payload = option_codes[optionDelta]
-            	option_desc = option_codes[optionNumber]
+                option_desc = option_codes[optionNumber]
 	    except:
                pass
             optionList.append([optionDelta, length, option_desc, option_payload])
@@ -73,7 +71,7 @@ class ParserCoap(Parser.Parser):
 
         log.debug('reading payload')
         payload = Payload.Payload()
-        #vader.vader
+        #vader.vader -- how to get the payload? If I use hexlify it throws an error.
         #payload.setPayload(str(binascii.hexlify(data[option_pointer:])))
         payload.setPayload("aaaaa")
         log.debug("Coap msg parsed")
