@@ -23,7 +23,7 @@ class ParserPayload(ParserCoap.ParserCoap):
         app=returnVal['header'].optionList[3] ##this is the application name
         factory=ParserFactory.ParserFactory()
         specificParser=factory.getParser(app)#get the specific parser
-        returnVal['parsed']=specificParser.parse(returnVal['header'])#call the parse method
+        returnVal['parsed']=specificParser.parse(returnVal['payload'])#call the parse method
 	return returnVal
     
     #======================== private =========================================
