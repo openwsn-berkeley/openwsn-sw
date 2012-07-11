@@ -19,19 +19,12 @@ class ParserCoap(Parser.Parser):
     
     def parse(self,data):
         returnVal          = {}
-        
-       
+
 	log.debug('parsing coap header')
    
         header = CoapHeader.CoapHeader()
-#vader.vader -- I have doubts here. Should I use ord?? Look commented code versus non commented (the difference is ord)
 
         #Header elements
-#        header.setVersion(int((ord(data[0])& 0xc0) >> 6))
-#        header.setType(int((ord(data[0])& 0x30) >> 4))
-#        header.setOption(int((ord(data[0])& 0xF)))
-#        header.setCode (int(ord(data[1])))
-
         header.setVersion(int(((data[0])& 0xc0) >> 6))
         header.setType(int(((data[0])& 0x30) >> 4))
         header.setOption(int(((data[0])& 0xF)))
@@ -46,15 +39,13 @@ class ParserCoap(Parser.Parser):
         option_pointer = 4
         #print version,type,options,code
 	for i in range(0, header.getOption()):
-            #optionDelta = int((ord(data[option_pointer])&0b11110000)>>4)
             optionDelta = int(((data[option_pointer])&0b11110000)>>4)
             optionNumber = optionDelta
             if (i > 0):
                optionNumber = optionDelta + optionList[i-1][0]
-#vader.vader -- idem as previous comment regarding ord.
-            #length = int(ord(data[option_pointer])&0b00001111)
+
             length = int((data[option_pointer])&0b00001111)
-            print data[option_pointer+1:option_pointer+length+1]
+            #print data[option_pointer+1:option_pointer+length+1]
 	    option_payload = data[option_pointer+1:option_pointer+length+1]
             option_desc = "" #string describing option
 	    try:
@@ -68,14 +59,14 @@ class ParserCoap(Parser.Parser):
         header.setOptionList(optionList)
         
         returnVal['header'] = header
-
         log.debug('reading payload')
         payload = Payload.Payload()
-        #vader.vader -- how to get the payload? If I use hexlify it throws an error.
-        #payload.setPayload(str(binascii.hexlify(data[option_pointer:])))
-        payload.setPayload("aaaaa")
+        #print data[option_pointer:]
+        payload.setPayload(data[option_pointer:])
         log.debug("Coap msg parsed")
 	returnVal['payload'] = payload
+
+        #here we can use a factory to get an appropiate parser.or instead use the ParserPayload
 
         return returnVal
     

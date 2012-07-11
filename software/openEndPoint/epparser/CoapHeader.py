@@ -51,16 +51,11 @@ class CoapHeader:
     def setOptionList(self, optionList):
         self._optionList = optionList      
 
-#TODO check this error
-#File " ..... /software/openEndPoint/bin/EpLayerdebugCli/../../epparser/CoapHeader.py", line 62, in __repr__
-#return self.toJSON(self)
-#TypeError: toJSON() takes exactly 1 argument (2 given)
-
     def toJSON(self):
         json=JSONWrapper.JSONWrapper()
         return json.json_repr(self)
 
-    def __str__( self ):
+    def __str__(self):
        return self.toJSON()
 
        
