@@ -11,16 +11,18 @@ import CoapCodes
 import Payload
 import ParserCoap
 
+PATH_FIELD = 3
+
 # Parses the payload
 class ParserPayload(ParserCoap.ParserCoap):
     
     #======================== public ==========================================
     
     def parse(self,data):
-        returnVal=super(ParserNeighbors, self).parse(self,data)
+        returnVal=super(ParserPayload, self).parse(self,data)
 
         #call the factory for a specific parser
-        app=returnVal['header'].optionList[3] ##this is the application name
+        app=returnVal['header'].optionList[PATH_FIELD] ##this is the application name
         factory=ParserFactory.ParserFactory()
         specificParser=factory.getParser(app)#get the specific parser
         returnVal['parsed']=specificParser.parse(returnVal['payload'])#call the parse method

@@ -14,7 +14,7 @@ import Payload
 # Parses the schedule payload.
 class ScheduleParser(SpecificParser.SpecificParser):
     
-    apps='ld_s'   #application name, can be a list.    
+    apps=['ld_s']   #application name, can be a list.    
     #======================== public ==========================================
     
     def create(self,name):

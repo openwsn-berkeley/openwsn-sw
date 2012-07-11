@@ -13,7 +13,7 @@ import Payload
 # Parses the neighbours payload.
 class NeighborsParser(SpecificParser.SpecificParser):
     
-    apps='ld_n,'   #application name, can be a list.    
+    apps=['ld_n']   #application name, can be a list.    
     #======================== public ==========================================
     
     def create(self,name):

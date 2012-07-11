@@ -17,9 +17,15 @@ class PublisherScreen(Publisher.Publisher):
     #======================== public ==========================================
     
     def publish(self,timestamp,source,data):
-        print "{2} from {1} at {0}".format(self._formatTimestamp(timestamp),
-                                           source,
-                                           data)
+        
+        if isinstance(data, dict):
+          print "{2} from {1} at {0}".format(self._formatTimestamp(timestamp),
+                                             source,
+                                             '\n'.join(["{0}:{1}".format(k,v) for (k,v) in data.items()]))
+        else:
+          print "{2} from {1} at {0}".format(self._formatTimestamp(timestamp),
+                                             source,
+                                             data) 
     
     #======================== private =========================================
     

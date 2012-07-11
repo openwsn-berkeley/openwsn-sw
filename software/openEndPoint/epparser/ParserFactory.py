@@ -12,7 +12,7 @@ import Payload
 import ParserCoap
 
 # creates an instance of an specific parser
-class ParserFactory():
+class ParserFactory(object):
     
     #======================== public ==========================================
     #by reflection get all subclasses of SpecificParser
