@@ -16,3 +16,8 @@ class IncorrectParserException(ParserException):
 class IncorrectLengthException(ParserException):
     pass
 
+class NoSubclassException(ParserException):
+    pass
+
+
+

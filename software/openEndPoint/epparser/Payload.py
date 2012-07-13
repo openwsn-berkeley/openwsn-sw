@@ -8,7 +8,7 @@ log = logging.getLogger('Payload')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-class Payload(IsJSON):
+class Payload(IsJSON.IsJSON):
    
     #Payload
     def getPayload(self):

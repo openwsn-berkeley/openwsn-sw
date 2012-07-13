@@ -69,10 +69,10 @@ class ParserCoap(Parser.Parser):
             option_payload = data[option_pointer + 1:option_pointer + length + 1]
             option_desc = "" #string describing option
         
-        try:
-            option_desc = option_codes[optionNumber] #try to get a string to associate with the option code, if none exists use the number
-        except:
-            pass
+            try:
+              option_desc = option_codes[optionNumber] #try to get a string to associate with the option code, if none exists use the number
+            except:
+              pass
             optionList.append([optionDelta, length, option_desc, option_payload])
             option_pointer = option_pointer + length + 1 #pass
         #end for

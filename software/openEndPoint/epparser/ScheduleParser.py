@@ -14,7 +14,7 @@ import Payload
 # Parses the schedule payload.
 class ScheduleParser(SpecificParser.SpecificParser):
     
-    apps=['ld_s']   #application name, can be a list.
+    apps=['d_s']   #application name, can be a list.
     headerStructure = {
         'structure': '<BBB', # little-endian, 3 one-byte fields
         'fieldNames': ['address','slotOffset','channelOffset'],
@@ -28,4 +28,6 @@ class ScheduleParser(SpecificParser.SpecificParser):
             raise IncorrectParserException('the specified app cannot be parsed by ScheduleParser. Try another parser.')  #check how to throw exception.
     
     #======================== private =========================================
-        
+    
+    def parse(self, data):
+       SpecificParser.SpecificParser.parse(self,data)

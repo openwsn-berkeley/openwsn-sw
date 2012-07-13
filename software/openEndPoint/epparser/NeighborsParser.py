@@ -13,9 +13,9 @@ import Payload
 # Parses the schedule payload.
 class NeighborsParser(SpecificParser.SpecificParser):
     
-    apps=['ld_n']   #application name, can be a list.
+    apps=['d_n']   #application name, can be a list.
     headerStructure = {
-        'structure': '<HbBBH', # little-endian, 2byte,1Byte signed,2 one-byte fields,2byte field
+        'structure': '<BbBBH', # little-endian, 1byte,1Byte signed,2 one-byte fields,2byte field
         'fieldNames': ['address','rssi','parentPref','DAGRank','ASN',],
         'repeat':     True,
     }
@@ -27,4 +27,5 @@ class NeighborsParser(SpecificParser.SpecificParser):
          raise IncorrectParserException('the specified app cannot be parsed by NeighborsParser. Try another parser.')  #check how to throw exception.
     
     #======================== private =========================================
-        
+    def parse(self, data):
+       SpecificParser.SpecificParser.parse(self,data)

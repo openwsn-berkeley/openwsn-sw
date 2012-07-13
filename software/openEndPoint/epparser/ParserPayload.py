@@ -7,11 +7,18 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import Parser
-import CoapCodes
 import Payload
 import ParserCoap
+import ParserFactory
+import ParserException
+import SpecificParser
+from ParserException import UnexistingParserException
+from ParserException import NoSubclassException
 
-PATH_FIELD = 3
+
+
+PATH_FIELD = 1
+PATH_SUBFIELD = 3
 
 # Parses the payload
 class ParserPayload(ParserCoap.ParserCoap):
@@ -23,11 +30,12 @@ class ParserPayload(ParserCoap.ParserCoap):
         #super(ParserPayload, self).parse(self,data)
 
         #call the factory for a specific parser
-        app=returnVal['header'].optionList[PATH_FIELD] ##this is the application name
+        optionList=returnVal['header'].getOptionList()
+        app=optionList[PATH_FIELD] ##this is the application name
         factory=ParserFactory.ParserFactory()
        
         try:
-            specificParser=factory.getParser(app)#get the specific parser
+            specificParser=factory.getParser(app[PATH_SUBFIELD])#get the specific parser
         except UnexistingParserException:
             raise UnexistingParserException('Parser for that payload does not exists')
         #TODO.. how to return here??

@@ -1,6 +1,6 @@
 import logging
 
-import IsJSON
+
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
@@ -8,7 +8,9 @@ log = logging.getLogger('CoapHeader')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-class CoapHeader(IsJSON):
+import IsJSON
+
+class CoapHeader(IsJSON.IsJSON):
 
     #Version
     def getVersion(self):
