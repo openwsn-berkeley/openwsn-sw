@@ -52,8 +52,8 @@ class SpecificParser(object):
             thisfield = {}
             
             # unpack this element
-            temp = struct.unpack(self.headerStructure['structure'],
-                                 ''.join([chr(b) for b in pay[:lengthElem]]))
+            aux=''.join([chr(b) for b in pay[:lengthElem]])
+            temp = struct.unpack(self.headerStructure['structure'],aux)
             
             assert(len(temp)==len(self.headerStructure['fieldNames']))
             
