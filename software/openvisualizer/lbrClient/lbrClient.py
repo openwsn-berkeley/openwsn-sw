@@ -3,7 +3,7 @@ class NullHandler(logging.Handler):
     def emit(self, record):
         pass
 log = logging.getLogger('lbrClient')
-log.setLevel(logging.ERROR)
+log.setLevel(logging.DEBUG)
 log.addHandler(NullHandler())
 
 import threading
@@ -240,10 +240,11 @@ class lbrClient(threading.Thread):
                 
                 # convert to string
                 lowpan = ''.join([chr(b) for b in lowpan])
-                
+                printlowpan=''.join([str(b).encode("hex") for b in lowpan])
                 # send to LBR
                 self.socket.send(lowpan)
-                
+                log.debug('packet sent to lbr: {}'.format(printlowpan))
+				#log.debug(lowpan)
                 # increment statistics
                 self._incrementStats('packetsSentOk')
                 self._incrementStats('bytesSentOk', step=len(lowpan))

@@ -7,14 +7,12 @@ class ParserException(Exception):
         return "{0}: {1}".format(self.__class__.__name__,
                                  self.value)
 
-class UnexistingParserException(EngineException):
+class UnexistingParserException(ParserException):
     pass
 
-class OutputUnavailableException(EngineException):
+class IncorrectParserException(ParserException):
     pass
 
-class ParsingException(EngineException):
+class IncorrectLengthException(ParserException):
     pass
 
-class PublishingException(EngineException):
-    pass

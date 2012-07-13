@@ -13,6 +13,7 @@ from   engine      import EndPoint
 from   listener    import ListenerUdp
 #from   epparser    import ParserOneNum
 from   epparser    import ParserCoap
+from   epparser    import ParserPayload
 from   publisher   import PublisherScreen
 
 UDP_PORT = 5683
@@ -29,7 +30,7 @@ def main():
     # create an endpoint
     endPoint  = EndPoint.EndPoint(
                         ListenerUdp.ListenerUdp(UDP_PORT),                     # listener
-                        ParserCoap.ParserCoap(),                           # parser
+                        ParserPayload.ParserPayload(),                           # parser
                         [                                                      # publishers
                             PublisherScreen.PublisherScreen(),
                         ],

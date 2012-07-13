@@ -21,7 +21,7 @@ class JSONWrapper():
          log.debug(obj)
          return obj
       elif isinstance(obj, dict):
-	 obj = obj.copy()
+         obj = obj.copy()
          for key in obj:
             obj[key] = self._serialize(obj[key])
          log.debug(obj) 
@@ -37,5 +37,4 @@ class JSONWrapper():
          return self._serialize(obj.__dict__)
       else:
          return str(obj) # Don't know how to handle, convert to string
-	  
-
+      

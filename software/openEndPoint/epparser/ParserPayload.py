@@ -19,12 +19,18 @@ class ParserPayload(ParserCoap.ParserCoap):
     #======================== public ==========================================
     
     def parse(self,data):
-        returnVal=super(ParserPayload, self).parse(self,data)
+        returnVal=ParserCoap.ParserCoap.parse(self,data)
+        #super(ParserPayload, self).parse(self,data)
 
         #call the factory for a specific parser
         app=returnVal['header'].optionList[PATH_FIELD] ##this is the application name
         factory=ParserFactory.ParserFactory()
-        specificParser=factory.getParser(app)#get the specific parser
+       
+        try:
+            specificParser=factory.getParser(app)#get the specific parser
+        except UnexistingParserException:
+            raise UnexistingParserException('Parser for that payload does not exists')
+        #TODO.. how to return here??
         returnVal['parsed']=specificParser.parse(returnVal['payload'])#call the parse method
 	return returnVal
     

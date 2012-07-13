@@ -1,5 +1,6 @@
 import logging
-import JSONWrapper
+
+import IsJSON
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
@@ -7,7 +8,7 @@ log = logging.getLogger('CoapHeader')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-class CoapHeader:
+class CoapHeader(IsJSON):
 
     #Version
     def getVersion(self):
@@ -51,12 +52,7 @@ class CoapHeader:
     def setOptionList(self, optionList):
         self._optionList = optionList      
 
-    def toJSON(self):
-        json=JSONWrapper.JSONWrapper()
-        return json.json_repr(self)
-
-    def __str__(self):
-       return self.toJSON()
+    
 
        
     
