@@ -6,11 +6,13 @@ log = logging.getLogger('ParserFactory')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-import Parser
-import ParserException
-import SpecificParser
-from ParserException import UnexistingParserException
-from ParserException import NoSubclassException
+from epparser.specificparsers import *
+from ParserException import IncorrectParserException
+
+
+
+#from ParserException import UnexistingParserException
+#from ParserException import NoSubclassException
 
 # creates an instance of an specific parser
 class ParserFactory(object):
@@ -18,7 +20,7 @@ class ParserFactory(object):
     #======================== public ==========================================
     #by reflection get all subclasses of SpecificParser
     def getParser(self,name):
-        
+        #p=ScheduleParser.ScheduleParser();
         strname="".join(chr(b) for b in name)
         try:
             sub=SpecificParser.SpecificParser.__subclasses__()
@@ -28,7 +30,7 @@ class ParserFactory(object):
             raise NoSubclassException()
         for cl in sub:
              try:
-               instance = eval(cl)() #instantiate the subclass
+               instance = cl() #instantiate the subclass
                instance.create(strname) #check if this is the right one.
                return instance #if this is the desired class return its instance.
              except IncorrectParserException:

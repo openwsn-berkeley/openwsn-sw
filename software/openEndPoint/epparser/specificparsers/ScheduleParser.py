@@ -7,9 +7,11 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import SpecificParser
-import CoapHeader
-import Payload
+from .. import CoapHeader
+from .. import Payload
+#from .. import IncorrectParserException
 
+from ..ParserException import IncorrectParserException
 
 # Parses the schedule payload.
 class ScheduleParser(SpecificParser.SpecificParser):
@@ -24,10 +26,10 @@ class ScheduleParser(SpecificParser.SpecificParser):
     #======================== public ==========================================
     
     def create(self,name):
-       if name not in apps:
+       if name not in self.apps:
             raise IncorrectParserException('the specified app cannot be parsed by ScheduleParser. Try another parser.')  #check how to throw exception.
     
     #======================== private =========================================
     
     def parse(self, data):
-       SpecificParser.SpecificParser.parse(self,data)
+       return SpecificParser.SpecificParser.parse(self,data)

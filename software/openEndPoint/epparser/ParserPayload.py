@@ -9,13 +9,15 @@ log.addHandler(NullHandler())
 import Parser
 import Payload
 import ParserCoap
-import ParserFactory
 import ParserException
-import SpecificParser
+
+from specificparsers import *
+
 from ParserException import UnexistingParserException
 from ParserException import NoSubclassException
+from ParserException import IncorrectParserException
 
-
+import ParserFactory
 
 PATH_FIELD = 1
 PATH_SUBFIELD = 3

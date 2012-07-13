@@ -7,7 +7,8 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import SpecificParser
-import Payload
+from .. import Payload
+from ..ParserException import IncorrectParserException
 
 
 # Parses the schedule payload.
@@ -23,9 +24,9 @@ class NeighborsParser(SpecificParser.SpecificParser):
     #======================== public ==========================================
     
     def create(self,name):
-       if name not in apps:
+       if name not in self.apps:
          raise IncorrectParserException('the specified app cannot be parsed by NeighborsParser. Try another parser.')  #check how to throw exception.
     
     #======================== private =========================================
     def parse(self, data):
-       SpecificParser.SpecificParser.parse(self,data)
+       return SpecificParser.SpecificParser.parse(self,data)

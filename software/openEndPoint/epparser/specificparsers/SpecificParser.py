@@ -7,6 +7,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import struct
+from ..ParserException import IncorrectParserException
 
 #interface implemented by specific parsers. Implement that interface if you want to parse an specific payload.
 class SpecificParser(object):
@@ -23,26 +24,27 @@ class SpecificParser(object):
         '''
         \brief Generic parser.
         '''
-        # make sure that this function is celled from a subclass
-        assert packetStructure
+        # make sure that this function is called from a subclass
+        assert self.headerStructure
         
         # determine the number of elements
         # Note:  we assume that there is no length byte for non-repeat payloads
         if self.headerStructure['repeat']:
             headerLength     = 1
-            numElems         = payload[0]
+            numElems         = payload.getPayload()[0]
         else:
             headerLength     = 0
             numElems         = 1
-        
-        lengthElem = struct.Struct(self.headerStructure['structure'])
+       
+        st=self.headerStructure['structure']
+        lengthElem = struct.calcsize(st)
         
         # make sure the payload is of the expected size
-        if len(payload)!=headerLength+numElems*lengthElem:
+        if len(payload.getPayload())!=headerLength+numElems*lengthElem:
             raise IncorrectLengthException()
         
         # skip the header
-        payload = payload[headerLength:]
+        pay = payload.getPayload()[headerLength:]
             
         # parse the fields
         fields = []
@@ -51,7 +53,7 @@ class SpecificParser(object):
             
             # unpack this element
             temp = struct.unpack(self.headerStructure['structure'],
-                                 ''.join([chr(b) for b in payload[:lengthElem]]))
+                                 ''.join([chr(b) for b in pay[:lengthElem]]))
             
             assert(len(temp)==len(self.headerStructure['fieldNames']))
             
@@ -63,8 +65,9 @@ class SpecificParser(object):
             fields.append(thisfield)
             
             # skip the element
-            payload = payload[lengthElem:]
-               
+            pay = pay[lengthElem:]
+        
+        log.debug("parsed payload {} ".format(fields))       
         return fields
     
     #======================== private =========================================
