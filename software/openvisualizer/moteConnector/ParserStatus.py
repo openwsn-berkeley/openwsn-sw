@@ -91,7 +91,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     4,
                                     'Asn',
-                                    '<BxHH',
+                                    '<BHH',
                                     [
                                         'asn_4',                     # B
                                         'asn_2_3',                   # H
@@ -102,7 +102,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     5,
                                     'MacStats',
-                                    '<BxhhBx',
+                                    '<BhhB',
                                     [
                                         'syncCounter',               # 1 B
                                         'minCorrection',             # 2 h
@@ -116,7 +116,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '<BxHBBBBQQBBBBBxBHHxH',
+                                    '<BHBBBBQQBBBBBBHHH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
@@ -170,7 +170,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     8,
                                     'NeighborsRow',
-                                    '<BxBBBBBQQBbBBBBxHH',
+                                    '<BBBBBBQQBbBBBBHH',
                                     [
                                         'row',                       # B
                                                                      # x
