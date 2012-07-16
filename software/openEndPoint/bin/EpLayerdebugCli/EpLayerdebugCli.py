@@ -14,7 +14,7 @@ from   listener    import ListenerUdp
 #from   epparser    import ParserOneNum
 from   epparser    import ParserCoap
 from   epparser    import ParserPayload
-from   publisher   import PublisherScreen
+from   publisher   import PublisherScreen,PublisherCoapCSV
 
 UDP_PORT = 5683
 
@@ -32,7 +32,8 @@ def main():
                         ListenerUdp.ListenerUdp(UDP_PORT),                     # listener
                         ParserPayload.ParserPayload(),                           # parser
                         [                                                      # publishers
-                            PublisherScreen.PublisherScreen(),
+                            #PublisherScreen.PublisherScreen(),
+                            PublisherCoapCSV.PublisherCoapCSV()
                         ],
                     )
     endPoint.start()
