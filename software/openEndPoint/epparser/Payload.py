@@ -17,6 +17,6 @@ class Payload(IsJSON.IsJSON):
     def setPayload(self, payload):
         self._payload = payload      
        
-  
+    
 
     
