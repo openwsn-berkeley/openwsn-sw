@@ -36,12 +36,7 @@ class PublisherCoapCSV(Publisher.Publisher):
         root.setLevel(logging.INFO)
         for h in root.handlers:
             if isinstance(h, FileHandler):
-                #print [name for name,thing in inspect.getmembers(h)]
-                #di=h.__dict__;
-                #print di;
-                #print h.get_name()
-                #print strname
-                if (h.get_name()==strname ):
+                if (h.get_name()==strname ):#already exists
                     pass
                 else:#create the new filehandler
                     fh=FileHandler(strname +".csv", "a")
