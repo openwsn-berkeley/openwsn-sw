@@ -8,11 +8,8 @@ log.addHandler(NullHandler())
 
 from epparser.specificparsers import *
 from ParserException import IncorrectParserException
-
-
-
-#from ParserException import UnexistingParserException
-#from ParserException import NoSubclassException
+from ParserException import UnexistingParserException
+from ParserException import NoSubclassException
 
 # creates an instance of an specific parser
 class ParserFactory(object):
