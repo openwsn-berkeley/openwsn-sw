@@ -15,7 +15,7 @@ class OpenWindow(Tkinter.Tk):
         self.protocol('WM_DELETE_WINDOW',self._closeWindow)
         
         # this window can not be resized
-        self.resizable(0,0)
+        #self.resizable(0,0)
         
     #======================== public ==========================================
     
