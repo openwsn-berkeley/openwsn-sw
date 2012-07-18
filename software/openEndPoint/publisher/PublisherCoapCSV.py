@@ -5,6 +5,7 @@ Created on 16/07/2012
 '''
 import logging
 import inspect
+import os
 
 from logging import FileHandler, StreamHandler
 from test.test_binop import isint
@@ -34,13 +35,21 @@ class PublisherCoapCSV(Publisher.Publisher):
         #check if there is an instance of that file handler
         root=logging.getLogger(strname)
         root.setLevel(logging.INFO)
+        s=source[0].replace(':','_')
         for h in root.handlers:
             if isinstance(h, FileHandler):
-                if (h.get_name()==strname ):#already exists
+                if (h.get_name()==s+"/"+strname ):#already exists
                     pass
                 else:#create the new filehandler
-                    fh=FileHandler(strname +".csv", "a")
-                    fh.set_name(strname)#set a name to be able to find it 
+                   
+                    if not os.path.exists(os.path.curdir +"/"+ s):
+                        os.makedirs(os.path.curdir +"/" + s)
+                    else:
+                       #print os.path.curdir    
+                       pass
+                    fh=FileHandler(os.path.curdir +"/"+ s +"/" +strname +".csv", "a")
+                    #fh=FileHandler(strname +".csv", "a")
+                    fh.set_name(s+"/"+strname)#set a name to be able to find it 
                     fh.setLevel(logging.INFO)
                     root.addHandler(fh)#add the handler to the logger only once
             else:#other handlers 
@@ -48,9 +57,15 @@ class PublisherCoapCSV(Publisher.Publisher):
                     
         #the first time will be added here
         if (len(root.handlers)==0):
-            fh=FileHandler(strname +".csv", "a")
+            
+            if not os.path.exists(os.path.curdir +"/"+ s):
+                os.makedirs(os.path.curdir +"/" + s)
+            else:
+                #print os.path.curdir
+                pass    
+            fh=FileHandler(os.path.curdir +"/"+ s +"/" +strname +".csv", "a")
             fh.setLevel(logging.INFO)
-            fh.set_name(strname)#set a name to be able to find it 
+            fh.set_name(s+"/"+strname)#set a name to be able to find it 
             root.addHandler(fh)#add the handler to the logger only once
         
         #prepare the ; separated tuples to be printed in csv
