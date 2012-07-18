@@ -11,10 +11,10 @@ import logging.handlers
 from   engine      import EndPointCli
 from   engine      import EndPoint
 from   listener    import ListenerUdp
-from   epparser    import ParserOneNum
+from   epparser    import ParserOneList
 from   publisher   import PublisherScreen
 
-UDP_PORT = 61000
+UDP_PORT = 5683
 
 class EpUdpRawCli(EndPointCli.EndPointCli):
     
@@ -28,7 +28,7 @@ def main():
     # create an endpoint
     endPoint  = EndPoint.EndPoint(
                         ListenerUdp.ListenerUdp(UDP_PORT),                     # listener
-                        ParserOneNum.ParserOneNum(),                           # parser
+                        ParserOneList.ParserOneList(),                         # parser
                         [                                                      # publishers
                             PublisherScreen.PublisherScreen(),
                         ],
