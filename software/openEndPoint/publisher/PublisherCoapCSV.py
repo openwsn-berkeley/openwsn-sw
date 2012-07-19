@@ -27,29 +27,34 @@ class PublisherCoapCSV(Publisher.Publisher):
     #======================== public ==========================================
     
     def publish(self,timestamp,source,data):
+        
+        #convert : to _ because windows do not like folders with :
+        s=source[0].replace(':','_')
+        
         #create logger according to app name.
+        
         optionList=data['header'].getOptionList()
         app=optionList[PATH_FIELD]
         app=app[PATH_SUBFIELD]
         strname="".join(chr(b) for b in app)
         #check if there is an instance of that file handler
-        root=logging.getLogger(strname)
+        root=logging.getLogger(s+strname)
         root.setLevel(logging.INFO)
-        s=source[0].replace(':','_')
+        
+        
+        print " ".join(h.get_name() for h in root.handlers)
+        
         for h in root.handlers:
             if isinstance(h, FileHandler):
-                if (h.get_name()==s+"/"+strname ):#already exists
+                name=h.get_name()
+                if (name in (s+strname) ):#already exists
                     pass
                 else:#create the new filehandler
-                   
                     if not os.path.exists(os.path.curdir +"/"+ s):
                         os.makedirs(os.path.curdir +"/" + s)
-                    else:
-                       #print os.path.curdir    
-                       pass
                     fh=FileHandler(os.path.curdir +"/"+ s +"/" +strname +".csv", "a")
                     #fh=FileHandler(strname +".csv", "a")
-                    fh.set_name(s+"/"+strname)#set a name to be able to find it 
+                    fh.set_name(s+strname)#set a name to be able to find it 
                     fh.setLevel(logging.INFO)
                     root.addHandler(fh)#add the handler to the logger only once
             else:#other handlers 
@@ -59,13 +64,10 @@ class PublisherCoapCSV(Publisher.Publisher):
         if (len(root.handlers)==0):
             
             if not os.path.exists(os.path.curdir +"/"+ s):
-                os.makedirs(os.path.curdir +"/" + s)
-            else:
-                #print os.path.curdir
-                pass    
-            fh=FileHandler(os.path.curdir +"/"+ s +"/" +strname +".csv", "a")
+                os.makedirs(os.path.curdir +"/" + s)    
+            fh=FileHandler(os.path.curdir +"/"+ s +"/" + strname +".csv", "a")
             fh.setLevel(logging.INFO)
-            fh.set_name(s+"/"+strname)#set a name to be able to find it 
+            fh.set_name(s+strname)#set a name to be able to find it 
             root.addHandler(fh)#add the handler to the logger only once
         
         #prepare the ; separated tuples to be printed in csv

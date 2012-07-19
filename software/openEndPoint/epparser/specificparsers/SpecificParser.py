@@ -7,7 +7,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import struct
-from ..ParserException import IncorrectParserException
+from ..ParserException import IncorrectParserException,IncorrectLengthException
 
 #interface implemented by specific parsers. Implement that interface if you want to parse an specific payload.
 class SpecificParser(object):
@@ -40,7 +40,8 @@ class SpecificParser(object):
         lengthElem = struct.calcsize(st)
         
         # make sure the payload is of the expected size
-        if len(payload.getPayload())!=headerLength+numElems*lengthElem:
+        lo=len(payload.getPayload())
+        if lo!=headerLength+numElems*lengthElem:
             raise IncorrectLengthException()
         
         # skip the header
