@@ -13,6 +13,7 @@ from   engine      import EndPoint
 from   listener    import ListenerUdp
 from   epparser    import ParserOneList
 from   publisher   import PublisherScreen
+from   injector    import InjectorCoap, InjectorCoapLed
 
 UDP_PORT = 5683
 
@@ -22,6 +23,28 @@ class EpUdpRawCli(EndPointCli.EndPointCli):
         
         # initialize parent class
         EndPointCli.EndPointCli.__init__(self,endPoint,"endPoint UDP Raw")
+    
+        # add commands
+        self.registerCommand('inject',
+                             'in',
+                             'inject data to CoAP resource',
+                             [],
+                             self._handlerInject)
+    
+    #======================== public ==========================================
+    
+    #======================== private =========================================
+    
+    #===== callbacks
+    
+    def _handlerInject(self,params):
+        destination_ip       = "2001:470:810a:d42f:1415:9209:22c:99"
+        destination_port     = 5683
+        destination_resource = 'l'
+        payload              = [0x01,0x02]
+        InjectorCoap.InjectorCoap.inject((destination_ip,destination_port),
+                                         destination_resource,
+                                         payload)
 
 def main():
     
