@@ -5,6 +5,14 @@ if __name__=='__main__':
     sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
     sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
 
+import logging
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log = logging.getLogger('MoteStateCli')
+log.setLevel(logging.DEBUG)
+log.addHandler(NullHandler())
+    
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
@@ -37,9 +45,9 @@ class MoteStateCli(OpenCli):
                              ['state parameter'],
                              self._handlerState)
         self.registerCommand('reserve',
-                               'r',
-                                    'reserve cells (usage: r  mote_addr neighbor_addr num_of_links start_at_asn [example: r e6 eb 2 )',
-                                    ['mote_addr','neighbor_addr','num_of_links','start_at_asn'],
+                             'r',
+                             'reserve cells, e.g. "r e6 eb 2"',
+                             ['mote_addr','neighbor_addr','num_of_links','start_at_asn'],
                              self._handlerRes)
                             
     #======================== public ==========================================
@@ -66,11 +74,13 @@ class MoteStateCli(OpenCli):
         for ms in self.moteState_handlers:
             try:
                 myid = str(ms.getStateElem("IdManager").data[0]['my16bID'])
-                myid=myid[3:5]
-                if myid==params[0]:#match the ID and then send command to mote
-                   input = 'Q' + ' ' + params[1]+' '+params[2]+' '+params[3] #Q is the code for reQuesting reservation in openserial_stop() on Gina
-                   ms.moteConnector.write(input)
-                   #print input
+                myid = myid[3:5]
+                if myid==params[0]: # match the ID and then send command to mote
+                   input  = []
+                   input += [params[1]]
+                   input += [params[2]]
+                   input += [params[3]]
+                   ms.moteConnector.write(' '.join(input),headerByte='Q')
             except ValueError as err:
                 print err
     
@@ -131,6 +141,7 @@ for loggerName in ['moteProbe',
                    'ParserData',
                    'moteState',
                    'OpenCli',
+                   'MoteStateCli',
                    ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)

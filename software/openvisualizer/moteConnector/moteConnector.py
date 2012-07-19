@@ -113,9 +113,9 @@ class moteConnector(threading.Thread):
         
         return dataQueue
     
-    def write(self,stringToWrite):
+    def write(self,stringToWrite,headerByte='D'):
         try:
-            self.socket.send(stringToWrite)
+            self.socket.send(headerByte+stringToWrite)
         except socket.error:
             log.error(err)
             pass

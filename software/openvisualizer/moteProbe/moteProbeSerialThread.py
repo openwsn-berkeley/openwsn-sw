@@ -87,7 +87,7 @@ class moteProbeSerialThread(threading.Thread):
     
     def send(self,bytesToSend):
         self.serialOutputLock.acquire()
-        self.serialOutput += 'D'+ chr(len(self.serialOutput)) + bytesToSend
+        self.serialOutput += bytesToSend[0]+ chr(len(self.serialOutput)) + bytesToSend[1:]
         if len(self.serialOutput)>200:
             log.warning("serialOutput overflowing ({0} bytes)".format(len(self.serialOutput)))
         self.serialOutputLock.release()
