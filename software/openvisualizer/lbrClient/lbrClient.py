@@ -244,7 +244,7 @@ class lbrClient(threading.Thread):
                 # send to LBR
                 self.socket.send(lowpan)
                 log.debug('packet sent to lbr: {}'.format(printlowpan))
-				#log.debug(lowpan)
+                #log.debug(lowpan)
                 # increment statistics
                 self._incrementStats('packetsSentOk')
                 self._incrementStats('bytesSentOk', step=len(lowpan))
