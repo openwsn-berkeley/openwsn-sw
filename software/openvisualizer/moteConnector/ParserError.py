@@ -7,10 +7,16 @@ log = logging.getLogger('ParserError')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+import struct
+
 from ParserException import ParserException
 import Parser
 
+import StackDefines
+
 class ParserError(Parser.Parser):
+    
+    HEADER_LENGTH       = 1
     
     def __init__(self):
         
@@ -18,7 +24,7 @@ class ParserError(Parser.Parser):
         log.debug("create instance")
         
         # initialize parent class
-        Parser.Parser.__init__(self,1)
+        Parser.Parser.__init__(self,self.HEADER_LENGTH)
     
     #======================== public ==========================================
     
@@ -27,6 +33,38 @@ class ParserError(Parser.Parser):
         # log
         log.debug("received data {0}".format(input))
         
-        raise ParserException(ParserException.NOT_IMPLEMENTED,"ParserError.parseInput")
+        # parse packet
+        try:
+           (moteId,
+            callingComponent,
+            error_code,
+            arg1,
+            arg2) = struct.unpack('<HBBHH',''.join([chr(c) for c in input]))
+        except struct.error:
+            raise ParserException(ParserException.DESERIALIZE,"could not extract data from {0}".format(input))
+        
+        # turn into string
+        
+        output = "[{COMPONENT}] {ERROR_DESC}".format(
+                                    COMPONENT  = self._translateCallingComponent(callingComponent),
+                                    ERROR_DESC = self._translateErrorDescription(error_code,arg1,arg2)
+                                )
+        
+        # log
+        log.debug("error = {0}".format(output))
+        
+        print output
     
     #======================== private =========================================
+    
+    def _translateCallingComponent(self,callingComponent):
+        try:
+            return StackDefines.components[callingComponent]
+        except KeyError:
+            return "unknown component code {0}".format(callingComponent)
+    
+    def _translateErrorDescription(self,error_code,arg1,arg2):
+        try:
+            return StackDefines.errorDescriptions[error_code].format(arg1,arg2)
+        except KeyError:
+            return "unknown error {0} arg1={1} arg2={2}".format(error_code,arg1,arg2)
