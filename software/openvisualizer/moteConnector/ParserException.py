@@ -11,6 +11,7 @@ class ParserException(Exception):
     descriptions = { 
         GENERIC:        'generic parsing error',
         TOO_SHORT:      'input too short',
+        WRONG_LENGTH:   'input of the wrong length',
         UNKNOWN_OPTION: 'no parser key',
         NO_KEY:         'no key',
         NOT_IMPLEMENTED:'not implemented',
