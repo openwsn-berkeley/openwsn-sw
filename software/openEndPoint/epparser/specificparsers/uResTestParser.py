@@ -23,8 +23,8 @@ class uResTestParser(SpecificParser.SpecificParser):
     
     apps=['res']   #application name, can be a list.
     headerStructure = {
-        'structure': '<BHBB', # little-endian, 
-        'fieldNames': ['success','timeSpent','n_requests','n_success'],
+        'structure': '<BHBBB', # little-endian, 
+        'fieldNames': ['success','timeSpent','n_requests','n_success','dest_address'],
         'repeat':     False,
     }
     
