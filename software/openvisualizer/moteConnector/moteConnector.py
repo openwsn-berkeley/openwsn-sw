@@ -38,6 +38,10 @@ class moteConnector(threading.Thread):
     TYPE_STATUS    = OpenParser.OpenParser.TYPE_STATUS
     TYPE_ERROR     = OpenParser.OpenParser.TYPE_ERROR
     TYPE_DATA      = OpenParser.OpenParser.TYPE_DATA
+    TYPE_DATA_LOCAL     = OpenParser.OpenParser.TYPE_DATA_LOCAL
+    TYPE_DATA_INTERNET  = OpenParser.OpenParser.TYPE_DATA_INTERNET
+ 
+    
     
     def __init__(self,moteProbeIp,moteProbeTcpPort):
         

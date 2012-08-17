@@ -56,11 +56,11 @@ class Parser(object):
         
         # parse the header
         # TODO
-        
+     
         # call the next header parser
         for key in self.parsingKeys:
             if input[key.index]==key.val:
-                return (key.val,key.parser(input[self.headerLength:]))
+                return (key.parser(key,input[self.headerLength:]))
         
         # if you get here, no key was found
         raise ParserException(ParserException.NO_KEY, "type={0} (\"{1}\")".format(

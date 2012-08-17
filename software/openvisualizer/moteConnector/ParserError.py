@@ -28,7 +28,7 @@ class ParserError(Parser.Parser):
     
     #======================== public ==========================================
     
-    def parseInput(self,input):
+    def parseInput(self,key,input):
         
         # log
         log.debug("received data {0}".format(input))

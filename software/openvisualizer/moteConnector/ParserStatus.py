@@ -195,7 +195,7 @@ class ParserStatus(Parser.Parser):
     
     #======================== public ==========================================
     
-    def parseInput(self,input):
+    def parseInput(self,key,input):
         
         # log
         log.debug("received input={0}".format(input))
@@ -246,7 +246,7 @@ class ParserStatus(Parser.Parser):
                 log.debug("parsed into {0}".format(returnTuple))
                 
                 # map to name tuple
-                return returnTuple
+                return (key,returnTuple)
         
         # if you get here, no key was found
         raise ParserException(ParserException.NO_KEY, "type={0} (\"{1}\")".format(

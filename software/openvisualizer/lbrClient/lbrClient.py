@@ -10,10 +10,11 @@ import threading
 from moteConnector import MoteConnectorConsumer
 import socket
 import copy
+import RPL
 
 class lbrClientMoteConnectorConsumer(MoteConnectorConsumer.MoteConnectorConsumer):
     
-    def __init__(self,moteConnector,receivedData_cb):
+    def __init__(self,moteConnector,receivedData_cb,type):
         
         # log
         log.debug("create instance")
@@ -25,7 +26,7 @@ class lbrClientMoteConnectorConsumer(MoteConnectorConsumer.MoteConnectorConsumer
         
         # initialize parent class
         MoteConnectorConsumer.MoteConnectorConsumer.__init__(self,self.moteConnector,
-                                                                  [self.moteConnector.TYPE_DATA],
+                                                                  [type],
                                                                   self.receivedData_cb)
 
 class lbrClient(threading.Thread):
@@ -41,7 +42,7 @@ class lbrClient(threading.Thread):
     
         # store params
         self.moteConnector   = moteConnector
-        
+        self.RPL             = RPL.RPL() #RPL source routing table
         # log
         log.debug("creating instance")
         
@@ -50,7 +51,10 @@ class lbrClient(threading.Thread):
         self.stats                = {}
         self.connectSem           = threading.Lock()
         self.connectorConsumer    = lbrClientMoteConnectorConsumer(self.moteConnector,
-                                                                   self.send)
+                                                                   self.send,self.moteConnector.TYPE_DATA_INTERNET)
+        #for RPL data local consumer that updates RPL information
+        self.connectorConsumerLocal  = lbrClientMoteConnectorConsumer(self.moteConnector,
+                                                                   self.handleLocalData,self.moteConnector.TYPE_DATA_LOCAL)
         
         # reset the statistics
         self._resetStats()
@@ -71,6 +75,7 @@ class lbrClient(threading.Thread):
         
         #start the moteConnectorConsumer
         self.connectorConsumer.start()
+        self.connectorConsumerLocal.start()
         
         while True:
             # reset the statistics
@@ -231,6 +236,7 @@ class lbrClient(threading.Thread):
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
     
+    #this is the callback exectued by moteConnectorConsumer. the filter is TYPE_DATA_INTERNET
     def send(self,lowpan):
         try:
             if self._isConnected():
@@ -257,6 +263,15 @@ class lbrClient(threading.Thread):
         except socket.error as err:
             log.error('socket error while sending: {0}'.format(err))
     
+    #this method handles RPL data, when invoked a DAO is passed as parameter. This information needs to be used to update
+    #RPL routing tables at RPL component. The method is invoked by Parser as this function is the callback passed to
+    #lbrClientMoteConnectorConsumer with filter TYPE_DATA_LOCAL
+    def handleLocalData(self,rplData):
+        self.RPL.update(rplData)
+        print "handleLocalData!"
+        log.debug('rplDATA update: {0}'.format(rplData))
+        
+                
     def getStats(self):
         self.statsLock.acquire()
         returnVal = copy.deepcopy(self.stats)

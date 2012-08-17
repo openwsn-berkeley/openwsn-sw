@@ -21,6 +21,9 @@ class OpenParser(Parser.Parser):
     TYPE_ERROR     = ord('E')
     TYPE_DATA      = ord('D')
     
+    TYPE_DATA_LOCAL        = ParserData.ParserData.TYPE_DATA_LOCAL
+    TYPE_DATA_INTERNET     = ParserData.ParserData.TYPE_DATA_INTERNET
+    
     def __init__(self):
         
         # log
