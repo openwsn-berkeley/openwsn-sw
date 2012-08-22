@@ -76,6 +76,8 @@ class moteProbeSerialThread(threading.Thread):
                                     self.serialOutputLock.release()
                             else:
                                 # send to other thread
+                                #print "".join(ord(c) for c in self.serialInput)
+                                #print " ".join(str(ord(c)) for c in self.serialInput)
                                 self.otherThreadHandler.send(self.serialInput)
                     else:
                         raise SystemError("invalid state {0}".format(state))

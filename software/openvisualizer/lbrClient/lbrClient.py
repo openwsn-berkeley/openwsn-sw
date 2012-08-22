@@ -43,6 +43,8 @@ class lbrClient(threading.Thread):
         # store params
         self.moteConnector   = moteConnector
         self.RPL             = RPL.RPL() #RPL source routing table
+        
+        self.RPL.test()
         # log
         log.debug("creating instance")
         

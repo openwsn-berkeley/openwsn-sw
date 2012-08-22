@@ -38,7 +38,7 @@ class ParserData(Parser.Parser):
         
         # log
         log.debug("received data {0}".format(input))
-        print input
+        #print input
         # ensure input not short longer than header
         self._checkLength(input)
         
@@ -67,9 +67,9 @@ class ParserData(Parser.Parser):
             #parse here the DAO.  
             parseDAO(input) 
         else:
-            #key=self.TYPE_DATA_INTERNET     
+            key=self.TYPE_DATA_INTERNET     
             #debug ..
-            key=self.TYPE_DATA_LOCAL #this is a link local messagage, we need to parse it and then return 
+            #key=self.TYPE_DATA_LOCAL #this is a link local messagage, we need to parse it and then return 
             
             # extract moteId and statusElem
             try:

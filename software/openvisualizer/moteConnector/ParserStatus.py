@@ -215,19 +215,23 @@ class ParserStatus(Parser.Parser):
         log.debug("moteId={0} statusElem={1}".format(moteId,statusElem))
         
         # jump the header bytes
+        aux = input
         input = input[3:]
+        #print aux;
+        #print input
         
         # call the next header parser
         for key in self.fieldsParsingKeys:
             if statusElem==key.val:
             
                 # log
-                log.debug("parsing {0} ({1} bytes) as {2}".format(input,len(input),key.name))
+                log.debug("parsing {0}, ({1} bytes) as {2}".format(input,len(input),key.name))
                 
                 # parse byte array
                 try:
                     fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))
                 except struct.error as err:
+                    #print "PARSER STATUS could not extract tuple {0} by applying {1} to {2} ({3} bytes); error: {4} before parsing {5}".format(key.name,key.structure,input,len(input),str(err),aux)
                     raise ParserException(
                             ParserException.DESERIALIZE,
                             "could not extract tuple {0} by applying {1} to {2} ({3} bytes); error: {4}".format(
@@ -241,7 +245,7 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
-                
+                #print returnTuple
                 # log
                 log.debug("parsed into {0}".format(returnTuple))
                 

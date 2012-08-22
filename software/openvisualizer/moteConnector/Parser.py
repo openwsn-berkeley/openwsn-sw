@@ -50,6 +50,7 @@ class Parser(object):
         
         # log
         log.debug("received input={0}".format(input))
+        #print "PARSER received input={0}".format(input)
         
         # ensure input not short longer than header
         self._checkLength(input)
@@ -63,6 +64,7 @@ class Parser(object):
                 return (key.parser(key,input[self.headerLength:]))
         
         # if you get here, no key was found
+     
         raise ParserException(ParserException.NO_KEY, "type={0} (\"{1}\")".format(
             input[0],
             chr(input[0])))

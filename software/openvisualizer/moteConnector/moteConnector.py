@@ -85,23 +85,26 @@ class moteConnector(threading.Thread):
                     
                     # log
                     log.debug("received input={0}".format(input))
-                    
+                    #print "Mote Connector received input={0}".format(input)
                     # parse input
                     try:
                         (notifType,parsedNotif)  = self.parser.parseInput(input)
                     except ParserException.ParserException as err:
                         # log
                         log.error(str(err))
+                        print str(err)
                         pass
                     else:
                         # inform all registrees
                         self.dataLock.acquire()
                         for registree in self.registrees:
                             if notifType in registree.getFilter():
+                                #print "notifType {0}".format(notifType)
                                 registree.indicate(parsedNotif)
                         self.dataLock.release()
                     
             except socket.error as err:
+                print str(error)
                 log.error(err)
                 pass
     
@@ -121,6 +124,7 @@ class moteConnector(threading.Thread):
         try:
             self.socket.send(headerByte+stringToWrite)
         except socket.error:
+            print error
             log.error(err)
             pass
     
