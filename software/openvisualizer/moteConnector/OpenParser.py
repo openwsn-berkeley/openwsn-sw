@@ -17,12 +17,16 @@ class OpenParser(Parser.Parser):
     
     HEADER_LENGTH  = 1
     
-    TYPE_STATUS    = ord('S')
-    TYPE_ERROR     = ord('E')
-    TYPE_DATA      = ord('D')
-    
-    TYPE_DATA_LOCAL        = ParserData.ParserData.TYPE_DATA_LOCAL
-    TYPE_DATA_INTERNET     = ParserData.ParserData.TYPE_DATA_INTERNET
+    TYPE_STATUS          = ord('S')
+    TYPE_ERROR           = ord('E')
+    TYPE_DATA            = ord('D')
+    TYPE_DATA_LOCAL      = ParserData.ParserData.TYPE_DATA_LOCAL
+    TYPE_DATA_INTERNET   = ParserData.ParserData.TYPE_DATA_INTERNET
+    TYPE_ALL             = [TYPE_STATUS,
+                            TYPE_ERROR,
+                            TYPE_DATA,
+                            TYPE_DATA_LOCAL,
+                            TYPE_DATA_INTERNET]
     
     def __init__(self):
         

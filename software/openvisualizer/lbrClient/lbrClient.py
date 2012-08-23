@@ -50,7 +50,8 @@ class lbrClient(threading.Thread):
         self.stats                = {}
         self.connectSem           = threading.Lock()
         self.connectorConsumer    = lbrClientMoteConnectorConsumer(self.moteConnector,
-                                                                   self.send,self.moteConnector.TYPE_DATA_INTERNET)
+                                                                   self.send,
+                                                                   self.moteConnector.TYPE_DATA_INTERNET)
         
         # reset the statistics
         self._resetStats()

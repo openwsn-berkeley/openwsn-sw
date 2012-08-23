@@ -8,6 +8,7 @@ if __name__=='__main__':
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
+from networkState  import networkState
 from lbrClient     import lbrClient
 import OpenWindow
 import OpenFrameState
@@ -102,6 +103,7 @@ class MoteStateGui_app(object):
         self.moteProbe_handlers        = []
         self.moteConnector_handlers    = []
         self.moteState_handlers        = []
+        self.networkState_handlers     = []
         self.lbrClient_handlers        = []
         
         # create a moteProbe for each mote connected to this computer
@@ -117,6 +119,10 @@ class MoteStateGui_app(object):
         # create a moteState for each moteConnector
         for mc in self.moteConnector_handlers:
            self.moteState_handlers.append(moteState.moteState(mc))
+        
+        # create a networkState for each moteConnector
+        for mc in self.moteConnector_handlers:
+           self.networkState_handlers.append(networkState.networkState(mc))
         
         # create an lbrClient for each moteConnector
         for mc in self.moteConnector_handlers:
