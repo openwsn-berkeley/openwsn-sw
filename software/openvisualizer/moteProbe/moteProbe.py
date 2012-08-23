@@ -15,17 +15,19 @@ class moteProbe(object):
     def __init__(self,serialport,tcpport):
         
         # store params
-        self.serialport = serialport
-        self.tcpport    = tcpport
+        self.serialportName     = serialport[0]
+        self.serialportBaudrate = serialport[1]
+        self.tcpport            = tcpport
         
         # log
-        log.info("creating moteProbe attaching to {0}, listening to TCP port {1}".format(
-                    self.serialport,
+        log.info("creating moteProbe attaching to {0}@{1}, listening to TCP port {1}".format(
+                    self.serialportName,
+                    self.serialportBaudrate,
                     self.tcpport)
                 )
         
         # declare serial and socket threads
-        self.serialThread = moteProbeSerialThread.moteProbeSerialThread(self.serialport)
+        self.serialThread = moteProbeSerialThread.moteProbeSerialThread(self.serialportName,self.serialportBaudrate)
         self.socketThread = moteProbeSocketThread.moteProbeSocketThread(self.tcpport)
         
         # inform one of another

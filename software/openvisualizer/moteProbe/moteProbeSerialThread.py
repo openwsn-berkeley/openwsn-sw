@@ -11,13 +11,14 @@ log.addHandler(NullHandler())
 
 class moteProbeSerialThread(threading.Thread):
 
-    def __init__(self,serialport):
+    def __init__(self,serialportName,serialportBaudrate):
         
         # log
         log.debug("create instance")
         
         # store params
-        self.serialport           = serialport
+        self.serialportName       = serialportName
+        self.serialportBaudrate   = serialportBaudrate
         
         # local variables
         self.serialInput          = ''
@@ -30,7 +31,7 @@ class moteProbeSerialThread(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name                 = 'moteProbeSerialThread@'+self.serialport
+        self.name                 = 'moteProbeSerialThread@'+self.serialportName
     
     def run(self):
         
@@ -39,7 +40,7 @@ class moteProbeSerialThread(threading.Thread):
     
         while True:     # open serial port
             log.debug("open serial port")
-            self.serial = serial.Serial(self.serialport,baudrate=115200)
+            self.serial = serial.Serial(self.serialportName,self.serialportBaudrate)
             while True: # read bytes from serial port
                 try:
                     char = self.serial.read(1)
