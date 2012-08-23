@@ -107,9 +107,7 @@ class ParserStatus(Parser.Parser):
                                         'syncCounter',               # 1 B
                                         'minCorrection',             # 2 h
                                         'maxCorrection',             # 2 h
-                                                                     # 1 x
                                         'numDeSync'                  # 1 B
-                                                                     # 1 x
                                     ],
                                 )
         self._addFieldsParser   (
@@ -170,10 +168,9 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     8,
                                     'NeighborsRow',
-                                    '<BBBBBBQQBbBBBBHH',
+                                    '<BBBBBBQQHbBBBBHH',
                                     [
                                         'row',                       # B
-                                                                     # x
                                         'used',                      # B
                                         'parentPreference',          # B
                                         'stableNeighbor',            # B
@@ -187,7 +184,6 @@ class ParserStatus(Parser.Parser):
                                         'numTx',                     # B
                                         'numTxACK',                  # B
                                         'asn_4',                     # B
-                                                                     # x
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
                                     ],

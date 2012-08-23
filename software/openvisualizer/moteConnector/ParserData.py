@@ -38,7 +38,8 @@ class ParserData(Parser.Parser):
         
         # log
         log.debug("received data {0}".format(input))
-        #print input
+        print " ".join(hex(i) for i in input)
+        print input
         # ensure input not short longer than header
         self._checkLength(input)
         
@@ -65,7 +66,7 @@ class ParserData(Parser.Parser):
             key=self.TYPE_DATA_LOCAL #this is a link local messagage, we need to parse it and then return 
             
             #parse here the DAO.  
-            parseDAO(input) 
+            #do nothing and return 
         else:
             key=self.TYPE_DATA_INTERNET     
             #debug ..
