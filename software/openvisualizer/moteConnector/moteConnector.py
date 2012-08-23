@@ -89,6 +89,7 @@ class moteConnector(threading.Thread):
                     # parse input
                     try:
                         (notifType,parsedNotif)  = self.parser.parseInput(input)
+                        assert isinstance(notifType,int)
                     except ParserException.ParserException as err:
                         # log
                         log.error(str(err))
@@ -99,12 +100,10 @@ class moteConnector(threading.Thread):
                         self.dataLock.acquire()
                         for registree in self.registrees:
                             if notifType in registree.getFilter():
-                                #print "notifType {0}".format(notifType)
                                 registree.indicate(parsedNotif)
                         self.dataLock.release()
-                    
+            
             except socket.error as err:
-                print str(error)
                 log.error(err)
                 pass
     
