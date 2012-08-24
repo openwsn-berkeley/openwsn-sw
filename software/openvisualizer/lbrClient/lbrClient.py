@@ -266,6 +266,14 @@ class lbrClient(threading.Thread):
         
         return returnVal
     
+    def getPrefix(self):
+        self.statsLock.acquire()
+        prefix = self.stats['prefix']
+        self.statsLock.release()
+        return prefix
+    
+    
+    
     #======================== private =========================================
     
     #===== stats handling

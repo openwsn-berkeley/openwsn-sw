@@ -12,6 +12,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
+import random
 
 class RPL(object):
     '''
