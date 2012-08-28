@@ -13,6 +13,7 @@ import threading
 import pprint
 import json
 
+
 from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
 from openType      import openType,         \
@@ -242,6 +243,7 @@ class StateIdManager(StateElem):
         self.data[0]['myPrefix'].update(notif.myPrefix_type,
                                         notif.myPrefix_bodyH,
                                         notif.myPrefix_bodyL)
+        
 
 class StateMyDagRank(StateElem):
     

@@ -173,7 +173,6 @@ class ParserStatus(Parser.Parser):
                                     '<BBBBBBQQBbBBBBHH',
                                     [
                                         'row',                       # B
-                                                                     # x
                                         'used',                      # B
                                         'parentPreference',          # B
                                         'stableNeighbor',            # B
@@ -181,13 +180,12 @@ class ParserStatus(Parser.Parser):
                                         'addr_type',                 # B
                                         'addr_bodyH',                # Q
                                         'addr_bodyL',                # Q
-                                        'DAGrank',                   # B
+                                        'DAGrank',                   # H
                                         'rssi',                      # b
                                         'numRx',                     # B
                                         'numTx',                     # B
                                         'numTxACK',                  # B
                                         'asn_4',                     # B
-                                                                     # x
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
                                     ],

@@ -8,6 +8,7 @@ log.setLevel(logging.DEBUG)
 log.addHandler(NullHandler())
 
 import openType
+from EventBus import EventBus
 
 class typeAddr(openType.openType):
     
@@ -64,6 +65,9 @@ class typeAddr(openType.openType):
         elif type==self.ADDR_64B:
             self.desc = '64b'
             self.addr = fullAddr[:8]
+            #call subscribers 
+            bus=EventBus.EventBus()
+            bus.emit_sync("networkState.setLocalAddr", self.addr)
         elif type==self.ADDR_128B:
             self.desc = '128b'
             self.addr = fullAddr

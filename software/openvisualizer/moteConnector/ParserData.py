@@ -38,8 +38,8 @@ class ParserData(Parser.Parser):
         
         # log
         log.debug("received data {0}".format(input))
-        print " ".join(hex(i) for i in input)
-        print input
+        #print " ".join(hex(i) for i in input)
+        #print input
         # ensure input not short longer than header
         self._checkLength(input)
         

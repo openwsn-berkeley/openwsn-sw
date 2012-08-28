@@ -41,7 +41,7 @@ class ParserError(Parser.Parser):
             arg2) = struct.unpack('<HBBHH',''.join([chr(c) for c in input]))
          
         except struct.error:
-            print "PARSER ERROR could not extract data from {0}".format(input)
+            #print "PARSER ERROR could not extract data from {0}".format(input)
             raise ParserException(ParserException.DESERIALIZE,"could not extract data from {0}".format(input))
         # turn into string
         

@@ -85,7 +85,6 @@ class moteConnector(threading.Thread):
                     
                     # log
                     log.debug("received input={0}".format(input))
-                    #print "Mote Connector received input={0}".format(input)
                     # parse input
                     try:
                         (notifType,parsedNotif)  = self.parser.parseInput(input)
@@ -93,7 +92,6 @@ class moteConnector(threading.Thread):
                     except ParserException.ParserException as err:
                         # log
                         log.error(str(err))
-                        print str(err)
                         pass
                     else:
                         # inform all registrees
@@ -123,7 +121,6 @@ class moteConnector(threading.Thread):
         try:
             self.socket.send(headerByte+stringToWrite)
         except socket.error:
-            print error
             log.error(err)
             pass
     

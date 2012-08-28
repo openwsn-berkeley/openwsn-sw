@@ -10,6 +10,7 @@ import threading
 from moteConnector import MoteConnectorConsumer
 import socket
 import copy
+from EventBus import EventBus
 
 class lbrClientMoteConnectorConsumer(MoteConnectorConsumer.MoteConnectorConsumer):
     
@@ -351,3 +352,7 @@ class lbrClient(threading.Thread):
         self.statsLock.acquire()
         self.stats['prefix'] = prefix
         self.statsLock.release()
+        
+        bus=EventBus.EventBus()
+        bus.emit_sync("networkState.test",prefix)
+        bus.emit_sync("networkState.setNetworkPrefix",prefix)

@@ -8,8 +8,11 @@ log.addHandler(NullHandler())
 
 import threading
 import RPL
+from EventBus import EventBus
+from EventBus import Callback
 
 from moteConnector import MoteConnectorConsumer
+import binascii
 
 class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     
@@ -39,19 +42,43 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.stateLock                      = threading.Lock()
         self.state                          = {}
         self.rpl                            = RPL.RPL()
+        self.bus                            = EventBus.EventBus()
         
-    
+        self.prefix= None
+        self.address= None
+        
+        
+        callback = Callback.Callback(self.print_prefix,"networkState.test")
+        self.bus.add_listener(callback)
+        
+        callback = Callback.Callback(self.setLocalAddr,"networkState.setLocalAddr")
+        self.bus.add_listener(callback)
+        
+        callback = Callback.Callback(self.setNetworkPrefix,"networkState.setNetworkPrefix")
+        self.bus.add_listener(callback)
         #send a DIO everu 10 seconds.
+        #self.initDIOActivity(10) #10s disable DIO activity by now. TODO!! enable it later.
         
     #======================== public ==========================================
     #whenever the prefix and the current mac address are received this function starts the DIO activity.
-    def initDIOActivity(self,prefix,address,initialPeriod):
+    def initDIOActivity(self,initialPeriod):
         
-        self.prefix=prefix 
-        self.address=address  #local address
-        self.timer = Timer(initialPeriod,self._sendDIO)
+        self.timer = threading.Timer(initialPeriod,self._sendDIO)
         self.timer.start()
     
+    def print_prefix(self,prefix):
+        print "**********************************************"
+        print prefix
+        
+    def setLocalAddr(self,localAddr):
+        self.stateLock.acquire()
+        self.address=localAddr    
+        self.stateLock.release()
+        
+    def setNetworkPrefix(self,prefix):
+        self.stateLock.acquire()
+        self.prefix=prefix    
+        self.stateLock.release() 
     #======================== private =========================================
     
     def _receivedData_notif(self,notif):
@@ -65,10 +92,22 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
     def _sendDIO(self):
         
+        if self.address is None or self.prefix is None:
+            self.initDIOActivity(10) #10s
+            return #send only if the prefix is set.
         
+        li=[] 
         dodagid=self.prefix #16bytes address
-        dodagid.append(self.address)
+        dodagid=dodagid.replace(":","") #remove : from the string
+        
+        val=self._hextranslate(dodagid)#every 2 digits is an hex that is converted to int.
 
+        for a in val: #build the address, this is the prefix
+            li.append(a) 
+        
+        for b in self.address:#rest of the address
+            li.append(int(b)) 
+        
         dio =[] #list of bytes
         dio.append(120) #IPHC 0x78
         dio.append(34)  #IPHC 0x22 (dam sam)
@@ -86,19 +125,33 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         dio.append(0) #RPL rank byte 1
         dio.append(0) #RPL rank byte 2
         
-        aux = MOP_DIO_A | MOP_DIO_B | MOP_DIO_C;
-        aux = aux & (not PRF_DIO_A) & (not PRF_DIO_B) & (not PRF_DIO_C) & (not G_DIO)
+        aux = self.MOP_DIO_A | self.MOP_DIO_B | self.MOP_DIO_C;
+        aux = aux & (not self.PRF_DIO_A) & (not self.PRF_DIO_B) & (not self.PRF_DIO_C) & (not self.G_DIO)
         
         dio.append(aux) #dio options
           
         dio.append(51) #DTSN 0x33 -- why??
         dio.append(0) #flags
         dio.append(0) #reserved
-        dio.append(dodagid)
+        
+        for k in li: #write the address 128bits to the DIO
+            dio.append(k)
+        
         dio.append(5) #options 0x05      
         
-        self.moteConnector.write(dio)
+        dio2send="".join(str(c) for c in dio) #convert list to string
+        self.moteConnector.write(dio2send) #send it!
         
+        #restart the timer
+        self.initDIOActivity(10) #10s
         return
     
+    def _hextranslate(self,s):
+        assert len(s)%2 == 0
+        
+        res = []
+        for i in range(len(s)/2):
+                realIdx = i*2
+                res.append(int(s[realIdx:realIdx+2],16))
+        return res
         
