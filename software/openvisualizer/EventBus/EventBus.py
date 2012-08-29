@@ -92,7 +92,7 @@ class EventBus(threading.Thread):
     """ Invoke synchronous"""
     def emit_sync(self, uri, args = None):
         assert uri is not None
-        log.info("EventBus new synch event {0}".format(uri))
+        #log.info("EventBus new synch event {0}".format(uri))
         for id in self.__callbacks:
             callback = self.__callbacks[id]
             if callback.matches_uri(uri):
