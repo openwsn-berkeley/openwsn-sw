@@ -12,7 +12,7 @@ log = logging.getLogger('moteProbeUtils')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-BAUDRATE_TELOSB = 9600
+BAUDRATE_TELOSB = 115200 # poipoipoi
 BAUDRATE_GINA   = 115200
 
 def findSerialPorts():
