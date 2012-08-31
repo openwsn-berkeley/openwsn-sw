@@ -25,8 +25,13 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     PRF_DIO_C = 1 <<0
     G_DIO     = 1 <<7
     
-    DIO_PERIOD = 20 #60s period
+    DIO_PERIOD = 20 #20s period
     
+    #An indetified problem comes when more than mote is attached to the serial port. The moteStateGui instantiate a networkState 
+    #for each mote connected to the computer. hence a network state is also created for motes that are not the Dagroot. 
+    #in that situation the problem is that networkState starts another DIO timer which increases the frequency of DIOs being sent.
+    #This BUG need to be fixed by preventing more instances of networkState. An option is to make it a singleton, another option
+    #is to identify the serial port of the dagroot and only create a network state that writes to that serial port. 
     def __init__(self,moteConnector):
         
         # log
@@ -61,7 +66,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             self.bus.add_listener(callback)
             #send a DIO everu 10 seconds.
             #TODO XV .. enable DIO once tested.
-            #self.initDIOActivity(self.DIO_PERIOD) 
+            self.initDIOActivity(self.DIO_PERIOD) 
             self.moduleInit                     = True
         
     #======================== public ==========================================
@@ -85,6 +90,40 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.prefix=prefix    
         self.stateLock.release() 
     #======================== private =========================================
+   
+   
+    def _calculateCRC(self,payload,length):
+       
+       temp_checksum = [0]*2
+       little_helper = []
+       
+       #initialization
+       #temp_checksum[0]  = 0;
+       #temp_checksum[1]  = 0;
+      
+      
+       self._oneComplementSum(temp_checksum,payload,len(payload));
+       temp_checksum[0] ^= 0xFF;
+       temp_checksum[1] ^= 0xFF;
+       log.debug("checksum calculated {0},{1}".format(temp_checksum[0],temp_checksum[1]))
+       return temp_checksum
+    
+    def _oneComplementSum(self,checksum,payload,length):
+        sum = 0xFFFF & (checksum[0]<<8 | checksum[1])
+        i=length
+        while (i>1):
+            sum     += 0xFFFF & (payload[length-i]<<8 | (payload[length-i+1]))
+            i  -= 2
+            
+        if (i):
+            sum     += (0xFF & payload[length])<<8
+   
+        while (sum>>16) :
+            sum      = (sum & 0xFFFF)+(sum >> 16);
+   
+        checksum[0] = (sum>>8) & 0xFF;
+        checksum[1] = sum & 0xFF;
+        
     
     def _receivedData_notif(self,notif):
         
@@ -125,9 +164,10 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             dio.append(255) #0xff
             
         dio.append(120) #IPHC 0x78
-        dio.append(34)  #IPHC 0x22 (dam sam)
+        dio.append(0x33)  #IPHC 0x33 (dam sam)
         dio.append(58)  #next header icmpv6 (0x3A)
         ## now ICMPv6 header
+        dio.append(9) #fake byte because the parsing in the iphc module in the mote requires that. Check why!!! any number works.
         
         dio.append(155) #RPL ICMPv6 type 
         dio.append(1) #RPL ICMPv6 CODE 0x01 for DIO
@@ -154,12 +194,18 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         dio.append(5) #options 0x05      
         
+        #calculate checksum of all the fields after checksum on ICMP Header
+        checksum=self._calculateCRC(dio[17:], len(dio[17:]))
+        dio[15]=checksum[0]
+        dio[16]=checksum[1]
+        
         dio2send="".join(chr(c) for c in dio) #convert list to string
-        dio2print="".join(str(c) for c in dio) #convert list to string
+        #dio2print="".join(str(c) for c in dio) #convert list to string
         dio2hex="".join(hex(c) for c in dio) #convert list to string
+        print dio2hex
+        
         self.moteConnector.write(dio2send) #send it!
-        #print dio2print
-        #print dio2hex
+        
         #restart the timer
         self.initDIOActivity(self.DIO_PERIOD) #10s
         return

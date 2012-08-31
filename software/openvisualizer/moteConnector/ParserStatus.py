@@ -227,7 +227,7 @@ class ParserStatus(Parser.Parser):
                 
                 # parse byte array
                 try:
-                    fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))
+                    fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))                     
                 except struct.error as err:
                     #print "PARSER STATUS could not extract tuple {0} by applying {1} to {2} ({3} bytes); error: {4} before parsing {5}".format(key.name,key.structure,input,len(input),str(err),aux)
                     raise ParserException(

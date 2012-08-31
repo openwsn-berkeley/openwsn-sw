@@ -85,6 +85,7 @@ class moteConnector(threading.Thread):
                     
                     # log
                     log.debug("received input={0}".format(input))
+                    #print input
                     # parse input
                     try:
                         (notifType,parsedNotif)  = self.parser.parseInput(input)
