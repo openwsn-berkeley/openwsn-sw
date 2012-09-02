@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Thu, 19 Jul 2012 23:50:42
+# on Sun, 02 Sep 2012 13:24:49
 #
 
 components = {
@@ -57,11 +57,11 @@ errorDescriptions = {
    2: "received an echo reply",
    3: "getData asks for too few bytes, maxNumBytes={0}, fill level={1}",
    4: "the input buffer has overflown",
-   5: "unknown transport protocol {0} (code position {1))",
-   6: "wrong TCP state {0} (code position {1))",
-   7: "TCP reset while in state {0} (code position {1))",
-   8: "unsupported port number {0} (code position {1))",
-   9: "unsupported ICMPv6 type {0} (code position {1))",
+   5: "unknown transport protocol {0} (code position {1})",
+   6: "wrong TCP state {0} (code position {1})",
+   7: "TCP reset while in state {0} (code position {1})",
+   8: "unsupported port number {0} (code position {1})",
+   9: "unsupported ICMPv6 type {0} (code position {1})",
   10: "unsupported 6LoWPAN parameter {1} at location {0}",
   11: "no next hop",
   12: "neighbors table is full (max number of neighbor is {0})",

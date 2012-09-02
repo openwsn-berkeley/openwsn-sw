@@ -202,7 +202,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         dio2send="".join(chr(c) for c in dio) #convert list to string
         #dio2print="".join(str(c) for c in dio) #convert list to string
         dio2hex="".join(hex(c) for c in dio) #convert list to string
-        print dio2hex
+        #print dio2hex
         
         self.moteConnector.write(dio2send) #send it!
         
