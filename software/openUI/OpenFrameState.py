@@ -58,7 +58,10 @@ class OpenFrameState(OpenFrame.OpenFrame):
         assert('data' in dataAndMeta)
         assert(isinstance(dataAndMeta['data'],list))
         
-        self.data.update(dataAndMeta['data'])
+        if len(dataAndMeta['meta'])>0 and ('columnOrder' in dataAndMeta['meta'][0]):
+            self.data.update(dataAndMeta['data'],columnOrder=dataAndMeta['meta'][0]['columnOrder'].split('.'))
+        else:
+            self.data.update(dataAndMeta['data'])
         self.meta.update(dataAndMeta['meta'])
     
     #======================== private =========================================

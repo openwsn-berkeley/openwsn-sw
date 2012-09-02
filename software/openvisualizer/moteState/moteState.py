@@ -255,9 +255,11 @@ class StateMyDagRank(StateElem):
 
 class StateTable(StateElem):
 
-    def __init__(self,rowClass):
+    def __init__(self,rowClass,columnOrder=None):
         StateElem.__init__(self)
         self.meta[0]['rowClass']            = rowClass
+        if columnOrder:
+            self.meta[0]['columnOrder']     = columnOrder
         self.data                           = []
 
     def update(self,notif):
@@ -311,9 +313,42 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.state[self.ST_OUPUTBUFFER]     = StateOutputBuffer()
         self.state[self.ST_ASN]             = StateAsn()
         self.state[self.ST_MACSTATS]        = StateMacStats()
-        self.state[self.ST_SCHEDULE]        = StateTable(StateScheduleRow)
+        self.state[self.ST_SCHEDULE]        = StateTable(
+                                                StateScheduleRow,
+                                                columnOrder = '.'.join(
+                                                    [
+                                                        'slotOffset',
+                                                        'type',
+                                                        'shared',
+                                                        'channelOffset',
+                                                        'neighbor',
+                                                        'backoffExponent',
+                                                        'backoff',
+                                                        'numRx',
+                                                        'numTx',
+                                                        'numTxACK',
+                                                        'lastUsedAsn',
+                                                    ]
+                                                )
+                                              )
         self.state[self.ST_QUEUE]           = StateQueue()
-        self.state[self.ST_NEIGHBORS]       = StateTable(StateNeighborsRow)
+        self.state[self.ST_NEIGHBORS]       = StateTable(
+                                                StateNeighborsRow,
+                                                columnOrder = '.'.join(
+                                                    [
+                                                        'used',
+                                                        'parentPreference',
+                                                        'stableNeighbor',
+                                                        'switchStabilityCounter',
+                                                        'addr',
+                                                        'DAGrank',
+                                                        'rssi',
+                                                        'numRx',
+                                                        'numTx',
+                                                        'numTxACK',
+                                                        'asn',
+                                                    ]
+                                                ))
         self.state[self.ST_ISSYNC]          = StateIsSync()
         self.state[self.ST_IDMANAGER]       = StateIdManager()
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()

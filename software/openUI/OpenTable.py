@@ -38,7 +38,7 @@ class OpenTable(Tkinter.Frame):
     
     #======================== public ==========================================
     
-    def update(self,data):
+    def update(self,data,columnOrder=None):
         
         # make sure data is formatted right
         assert(isinstance(data,list))       # data is a list
@@ -51,8 +51,10 @@ class OpenTable(Tkinter.Frame):
         
         # if this is the first call, populate the column names
         if not self.columnNames:
-            for k in data[0].keys():
-                self.columnNames.append(k)
+            if columnOrder:
+                self.columnNames = columnOrder
+            else:
+                self.columnNames = data[0].keys()
         
         # make sure each data row contains all columns
         for row in data:
