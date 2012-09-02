@@ -52,7 +52,6 @@ class ParserError(Parser.Parser):
         # log
         log.debug("error = {0}".format(output))
         
-        print output
         return (key,input)
     
     #======================== private =========================================
