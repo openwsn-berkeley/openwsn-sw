@@ -19,9 +19,34 @@ class moteProbeCli(OpenCli):
         
         # initialize parent class
         OpenCli.__init__(self,"mote probe CLI",self.quit_cb)
+         
+        # add commands
+        self.registerCommand('status',
+                             's',
+                             'print status',
+                             [],
+                             self._handlerStatus)
+    
+    #======================== public ==========================================
+    
+    #======================== private =========================================
+    
+    #===== callbacks
+    
+    def _handlerStatus(self,params):
+        output = []
+        
+        for mp in self.moteProbe_handlers:
+            output += [' - serial port {0}@{1} presented on TCP port {2}'.format(
+                            mp.getSerialPortName(),
+                            mp.getSerialPortBaudrate(),
+                            mp.getTcpPort())]
+        
+        print '\n'.join(output)
+    
+    #===== helpers
     
     def quit_cb(self):
-        
         for mb in self.moteProbe_handlers:
            mb.quit()
 

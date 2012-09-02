@@ -1,7 +1,3 @@
-import moteProbeSerialThread
-import moteProbeSocketThread
-import utils
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -9,6 +5,12 @@ class NullHandler(logging.Handler):
 log = logging.getLogger('moteProbe')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
+
+import threading
+
+import moteProbeSerialThread
+import moteProbeSocketThread
+import utils
 
 class moteProbe(object):
     
@@ -26,6 +28,9 @@ class moteProbe(object):
                     self.tcpport)
                 )
         
+        # local variables
+        self.dataLock     = threading.Lock()
+        
         # declare serial and socket threads
         self.serialThread = moteProbeSerialThread.moteProbeSerialThread(self.serialportName,self.serialportBaudrate)
         self.socketThread = moteProbeSocketThread.moteProbeSocketThread(self.tcpport)
@@ -40,8 +45,26 @@ class moteProbe(object):
     
     #======================== public ==========================================
     
+    def getSerialPortName(self):
+        self.dataLock.acquire()
+        returnVal = self.serialportName
+        self.dataLock.release()
+        
+        return returnVal
+    
+    def getSerialPortBaudrate(self):
+        self.dataLock.acquire()
+        returnVal = self.serialportBaudrate
+        self.dataLock.release()
+        
+        return returnVal
+    
     def getTcpPort(self):
-        return self.tcpport
+        self.dataLock.acquire()
+        returnVal = self.tcpport
+        self.dataLock.release()
+        
+        return returnVal
         
     def quit(self):
         raise NotImplementedError()
