@@ -1,4 +1,3 @@
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -354,25 +353,25 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         
         self.notifHandlers = {
-                self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
-                    self.state[self.ST_OUPUTBUFFER].update,
-                self.parserStatus.named_tuple[self.ST_ASN]:
-                    self.state[self.ST_ASN].update,
-                self.parserStatus.named_tuple[self.ST_MACSTATS]:
-                    self.state[self.ST_MACSTATS].update,
-                self.parserStatus.named_tuple[self.ST_SCHEDULEROW]:
-                    self.state[self.ST_SCHEDULE].update,
-                self.parserStatus.named_tuple[self.ST_QUEUEROW]:
-                    self.state[self.ST_QUEUE].update,
-                self.parserStatus.named_tuple[self.ST_NEIGHBORSROW]:
-                    self.state[self.ST_NEIGHBORS].update,
-                self.parserStatus.named_tuple[self.ST_ISSYNC]:
-                    self.state[self.ST_ISSYNC].update,
-                self.parserStatus.named_tuple[self.ST_IDMANAGER]:
-                    self.state[self.ST_IDMANAGER].update,
-                self.parserStatus.named_tuple[self.ST_MYDAGRANK]:
-                    self.state[self.ST_MYDAGRANK].update,
-            }
+            self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
+                self.state[self.ST_OUPUTBUFFER].update,
+            self.parserStatus.named_tuple[self.ST_ASN]:
+                self.state[self.ST_ASN].update,
+            self.parserStatus.named_tuple[self.ST_MACSTATS]:
+                self.state[self.ST_MACSTATS].update,
+            self.parserStatus.named_tuple[self.ST_SCHEDULEROW]:
+                self.state[self.ST_SCHEDULE].update,
+            self.parserStatus.named_tuple[self.ST_QUEUEROW]:
+                self.state[self.ST_QUEUE].update,
+            self.parserStatus.named_tuple[self.ST_NEIGHBORSROW]:
+                self.state[self.ST_NEIGHBORS].update,
+            self.parserStatus.named_tuple[self.ST_ISSYNC]:
+                self.state[self.ST_ISSYNC].update,
+            self.parserStatus.named_tuple[self.ST_IDMANAGER]:
+                self.state[self.ST_IDMANAGER].update,
+            self.parserStatus.named_tuple[self.ST_MYDAGRANK]:
+                self.state[self.ST_MYDAGRANK].update,
+        }
     
     #======================== public ==========================================
     
