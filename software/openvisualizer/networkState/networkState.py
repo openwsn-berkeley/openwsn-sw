@@ -54,16 +54,14 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.stateLock            = threading.Lock()
         self.state                = {}
         self.rpl                  = RPL.RPL()
-        self.bus                  = EventBus.EventBus()
         
         self.prefix               = None
         self.address              = None
         self.moduleInit           = False
         
         if not self.moduleInit:
-            self.bus.subscribe(self._print_prefix,    "networkState.test")
-            self.bus.subscribe(self._setLocalAddr,    "networkState._setLocalAddr")
-            self.bus.subscribe(self._setNetworkPrefix,"networkState._setNetworkPrefix")
+            EventBus.EventBus().subscribe(self._setLocalAddr,    "networkState._setLocalAddr")
+            EventBus.EventBus().subscribe(self._setNetworkPrefix,"networkState._setNetworkPrefix")
             
             # send a DIO periodically
             #TODO XV .. enable DIO once tested.
@@ -175,9 +173,6 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self._initDIOActivity(self.DIO_PERIOD)
     
     #==== bus event handlers
-    
-    def _print_prefix(self,prefix):
-        print "[PREFIX] "+prefix
         
     def _setLocalAddr(self,localAddr):
         self.stateLock.acquire()

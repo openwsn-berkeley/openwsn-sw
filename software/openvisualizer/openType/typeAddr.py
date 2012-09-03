@@ -1,4 +1,3 @@
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -65,9 +64,8 @@ class typeAddr(openType.openType):
         elif type==self.ADDR_64B:
             self.desc = '64b'
             self.addr = fullAddr[:8]
-            #call subscribers 
-            bus=EventBus.EventBus()
-            bus.publish_sync("networkState.setLocalAddr", self.addr)
+            # call subscribers
+            EventBus.EventBus().publish_sync("networkState.setLocalAddr", self.addr)
         elif type==self.ADDR_128B:
             self.desc = '128b'
             self.addr = fullAddr

@@ -106,11 +106,10 @@ def test_subscribe_both():
     subscriber1 = Subscriber('subscriber1')
     subscriber2 = Subscriber('subscriber2')
     
-    bus = EventBus.EventBus()
-    bus.subscribe(subscriber1.notification_singleText,'text')
-    bus.subscribe(subscriber1.notification_doubleNum,'num')
-    bus.subscribe(subscriber2.notification_singleText,'text')
-    bus.subscribe(subscriber2.notification_doubleNum,'num')
+    EventBus.EventBus().subscribe(subscriber1.notification_singleText,'text')
+    EventBus.EventBus().subscribe(subscriber1.notification_doubleNum,'num')
+    EventBus.EventBus().subscribe(subscriber2.notification_singleText,'text')
+    EventBus.EventBus().subscribe(subscriber2.notification_doubleNum,'num')
     
     # log
     log.debug(prettyformat(bus.getSubscriptions()))
@@ -125,8 +124,7 @@ def test_publishText_sync_both():
     
     log.debug("\n\n----------test_publishText_sync_both")
     
-    bus = EventBus.EventBus()
-    bus.publish_sync('text','someText1')
+    EventBus.EventBus().publish_sync('text','someText1')
     
     # log
     log.debug(prettyformat(subscriber1.notifications))
@@ -147,8 +145,7 @@ def test_publishText_sync_both_again():
     
     log.debug("\n\n----------test_publishText_sync_both_again")
     
-    bus = EventBus.EventBus()
-    bus.publish_sync('text','someText2')
+    EventBus.EventBus().publish_sync('text','someText2')
     
     assert subscriber1.notifications=={
         'text': ['someText1','someText2'],
@@ -165,8 +162,7 @@ def test_publishText_async_both():
     
     log.debug("\n\n----------test_publishText_async_both")
     
-    bus = EventBus.EventBus()
-    bus.publish('text','someText3')
+    EventBus.EventBus().publish('text','someText3')
     
     time.sleep(1) # longest possible time for thread to publish
     
@@ -185,8 +181,7 @@ def test_publishText_async_both_again():
     
     log.debug("\n\n----------test_publishText_async_both_again")
     
-    bus = EventBus.EventBus()
-    bus.publish('text','someText4')
+    EventBus.EventBus().publish('text','someText4')
     
     time.sleep(1) # longest possible time for thread to publish
     
@@ -205,8 +200,7 @@ def test_publishNum_sync_both():
     
     log.debug("\n\n----------test_publishNum_sync_both")
     
-    bus = EventBus.EventBus()
-    bus.publish_sync('num',1,2)
+    EventBus.EventBus().publish_sync('num',1,2)
     
     # log
     log.debug(prettyformat(subscriber1.notifications))
@@ -227,17 +221,16 @@ def test_unsubscription():
     global subscriber1
     global subscriber2
     
-    bus = EventBus.EventBus()
-    res = bus.unsubscribe(3)
+    res = EventBus.EventBus().unsubscribe(3)
     assert res
-    res = bus.unsubscribe(4)
+    res = EventBus.EventBus().unsubscribe(4)
     assert res
     
     # log
-    log.debug(prettyformat(bus.getSubscriptions()))
+    log.debug(prettyformat(EventBus.EventBus().getSubscriptions()))
     
-    bus.publish_sync('text','someText5')
-    bus.publish_sync('num',3,4)
+    EventBus.EventBus().publish_sync('text','someText5')
+    EventBus.EventBus().publish_sync('num',3,4)
     
     # log
     log.debug(prettyformat(subscriber1.notifications))
@@ -260,5 +253,4 @@ def test_teardown():
     
     log.debug("\n\n----------test_teardown")
     
-    bus = EventBus.EventBus()
-    bus.close()
+    EventBus.EventBus().close()

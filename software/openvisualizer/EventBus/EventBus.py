@@ -46,11 +46,11 @@ class EventBus(threading.Thread):
         \note This function is called after __new__.
         '''
         
-        # log
-        log.debug("creating instance")
-        
         if self._init:
             return
+        
+        # log
+        log.debug("initialize instance")
         
         # intialize parent class
         threading.Thread.__init__(self)
