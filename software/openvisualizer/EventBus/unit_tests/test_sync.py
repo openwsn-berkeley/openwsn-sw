@@ -77,7 +77,6 @@ def prettyformat(dataToPrint):
     
 #============================ tests ===========================================
 
-global bus
 global subscriber1
 global subscriber2
 
@@ -99,7 +98,6 @@ def test_setup():
 #---- subscription
     
 def test_subscribe_both():
-    global bus
     global subscriber1
     global subscriber2
     
@@ -108,6 +106,7 @@ def test_subscribe_both():
     subscriber1 = Subscriber('subscriber1')
     subscriber2 = Subscriber('subscriber2')
     
+    bus = EventBus.EventBus()
     bus.subscribe(subscriber1.notification_singleText,'text')
     bus.subscribe(subscriber1.notification_doubleNum,'num')
     bus.subscribe(subscriber2.notification_singleText,'text')
@@ -121,12 +120,12 @@ def test_subscribe_both():
 #---- text publication
 
 def test_publishText_sync_both():
-    global bus
     global subscriber1
     global subscriber2
     
     log.debug("\n\n----------test_publishText_sync_both")
     
+    bus = EventBus.EventBus()
     bus.publish_sync('text','someText1')
     
     # log
@@ -143,12 +142,12 @@ def test_publishText_sync_both():
     }
 
 def test_publishText_sync_both_again():
-    global bus
     global subscriber1
     global subscriber2
     
     log.debug("\n\n----------test_publishText_sync_both_again")
     
+    bus = EventBus.EventBus()
     bus.publish_sync('text','someText2')
     
     assert subscriber1.notifications=={
@@ -161,12 +160,12 @@ def test_publishText_sync_both_again():
     }
 
 def test_publishText_async_both():
-    global bus
     global subscriber1
     global subscriber2
     
     log.debug("\n\n----------test_publishText_async_both")
     
+    bus = EventBus.EventBus()
     bus.publish('text','someText3')
     
     time.sleep(1) # longest possible time for thread to publish
@@ -181,12 +180,12 @@ def test_publishText_async_both():
     }
 
 def test_publishText_async_both_again():
-    global bus
     global subscriber1
     global subscriber2
     
     log.debug("\n\n----------test_publishText_async_both_again")
     
+    bus = EventBus.EventBus()
     bus.publish('text','someText4')
     
     time.sleep(1) # longest possible time for thread to publish
@@ -201,12 +200,12 @@ def test_publishText_async_both_again():
     }
 
 def test_publishNum_sync_both():
-    global bus
     global subscriber1
     global subscriber2
     
     log.debug("\n\n----------test_publishNum_sync_both")
     
+    bus = EventBus.EventBus()
     bus.publish_sync('num',1,2)
     
     # log
@@ -225,10 +224,10 @@ def test_publishNum_sync_both():
 #---- unsubscription
 
 def test_unsubscription():
-    global bus
     global subscriber1
     global subscriber2
     
+    bus = EventBus.EventBus()
     res = bus.unsubscribe(3)
     assert res
     res = bus.unsubscribe(4)
@@ -256,10 +255,10 @@ def test_unsubscription():
 #----- teardown
 
 def test_teardown():
-    global bus
     global subscriber1
     global subscriber2
     
     log.debug("\n\n----------test_teardown")
     
+    bus = EventBus.EventBus()
     bus.close()
