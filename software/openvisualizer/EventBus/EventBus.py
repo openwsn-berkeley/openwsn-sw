@@ -80,7 +80,7 @@ class EventBus(threading.Thread):
             # pop the head event
             event = self._pending_events.pop(0)
             
-            if   isinstance(event,Event):
+            if   isinstance(event,Event.Event):
                 # normal case
             
                 # log
@@ -126,8 +126,8 @@ class EventBus(threading.Thread):
         if uri:
             assert isinstance(uri,str)
         
-        # create the Subcription instance
-        subs = Subcription.Subcription(func,uri)
+        # create the Subscription instance
+        subs = Subscription.Subscription(func,uri)
         
         # get a unique ID for that subscriber
         id = self._getNextId()
@@ -194,7 +194,7 @@ class EventBus(threading.Thread):
         # log
         log.debug("publish uri={0}".format(uri))
         
-        self._pending_events.append(Event(uri, args))
+        self._pending_events.append(Event.Event(uri, args))
         self._eventSem.release()
     
     def publish_sync(self, uri, *args):
@@ -217,7 +217,7 @@ class EventBus(threading.Thread):
             if subs.matches_uri(uri):
                 subs.get_function()(*args)
     
-    def getSubcriptions(self):
+    def getSubscriptions(self):
         '''
         \brief Retrieve the current list of subscriptions.
         

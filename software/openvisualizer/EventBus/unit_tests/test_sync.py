@@ -93,7 +93,7 @@ def test_setup():
     
     assert bus
     assert isinstance(bus,EventBus.EventBus)
-    assert bus.getSubcriptions()=={}
+    assert bus.getSubscriptions()=={}
 
 #---- subscription
     
@@ -113,9 +113,9 @@ def test_subscribe_both():
     bus.subscribe(subscriber2.notification_doubleNum,'num')
     
     # log
-    log.debug(prettyformat(bus.getSubcriptions()))
+    log.debug(prettyformat(bus.getSubscriptions()))
     
-    assert len(bus.getSubcriptions().keys())==4
+    assert len(bus.getSubscriptions().keys())==4
 
 #---- text publication
 
@@ -234,7 +234,7 @@ def test_unsubscription():
     assert res
     
     # log
-    log.debug(prettyformat(bus.getSubcriptions()))
+    log.debug(prettyformat(bus.getSubscriptions()))
     
     bus.publish_sync('text','someText5')
     bus.publish_sync('num',3,4)
