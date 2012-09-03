@@ -40,8 +40,6 @@ class moteConnector(threading.Thread):
     TYPE_DATA      = OpenParser.OpenParser.TYPE_DATA
     TYPE_DATA_LOCAL     = OpenParser.OpenParser.TYPE_DATA_LOCAL
     TYPE_DATA_INTERNET  = OpenParser.OpenParser.TYPE_DATA_INTERNET
- 
-    
     
     def __init__(self,moteProbeIp,moteProbeTcpPort):
         
@@ -85,7 +83,7 @@ class moteConnector(threading.Thread):
                     
                     # log
                     log.debug("received input={0}".format(input))
-                    #print input
+                    
                     # parse input
                     try:
                         (notifType,parsedNotif)  = self.parser.parseInput(input)
@@ -101,7 +99,7 @@ class moteConnector(threading.Thread):
                             if notifType in registree.getFilter():
                                 registree.indicate(parsedNotif)
                         self.dataLock.release()
-            
+                
             except socket.error as err:
                 log.error(err)
                 pass

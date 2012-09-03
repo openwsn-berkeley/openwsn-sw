@@ -34,7 +34,7 @@ class ParserData(Parser.Parser):
     
     #======================== public ==========================================
     
-    def parseInput(self,key,input):
+    def parseInput(self,key_param,input):
         
         # log
         log.debug("received data {0}".format(input))
@@ -63,12 +63,12 @@ class ParserData(Parser.Parser):
          
         if (dam ==0x02 and sam==0x02): 
             #header byte 1 contains DAM/SAM, if any of both is compressed 
-            key=self.TYPE_DATA_LOCAL #this is a link local messagage, we need to parse it and then return 
+            key_param=self.TYPE_DATA_LOCAL #this is a link local messagage, we need to parse it and then return 
             
             #parse here the DAO.  
             #do nothing and return 
         else:
-            key=self.TYPE_DATA_INTERNET     
+            key_param=self.TYPE_DATA_INTERNET     
             #debug ..
             #key=self.TYPE_DATA_LOCAL #this is a link local messagage, we need to parse it and then return 
             
@@ -83,6 +83,6 @@ class ParserData(Parser.Parser):
         # jump the header bytes
         input = input[2:]
         
-        return (key,input)
+        return (key_param,input)
     
     #======================== private =========================================
