@@ -45,7 +45,7 @@ class MoteStateGui(object):
         menubar                     = Tkinter.Menu(self.window)
         self.window.config(menu=menubar)
         
-        #===== framesState
+        #===== mote states
         stateMenu = Tkinter.Menu(menubar, tearoff=0)
         for ms in self.moteState_handlers:
             thisFrame               = Tkinter.Frame(self.window)
@@ -93,6 +93,10 @@ class MoteStateGui(object):
             temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
             stateMenu.add_command(label="poipoi",  command=temp_lambda)
         menubar.add_cascade(label="mote states",menu=stateMenu)
+        
+        #===== network state
+        
+        # TODO
         
         #===== frameLbr
         
