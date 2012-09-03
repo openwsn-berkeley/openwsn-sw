@@ -9,7 +9,6 @@ log.addHandler(NullHandler())
 import threading
 import RPL
 from EventBus import EventBus
-from EventBus import Callback
 
 from moteConnector import MoteConnectorConsumer
 import binascii
