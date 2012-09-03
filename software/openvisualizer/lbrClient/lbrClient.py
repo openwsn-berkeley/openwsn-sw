@@ -354,5 +354,5 @@ class lbrClient(threading.Thread):
         self.statsLock.release()
         
         bus=EventBus.EventBus()
-        bus.emit_sync("networkState.test",prefix)
-        bus.emit_sync("networkState.setNetworkPrefix",prefix)
+        bus.publish_sync("networkState.test",prefix)
+        bus.publish_sync("networkState.setNetworkPrefix",prefix)

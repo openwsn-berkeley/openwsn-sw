@@ -67,7 +67,7 @@ class typeAddr(openType.openType):
             self.addr = fullAddr[:8]
             #call subscribers 
             bus=EventBus.EventBus()
-            bus.emit_sync("networkState.setLocalAddr", self.addr)
+            bus.publish_sync("networkState.setLocalAddr", self.addr)
         elif type==self.ADDR_128B:
             self.desc = '128b'
             self.addr = fullAddr

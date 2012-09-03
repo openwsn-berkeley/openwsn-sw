@@ -3,8 +3,6 @@ Created on 24/08/2012
 
 @author: xvilajosana
 '''
-
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -14,105 +12,252 @@ log.setLevel(logging.DEBUG)
 log.addHandler(NullHandler())
 
 import sys
-from Event     import Event
-from Callback  import Callback
-#from threading import Thread
 import threading
 import time
 
-""" A singleton """
+from   Event     import Event
+import Callback
+
 class EventBus(threading.Thread):
-    _instance = None
-    _init = False
+    '''
+    \brief An event bus to which modules can publish/subscribe.
     
-    """ override creation of the object so it is create only once.. singleton pattern """
+    It is implemented as a singleton, i.e. only one instance of the eventBus
+    lives in the system. This means that separate modules can instantiate this
+    class independently and publish/subscribe to the result of that
+    instantiation.
+    '''
+    _instance      = None
+    _init          = False
+    
     def __new__(cls, *args, **kwargs):
+        '''
+        \brief Override creation of the object so it is create only once
+               (singleton pattern)
+        '''
         if not cls._instance:
-            cls._instance = super(EventBus, cls).__new__(
-                                cls, *args, **kwargs)
+            cls._instance = super(EventBus, cls).__new__(cls, *args, **kwargs)
         return cls._instance
     
-    """  after new, initialization """
     def __init__(self):
-        if (self._init):
+        '''
+        \brief Initializer.
+        
+        \note This function is called after __new__.
+        '''
+        
+        # log
+        log.debug("creating instance")
+        
+        if self._init:
             return
+        
+        # intialize parent class
         threading.Thread.__init__(self)
-        self.__pending_events = []
-        self.__callbacks      = {}
-        self.__next_id        = 1
-        self._init = True
-        self.start()  #Start async handling.
+        
+        # give this thread a name
+        self.name                 = 'eventBus'
+        
+        # local variables
+        self._eventSem            = threading.Semaphore(0)
+        self._pending_events      = []      ##< list of pending events
+        self._subscriptions       = {}      ##< list of subscriptions
+        self._next_id             = 1       ##< index of a new element in _subscriptions
+        self._init                = True    ##< this object was initialized
+        
+        # start asynchronous handling
+        self.start()
 
     def run(self): 
-        log.info("EventBus asynch event handling running")
-        while len(self.__pending_events) > 0:
-            event = self.__pending_events.pop(0)
-            log.info("EventBus notifies {0}".format(event.get_uri()))
-            self.emit_sync(event.get_uri(), event.get_args())
-
-    def add_listener(self, callback):
-        """
-        Adds a listener to the event bus. The given function is called whenever
-        any event is sent that matches the given regular expression. If no
-        regular expression was given, any signal is emitted.
-        @type  callback: Callback
-        @param callback: Specifies the requested notification.
-        @rtype:  Boolean
-        @return: False if the listener was not found, True otherwise.
-        """
-        assert callback is not None
-        self.__callbacks[str(self.__next_id)] = callback
-        assert self.__next_id < sys.maxint
-        self.__next_id += 1
-        log.info("EventBus listener added {0}".format(callback.get_event_uri()))
-        return self.__next_id - 1
-
-    def remove_listener_from_id(self, id):
-        """
-        Removes a listener from the event bus.
-        @type  id: integer
-        @param id: The id of the listener to remove.
-        @rtype:  Boolean
-        @return: False if the listener was not found, True otherwise.
-        """
-        assert id > 0
-        if not self.__callbacks.has_key(str(id)):
-            return False
-        del self.__callbacks[id]
-        log.info("EventBus removed {0}".format(id))
-        return True
+        # log
+        log.debug("thread running")
+        
+        while True:
+            
+            # block until at least one event is in the pending events
+            self._eventSem.acquire()
+            
+            # pop the head event
+            event = self._pending_events.pop(0)
+            
+            if   isinstance(event,Event):
+                # normal case
+            
+                # log
+                log.debug("popped event with uri={0}".format(event.get_uri()))
+                
+                # publish
+                self.publish_sync(event.get_uri(),event.get_args())
+            
+            elif (instance(event,str)) and (event=='close'):
+                # teardown case
+                
+                # log
+                log.debug("...closed.")
+                
+                return
+            
+            else:
+                
+                # log
+                log.critical("unexpected event={0}".format(event))
+                
+                raise SystemError()
     
-    """ Invoke asynchronous"""
-    def emit(self, uri, args = None):
-        assert uri is not None
-        event = Event(uri, args)
-        self.__pending_events.append(event)
-        log.info("EventBus new asynch event {0}".format(uri))
+    #======================== public ==========================================
+    
+    def subscribe(self, func, uri=None):
+        '''
+        \brief Adds a subscriber to the event bus.
+        
+        The given function pointer passed is called whenever an event is sent
+        that matches the given regular expression. If no regular expression
+        was given, the function is called for any emitted signal.
+        
+        \param func The function to call.
+        \param uri  The URI trigger this fuction to be called.
+        
+        \returns The unique identifier of this registration, an int. The caller
+                 can store and use that ID to unsubscribe.
+        '''
+        
+        # param validation
+        assert callable(func)
+        if uri:
+            assert isinstance(uri,str)
+        
+        # create the Callback instance
+        cb = Callback.Callback(func,uri)
+        
+        # get a unique ID for that subscriber
+        id = self._getNextId()
+        
+        # store cb
+        self._subscriptions[id] = cb
+        
+        # log
+        log.info("subscriber added: {0} -> {1}".format(
+                cb.get_event_uri(),
+                cb.get_function(),
+            )
+        )
+        
+        return id
 
-    """ Invoke synchronous"""
-    def emit_sync(self, uri, args = None):
-        assert uri is not None
-        #log.info("EventBus new synch event {0}".format(uri))
-        for id in self.__callbacks:
-            callback = self.__callbacks[id]
-            if callback.matches_uri(uri):
-                func     = callback.get_function()
-                func(args)  
-                
-                
-    def test(self):
-        bus=EventBus()
-        callback=Callback(self.test_print,"test")
-        bus.add_listener(callback)
-        bus.emit("test","1")
-        time.sleep(2)
-        bus.emit_sync("test","2")
+    def unsubscribe(self, id):
+        '''
+        \brief Removes a subscriber from the event bus.
         
-        print "end"
-                    
-    def test_print(self,args):
-        print "bang bang! "+args
+        \param   The id of the subscriber to remove, an int.
         
-if __name__=="__main__":
-    EventBus().test() 
-    time.sleep(4)            
+        \returns True if the subscriber was found (and removed).
+        \returns False if the subscriber was not found.
+        '''
+        
+        # param validation
+        assert isinstance(id,int)
+        assert id > 0
+        
+        if id in self._subscriptions:
+            
+            # log 
+            log.info("removed subscriber id {0}".format(id))
+            
+            # delete
+            del self._subscriptions[id]
+        
+            return True
+            
+        else:
+            
+            # log 
+            log.warning("could not find subscriber id {0} to remove".format(id))
+            
+            return False
+        
+        raise SystemError()
+    
+    def publish(self, uri, args = None):
+        '''
+        \brief Publish an event.
+        
+        Publication is done asynchronously by the eventBus thread, i.e.
+        sometimes after this function is called.
+        
+        \param uri  The URI of the published event.
+        \param args The arguments to pass to the callback
+        '''
+        # param validation
+        assert uri
+        assert isinstance(uri,str)
+        
+        # log
+        log.debug("publish uri={0}".format(uri))
+        
+        self._pending_events.append(Event(uri, args))
+        self._eventSem.release()
+    
+    def publish_sync(self, uri, *args):
+        '''
+        \brief Publish an event synchronously.
+        
+        Publication is done before this function returns.
+        
+        \param uri  The URI of the published event.
+        \param args The arguments to pass to the callback
+        '''
+        # param validation
+        assert uri
+        assert isinstance(uri,str)
+        
+        # log
+        log.debug("publish_sync uri={0}".format(uri))
+        
+        for (id,cb) in self._subscriptions.items():
+            if cb.matches_uri(uri):
+                cb.get_function()(*args)
+    
+    def getSubcriptions(self):
+        '''
+        \brief Retrieve the current list of subscriptions.
+        
+        \returns The current list of subscriptions, as a dictionary of
+                 dictionaries:
+                 
+                 returnVal = {
+                    1: {
+                          'uri':      'someURI'
+                          'function': cb_function
+                    },
+                    etc.
+                 }
+        
+        '''
+        returnVal = {}
+        for (id,cb) in self._subscriptions.items():
+            returnVal[id] = {
+                'uri':      cb.get_event_uri(),
+                'function': cb.get_function(),
+            }
+        return returnVal
+    
+    def close(self):
+        '''
+        \brief Destroy this eventBus.
+        
+        \note This also stops the thread.
+        '''
+        
+        # log
+        log.debug("closing...")
+        
+        self._pending_events.append('close')
+        self._eventSem.release()
+    
+    #======================== private =========================================
+    
+    def _getNextId(self):
+        retunVal = self._next_id
+        assert self._next_id < sys.maxint
+        self._next_id += 1
+        return retunVal

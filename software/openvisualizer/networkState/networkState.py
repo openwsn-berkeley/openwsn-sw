@@ -62,17 +62,9 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.moduleInit           = False
         
         if not self.moduleInit:
-            callback = Callback.Callback(self._print_prefix,
-                                         "networkState.test")
-            self.bus.add_listener(callback)
-            
-            callback = Callback.Callback(self._setLocalAddr,
-                                         "networkState._setLocalAddr")
-            self.bus.add_listener(callback)
-            
-            callback = Callback.Callback(self._setNetworkPrefix,
-                                         "networkState._setNetworkPrefix")
-            self.bus.add_listener(callback)
+            self.bus.subscribe(self._print_prefix,    "networkState.test")
+            self.bus.subscribe(self._setLocalAddr,    "networkState._setLocalAddr")
+            self.bus.subscribe(self._setNetworkPrefix,"networkState._setNetworkPrefix")
             
             # send a DIO periodically
             #TODO XV .. enable DIO once tested.
