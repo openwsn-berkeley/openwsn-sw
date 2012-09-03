@@ -124,6 +124,7 @@ class MoteStateGui(object):
                 mf.grid(row=0)
             else:
                 mf.grid_forget()
+        self.window.update_idletasks()
     
 class MoteStateGui_app(object):
     
