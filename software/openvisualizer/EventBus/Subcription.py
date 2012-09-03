@@ -5,9 +5,9 @@ Created on 24/08/2012
 '''
 import re
 
-class Callback:
+class Subscription:
     '''
-    \brief Representation of an callback, in the event bus.
+    \brief Representation of an Subscription, in the event bus.
     
     This object contains both the URI and the function to call.
     '''

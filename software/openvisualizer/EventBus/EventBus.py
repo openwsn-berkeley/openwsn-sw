@@ -15,8 +15,8 @@ import sys
 import threading
 import time
 
-from   Event     import Event
-import Callback
+import Subscription
+import Event
 
 class EventBus(threading.Thread):
     '''
@@ -126,19 +126,19 @@ class EventBus(threading.Thread):
         if uri:
             assert isinstance(uri,str)
         
-        # create the Callback instance
-        cb = Callback.Callback(func,uri)
+        # create the Subcription instance
+        subs = Subcription.Subcription(func,uri)
         
         # get a unique ID for that subscriber
         id = self._getNextId()
         
-        # store cb
-        self._subscriptions[id] = cb
+        # store subs
+        self._subscriptions[id] = subs
         
         # log
         log.info("subscriber added: {0} -> {1}".format(
-                cb.get_event_uri(),
-                cb.get_function(),
+                subs.get_event_uri(),
+                subs.get_function(),
             )
         )
         
@@ -185,7 +185,7 @@ class EventBus(threading.Thread):
         sometimes after this function is called.
         
         \param uri  The URI of the published event.
-        \param args The arguments to pass to the callback
+        \param args The arguments to pass to the callback function
         '''
         # param validation
         assert uri
@@ -204,7 +204,7 @@ class EventBus(threading.Thread):
         Publication is done before this function returns.
         
         \param uri  The URI of the published event.
-        \param args The arguments to pass to the callback
+        \param args The arguments to pass to the callback function
         '''
         # param validation
         assert uri
@@ -213,9 +213,9 @@ class EventBus(threading.Thread):
         # log
         log.debug("publish_sync uri={0}".format(uri))
         
-        for (id,cb) in self._subscriptions.items():
-            if cb.matches_uri(uri):
-                cb.get_function()(*args)
+        for (id,subs) in self._subscriptions.items():
+            if subs.matches_uri(uri):
+                subs.get_function()(*args)
     
     def getSubcriptions(self):
         '''
@@ -234,10 +234,10 @@ class EventBus(threading.Thread):
         
         '''
         returnVal = {}
-        for (id,cb) in self._subscriptions.items():
+        for (id,subs) in self._subscriptions.items():
             returnVal[id] = {
-                'uri':      cb.get_event_uri(),
-                'function': cb.get_function(),
+                'uri':      subs.get_event_uri(),
+                'function': subs.get_function(),
             }
         return returnVal
     
