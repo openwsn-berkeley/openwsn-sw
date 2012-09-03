@@ -38,57 +38,78 @@ class MoteStateGui(object):
         
         # local variables
         self.window                 = OpenWindow.OpenWindow("mote state GUI")
-        self.framesState            = {}
-        self.frameLbr               = None
+        # frames to switch through using the menu
+        self.menuFrames             = []
+        
+        #===== (empty) menu
+        menubar                     = Tkinter.Menu(self.window)
+        self.window.config(menu=menubar)
         
         #===== framesState
-        
-        tempStatesFrame             = Tkinter.Frame(self.window)
-        tempStatesFrame.grid(row=0)
-        frameOrganization = [
-            [
-                moteState.moteState.ST_ISSYNC,
-                moteState.moteState.ST_ASN,
-                moteState.moteState.ST_MYDAGRANK,
-                moteState.moteState.ST_OUPUTBUFFER,
-            ],
-            [
-                moteState.moteState.ST_IDMANAGER,
-                moteState.moteState.ST_MACSTATS,
-            ],
-            [
-                moteState.moteState.ST_SCHEDULE,
-            ],
-            [
-                moteState.moteState.ST_NEIGHBORS,
-                moteState.moteState.ST_QUEUE,
-            ],
-        ]
-        for row in range(len(frameOrganization)):
-            tempRowFrame = Tkinter.Frame(tempStatesFrame)
-            tempRowFrame.grid(row=row)
-            for column in range(len(frameOrganization[row])):
-                stateType = frameOrganization[row][column]
-                self.framesState[stateType]   = OpenFrameState.OpenFrameState(
-                                                    tempRowFrame,
-                                                    frameName=stateType,
-                                                    row=0,
-                                                    column=column
-                                                )
-                self.framesState[stateType].startAutoUpdate(
-                                                    self.GUI_UPDATE_PERIOD,
-                                                    self.moteState_handlers[0].getStateElem,
-                                                    (stateType,)
-                                                )
-                self.framesState[stateType].show()
+        stateMenu = Tkinter.Menu(menubar, tearoff=0)
+        for ms in self.moteState_handlers:
+            thisFrame               = Tkinter.Frame(self.window)
+            frameOrganization = [
+                [
+                    moteState.moteState.ST_ISSYNC,
+                    moteState.moteState.ST_ASN,
+                    moteState.moteState.ST_MYDAGRANK,
+                    moteState.moteState.ST_OUPUTBUFFER,
+                ],
+                [
+                    moteState.moteState.ST_IDMANAGER,
+                    moteState.moteState.ST_MACSTATS,
+                ],
+                [
+                    moteState.moteState.ST_SCHEDULE,
+                ],
+                [
+                    moteState.moteState.ST_NEIGHBORS,
+                    moteState.moteState.ST_QUEUE,
+                ],
+            ]
+            for row in range(len(frameOrganization)):
+                tempRowFrame = Tkinter.Frame(thisFrame)
+                tempRowFrame.grid(row=row)
+                for column in range(len(frameOrganization[row])):
+                    stateType = frameOrganization[row][column]
+                    tempFrameState =  OpenFrameState.OpenFrameState(
+                                tempRowFrame,
+                                frameName=stateType,
+                                row=0,
+                                column=column
+                            )
+                    tempFrameState.startAutoUpdate(
+                                self.GUI_UPDATE_PERIOD,
+                                ms.getStateElem,
+                                (stateType,)
+                            )
+                    tempFrameState.show()
+            
+            # add this frame to the menuFrames
+            self.menuFrames.append(thisFrame)
+            
+            # register this frame with its menu
+            temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
+            stateMenu.add_command(label="poipoi",  command=temp_lambda)
+        menubar.add_cascade(label="mote states",menu=stateMenu)
         
         #===== frameLbr
         
-        self.frameLbr = OpenFrameLbr.OpenFrameLbr(self.window,
-                                                  self.lbrClient_handlers[0],
-                                                  self.lbrConnectParams_cb,
-                                                  row=1)
-        self.frameLbr.show()
+        thisFrame       = Tkinter.Frame(self.window)
+        
+        tempFrameLbr    = OpenFrameLbr.OpenFrameLbr(thisFrame,
+                                                    self.lbrClient_handlers[0],
+                                                    self.lbrConnectParams_cb,
+                                                    row=1)
+        tempFrameLbr.show()
+        
+        # add this frame to the menuFrames
+        self.menuFrames.append(thisFrame)
+        
+        # register this frame with its menu
+        temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
+        menubar.add_command(label="lbr",  command=temp_lambda)
         
     #======================== public ==========================================
     
@@ -96,7 +117,14 @@ class MoteStateGui(object):
         self.window.startGui()
     
     #======================== private =========================================
-
+    
+    def _menuFrameSwitch(self,frameToSwitchTo):
+        for mf in self.menuFrames:
+            if mf==frameToSwitchTo:
+                mf.grid(row=0)
+            else:
+                mf.grid_forget()
+    
 class MoteStateGui_app(object):
     
     def __init__(self):
