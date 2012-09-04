@@ -193,7 +193,7 @@ class ParserStatus(Parser.Parser):
     
     #======================== public ==========================================
     
-    def parseInput(self,key_param,input):
+    def parseInput(self,input):
         
         # log
         log.debug("received input={0}".format(input))
@@ -213,10 +213,7 @@ class ParserStatus(Parser.Parser):
         log.debug("moteId={0} statusElem={1}".format(moteId,statusElem))
         
         # jump the header bytes
-        aux = input
         input = input[3:]
-        #print aux;
-        #print input
         
         # call the next header parser
         for key in self.fieldsParsingKeys:
@@ -229,7 +226,6 @@ class ParserStatus(Parser.Parser):
                 try:
                     fields = struct.unpack(key.structure,''.join([chr(c) for c in input]))                     
                 except struct.error as err:
-                    #print "PARSER STATUS could not extract tuple {0} by applying {1} to {2} ({3} bytes); error: {4} before parsing {5}".format(key.name,key.structure,input,len(input),str(err),aux)
                     raise ParserException(
                             ParserException.DESERIALIZE,
                             "could not extract tuple {0} by applying {1} to {2} ({3} bytes); error: {4}".format(
@@ -243,12 +239,12 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
-                #print returnTuple
+                
                 # log
                 log.debug("parsed into {0}".format(returnTuple))
                 
                 # map to name tuple
-                return (key_param,returnTuple)
+                return ('status',returnTuple)
         
         # if you get here, no key was found
         raise ParserException(ParserException.NO_KEY, "type={0} (\"{1}\")".format(

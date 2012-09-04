@@ -1,9 +1,3 @@
-import threading
-import socket
-
-import OpenParser
-import ParserException
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -12,20 +6,26 @@ log = logging.getLogger('moteConnectorConsumer')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+import threading
+import socket
+import Queue
+
+import OpenParser
+import ParserException
+from   EventBus import EventBus
+
 class MoteConnectorConsumer(threading.Thread):
     
-    def __init__(self,moteConnector,dataType,notifCallback):
+    QUEUESIZE = 100
+    
+    def __init__(self,eventType,notifCallback):
         
         # log
         log.debug("create instance")
         
         # store params
-        self.moteConnector = moteConnector
-        self.dataType      = dataType
+        self.eventType     = eventType
         self.notifCallback = notifCallback
-        self.dataQueue     = self.moteConnector.register(
-                                self.dataType,
-                             )
         
         # initialize parent class
         threading.Thread.__init__(self)
@@ -34,8 +34,15 @@ class MoteConnectorConsumer(threading.Thread):
         self.name          = 'MoteConnectorConsumer'
         
         # local variables
-        self.goOn = True
+        self.goOn          = True
+        self.dataQueue     = Queue.Queue(self.QUEUESIZE)
     
+        # subscribe to eventBus
+        EventBus.EventBus().subscribe(
+            self._eventBusNotification,
+            self.eventType,
+        )
+        
     def run(self):
         # log
         log.debug("starting to run")
@@ -49,8 +56,15 @@ class MoteConnectorConsumer(threading.Thread):
             log.debug("got data: {0}".format(newData))
             
             # call the callback
-            self.notifCallback(newData)
+            self.notifCallback(*newData)
     
     #======================== public ==========================================
     
     #======================== private =========================================
+    
+    def _eventBusNotification(self,*args):
+        
+        if self.dataQueue.full():
+            raise SystemError("Queue is full")
+        
+        self.dataQueue.put(args)

@@ -300,9 +300,14 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.moteConnector                  = moteConnector
         
         # initialize parent class
-        MoteConnectorConsumer.MoteConnectorConsumer.__init__(self,self.moteConnector,
-                                                                  [self.moteConnector.TYPE_STATUS],
-                                                                  self._receivedData_notif)
+        MoteConnectorConsumer.MoteConnectorConsumer.__init__(
+            self,
+            'moteConnector.{0}:{1}.inputFromMoteProbe.status'.format(
+                self.moteConnector.moteProbeIp,
+                self.moteConnector.moteProbeTcpPort,
+            ),
+            self._receivedData_notif
+        )
         
         # local variables
         self.parserStatus                   = ParserStatus.ParserStatus()

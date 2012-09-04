@@ -1,10 +1,3 @@
-import threading
-import socket
-import Queue
-
-import OpenParser
-import ParserException
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -13,33 +6,18 @@ log = logging.getLogger('moteConnector')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
-class moteConnectorRegistree(object):
-    
-    QUEUESIZE = 100
-    
-    def __init__(self,filter):
-        self._filter    = filter
-        self.dataQueue  = Queue.Queue(self.QUEUESIZE)
-        
-    def getQueue(self):
-        return self.dataQueue
-    
-    def getFilter(self):
-        return self._filter
-    
-    def indicate(self,data):
-        if self.dataQueue.full():
-            raise SystemError("Queue is full")
-        
-        self.dataQueue.put(data)
+import threading
+import socket
+
+import OpenParser
+import ParserException
+from   EventBus import EventBus
 
 class moteConnector(threading.Thread):
     
     TYPE_STATUS    = OpenParser.OpenParser.TYPE_STATUS
     TYPE_ERROR     = OpenParser.OpenParser.TYPE_ERROR
     TYPE_DATA      = OpenParser.OpenParser.TYPE_DATA
-    TYPE_DATA_LOCAL     = OpenParser.OpenParser.TYPE_DATA_LOCAL
-    TYPE_DATA_INTERNET  = OpenParser.OpenParser.TYPE_DATA_INTERNET
     
     def __init__(self,moteProbeIp,moteProbeTcpPort):
         
@@ -53,8 +31,6 @@ class moteConnector(threading.Thread):
         # local variables
         self.socket               = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.parser               = OpenParser.OpenParser()
-        self.dataLock             = threading.Lock()
-        self.registrees           = []
         self.goOn                 = True
         
         # initialize parent class
@@ -86,35 +62,28 @@ class moteConnector(threading.Thread):
                     
                     # parse input
                     try:
-                        (notifType,parsedNotif)  = self.parser.parseInput(input)
-                        assert isinstance(notifType,int)
+                        (eventSubType,parsedNotif)  = self.parser.parseInput(input)
+                        assert isinstance(eventSubType,str)
                     except ParserException.ParserException as err:
                         # log
                         log.error(str(err))
                         pass
                     else:
-                        # inform all registrees
-                        self.dataLock.acquire()
-                        for registree in self.registrees:
-                            if notifType in registree.getFilter():
-                                registree.indicate(parsedNotif)
-                        self.dataLock.release()
+                        # publish on eventBus
+                        EventBus.EventBus().publish(
+                            'moteConnector.{0}:{1}.inputFromMoteProbe.{2}'.format(
+                                self.moteProbeIp,
+                                self.moteProbeTcpPort,
+                                eventSubType
+                            ),
+                            parsedNotif,
+                        )
                 
             except socket.error as err:
                 log.error(err)
                 pass
     
     #======================== public ==========================================
-    
-    def register(self,filter):
-        
-        self.dataLock.acquire()
-        newRegistree = moteConnectorRegistree(filter)
-        dataQueue    = newRegistree.getQueue()
-        self.registrees.append(newRegistree)
-        self.dataLock.release()
-        
-        return dataQueue
     
     def write(self,stringToWrite,headerByte='D'):
         try:

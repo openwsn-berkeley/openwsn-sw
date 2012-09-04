@@ -46,9 +46,14 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.moteConnector        = moteConnector
         
         # initialize parent class
-        MoteConnectorConsumer.MoteConnectorConsumer.__init__(self,self.moteConnector,
-                                                                  [self.moteConnector.TYPE_DATA_LOCAL],
-                                                                  self._receivedData_notif)
+        MoteConnectorConsumer.MoteConnectorConsumer.__init__(
+            self,
+            'moteConnector.{0}:{1}.inputFromMoteProbe.data.local'.format(
+                self.moteConnector.moteProbeIp,
+                self.moteConnector.moteProbeTcpPort,
+            ),
+            self._receivedData_notif
+        )
         
         # local variables
         self.stateLock            = threading.Lock()

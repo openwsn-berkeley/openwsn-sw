@@ -12,23 +12,6 @@ import socket
 import copy
 from EventBus import EventBus
 
-class lbrClientMoteConnectorConsumer(MoteConnectorConsumer.MoteConnectorConsumer):
-    
-    def __init__(self,moteConnector,receivedData_cb,type):
-        
-        # log
-        log.debug("create instance")
-        
-        # store params
-        self.moteConnector   = moteConnector
-        self.receivedData_cb = receivedData_cb
-        
-        
-        # initialize parent class
-        MoteConnectorConsumer.MoteConnectorConsumer.__init__(self,self.moteConnector,
-                                                                  [type],
-                                                                  self.receivedData_cb)
-
 class lbrClient(threading.Thread):
     
     STATUS_DISCONNECTED      = 'disconnected'
@@ -50,9 +33,10 @@ class lbrClient(threading.Thread):
         self.statsLock            = threading.Lock()
         self.stats                = {}
         self.connectSem           = threading.Lock()
-        self.connectorConsumer    = lbrClientMoteConnectorConsumer(self.moteConnector,
-                                                                   self.send,
-                                                                   self.moteConnector.TYPE_DATA_INTERNET)
+        self.connectorConsumer    = MoteConnectorConsumer.MoteConnectorConsumer(
+            '(\S+)\.data\.internet',
+            self.send,
+        )
         
         # reset the statistics
         self._resetStats()

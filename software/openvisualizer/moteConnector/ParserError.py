@@ -28,7 +28,7 @@ class ParserError(Parser.Parser):
     
     #======================== public ==========================================
     
-    def parseInput(self,key_param,input):
+    def parseInput(self,input):
         
         # log
         log.debug("received data {0}".format(input))
@@ -52,7 +52,7 @@ class ParserError(Parser.Parser):
         # log
         log.debug("error = {0}".format(output))
         
-        return (key_param,input)
+        return ('error',input)
     
     #======================== private =========================================
     
