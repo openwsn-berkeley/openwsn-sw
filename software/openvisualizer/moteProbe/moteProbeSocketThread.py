@@ -1,6 +1,3 @@
-import threading
-import socket
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -9,15 +6,21 @@ log = logging.getLogger('moteProbeSocketThread')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+import threading
+import socket
+
+from EventBus import EventBus
+
 class moteProbeSocketThread(threading.Thread):
     
-    def __init__(self,socketport):
+    def __init__(self,socketport,serialportName):
         
         # log
         log.debug("create instance")
         
         # store params
         self.socketport      = socketport
+        self.serialportName  = serialportName
         
         # local variables
         self.socket          = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -28,6 +31,12 @@ class moteProbeSocketThread(threading.Thread):
         
         # give this thread a name
         self.name            = 'moteProbeSocketThread@'+str(self.socketport)
+        
+        # subscribe to eventBus
+        EventBus.EventBus().subscribe(
+            self.send,
+            'moteProbe.{0}.bytesFromSerialPort'.format(self.serialportName)
+        )
     
     def run(self):
         
@@ -52,7 +61,12 @@ class moteProbeSocketThread(threading.Thread):
                 
                 try:
                     bytesReceived = self.conn.recv(4096)
-                    self.otherThreadHandler.send(bytesReceived)
+                    
+                    # publish copy of network input on eventBus (synchronously)
+                    EventBus.EventBus().publish_sync(
+                        'moteProbe.{0}.bytesFromTcpPort'.format(self.serialportName),
+                        bytesReceived
+                    )
                 except socket.error as err:
                 
                     # log
@@ -62,9 +76,6 @@ class moteProbeSocketThread(threading.Thread):
                     break
     
     #======================== public ==========================================
-    
-    def setOtherThreadHandler(self,otherThreadHandler):
-        self.otherThreadHandler = otherThreadHandler
     
     def send(self,bytesToSend):
         if self.conn!=None:

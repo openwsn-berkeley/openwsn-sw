@@ -33,11 +33,7 @@ class moteProbe(object):
         
         # declare serial and socket threads
         self.serialThread = moteProbeSerialThread.moteProbeSerialThread(self.serialportName,self.serialportBaudrate)
-        self.socketThread = moteProbeSocketThread.moteProbeSocketThread(self.tcpport)
-        
-        # inform one of another
-        self.serialThread.setOtherThreadHandler(self.socketThread)
-        self.socketThread.setOtherThreadHandler(self.serialThread)
+        self.socketThread = moteProbeSocketThread.moteProbeSocketThread(self.tcpport,self.serialportName)
         
         # start threads
         self.serialThread.start()

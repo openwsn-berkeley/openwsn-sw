@@ -1,6 +1,3 @@
-import threading
-import serial
-
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -8,6 +5,11 @@ class NullHandler(logging.Handler):
 log = logging.getLogger('moteProbeSerialThread')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
+
+import threading
+import serial
+
+from EventBus import EventBus
 
 class moteProbeSerialThread(threading.Thread):
 
@@ -32,6 +34,12 @@ class moteProbeSerialThread(threading.Thread):
         
         # give this thread a name
         self.name                 = 'moteProbeSerialThread@'+self.serialportName
+        
+        # subscribe to eventBus
+        EventBus.EventBus().subscribe(
+            self.send,
+            'moteProbe.{0}.bytesFromTcpPort'.format(self.serialportName),
+        )
     
     def run(self):
         
@@ -76,16 +84,15 @@ class moteProbeSerialThread(threading.Thread):
                                     self.serialOutput = ''
                                     self.serialOutputLock.release()
                             else:
-                                # send to other thread
-                                #print " ".join(str(ord(c)) for c in self.serialInput)
-                                self.otherThreadHandler.send(self.serialInput)
+                                # publish copy of serial input on eventBus (synchronously)
+                                EventBus.EventBus().publish_sync(
+                                    'moteProbe.{0}.bytesFromSerialPort'.format(self.serialportName),
+                                    self.serialInput[:]
+                                )
                     else:
                         raise SystemError("invalid state {0}".format(state))
     
     #======================== public ==========================================
-    
-    def setOtherThreadHandler(self,otherThreadHandler):
-        self.otherThreadHandler = otherThreadHandler
     
     def send(self,bytesToSend):
         self.serialOutputLock.acquire()
