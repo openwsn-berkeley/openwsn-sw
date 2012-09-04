@@ -21,10 +21,9 @@ class lbrClient(threading.Thread):
     
     AUTHTIMEOUT              = 5.0
     
-    def __init__(self,moteConnector):
+    def __init__(self):
     
         # store params
-        self.moteConnector   = moteConnector
         
         # log
         log.debug("creating instance")
@@ -93,8 +92,11 @@ class lbrClient(threading.Thread):
                         log.error("received packet from LBR which is too short ({0} bytes)".format(len(input)))
                         continue
                     
-                    # look for the connected mote which is a bridge
-                    self.moteConnector.write(input)
+                    # publish on eventBus
+                    EventBus.EventBus().publish(
+                        'lbrClient.dataFromInternet',
+                        input,
+                    )
             
             except socket.error as err:
                
