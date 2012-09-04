@@ -65,7 +65,9 @@ class moteProbeSocketThread(threading.Thread):
                     # publish copy of network input on eventBus (synchronously)
                     EventBus.EventBus().publish_sync(
                         'moteProbe.{0}.bytesFromTcpPort'.format(self.serialportName),
-                        bytesReceived
+                        bytesReceived,
+                        minNumReceivers=1,
+                        maxNumReceivers=1,
                     )
                 except socket.error as err:
                 

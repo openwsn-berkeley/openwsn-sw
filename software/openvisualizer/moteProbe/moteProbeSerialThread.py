@@ -87,7 +87,9 @@ class moteProbeSerialThread(threading.Thread):
                                 # publish copy of serial input on eventBus (synchronously)
                                 EventBus.EventBus().publish_sync(
                                     'moteProbe.{0}.bytesFromSerialPort'.format(self.serialportName),
-                                    self.serialInput[:]
+                                    self.serialInput[:],
+                                    minNumReceivers=1,
+                                    maxNumReceivers=1,
                                 )
                     else:
                         raise SystemError("invalid state {0}".format(state))

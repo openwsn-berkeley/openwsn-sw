@@ -72,37 +72,45 @@ class EventBus(threading.Thread):
         # log
         log.debug("thread running")
         
-        while True:
-            
-            # block until at least one event is in the pending events
-            self._eventSem.acquire()
-            
-            # pop the head event
-            event = self._pending_events.pop(0)
-            
-            if   isinstance(event,Event.Event):
-                # normal case
-            
-                # log
-                log.debug("popped event with uri={0}".format(event.get_uri()))
+        try:
+            while True:
                 
-                # publish
-                self.publish_sync(event.get_uri(),event.get_args())
-            
-            elif (instance(event,str)) and (event=='close'):
-                # teardown case
+                # block until at least one event is in the pending events
+                self._eventSem.acquire()
                 
-                # log
-                log.debug("...closed.")
+                # pop the head event
+                event = self._pending_events.pop(0)
                 
-                return
-            
-            else:
+                if   isinstance(event,Event.Event):
+                    # normal case
                 
-                # log
-                log.critical("unexpected event={0}".format(event))
+                    # log
+                    log.debug("popped event {0} ".format(event))
+                    
+                    # publish
+                    
+                    self.publish_sync(event.get_uri(),
+                                      *event.get_args(),
+                                      minNumReceivers=event.get_minNumReceivers(),
+                                      maxNumReceivers=event.get_maxNumReceivers())
+                    
+                elif (instance(event,str)) and (event=='close'):
+                    # teardown case
+                    
+                    # log
+                    log.debug("...closed.")
+                    
+                    return
                 
-                raise SystemError()
+                else:
+                    
+                    # log
+                    log.critical("unexpected event={0}".format(event))
+                    
+                    raise SystemError()
+        except Exception as err:
+            log.critical(err)
+            raise
     
     #======================== public ==========================================
     
@@ -177,7 +185,7 @@ class EventBus(threading.Thread):
         
         raise SystemError()
     
-    def publish(self, uri, args = None):
+    def publish(self, uri, *args, **kwargs):
         '''
         \brief Publish an event.
         
@@ -187,17 +195,21 @@ class EventBus(threading.Thread):
         \param uri  The URI of the published event.
         \param args The arguments to pass to the callback function
         '''
+        # log
+        log.debug("publish uri={0} args={1} kwargs={2}".format(uri,args,kwargs))
+        
         # param validation
         assert uri
         assert isinstance(uri,str)
-        
-        # log
-        log.debug("publish uri={0}".format(uri))
+        if 'minNumReceivers' in kwargs:
+            assert isinstance(kwargs['minNumReceivers'],int)
+        if 'maxNumReceivers' in kwargs:
+            assert isinstance(kwargs['maxNumReceivers'],int)
         
         self._pending_events.append(Event.Event(uri, args))
         self._eventSem.release()
     
-    def publish_sync(self, uri, *args):
+    def publish_sync(self, uri, *args, **kwargs):
         '''
         \brief Publish an event synchronously.
         
@@ -206,16 +218,43 @@ class EventBus(threading.Thread):
         \param uri  The URI of the published event.
         \param args The arguments to pass to the callback function
         '''
+        # log
+        log.debug("publish_sync uri={0} args={1} kwargs={2}".format(uri,args,kwargs))
+        
         # param validation
         assert uri
         assert isinstance(uri,str)
+        if ('minNumReceivers' in kwargs) and kwargs['minNumReceivers']:
+            assert isinstance(kwargs['minNumReceivers'],int)
+        if ('maxNumReceivers' in kwargs) and kwargs['maxNumReceivers']:
+            assert isinstance(kwargs['maxNumReceivers'],int)
         
-        # log
-        log.debug("publish_sync uri={0}".format(uri))
+        # local variables
+        self.numReceivers = 0
         
+        # publish to subscribers
         for (id,subs) in self._subscriptions.items():
             if subs.matches_uri(uri):
                 subs.get_function()(*args)
+                self.numReceivers += 1
+        
+        # ensure that number receivers is expected
+        if ('minNumReceivers' in kwargs) and kwargs['minNumReceivers']:
+            if self.numReceivers<kwargs['minNumReceivers']:
+                raise SystemError('expected a least {0} receivers for event {1}, got {2}'.format(
+                                kwargs['minNumReceivers'],
+                                uri,
+                                self.numReceivers,
+                            )
+                        )
+        if ('maxNumReceivers' in kwargs) and kwargs['maxNumReceivers']:
+            if self.numReceivers>kwargs['maxNumReceivers']:
+                raise SystemError('expected a most {0} receivers for event {1}, got {2}'.format(
+                                kwargs['maxNumReceivers'],
+                                uri,
+                                self.numReceivers,
+                            )
+                        )
     
     def getSubscriptions(self):
         '''

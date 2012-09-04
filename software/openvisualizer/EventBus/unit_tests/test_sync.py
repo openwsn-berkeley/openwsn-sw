@@ -87,7 +87,7 @@ def test_setup():
     global subscriber1
     global subscriber2
     
-    log.debug("\n\n----------test_init")
+    log.debug("\n\n----------test_setup")
     
     bus = EventBus.EventBus()
     
@@ -147,6 +147,10 @@ def test_publishText_sync_both_again():
     
     EventBus.EventBus().publish_sync('text','someText2')
     
+    # log
+    log.debug(prettyformat(subscriber1.notifications))
+    log.debug(prettyformat(subscriber2.notifications))
+    
     assert subscriber1.notifications=={
         'text': ['someText1','someText2'],
         'num':  [],
@@ -166,6 +170,10 @@ def test_publishText_async_both():
     
     time.sleep(1) # longest possible time for thread to publish
     
+    # log
+    log.debug(prettyformat(subscriber1.notifications))
+    log.debug(prettyformat(subscriber2.notifications))
+    
     assert subscriber1.notifications=={
         'text': ['someText1','someText2','someText3'],
         'num':  [],
@@ -184,6 +192,10 @@ def test_publishText_async_both_again():
     EventBus.EventBus().publish('text','someText4')
     
     time.sleep(1) # longest possible time for thread to publish
+    
+    # log
+    log.debug(prettyformat(subscriber1.notifications))
+    log.debug(prettyformat(subscriber2.notifications))
     
     assert subscriber1.notifications=={
         'text': ['someText1','someText2','someText3','someText4'],
@@ -220,6 +232,8 @@ def test_publishNum_sync_both():
 def test_unsubscription():
     global subscriber1
     global subscriber2
+    
+    log.debug("\n\n----------test_unsubscription")
     
     res = EventBus.EventBus().unsubscribe(3)
     assert res
