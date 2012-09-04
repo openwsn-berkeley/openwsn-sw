@@ -33,7 +33,7 @@ class lbrClient(threading.Thread):
         self.stats                = {}
         self.connectSem           = threading.Lock()
         self.connectorConsumer    = MoteConnectorConsumer.MoteConnectorConsumer(
-            '(\S+)\.data\.internet',
+            '(\S+).inputFromMoteProbe.data.internet',
             self.send,
         )
         
@@ -94,7 +94,7 @@ class lbrClient(threading.Thread):
                     
                     # publish on eventBus
                     EventBus.EventBus().publish(
-                        'lbrClient.dataFromInternet',
+                        'lbrClient.dataForDagRoot',
                         input,
                     )
             

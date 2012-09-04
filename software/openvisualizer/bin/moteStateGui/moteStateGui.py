@@ -153,7 +153,7 @@ class MoteStateGui_app(object):
         self.moteProbe_handlers        = []
         self.moteConnector_handlers    = []
         self.moteState_handlers        = []
-        self.networkState_handlers     = []
+        self.networkState_handler      = None
         self.lbrClient_handler         = None
         
         # create a moteProbe for each mote connected to this computer
@@ -170,12 +170,11 @@ class MoteStateGui_app(object):
         for mc in self.moteConnector_handlers:
            self.moteState_handlers.append(moteState.moteState(mc))
         
-        # create a networkState for each moteConnector
-        for mc in self.moteConnector_handlers:
-           self.networkState_handlers.append(networkState.networkState(mc))
+        # create one networkState
+        self.networkState_handler = networkState.networkState()
         
         # create one lbrClient
-        self.lbrClient_handler = lbrClient.lbrClient()
+        self.lbrClient_handler    = lbrClient.lbrClient()
         
         # create an open GUI
         gui = MoteStateGui(self.moteProbe_handlers,

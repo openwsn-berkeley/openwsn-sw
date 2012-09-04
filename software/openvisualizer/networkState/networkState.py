@@ -14,18 +14,6 @@ from moteConnector import MoteConnectorConsumer
 import binascii
 
 class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
-    '''
-    \bug An identified problem comes when more than mote is attached to the
-         serial port. The moteStateGui instantiate a networkState for each mote
-         connected to the computer. hence a network state is also created for
-         motes that are not the Dagroot.
-         In that situation the problem is that networkState starts another
-         DIO timer which increases the frequency of DIOs being sent.
-         This BUG need to be fixed by preventing more instances of
-         networkState. An option is to make it a singleton, another option is 
-         to identify the serial port of the dagroot and only create a network
-         state that writes to that serial port. 
-    '''
     
     MOP_DIO_A      = 1<<5
     MOP_DIO_B      = 1<<4
@@ -37,21 +25,17 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     
     DIO_PERIOD     = 20 # period between successive DIOs, in seconds
     
-    def __init__(self,moteConnector):
+    def __init__(self):
         
         # log
         log.debug("create instance")
         
         # store params
-        self.moteConnector        = moteConnector
         
         # initialize parent class
         MoteConnectorConsumer.MoteConnectorConsumer.__init__(
             self,
-            'moteConnector.{0}:{1}.inputFromMoteProbe.data.local'.format(
-                self.moteConnector.moteProbeIp,
-                self.moteConnector.moteProbeTcpPort,
-            ),
+            '(\S+).inputFromMoteProbe.data.local',
             self._receivedData_notif
         )
         
@@ -167,12 +151,13 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         dio[16]    = checksum[1]
         
         # log
-        log.debug('sending DIO {0}'.format(' '.join(['%.2x'])))
+        log.debug('sending DIO {0}'.format(' '.join(['%.2x'%c for c in dio])))
         
-        print 'sending DIO {0}'.format(' '.join(['%.2x']))
-        
-        # send DIO to DAGroot mote
-        self.moteConnector.write("".join(chr(c) for c in dio))
+        # publish on eventBus
+        EventBus.EventBus().publish(
+            'rpl.dio.dataForDagRoot',
+            ''.join([chr(c) for c in dio]),
+        )
         
         # restart the timer
         self._initDIOActivity(self.DIO_PERIOD)
