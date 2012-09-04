@@ -14,6 +14,8 @@ log.addHandler(NullHandler())
 import sys
 import threading
 import time
+import copy
+import json
 
 import Subscription
 import Event
@@ -59,11 +61,13 @@ class EventBus(threading.Thread):
         self.name                 = 'eventBus'
         
         # local variables
+        self._dataLock            = threading.Lock()
         self._eventSem            = threading.Semaphore(0)
         self._pending_events      = []      ##< list of pending events
         self._subscriptions       = {}      ##< list of subscriptions
         self._next_id             = 1       ##< index of a new element in _subscriptions
         self._init                = True    ##< this object was initialized
+        self._stats               = {}
         
         # start asynchronous handling
         self.start()
@@ -79,7 +83,9 @@ class EventBus(threading.Thread):
                 self._eventSem.acquire()
                 
                 # pop the head event
+                self._dataLock.acquire()
                 event = self._pending_events.pop(0)
+                self._dataLock.release()
                 
                 if   isinstance(event,Event.Event):
                     # normal case
@@ -141,7 +147,9 @@ class EventBus(threading.Thread):
         id = self._getNextId()
         
         # store subs
+        self._dataLock.acquire()
         self._subscriptions[id] = subs
+        self._dataLock.release()
         
         # log
         log.info("subscriber added: {0} -> {1}".format(
@@ -166,24 +174,28 @@ class EventBus(threading.Thread):
         assert isinstance(id,int)
         assert id > 0
         
-        if id in self._subscriptions:
+        try:
+            self._dataLock.acquire()
+            if id in self._subscriptions:
+                
+                # log 
+                log.info("removed subscriber id {0}".format(id))
+                
+                # delete
+                del self._subscriptions[id]
             
-            # log 
-            log.info("removed subscriber id {0}".format(id))
+                return True
+                
+            else:
+                
+                # log 
+                log.warning("could not find subscriber id {0} to remove".format(id))
+                
+                return False
             
-            # delete
-            del self._subscriptions[id]
-        
-            return True
-            
-        else:
-            
-            # log 
-            log.warning("could not find subscriber id {0} to remove".format(id))
-            
-            return False
-        
-        raise SystemError()
+            raise SystemError()
+        finally:
+            self._dataLock.release()
     
     def publish(self, uri, *args, **kwargs):
         '''
@@ -206,7 +218,10 @@ class EventBus(threading.Thread):
         if 'maxNumReceivers' in kwargs:
             assert isinstance(kwargs['maxNumReceivers'],int)
         
+        self._dataLock.acquire()
         self._pending_events.append(Event.Event(uri, args))
+        self._dataLock.release()
+        
         self._eventSem.release()
     
     def publish_sync(self, uri, *args, **kwargs):
@@ -229,14 +244,27 @@ class EventBus(threading.Thread):
         if ('maxNumReceivers' in kwargs) and kwargs['maxNumReceivers']:
             assert isinstance(kwargs['maxNumReceivers'],int)
         
+        # update stats
+        self._dataLock.acquire()
+        if uri not in self._stats:
+            self._stats[uri] = {
+                'numIn':     0,
+                'numOut':    0,
+            }
+        self._stats[uri]['numIn'] += 1
+        self._dataLock.release()
+        
         # local variables
         self.numReceivers = 0
         
         # publish to subscribers
+        self._dataLock.acquire()
         for (id,subs) in self._subscriptions.items():
             if subs.matches_uri(uri):
                 subs.get_function()(*args)
                 self.numReceivers += 1
+        self._stats[uri]['numOut'] += self.numReceivers
+        self._dataLock.release()
         
         # ensure that number receivers is expected
         if ('minNumReceivers' in kwargs) and kwargs['minNumReceivers']:
@@ -273,12 +301,28 @@ class EventBus(threading.Thread):
         
         '''
         returnVal = {}
+        self._dataLock.acquire()
         for (id,subs) in self._subscriptions.items():
             returnVal[id] = {
                 'uri':      subs.get_event_uri(),
                 'function': subs.get_function(),
             }
+        self._dataLock.release()
         return returnVal
+    
+    def getStats(self):
+        self._dataLock.acquire()
+        tempStats = copy.deepcopy(self._stats)
+        self._dataLock.release()
+        
+        returnVal = []
+        for (k,v) in tempStats.items():
+            returnVal.append({
+                'uri':       k,
+                'numIn':     v['numIn'],
+                'numOut':    v['numOut'],
+            })
+        return json.dumps(returnVal,sort_keys=True,indent=4)
     
     def close(self):
         '''
@@ -296,7 +340,11 @@ class EventBus(threading.Thread):
     #======================== private =========================================
     
     def _getNextId(self):
-        retunVal = self._next_id
         assert self._next_id < sys.maxint
-        self._next_id += 1
+        
+        self._dataLock.acquire()
+        retunVal        = self._next_id
+        self._next_id  += 1
+        self._dataLock.release()
+        
         return retunVal

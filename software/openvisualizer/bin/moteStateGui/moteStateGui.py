@@ -13,6 +13,7 @@ from lbrClient     import lbrClient
 import OpenWindow
 import OpenFrameState
 import OpenFrameLbr
+import OpenFrameEventBus
 
 import Tkinter
 
@@ -114,6 +115,22 @@ class MoteStateGui(object):
         # register this frame with its menu
         temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
         menubar.add_command(label="lbr",  command=temp_lambda)
+        
+        #===== frameEventBus
+        
+        thisFrame            = Tkinter.Frame(self.window)
+        
+        tempFrameEventBus    = OpenFrameEventBus.OpenFrameEventBus(thisFrame,
+                                                    row=1)
+        tempFrameEventBus.startAutoUpdate(self.GUI_UPDATE_PERIOD)
+        tempFrameEventBus.show()
+        
+        # add this frame to the menuFrames
+        self.menuFrames.append(thisFrame)
+        
+        # register this frame with its menu
+        temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
+        menubar.add_command(label="eventBus",  command=temp_lambda)
         
     #======================== public ==========================================
     
