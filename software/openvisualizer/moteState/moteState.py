@@ -21,6 +21,7 @@ from openType      import openType,         \
                           typeCellType,     \
                           typeComponent,    \
                           typeRssi
+from EventBus import EventBus
 
 class OpenEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -216,7 +217,13 @@ class StateIsSync(StateElem):
 
 class StateIdManager(StateElem):
     
+    def __init__(self,moteConnector):
+        StateElem.__init__(self)
+        self.moteConnector = moteConnector
+    
     def update(self,notif):
+    
+        # update state
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
@@ -243,6 +250,15 @@ class StateIdManager(StateElem):
                                         notif.myPrefix_bodyH,
                                         notif.myPrefix_bodyL)
         
+        # announce information about the DAG root to the eventBus
+        if self.data[0]['isDAGroot']==1:
+            EventBus.EventBus().publish(
+                'StateIdManager.infoDagRoot',
+                {
+                    'ip':      self.moteConnector.moteProbeIp,
+                    'tcpPort': self.moteConnector.moteProbeTcpPort,
+                }
+            )
 
 class StateMyDagRank(StateElem):
     
@@ -354,7 +370,7 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
                                                     ]
                                                 ))
         self.state[self.ST_ISSYNC]          = StateIsSync()
-        self.state[self.ST_IDMANAGER]       = StateIdManager()
+        self.state[self.ST_IDMANAGER]       = StateIdManager(self.moteConnector)
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         
         self.notifHandlers = {
