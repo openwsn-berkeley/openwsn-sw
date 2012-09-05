@@ -32,12 +32,17 @@ class moteConnector(threading.Thread):
         self.socket               = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.parser               = OpenParser.OpenParser()
         self.goOn                 = True
+        self.eventBusSubscription = None
         
         # initialize parent class
         threading.Thread.__init__(self)
         
         # give this thread a name
         self.name = 'moteConnector to {0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
+        
+        # subscribe to EventBus
+        EventBus.EventBus().subscribe(self._updateConnectedToDagRoot,
+                                      'StateIdManager.infoDagRoot')
     
     def run(self):
         # log
@@ -84,6 +89,34 @@ class moteConnector(threading.Thread):
                 pass
     
     #======================== public ==========================================
+    
+    def _updateConnectedToDagRoot(self,infoDagRoot):
+        if  (
+               (self.moteProbeIp==infoDagRoot['ip'])
+               and
+               (self.moteProbeTcpPort==infoDagRoot['tcpPort'])
+            ):
+            # this moteConnector is connected to a DAGroot
+            
+            if not self.eventBusSubscription:
+                # subscribe
+                '''
+                try:
+                    self.eventBusSubscription = EventBus.EventBus().subscribe(
+                            self.write,
+                            '(\S*).dataForDagRoot',
+                        )
+                except Exception as err:
+                    print err
+                '''
+        else:
+            # this moteConnector is *not* connected to a DAGroot
+            
+            if self.eventBusSubscription:
+                # unsubscribe
+                print 'poipoi unsubscribe'
+                EventBus.EventBus().unsubscribe(self.eventBusSubscription)
+                self.eventBusSubscription = None
     
     def write(self,stringToWrite,headerByte='D'):
         try:
