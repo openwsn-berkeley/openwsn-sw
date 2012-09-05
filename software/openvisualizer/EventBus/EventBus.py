@@ -83,9 +83,11 @@ class EventBus(threading.Thread):
                 self._eventSem.acquire()
                 
                 # pop the head event
-                self._dataLock.acquire()
-                event = self._pending_events.pop(0)
-                self._dataLock.release()
+                try:
+                    self._dataLock.acquire()
+                    event = self._pending_events.pop(0)
+                finally:
+                    self._dataLock.release()
                 
                 if   isinstance(event,Event.Event):
                     # normal case
@@ -135,6 +137,13 @@ class EventBus(threading.Thread):
                  can store and use that ID to unsubscribe.
         '''
         
+        # log
+        log.info("adding subscriber: {0} -> {1}".format(
+                uri,
+                func,
+            )
+        )
+        
         # param validation
         assert callable(func)
         if uri:
@@ -147,16 +156,11 @@ class EventBus(threading.Thread):
         id = self._getNextId()
         
         # store subs
-        self._dataLock.acquire()
-        self._subscriptions[id] = subs
-        self._dataLock.release()
-        
-        # log
-        log.info("subscriber added: {0} -> {1}".format(
-                subs.get_event_uri(),
-                subs.get_function(),
-            )
-        )
+        try:
+            self._dataLock.acquire()
+            self._subscriptions[id] = subs
+        finally:
+            self._dataLock.release()
         
         return id
 
@@ -218,11 +222,12 @@ class EventBus(threading.Thread):
         if 'maxNumReceivers' in kwargs:
             assert isinstance(kwargs['maxNumReceivers'],int)
         
-        self._dataLock.acquire()
-        self._pending_events.append(Event.Event(uri, args))
-        self._dataLock.release()
-        
-        self._eventSem.release()
+        try:
+            self._dataLock.acquire()
+            self._pending_events.append(Event.Event(uri, args))
+            self._eventSem.release()
+        finally:
+            self._dataLock.release()
     
     def publish_sync(self, uri, *args, **kwargs):
         '''
@@ -245,36 +250,40 @@ class EventBus(threading.Thread):
             assert isinstance(kwargs['maxNumReceivers'],int)
         
         # update stats
-        self._dataLock.acquire()
-        if uri not in self._stats:
-            self._stats[uri] = {
-                'numIn':     0,
-                'numOut':    0,
-            }
-        self._stats[uri]['numIn'] += 1
-        self._dataLock.release()
+        try:
+            self._dataLock.acquire()
+            if uri not in self._stats:
+                self._stats[uri] = {
+                    'numIn':     0,
+                    'numOut':    0,
+                }
+            self._stats[uri]['numIn'] += 1
+        finally:
+            self._dataLock.release()
         
         # local variables
         self.numReceivers = 0
         
         # publish to subscribers
-        self._dataLock.acquire()
-        for (id,subs) in self._subscriptions.items():
-            if subs.matches_uri(uri):
-                subs.get_function()(*args)
-                self.numReceivers += 1
-        self._stats[uri]['numOut'] += self.numReceivers
-        self._dataLock.release()
+        try:
+            self._dataLock.acquire()
+            for (id,subs) in self._subscriptions.items():
+                if subs.matches_uri(uri):
+                    subs.get_function()(*args)
+                    self.numReceivers += 1
+            self._stats[uri]['numOut'] += self.numReceivers
+        finally:
+            self._dataLock.release()
         
         # ensure that number receivers is expected
         if ('minNumReceivers' in kwargs) and kwargs['minNumReceivers']:
             if self.numReceivers<kwargs['minNumReceivers']:
-                raise SystemError('expected a least {0} receivers for event {1}, got {2}'.format(
+                output =    'expected a least {0} receivers for event {1}, got {2}'.format(
                                 kwargs['minNumReceivers'],
                                 uri,
                                 self.numReceivers,
                             )
-                        )
+                raise SystemError(output)
         if ('maxNumReceivers' in kwargs) and kwargs['maxNumReceivers']:
             if self.numReceivers>kwargs['maxNumReceivers']:
                 raise SystemError('expected a most {0} receivers for event {1}, got {2}'.format(
@@ -301,19 +310,23 @@ class EventBus(threading.Thread):
         
         '''
         returnVal = {}
-        self._dataLock.acquire()
-        for (id,subs) in self._subscriptions.items():
-            returnVal[id] = {
-                'uri':      subs.get_event_uri(),
-                'function': subs.get_function(),
-            }
-        self._dataLock.release()
+        try:
+            self._dataLock.acquire()
+            for (id,subs) in self._subscriptions.items():
+                returnVal[id] = {
+                    'uri':      subs.get_event_uri(),
+                    'function': subs.get_function(),
+                }
+        finally:
+            self._dataLock.release()
         return returnVal
     
     def getStats(self):
-        self._dataLock.acquire()
-        tempStats = copy.deepcopy(self._stats)
-        self._dataLock.release()
+        try:
+            self._dataLock.acquire()
+            tempStats = copy.deepcopy(self._stats)
+        finally:
+            self._dataLock.release()
         
         returnVal = []
         for (k,v) in tempStats.items():
@@ -342,9 +355,11 @@ class EventBus(threading.Thread):
     def _getNextId(self):
         assert self._next_id < sys.maxint
         
-        self._dataLock.acquire()
-        retunVal        = self._next_id
-        self._next_id  += 1
-        self._dataLock.release()
+        try:
+            self._dataLock.acquire()
+            retunVal        = self._next_id
+            self._next_id  += 1
+        finally:
+            self._dataLock.release()
         
         return retunVal
