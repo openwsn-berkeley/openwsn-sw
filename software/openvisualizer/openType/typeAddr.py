@@ -6,8 +6,6 @@ log = logging.getLogger('typeAddr')
 log.setLevel(logging.DEBUG)
 log.addHandler(NullHandler())
 
-from pydispatch import dispatcher
-
 import openType
 
 class typeAddr(openType.openType):
@@ -65,11 +63,6 @@ class typeAddr(openType.openType):
         elif type==self.ADDR_64B:
             self.desc = '64b'
             self.addr = fullAddr[:8]
-            # dispatch
-            dispatcher.send(
-                signal       = 'networkState.setLocalAddr',
-                data         = self.addr,
-            )
         elif type==self.ADDR_128B:
             self.desc = '128b'
             self.addr = fullAddr

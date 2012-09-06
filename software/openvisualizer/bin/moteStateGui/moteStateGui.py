@@ -207,7 +207,7 @@ for loggerName in ['moteProbeUtils',
                    'ParserData',
                    'moteState',
                    'lbrClient',
-                   ]:
+                   'networkState',]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
     temp.addHandler(logHandler)

@@ -23,7 +23,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     PRF_DIO_C      = 1<<0
     G_DIO          = 1<<7
     
-    DIO_PERIOD     = 20 # period between successive DIOs, in seconds
+    DIO_PERIOD     = 10 # period between successive DIOs, in seconds
     
     def __init__(self):
         
@@ -53,11 +53,11 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             # connect to dispatcher
             dispatcher.connect(
                 self._setLocalAddr,
-                signal = 'networkState._setLocalAddr',
+                signal = 'infoDagRoot',
             )
             dispatcher.connect(
                 self._setNetworkPrefix,
-                signal = 'networkState._setNetworkPrefix',
+                signal = 'networkPrefix',
             )
             
             # send a DIO periodically
@@ -175,7 +175,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
     def _setLocalAddr(self,data):
         self.stateLock.acquire()
-        self.address    = data    
+        self.address    = data['eui64']
         self.stateLock.release()
         
     def _setNetworkPrefix(self,data):

@@ -260,6 +260,7 @@ class StateIdManager(StateElem):
                 data          = {
                                     'ip':      self.moteConnector.moteProbeIp,
                                     'tcpPort': self.moteConnector.moteProbeTcpPort,
+                                    'eui64':   self.data[0]['my64bID'].addr,
                                 },
             )
 
