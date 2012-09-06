@@ -9,7 +9,7 @@ log.addHandler(NullHandler())
 import threading
 import serial
 
-from EventBus import EventBus
+from pydispatch import dispatcher
 
 class moteProbeSerialThread(threading.Thread):
 
@@ -35,10 +35,10 @@ class moteProbeSerialThread(threading.Thread):
         # give this thread a name
         self.name                 = 'moteProbeSerialThread@'+self.serialportName
         
-        # subscribe to eventBus
-        EventBus.EventBus().subscribe(
+        # connect to dispatcher
+        dispatcher.connect(
             self.send,
-            'moteProbe.{0}.bytesFromTcpPort'.format(self.serialportName),
+            signal = 'bytesFromTcpPort'+self.serialportName,
         )
     
     def run(self):
@@ -84,24 +84,22 @@ class moteProbeSerialThread(threading.Thread):
                                     self.serialOutput = ''
                                     self.serialOutputLock.release()
                             else:
-                                # publish copy of serial input on eventBus (synchronously)
-                                EventBus.EventBus().publish_sync(
-                                    'moteProbe.{0}.bytesFromSerialPort'.format(self.serialportName),
-                                    self.serialInput[:],
-                                    minNumReceivers=1,
-                                    maxNumReceivers=1,
+                                # dispatch
+                                dispatcher.send(
+                                    signal        = 'bytesFromSerialPort'+self.serialportName,
+                                    data          = self.serialInput[:],
                                 )
                     else:
                         raise SystemError("invalid state {0}".format(state))
     
     #======================== public ==========================================
     
-    def send(self,bytesToSend):
+    def send(self,data):
         self.serialOutputLock.acquire()
         if len(self.serialOutput)>255:
             log.error("serialOutput overflow ({0} bytes)".format(len(self.serialOutput)))
         
-        self.serialOutput += bytesToSend[0]+ chr(len(self.serialOutput)) + bytesToSend[1:]
+        self.serialOutput += data[0]+ chr(len(self.serialOutput)) + data[1:]
         if len(self.serialOutput)>200:
             log.warning("serialOutput overflowing ({0} bytes)".format(len(self.serialOutput)))
         self.serialOutputLock.release()

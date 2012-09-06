@@ -12,6 +12,7 @@ import threading
 import pprint
 import json
 
+from pydispatch import dispatcher
 
 from moteConnector import ParserStatus
 from moteConnector import MoteConnectorConsumer
@@ -21,7 +22,6 @@ from openType      import openType,         \
                           typeCellType,     \
                           typeComponent,    \
                           typeRssi
-from EventBus import EventBus
 
 class OpenEncoder(json.JSONEncoder):
     def default(self, obj):
@@ -252,12 +252,15 @@ class StateIdManager(StateElem):
         
         # announce information about the DAG root to the eventBus
         if self.data[0]['isDAGroot']==1:
-            EventBus.EventBus().publish(
-                'StateIdManager.infoDagRoot',
-                {
-                    'ip':      self.moteConnector.moteProbeIp,
-                    'tcpPort': self.moteConnector.moteProbeTcpPort,
-                }
+        
+            # dispatch
+            dispatcher.send(
+                signal        = 'infoDagRoot',
+                sender        = 'StateIdManager',
+                data          = {
+                                    'ip':      self.moteConnector.moteProbeIp,
+                                    'tcpPort': self.moteConnector.moteProbeTcpPort,
+                                },
             )
 
 class StateMyDagRank(StateElem):
@@ -318,11 +321,12 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
         # initialize parent class
         MoteConnectorConsumer.MoteConnectorConsumer.__init__(
             self,
-            'moteConnector.{0}:{1}.inputFromMoteProbe.status'.format(
-                self.moteConnector.moteProbeIp,
-                self.moteConnector.moteProbeTcpPort,
-            ),
-            self._receivedData_notif
+            signal        = 'inputFromMoteProbe.status',
+            sender        = 'moteConnector@{0}:{1}'.format(
+                                self.moteConnector.moteProbeIp,
+                                self.moteConnector.moteProbeTcpPort,
+                            ),
+            notifCallback = self._receivedData_notif,
         )
         
         # local variables

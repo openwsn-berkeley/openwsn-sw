@@ -2,6 +2,7 @@ import sys
 import os
 if __name__=='__main__':
     cur_path = sys.path[0]
+    sys.path.insert(0, os.path.join(cur_path, '..', '..','PyDispatcher-2.0.3'))# PyDispatcher-2.0.3/
     sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
     sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openUI'))     # openUI/
 
@@ -13,7 +14,6 @@ from lbrClient     import lbrClient
 import OpenWindow
 import OpenFrameState
 import OpenFrameLbr
-import OpenFrameEventBus
 
 import Tkinter
 
@@ -92,7 +92,7 @@ class MoteStateGui(object):
             
             # register this frame with its menu
             temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
-            stateMenu.add_command(label="poipoi",  command=temp_lambda)
+            stateMenu.add_command(label='{0}:{1}'.format(ms.moteConnector.moteProbeIp,ms.moteConnector.moteProbeTcpPort),  command=temp_lambda)
         menubar.add_cascade(label="mote states",menu=stateMenu)
         
         #===== network state
@@ -115,22 +115,6 @@ class MoteStateGui(object):
         # register this frame with its menu
         temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
         menubar.add_command(label="lbr",  command=temp_lambda)
-        
-        #===== frameEventBus
-        
-        thisFrame            = Tkinter.Frame(self.window)
-        
-        tempFrameEventBus    = OpenFrameEventBus.OpenFrameEventBus(thisFrame,
-                                                    row=1)
-        tempFrameEventBus.startAutoUpdate(self.GUI_UPDATE_PERIOD)
-        tempFrameEventBus.show()
-        
-        # add this frame to the menuFrames
-        self.menuFrames.append(thisFrame)
-        
-        # register this frame with its menu
-        temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
-        menubar.add_command(label="eventBus",  command=temp_lambda)
         
     #======================== public ==========================================
     
@@ -213,8 +197,7 @@ logHandler = logging.handlers.RotatingFileHandler('moteStateGui.log',
                                                   backupCount=5,
                                                   mode='w')
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-for loggerName in ['EventBus',
-                   'moteProbeUtils',
+for loggerName in ['moteProbeUtils',
                    'moteProbe',
                    'moteConnector',
                    'OpenParser',

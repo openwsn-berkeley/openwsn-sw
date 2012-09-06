@@ -9,7 +9,7 @@ log.addHandler(NullHandler())
 import threading
 import socket
 
-from EventBus import EventBus
+from pydispatch import dispatcher
 
 class moteProbeSocketThread(threading.Thread):
     
@@ -32,10 +32,10 @@ class moteProbeSocketThread(threading.Thread):
         # give this thread a name
         self.name            = 'moteProbeSocketThread@'+str(self.socketport)
         
-        # subscribe to eventBus
-        EventBus.EventBus().subscribe(
+        # subscribe to dispatcher
+        dispatcher.connect(
             self.send,
-            'moteProbe.{0}.bytesFromSerialPort'.format(self.serialportName)
+            signal='bytesFromSerialPort'+self.serialportName,
         )
     
     def run(self):
@@ -62,13 +62,12 @@ class moteProbeSocketThread(threading.Thread):
                 try:
                     bytesReceived = self.conn.recv(4096)
                     
-                    # publish copy of network input on eventBus (synchronously)
-                    EventBus.EventBus().publish_sync(
-                        'moteProbe.{0}.bytesFromTcpPort'.format(self.serialportName),
-                        bytesReceived,
-                        minNumReceivers=1,
-                        maxNumReceivers=1,
+                    # dispatch
+                    dispatcher.send(
+                        signal        = 'bytesFromTcpPort'+self.serialportName,
+                        data          = bytesReceived
                     )
+                    
                 except socket.error as err:
                 
                     # log
@@ -79,10 +78,10 @@ class moteProbeSocketThread(threading.Thread):
     
     #======================== public ==========================================
     
-    def send(self,bytesToSend):
+    def send(self,data):
         if self.conn!=None:
             try:
-                self.conn.send(bytesToSend)
+                self.conn.send(data)
             except socket.error:
                 # happens when not connected
                 pass

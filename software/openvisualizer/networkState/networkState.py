@@ -7,11 +7,11 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
-import RPL
-from EventBus import EventBus
+
+from pydispatch import dispatcher
 
 from moteConnector import MoteConnectorConsumer
-import binascii
+import RPL
 
 class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     
@@ -35,8 +35,9 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         # initialize parent class
         MoteConnectorConsumer.MoteConnectorConsumer.__init__(
             self,
-            '(\S+).inputFromMoteProbe.data.local',
-            self._receivedData_notif
+            signal           = 'inputFromMoteProbe.data.local',
+            sender           = dispatcher.Any,
+            notifCallback    = self._receivedData_notif
         )
         
         # local variables
@@ -49,8 +50,15 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.moduleInit           = False
         
         if not self.moduleInit:
-            EventBus.EventBus().subscribe(self._setLocalAddr,    "networkState._setLocalAddr")
-            EventBus.EventBus().subscribe(self._setNetworkPrefix,"networkState._setNetworkPrefix")
+            # connect to dispatcher
+            dispatcher.connect(
+                self._setLocalAddr,
+                signal = 'networkState._setLocalAddr',
+            )
+            dispatcher.connect(
+                self._setNetworkPrefix,
+                signal = 'networkState._setNetworkPrefix',
+            )
             
             # send a DIO periodically
             #TODO XV .. enable DIO once tested.
@@ -153,10 +161,11 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         # log
         log.debug('sending DIO {0}'.format(' '.join(['%.2x'%c for c in dio])))
         
-        # publish on eventBus
-        EventBus.EventBus().publish(
-            'rpl.dio.dataForDagRoot',
-            ''.join([chr(c) for c in dio]),
+        # dispatch
+        dispatcher.send(
+            signal        = 'dataForDagRoot',
+            sender        = 'rpl',
+            data          = ''.join([chr(c) for c in dio]),
         )
         
         # restart the timer
@@ -164,14 +173,14 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     
     #==== bus event handlers
         
-    def _setLocalAddr(self,localAddr):
+    def _setLocalAddr(self,data):
         self.stateLock.acquire()
-        self.address    = localAddr    
+        self.address    = data    
         self.stateLock.release()
         
-    def _setNetworkPrefix(self,prefix):
+    def _setNetworkPrefix(self,data):
         self.stateLock.acquire()
-        self.prefix     = prefix    
+        self.prefix     = data    
         self.stateLock.release()
     
     #======================== helpers =========================================

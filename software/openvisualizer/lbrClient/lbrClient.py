@@ -6,11 +6,12 @@ log = logging.getLogger('lbrClient')
 log.setLevel(logging.DEBUG)
 log.addHandler(NullHandler())
 
-import threading
-from moteConnector import MoteConnectorConsumer
-import socket
 import copy
-from EventBus import EventBus
+import socket
+import threading
+
+from pydispatch import dispatcher
+from moteConnector import MoteConnectorConsumer
 
 class lbrClient(threading.Thread):
     
@@ -33,8 +34,9 @@ class lbrClient(threading.Thread):
         self.stats                = {}
         self.connectSem           = threading.Lock()
         self.connectorConsumer    = MoteConnectorConsumer.MoteConnectorConsumer(
-            '(\S+).inputFromMoteProbe.data.internet',
-            self.send,
+            signal        = 'inputFromMoteProbe.data.internet',
+            sender        = dispatcher.Any,
+            notifCallback = self.send,
         )
         
         # reset the statistics
@@ -92,10 +94,11 @@ class lbrClient(threading.Thread):
                         log.error("received packet from LBR which is too short ({0} bytes)".format(len(input)))
                         continue
                     
-                    # publish on eventBus
-                    EventBus.EventBus().publish(
-                        'lbrClient.dataForDagRoot',
-                        input,
+                    # dispatch
+                    dispatcher.send(
+                        signal        = 'dataForDagRoot',
+                        sender        = 'lbrClient',
+                        data          = input,
                     )
             
             except socket.error as err:
@@ -259,8 +262,6 @@ class lbrClient(threading.Thread):
         self.statsLock.release()
         return prefix
     
-    
-    
     #======================== private =========================================
     
     #===== stats handling
@@ -339,4 +340,9 @@ class lbrClient(threading.Thread):
         self.stats['prefix'] = prefix
         self.statsLock.release()
         
-        EventBus.EventBus().publish_sync("networkState.setNetworkPrefix",prefix)
+        # dispatch
+        dispatcher.send(
+            signal      = 'networkPrefix',
+            sender      = 'lbrClient',
+            data        = prefix,
+        )

@@ -9,9 +9,10 @@ log.addHandler(NullHandler())
 import threading
 import socket
 
+from pydispatch import dispatcher
+
 import OpenParser
 import ParserException
-from   EventBus import EventBus
 
 class moteConnector(threading.Thread):
     
@@ -25,25 +26,27 @@ class moteConnector(threading.Thread):
         log.debug("creating instance")
         
         # store params
-        self.moteProbeIp          = moteProbeIp
-        self.moteProbeTcpPort     = moteProbeTcpPort
+        self.moteProbeIp               = moteProbeIp
+        self.moteProbeTcpPort          = moteProbeTcpPort
         
         # local variables
-        self.socket               = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.parser               = OpenParser.OpenParser()
-        self.goOn                 = True
-        self.eventBusSubscription = None
+        self.socket                    = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.parser                    = OpenParser.OpenParser()
+        self.goOn                      = True
+        self._subcribedDataForDagRoot  = False
         
         # initialize parent class
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name = 'moteConnector to {0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
+        self.name = 'moteConnector@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
         
-        # subscribe to EventBus
-        EventBus.EventBus().subscribe(self._updateConnectedToDagRoot,
-                                      'StateIdManager.infoDagRoot')
-    
+        # connect to dispatcher
+        dispatcher.connect(
+            self._updateConnectedToDagRoot,
+            signal='infoDagRoot',
+        )
+        
     def run(self):
         # log
         log.debug("starting to run")
@@ -74,14 +77,11 @@ class moteConnector(threading.Thread):
                         log.error(str(err))
                         pass
                     else:
-                        # publish on eventBus
-                        EventBus.EventBus().publish(
-                            'moteConnector.{0}:{1}.inputFromMoteProbe.{2}'.format(
-                                self.moteProbeIp,
-                                self.moteProbeTcpPort,
-                                eventSubType
-                            ),
-                            parsedNotif,
+                        # dispatch
+                        dispatcher.send(
+                            signal        = 'inputFromMoteProbe.'+eventSubType,
+                            sender        = self.name,
+                            data          = parsedNotif,
                         )
                 
             except socket.error as err:
@@ -90,37 +90,39 @@ class moteConnector(threading.Thread):
     
     #======================== public ==========================================
     
-    def _updateConnectedToDagRoot(self,infoDagRoot):
+    def _updateConnectedToDagRoot(self,data):
         if  (
-               (self.moteProbeIp==infoDagRoot['ip'])
+               (self.moteProbeIp==data['ip'])
                and
-               (self.moteProbeTcpPort==infoDagRoot['tcpPort'])
+               (self.moteProbeTcpPort==data['tcpPort'])
             ):
             # this moteConnector is connected to a DAGroot
             
-            if not self.eventBusSubscription:
-                # subscribe
-                '''
-                try:
-                    self.eventBusSubscription = EventBus.EventBus().subscribe(
-                            self.write,
-                            '(\S*).dataForDagRoot',
-                        )
-                except Exception as err:
-                    print err
-                '''
+            if not self._subcribedDataForDagRoot:
+                
+                # connect to dispatcher
+                dispatcher.connect(
+                    self.write,
+                    signal='dataForDagRoot',
+                )
+                
+                self._subcribedDataForDagRoot = True
+            
         else:
             # this moteConnector is *not* connected to a DAGroot
             
-            if self.eventBusSubscription:
-                # unsubscribe
-                print 'poipoi unsubscribe'
-                EventBus.EventBus().unsubscribe(self.eventBusSubscription)
-                self.eventBusSubscription = None
+            if self._subcribedDataForDagRoot:
+                # disconnect from dispatcher
+                dispatcher.connect(
+                    self.write,
+                    signal='dataForDagRoot',
+                )
+                
+                self._subcribedDataForDagRoot = False
     
-    def write(self,stringToWrite,headerByte='D'):
+    def write(self,data,headerByte='D'):
         try:
-            self.socket.send(headerByte+stringToWrite)
+            self.socket.send(headerByte+data)
         except socket.error:
             log.error(err)
             pass

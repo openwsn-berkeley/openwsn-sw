@@ -10,22 +10,23 @@ import threading
 import socket
 import Queue
 
+from pydispatch import dispatcher
+
 import OpenParser
 import ParserException
-from   EventBus import EventBus
 
 class MoteConnectorConsumer(threading.Thread):
     
     QUEUESIZE = 100
     
-    def __init__(self,eventType,notifCallback):
+    def __init__(self,signal,sender,notifCallback):
         
         # log
         log.debug("create instance")
         
         # store params
-        self.eventType     = eventType
         self.notifCallback = notifCallback
+        self.sender        = sender
         
         # initialize parent class
         threading.Thread.__init__(self)
@@ -36,11 +37,11 @@ class MoteConnectorConsumer(threading.Thread):
         # local variables
         self.goOn          = True
         self.dataQueue     = Queue.Queue(self.QUEUESIZE)
-    
-        # subscribe to eventBus
-        EventBus.EventBus().subscribe(
+        
+        # connect to dispatcher
+        dispatcher.connect(
             self._eventBusNotification,
-            self.eventType,
+            signal = signal,
         )
         
     def run(self):
@@ -56,15 +57,18 @@ class MoteConnectorConsumer(threading.Thread):
             log.debug("got data: {0}".format(newData))
             
             # call the callback
-            self.notifCallback(*newData)
+            self.notifCallback(newData)
     
     #======================== public ==========================================
     
     #======================== private =========================================
     
-    def _eventBusNotification(self,*args):
+    def _eventBusNotification(self,signal,sender,data):
+        
+        if (self.sender!=dispatcher.Any) and (sender!=self.sender):
+            return
         
         if self.dataQueue.full():
             raise SystemError("Queue is full")
         
-        self.dataQueue.put(args)
+        self.dataQueue.put(data)
