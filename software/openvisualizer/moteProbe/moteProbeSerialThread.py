@@ -8,6 +8,7 @@ log.addHandler(NullHandler())
 
 import threading
 import serial
+import time
 
 from pydispatch import dispatcher
 
