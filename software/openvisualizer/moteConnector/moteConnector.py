@@ -77,7 +77,7 @@ class moteConnector(threading.Thread):
                         log.error(str(err))
                         pass
                     else:
-                        # dispatch
+                        # dispatch                            
                         dispatcher.send(
                             signal        = 'inputFromMoteProbe.'+eventSubType,
                             sender        = self.name,

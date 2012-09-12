@@ -49,6 +49,9 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.address              = None
         self.moduleInit           = False
         
+        #debug
+        self.prefix="2001:1111:2222:3333"
+        
         if not self.moduleInit:
             # connect to dispatcher
             dispatcher.connect(
@@ -59,6 +62,10 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 self._setNetworkPrefix,
                 signal = 'networkPrefix',
             )
+            
+            
+            #start the moteConnectorConsumer
+            self.start()
             
             # send a DIO periodically
             #TODO XV .. enable DIO once tested.
@@ -71,7 +78,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         # log
         log.debug("received {0}".format(notif))
-        
+               
         # indicate data to RPL
         self.rpl.update(notif)
     
@@ -141,7 +148,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         # DIO options
         aux = self.MOP_DIO_A | self.MOP_DIO_B | self.MOP_DIO_C;
-        aux = aux & (not self.PRF_DIO_A) & (not self.PRF_DIO_B) & (not self.PRF_DIO_C) & (not self.G_DIO)
+        #aux = aux & (not self.PRF_DIO_A) & (not self.PRF_DIO_B) & (not self.PRF_DIO_C) & (not self.G_DIO)
         dio.append(aux)
           
         dio.append(0x33)     # DTSN
@@ -151,7 +158,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         # DODAGID
         dio += li
         
-        dio.append(0x05)     # options
+        dio.append(0x03)     # options
         
         # checksum of all the fields checksum on ICMP Header
         checksum   = self._calculateCRC(dio[17:], len(dio[17:]))

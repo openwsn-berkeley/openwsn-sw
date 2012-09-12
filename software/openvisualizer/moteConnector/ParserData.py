@@ -33,12 +33,21 @@ class ParserData(Parser.Parser):
         
         # log
         log.debug("received data {0}".format(input))
-        
+        print input
         # ensure input not short longer than header
         self._checkLength(input)
     
         headerBytes = input[:2]
-        iphcHeader  = input[2:4]
+        dest = input[2:10]
+        source = input[10:18]
+        
+        a="".join(hex(c) for c in dest)
+        print "dest="+a
+        a="".join(hex(c) for c in source)
+        print "source="+a
+        
+        
+        iphcHeader  = input[18:20]
         
         # check if local data or internet data. to do so we need to look at the header and see if it is compressed.
         # this is the situation where DAM and SAM fields are 0x03 or 0x02
@@ -53,10 +62,12 @@ class ParserData(Parser.Parser):
         dam  = (iphcHeader[1] >> self.IPHC_DAM) & 0x03 #2b
         
         # for DAO DAM and SAM are 2.
-         
-        if (dam ==0x02 and sam==0x02): 
+        print "dam and sam are {0},{1}".format(dam,sam) 
+        if (dam ==0x03 and sam==0x03): 
             #header byte 1 contains DAM/SAM, if any of both is compressed 
             eventType = 'data.local'
+            #keep src and dest for local data 
+            input = input[2:]
         else:
             eventType = 'data.internet'
             
@@ -66,11 +77,14 @@ class ParserData(Parser.Parser):
             except struct.error:
                 raise ParserException(ParserException.DESERIALIZE,"could not extract moteId from {0}".format(headerBytes))
             
+            
             # log
             log.debug("moteId={0}".format(moteId))
-        
+            #remove src and dest and mote id at the beginning.
+            input = input[18:]
+             
         # jump the header bytes
-        input = input[2:]
+       
         
         return (eventType,input)
     

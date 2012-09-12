@@ -34,12 +34,14 @@ class RPL(object):
         '''
         updates the DAO table
         '''
-        parents    = []
-        source     = self._parseSource(dao) 
-        parents    = self._parseParents(dao)
+        parents     = []
+        source      = self._parseSource(dao) 
+        destination = self._parseDestination(dao)
+        DAOheader   = self._retrieveDAOHeader(dao)
+        parents     = self._parseParents(dao,DAOheader['Transit_information_length'])
         
         self.dataLock.acquire()
-        self.routes.update({source:parents})
+        self.routes.update({str(source):parents})
         self.dataLock.release()
     
     def getRouteTo(self,destAddr):
@@ -56,6 +58,9 @@ class RPL(object):
             self.dataLock.release()
         
         return list
+    
+  
+    #======================== private =========================================
     
     def _getRouteTo_internal(self,destAddr,list):
         '''
@@ -85,20 +90,89 @@ class RPL(object):
                 if (nextparent is not None):
                     list.append(nextparent)
     
-    #======================== private =========================================
+    #Here the header + dao stuff
+    #list: [120, 51, 58, 64, 155, 4, 128, 50, 136, 64, 0, 153,
+    #2bytes IPHC, 6bytes ICMPv6 header including checksum, 1byte RPL instance iD== 136==0x88, 1byte flags, 1 byte reserved (0),1byte DAO sequence.  
+    #DODAGID=16 BYTES = 32, 1, 17, 17, 34, 34, 51, 51, 20, 21, 146, 11, 3, 1, 0, 233, 
+    #1byte options=6,
+    #transit information type= 6, 
+    #1 byte length options 1,
+    #1byte flags= 0,
+    #1 byte PAth control 64,
+    #1 byte path sequence 6, 
+    #1 byte path lifetime 170,
+    # parents addresses 0, 0, 0, 0, 0, 0, 0, 233
+
+    def _retrieveDAOHeader(self,dao):
+        header={}
+        header['IPHC_b0']=dao[0]
+        header['IPHC_b1']=dao[1]
+        #IPv6
+        header['IPv6_nextHeader']=dao[2]
+        header['IPv6_hoplimit']=dao[3]
+        header['ICMPv6_RPLType']=dao[4]
+        header['ICMPv6_Code']=dao[5]
+        header['ICMPv6_CheckSum_b0']=dao[6]
+        header['ICMPv6_CheckSum_b1']=dao[7]
+        #RPL
+        header['RPL_InstanceID']=dao[8]
+        header['RPL_flags']=dao[9]
+        header['RPL_Reserved']=dao[10]
+        header['RPL_DAO_Sequence']=dao[11]
+        
+        #DODAGID 16bytes
+        header['DODAGID'] = dao[12:28]
+        header['RPL_option'] = dao[28]
+        
+        #transit information object
+        header['Transit_information_type'] = dao[29]
+        header['Transit_information_length'] = dao[30]
+        header['Transit_information_flags'] = dao[31]
+        header['Transit_information_path_control'] = dao[32]
+        header['Transit_information_path_sequence'] = dao[33]
+        header['Transit_information_path_lifetime'] = dao[34]
+        #dao=dao[35:]
+        for c in range(35): dao.pop(0)
+        return header
+        
     
+    ''' the DAO looks like this:
+    0x78 0x33 0x3a IPHC header
+    0x40 -- ?? -- maybe sender rank?? hop limit...
+    I was expecting here instanceID (1B), IPv6 Next Header (1B),IPv6 Hop Limit (1B), IPv6 source address (8B),IPv6 dest address (8B)
+    0x9b 0x4 0xeb 0x7a  ICMPv6 header (RPL type 9b,DAO, Checksum 2Bytes )
+    0x88 0x40 0x0 0x99  ICMPv6 header (RPL instance,flags, reserved (0), DAO sequence)
+    0x20 0x1 0x4 0x70 0x81 0xa 0xc0 0xf6 0x14 0x15 0x92 0x9 0x2 0x2c 0x0 0xa1 DODAGID 
+    
+    0x6 Option
+    DAO transit INFO (type,EFLAGS,PathControl,PathSequence,pathlifetime
+    0x6 0x1 0x0 0x40 0x16 0xaa 0x0 0x0 0x0 0x0 0x0 0x0 0x0 0xa1
+    '''
+                    
     def _parseSource(self,dao):
-        #parse source from DAO. 
-        #dao=dao[8:10] #source address starts at 8th byte in the packet.
-        return '1.1.1.' + str(random.randint(1,5))  #dummy
+        #parse source from DAO.
+        #[20, 21, 146, 11, 3, 1, 0, 233, 0, 0, 0, 0, 0, 0, 0, 225, 120, 51, 58, 64, 155, 4, 128, 50, 136, 64, 0, 153, 32, 1, 17, 17, 34, 
+        #34, 51, 51, 20, 21, 146, 11, 3, 1, 0, 233, 6, 6, 1, 0, 64, 6, 170, 0, 0, 0, 0, 0, 0, 0, 233]
+        res=dao[0:8] #source address starts at 0th byte in the packet.
+        for c in range(8): dao.pop(0)
+        #dao=dao[8:]#remove source from the chunk of bytes
+        return res  
     
-    def _parseParents(self,daos):
-        parents=[]
-        
+    def _parseDestination(self,dao):
+        #parse dest from DAO.
+        #[0, 0, 0, 0, 0, 0, 0, 225, 120, 51, 58, 64, 155, 4, 128, 50, 136, 64, 0, 153, 32, 1, 17, 17, 34, 
+        #34, 51, 51, 20, 21, 146, 11, 3, 1, 0, 233, 6, 6, 1, 0, 64, 6, 170, 0, 0, 0, 0, 0, 0, 0, 233]
+        res=dao[0:8] #dest address starts at 0th byte in the packet. because it has been cut by get source
+        for c in range(8): dao.pop(0)
+        return res  
+    
+    
+    def _parseParents(self,dao,length):
+        result=[]
+        for i in range(length):
+            result.append(dao[i*8:(i+1)*8])
         #parse all parents.
-        
-        #dummy
-        return ['1.1.1.' + str(random.randint(1,5)),'1.1.1.' + str(random.randint(1,5)),'1.1.1.' + str(random.randint(1,5)),'1.1.1.' + str(random.randint(1,5))]
+        return result
     
     #======================== helpers =========================================
     
