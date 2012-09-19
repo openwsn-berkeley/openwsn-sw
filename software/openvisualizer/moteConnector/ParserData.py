@@ -33,7 +33,7 @@ class ParserData(Parser.Parser):
         
         # log
         log.debug("received data {0}".format(input))
-        print input
+    
         # ensure input not short longer than header
         self._checkLength(input)
     
@@ -42,9 +42,9 @@ class ParserData(Parser.Parser):
         source = input[10:18]
         
         a="".join(hex(c) for c in dest)
-        print "dest="+a
+        log.debug("destination address of the packet is {0} ".format(a))
         a="".join(hex(c) for c in source)
-        print "source="+a
+        log.debug("source address of the packet is {0} ".format(a))
         
         
         iphcHeader  = input[18:20]
@@ -62,15 +62,16 @@ class ParserData(Parser.Parser):
         dam  = (iphcHeader[1] >> self.IPHC_DAM) & 0x03 #2b
         
         # for DAO DAM and SAM are 2.
-        print "dam and sam are {0},{1}".format(dam,sam) 
+        log.debug("SAM is {0}, DAM is {1}  ".format(sam,dam)) 
         if (dam ==0x03 and sam==0x03): 
             #header byte 1 contains DAM/SAM, if any of both is compressed 
             eventType = 'data.local'
             #keep src and dest for local data 
             input = input[2:]
+            log.debug("data is local")
         else:
             eventType = 'data.internet'
-            
+            log.debug("data destination is in internet")
             # extract moteId and statusElem
             try:
                (moteId) = struct.unpack('<H',''.join([chr(c) for c in headerBytes]))

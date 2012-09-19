@@ -62,6 +62,11 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 self._setNetworkPrefix,
                 signal = 'networkPrefix',
             )
+            #subscribe to LBR data to handle source routing.
+            dispatcher.connect(
+                self._IPv6PacketReceived,
+                signal = 'dataFromInternet',
+            )
             
             
             #start the moteConnectorConsumer
@@ -73,6 +78,71 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             self.moduleInit       = True
         
     #======================== public ==========================================
+    
+      # the data received from the LBR should be:
+      # - first 8 bytes: EUI64 of the final destination
+      # - remainder: 6LoWPAN packet and above
+    def _IPv6PacketReceived(self,data):
+        #print "do not underestimate the power of the dark side"
+        destination = data[:8]
+        pkt=data[8:]
+        
+        # a source route in the routing table looks like that:
+        #{'[20, 21, 146, 11, 3, 1, 0, 233]': [[20, 21, 146, 11, 3, 1, 0, 233]]}
+        
+        route=self.rpl.getRouteTo(destination)
+        if not route:
+            return #the list is empty. no route to host 
+        
+        
+        # the route is here.
+        log.debug("route src found {0}".format(route))
+        
+        if (len(route)>1):
+            #more than one hop 
+            srcRouteHeader=[]
+            srcRouteHeader.append(0x3A) #Next header
+            srcRouteHeader.append(0) #len of the routing header. to be set later
+            srcRouteHeader.append(0x03) #Routing type 3 fir src routing
+            srcRouteHeader.append(len(route)-1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
+            elided=0x08<<4 & 0x08 
+            srcRouteHeader.append(elided) #elided prefix -- all in our case
+            srcRouteHeader.append(0) #padding octets
+            srcRouteHeader.append(0) #reserved
+            srcRouteHeader.append(0) #reserved
+            for j in range(1,len(route)):
+                hop=route[j]
+                for i in range(len(hop)):
+                     srcRouteHeader.append(hop[i]) #reserved
+            
+            #now set the length 
+            srcRouteHeader[1]=len(srcRouteHeader)
+        
+            #split the packet
+            ipv6header=pkt[:10]  #TODO how long is that header???
+            pkt=pkt[10:]
+            #Split the packet, add the src routing header
+        
+            for c in srcRouteHeader:
+                ipv6header.append(c)
+            for d in pkt:
+                ipv6header.append(d)
+            # pkt reasembled with the src routing header. SEND IT
+        else:
+            #--> destination is next hop.
+            # let the packet as is??
+            ipv6header=pkt
+            pass     
+        
+        dispatcher.send(
+            signal        = 'dataForDagRoot',
+            sender        = 'rpl',
+            data          = ''.join([chr(c) for c in ipv6header]),
+        )
+               
+        return
+    
+    
     
     def _receivedData_notif(self,notif):
         
@@ -93,6 +163,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         '''
         self.timer = threading.Timer(initialPeriod,self._sendDIO)
         self.timer.start()
+        
     
     def _sendDIO(self):
         

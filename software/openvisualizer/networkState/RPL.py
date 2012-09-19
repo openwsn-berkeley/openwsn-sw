@@ -47,7 +47,6 @@ class RPL(object):
     def getRouteTo(self,destAddr):
         
         list = []
-        
         try:
             self.dataLock.acquire()
             self._getRouteTo_internal(destAddr,list)
@@ -71,7 +70,7 @@ class RPL(object):
         if (destAddr is None):
           #no more parents.  
             return
-        if (self.routes.get(destAddr) is None):
+        if (self.routes.get(str(destAddr)) is None):
             #this node does not have a list of parents. dagroot return.
             return
         else:
@@ -80,13 +79,13 @@ class RPL(object):
                 list.append(destAddr)
             
             # here pick a parent.
-            parent=self.routes.get(destAddr)[0]
+            parent=self.routes.get(str(destAddr))[0]
             
             #avoid loops
             if (parent not in list):
                 list.append(parent)
                 #add recursively non empty parents
-                nextparent=self.getRouteTo(parent,list)
+                nextparent=self._getRouteTo_internal(str(parent),list)
                 if (nextparent is not None):
                     list.append(nextparent)
     

@@ -94,9 +94,16 @@ class lbrClient(threading.Thread):
                         log.error("received packet from LBR which is too short ({0} bytes)".format(len(input)))
                         continue
                     
-                    # dispatch
+                    # dispatch the prefix
                     dispatcher.send(
                         signal        = 'dataForDagRoot',
+                        sender        = 'lbrClient',
+                        data          = input,
+                    )
+                    
+                    # dispatch the packet to network state to figure out source route.
+                    dispatcher.send(
+                        signal        = 'dataFromInternet',
                         sender        = 'lbrClient',
                         data          = input,
                     )
@@ -205,7 +212,30 @@ class lbrClient(threading.Thread):
         
         # update status
         self._updateStatus(self.STATUS_CONNECTED)
-    
+        
+        #test source routing:
+        self.timer = threading.Timer(20,self._testSourceRouting)
+        self.timer.start()
+  
+  
+    def _testSourceRouting(self):
+        pkt=[]
+        #[0, 0, 0, 0, 0, 0, 0, 233]
+        pkt=[20, 21, 146, 11, 3, 1, 0, 233] #destination address
+        #pkt=[0, 0, 0, 0, 0, 0, 0, 233]
+        
+        for i in range (127):
+            pkt.append(i)
+            
+        dispatcher.send(
+             signal        = 'dataFromInternet',
+             sender        = 'lbrClient',
+             data          = pkt,
+             )
+        #start the timer again
+        self.timer = threading.Timer(20,self._testSourceRouting)
+        self.timer.start()
+              
     def disconnect(self,reason):
         
         # log
