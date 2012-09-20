@@ -7,6 +7,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
+import struct
 
 from pydispatch import dispatcher
 
@@ -50,7 +51,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.moduleInit           = False
         
         #debug
-        self.prefix="2001:1111:2222:3333"
+        #self.prefix="2001:1111:2222:3333"
         
         if not self.moduleInit:
             # connect to dispatcher
@@ -73,7 +74,6 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             self.start()
             
             # send a DIO periodically
-            #TODO XV .. enable DIO once tested.
             self._initDIOActivity(self.DIO_PERIOD) 
             self.moduleInit       = True
         
@@ -83,23 +83,26 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
       # - first 8 bytes: EUI64 of the final destination
       # - remainder: 6LoWPAN packet and above
     def _IPv6PacketReceived(self,data):
-        #print "do not underestimate the power of the dark side"
-        destination = data[:8]
-        pkt=data[8:]
+        #destination needs to be unpacked
+        dest =struct.unpack('<BBBBBBBB',''.join([c for c in data[:8]])) 
+        destination = list(dest)
+       
+        log.debug("packet to be sent to {0}".format("".join(str(c) for c in destination)))
         
+        pkt=data[8:] 
         # a source route in the routing table looks like that:
         #{'[20, 21, 146, 11, 3, 1, 0, 233]': [[20, 21, 146, 11, 3, 1, 0, 233]]}
         
         route=self.rpl.getRouteTo(destination)
         if not route:
-            return #the list is empty. no route to host 
-        
+            return #the list is empty. no route to host. TODO Check if this is the desired behaviour.
         
         # the route is here.
         log.debug("route src found {0}".format(route))
+        route.pop(1) #remove the last element as it is this node!!
         
         if (len(route)>1):
-            #more than one hop 
+            #more than one hop -- create the source routing header. 
             srcRouteHeader=[]
             srcRouteHeader.append(0x3A) #Next header
             srcRouteHeader.append(0) #len of the routing header. to be set later
@@ -110,6 +113,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             srcRouteHeader.append(0) #padding octets
             srcRouteHeader.append(0) #reserved
             srcRouteHeader.append(0) #reserved
+            nextHop=route[0] #this is the next hop that goes in front of the pkt so openserial can read it
             for j in range(1,len(route)):
                 hop=route[j]
                 for i in range(len(hop)):
@@ -119,25 +123,34 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             srcRouteHeader[1]=len(srcRouteHeader)
         
             #split the packet
-            ipv6header=pkt[:10]  #TODO how long is that header???
+            #ipv6header=pkt[:10]  #TODO how long is that header???
+            #it is a chunk of bytes, lets unpack it
+            #ipv6tup =struct.unpack('<BBBBBBHH',''.join([c for c in pkt[:10]])) 
+            #ipv6header=list(ipv6tup)
+            #print " ".join(chr(c) for c in ipv6header)
+            ipv6header=pkt[:10]
             pkt=pkt[10:]
             #Split the packet, add the src routing header
-        
+            #build the pkt as NEXT HOP + IPv6 Header + SRC ROUTING HEADER + REST OF THE PKT
+            for c in ipv6header:  
+                nextHop.append(c)
             for c in srcRouteHeader:
-                ipv6header.append(c)
+                nextHop.append(c)
             for d in pkt:
-                ipv6header.append(d)
+                nextHop.append(d)
             # pkt reasembled with the src routing header. SEND IT
+            lowpanmsg="".join(c for c in nextHop)
+            
         else:
             #--> destination is next hop.
             # let the packet as is??
-            ipv6header=pkt
+            lowpanmsg=data
             pass     
         
         dispatcher.send(
             signal        = 'dataForDagRoot',
             sender        = 'rpl',
-            data          = ''.join([chr(c) for c in ipv6header]),
+            data          = lowpanmsg,
         )
                
         return

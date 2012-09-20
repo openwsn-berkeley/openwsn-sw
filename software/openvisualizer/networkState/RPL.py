@@ -35,8 +35,8 @@ class RPL(object):
         updates the DAO table
         '''
         parents     = []
-        source      = self._parseSource(dao) 
         destination = self._parseDestination(dao)
+        source      = self._parseSource(dao) 
         DAOheader   = self._retrieveDAOHeader(dao)
         parents     = self._parseParents(dao,DAOheader['Transit_information_length'])
         

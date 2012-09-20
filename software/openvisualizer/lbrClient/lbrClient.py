@@ -214,8 +214,8 @@ class lbrClient(threading.Thread):
         self._updateStatus(self.STATUS_CONNECTED)
         
         #test source routing:
-        self.timer = threading.Timer(20,self._testSourceRouting)
-        self.timer.start()
+        #self.timer = threading.Timer(20,self._testSourceRouting)
+        #self.timer.start()
   
   
     def _testSourceRouting(self):
@@ -233,8 +233,8 @@ class lbrClient(threading.Thread):
              data          = pkt,
              )
         #start the timer again
-        self.timer = threading.Timer(20,self._testSourceRouting)
-        self.timer.start()
+        #self.timer = threading.Timer(20,self._testSourceRouting)
+        #self.timer.start()
               
     def disconnect(self,reason):
         
