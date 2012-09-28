@@ -18,6 +18,8 @@ class RPL(object):
     '''
     classdocs
     '''
+    
+    _HEADER_LEN = 35
 
     def __init__(self):
         '''
@@ -37,6 +39,12 @@ class RPL(object):
         parents     = []
         destination = self._parseDestination(dao)
         source      = self._parseSource(dao) 
+        #check that the DAO has at least the minimum header
+        if (len(dao) < self._HEADER_LEN):
+             log.debug('received pkt different than expecte DAO. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao)))
+             print 'received pkt different than expecte DAO. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao))
+             return
+         
         DAOheader   = self._retrieveDAOHeader(dao)
         parents     = self._parseParents(dao,DAOheader['Transit_information_length'])
         
@@ -131,7 +139,7 @@ class RPL(object):
         header['Transit_information_path_sequence'] = dao[33]
         header['Transit_information_path_lifetime'] = dao[34]
         #dao=dao[35:]
-        for c in range(35): dao.pop(0)
+        for c in range(self._HEADER_LEN): dao.pop(0)
         return header
         
     
