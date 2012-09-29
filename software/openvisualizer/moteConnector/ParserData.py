@@ -46,11 +46,7 @@ class ParserData(Parser.Parser):
         a="".join(hex(c) for c in source)
         log.debug("source address of the packet is {0} ".format(a))
         
-        
         iphcHeader  = input[18:20]
-        
-        # check if local data or internet data. to do so we need to look at the header and see if it is compressed.
-        # this is the situation where DAM and SAM fields are 0x03 or 0x02
         
         #from 6LoWPAN compression draft:
         # DAM/SAM 
@@ -58,35 +54,46 @@ class ParserData(Parser.Parser):
         #    of the address are the link-local prefix padded with zeros.
         #    The remaining 64 bits are computed from the encapsulating
         #    header (e.g. 802.15.4 or IPv6 destination address)
+        
         sam  = (iphcHeader[1] >> self.IPHC_SAM) & 0x03 #2b
         dam  = (iphcHeader[1] >> self.IPHC_DAM) & 0x03 #2b
         
-        # for DAO DAM and SAM are 2.
-        log.debug("SAM is {0}, DAM is {1}  ".format(sam,dam)) 
-        if (dam ==0x03 and sam==0x03): 
-            #header byte 1 contains DAM/SAM, if any of both is compressed 
-            eventType = 'data.local'
-            #keep src and dest for local data 
-            input = input[2:]
-            log.debug("data is local")
+        if (sam==0x01 and dam==0x03):
+            #source is not elided so it is in the iphc header.
+            #skip 2 bytes of ICMP header being nexhop, hop limit,..
+            icmpHeader = input[20:22]
+            source=input[22:30]
+            rplheader=input[30:32]
+
+            if (rplheader[0]==155 and rplheader[1]==4):
+                #this is a DAO
+                eventType = 'data.local'
+                #keep src and dest for local data 
+                input = input[2:]
+                log.debug("data is local")  
+                
+                return (eventType,input)
+            else:
+                pass
         else:
-            eventType = 'data.internet'
-            log.debug("data destination is in internet")
+            pass
+        
+        
+        #No DAO, it is data internet.
+        eventType = 'data.internet'
+        log.debug("data destination is in internet")
             # extract moteId and statusElem
-            try:
-               (moteId) = struct.unpack('<H',''.join([chr(c) for c in headerBytes]))
-            except struct.error:
-                raise ParserException(ParserException.DESERIALIZE,"could not extract moteId from {0}".format(headerBytes))
+        try:
+          (moteId) = struct.unpack('<H',''.join([chr(c) for c in headerBytes]))
+        except struct.error:
+           raise ParserException(ParserException.DESERIALIZE,"could not extract moteId from {0}".format(headerBytes))
             
             
             # log
-            log.debug("moteId={0}".format(moteId))
+        log.debug("moteId={0}".format(moteId))
             #remove src and dest and mote id at the beginning.
-            input = input[18:]
+        input = input[18:]
              
-        # jump the header bytes
-       
-        
         return (eventType,input)
     
     #======================== private =========================================

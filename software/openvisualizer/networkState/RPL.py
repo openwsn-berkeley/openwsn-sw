@@ -19,7 +19,7 @@ class RPL(object):
     classdocs
     '''
     
-    _HEADER_LEN = 35
+    _HEADER_LEN = 43
 
     def __init__(self):
         '''
@@ -117,27 +117,29 @@ class RPL(object):
         #IPv6
         header['IPv6_nextHeader']=dao[2]
         header['IPv6_hoplimit']=dao[3]
-        header['ICMPv6_RPLType']=dao[4]
-        header['ICMPv6_Code']=dao[5]
-        header['ICMPv6_CheckSum_b0']=dao[6]
-        header['ICMPv6_CheckSum_b1']=dao[7]
+        header['source_address'] = dao[4:12]
+        
+        header['ICMPv6_RPLType']=dao[12]
+        header['ICMPv6_Code']=dao[13]
+        header['ICMPv6_CheckSum_b0']=dao[14]
+        header['ICMPv6_CheckSum_b1']=dao[15]
         #RPL
-        header['RPL_InstanceID']=dao[8]
-        header['RPL_flags']=dao[9]
-        header['RPL_Reserved']=dao[10]
-        header['RPL_DAO_Sequence']=dao[11]
+        header['RPL_InstanceID']=dao[16]
+        header['RPL_flags']=dao[17]
+        header['RPL_Reserved']=dao[18]
+        header['RPL_DAO_Sequence']=dao[19]
         
         #DODAGID 16bytes
-        header['DODAGID'] = dao[12:28]
-        header['RPL_option'] = dao[28]
+        header['DODAGID'] = dao[20:36]
+        header['RPL_option'] = dao[36]
         
         #transit information object
-        header['Transit_information_type'] = dao[29]
-        header['Transit_information_length'] = dao[30]
-        header['Transit_information_flags'] = dao[31]
-        header['Transit_information_path_control'] = dao[32]
-        header['Transit_information_path_sequence'] = dao[33]
-        header['Transit_information_path_lifetime'] = dao[34]
+        header['Transit_information_type'] = dao[37]
+        header['Transit_information_length'] = dao[38]
+        header['Transit_information_flags'] = dao[39]
+        header['Transit_information_path_control'] = dao[40]
+        header['Transit_information_path_sequence'] = dao[41]
+        header['Transit_information_path_lifetime'] = dao[42]
         #dao=dao[35:]
         for c in range(self._HEADER_LEN): dao.pop(0)
         return header
