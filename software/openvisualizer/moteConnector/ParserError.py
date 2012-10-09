@@ -38,20 +38,21 @@ class ParserError(Parser.Parser):
             callingComponent,
             error_code,
             arg1,
-            arg2) = struct.unpack('<HBBHH',''.join([chr(c) for c in input]))
+            arg2) = struct.unpack('>HBBHH',''.join([chr(c) for c in input]))
          
         except struct.error:
             #print "PARSER ERROR could not extract data from {0}".format(input)
             raise ParserException(ParserException.DESERIALIZE,"could not extract data from {0}".format(input))
         # turn into string
-        
+               
+            
         output = "[{COMPONENT}] {ERROR_DESC}".format(
                                     COMPONENT  = self._translateCallingComponent(callingComponent),
                                     ERROR_DESC = self._translateErrorDescription(error_code,arg1,arg2)
                                 )
         # log
         log.debug("error = {0}".format(output))
-        
+        print "error = {0}".format(output)
         return ('error',input)
     
     #======================== private =========================================
