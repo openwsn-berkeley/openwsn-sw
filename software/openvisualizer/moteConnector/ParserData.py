@@ -17,7 +17,7 @@ import Parser
 class ParserData(Parser.Parser):
     
     HEADER_LENGTH  = 2
-    uSPERTIC       = 33 #uS per tic.
+    MSPERSLOT       = 15 #ms per slot.
     
     IPHC_SAM       = 4
     IPHC_DAM       = 0
@@ -126,7 +126,7 @@ class ParserData(Parser.Parser):
             #udp port 61001 for udplatency app.
                aux=input[len(input)-5:]
                diff=self._asndiference(aux,asnbytes)
-               timeinus=diff*self.uSPERTIC
+               timeinus=diff*self.MSPERSLOT
                node=input[len(input)-13:len(input)-5]
                #print "Node {0} = {1} uS".format(hex(node[7]),timeinus)
                #log.debug("Node {0} = {1} uS".format(hex(node[7]),timeinus))
@@ -139,8 +139,8 @@ class ParserData(Parser.Parser):
                      data          = (node,timeinus),
                   )
                else:
-                   print "Wrong latency computation {0} = {1} uS".format(str(node),timeinus)
-                   log.debug("Wrong latency computation {0} = {1} uS".format(str(node),timeinus))
+                   print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
+                   log.debug("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
                    pass
                #computed=struct.pack('<H', timeinus)#to be appended to the pkt
                #for x in computed:
