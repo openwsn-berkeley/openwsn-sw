@@ -8,6 +8,7 @@ log.addHandler(NullHandler())
 
 import threading
 import struct
+from pprint import pprint
 
 from pydispatch import dispatcher
 
@@ -50,6 +51,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.address              = None
         self.moduleInit           = False
         
+        self.latencyStats     = {} #empty dictionary
+        
         #debug
         #self.prefix="2001:1111:2222:3333"
         
@@ -68,7 +71,11 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 self._IPv6PacketReceived,
                 signal = 'dataFromInternet',
             )
-            
+            #get latency information 
+            dispatcher.connect(
+                self._latencyStatsRcv,
+                signal = 'latency',
+            )
             
             #start the moteConnectorConsumer
             self.start()
@@ -78,6 +85,42 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             self.moduleInit       = True
         
     #======================== public ==========================================
+    ''' This method is invoked whenever a UDP packet is send from a mote from UDPLatency application. This app listens at port 61001 
+        and computes the latency of a packet. Note that this app is a crosslayer app since the mote sends the data within a UDP packet 
+        and OpenVisualizer (ParserData) handles that packet and reads UDP payload to compute time difference. At bridge level on the dagroot, 
+        the ASN of the DAGROOt is appended to the serial port to be able to know what is the ASN at reception side. The LATENCY values are in uS.'''  
+    def _latencyStatsRcv(self,data):
+        address=",".join(hex(c) for c in data[0])
+        latency=data[1]
+        stats={}#dictionary of stats
+        
+        if (self.latencyStats.get(str(address)) is None):
+           #none for this node.. create initial stats
+           stats.update({'min':latency})
+           stats.update({'max':latency})
+           stats.update({'lastVal':latency})
+           stats.update({'num':1})
+           stats.update({'avg':latency})
+        else:
+            #get and update
+           stats=self.latencyStats.get(str(address))
+           if (stats.get('min')>latency):
+               stats.update({'min':latency})
+           if (stats.get('max')<latency):
+               stats.update({'max':latency})
+           
+           stats.update({'lastVal':latency})
+            
+           stats.update({'avg':((stats.get('avg')*stats.get('num'))+latency)/(stats.get('num')+1)})
+           stats.update({'num':(stats.get('num')+1)})
+        
+        self.stateLock.acquire()  
+        self.latencyStats.update({str(address):stats}) 
+        self.stateLock.release()               
+        #add to dictionary and compute stats...
+        log.debug("Latency stats in uS {0}".format(self.latencyStats))
+        pprint(self.latencyStats)        
+        
     
       # the data received from the LBR should be:
       # - first 8 bytes: EUI64 of the final destination
