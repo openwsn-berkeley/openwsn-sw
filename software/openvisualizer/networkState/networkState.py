@@ -92,6 +92,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     def _latencyStatsRcv(self,data):
         address=",".join(hex(c) for c in data[0])
         latency=data[1]
+        parent=",".join(hex(c) for c in data[2])
+        
         stats={}#dictionary of stats
         
         if (self.latencyStats.get(str(address)) is None):
@@ -101,6 +103,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
            stats.update({'lastVal':latency})
            stats.update({'num':1})
            stats.update({'avg':latency})
+           stats.update({'prefParent':parent})
         else:
             #get and update
            stats=self.latencyStats.get(str(address))
@@ -113,6 +116,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             
            stats.update({'avg':((stats.get('avg')*stats.get('num'))+latency)/(stats.get('num')+1)})
            stats.update({'num':(stats.get('num')+1)})
+           stats.update({'prefParent':parent})
         
         self.stateLock.acquire()  
         self.latencyStats.update({str(address):stats}) 

@@ -48,11 +48,11 @@ class ParserData(Parser.Parser):
         self._checkLength(input)
     
         headerBytes = input[:2]
-        
+        #asn comes in the next 5bytes.  
         asnbytes=input[2:7]
         (self._asn) = struct.unpack('<BHH',''.join([chr(c) for c in asnbytes]))
         
-        
+        #source and destination of the message
         dest = input[7:15]
         source = input[15:23]
         
@@ -61,7 +61,7 @@ class ParserData(Parser.Parser):
         a="".join(hex(c) for c in source)
         log.debug("source address of the packet is {0} ".format(a))
        
-       
+        #check if the message is local or internet
         if (len(input) > 25):
             iphcHeader  = input[13:25]
             
@@ -97,7 +97,7 @@ class ParserData(Parser.Parser):
         else:
             pass
         
-        #No DAO, it is data internet.
+        #No DAO, it is data Internet.
         eventType = 'data.internet'
         log.debug("data destination is in internet")
             # extract moteId and statusElem
@@ -105,43 +105,39 @@ class ParserData(Parser.Parser):
           (moteId) = struct.unpack('<H',''.join([chr(c) for c in headerBytes]))
         except struct.error:
            raise ParserException(ParserException.DESERIALIZE,"could not extract moteId from {0}".format(headerBytes))
-            
-            
             # log
         log.debug("moteId={0}".format(moteId))
             #remove asn src and dest and mote id at the beginning.
         input = input[23:]
+        
         #when the packet goes to internet it comes with the asn at the beginning as timestamp.
         
         #cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         #then notify a latency component that will plot that information.
-        
-        #[237, 0, 48, 4, 0, 0, 0, 120, 0, 17, 64, 0, 0, 0, 0, 0, 0, 0, 0, 20, 21, 146, 11, 3, 1, 0, 230, 32, 1, 4, 112, 0, 102, 0, 23, 0, 0, 
-        # 0, 0, 0, 0, 0, 2, 238, 73, 238, 73, 0, 21, 124, 45, 20, 21, 146, 11, 3, 1, 0, 230, 46, 4, 0, 0, 0]
-             
-        #0x58,0x3,0x0,0x0,0x0,0x3,0x1,0x0,0xe6,0x20,0x1,0x4,0x70,0x0,0x66,0x0,0x17,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x2,0xee,0x49,0xee,0x49,0x0,0x15,0x55,0x2e,0x14,0x15,0x92,0xb,0x3,0x1,0x0,0xe6,0x55,0x3,0x0,0x0,0x0
         # port 61001==0xee,0x49
         if (len(input) > 23):
            if (input[22]==238 and input[23]==73):
             #udp port 61001 for udplatency app.
-               aux=input[len(input)-5:]
-               diff=self._asndiference(aux,asnbytes)
-               timeinus=diff*self.MSPERSLOT
-               node=input[len(input)-13:len(input)-5]
-               #print "Node {0} = {1} uS".format(hex(node[7]),timeinus)
-               #log.debug("Node {0} = {1} uS".format(hex(node[7]),timeinus))
+               aux=input[len(input)-5:]                 #last 5 bytes of the packet are the ASN in the UDP latency packet
+               diff=self._asndiference(aux,asnbytes)    #calculate difference 
+               timeinus=diff*self.MSPERSLOT             #compute time in ms 
+               parent=input[len(input)-21:len(input)-13]#the parent node is the first element (used to know topology)
+               node=input[len(input)-13:len(input)-5] #the node address
                
                if (timeinus<0xFFFF):
                #notify latency manager component. only if a valid value
                   dispatcher.send(
                      signal        = 'latency',
                      sender        = 'parserData',
-                     data          = (node,timeinus),
+                     data          = (node,timeinus,parent),
                   )
                else:
+                   #this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
                    print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
+                   print ",".join(hex(c) for c in input)
                    log.debug("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
                    pass
+               #in case we want to send the computed time to internet..
                #computed=struct.pack('<H', timeinus)#to be appended to the pkt
                #for x in computed:
                    #input.append(x)
