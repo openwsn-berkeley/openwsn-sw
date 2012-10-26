@@ -9,6 +9,7 @@ log.addHandler(NullHandler())
 import threading
 import struct
 from pprint import pprint
+from datetime import datetime
 
 from pydispatch import dispatcher
 
@@ -100,10 +101,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
            #none for this node.. create initial stats
            stats.update({'min':latency})
            stats.update({'max':latency})
-           stats.update({'lastVal':latency})
            stats.update({'num':1})
            stats.update({'avg':latency})
-           stats.update({'prefParent':parent})
         else:
             #get and update
            stats=self.latencyStats.get(str(address))
@@ -111,12 +110,12 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                stats.update({'min':latency})
            if (stats.get('max')<latency):
                stats.update({'max':latency})
-           
-           stats.update({'lastVal':latency})
-            
            stats.update({'avg':((stats.get('avg')*stats.get('num'))+latency)/(stats.get('num')+1)})
            stats.update({'num':(stats.get('num')+1)})
-           stats.update({'prefParent':parent})
+        #this fields are common
+        stats.update({'lastVal':latency})
+        stats.update({'prefParent':parent})
+        stats.update({'lastMsg':datetime.now()})
         
         self.stateLock.acquire()  
         self.latencyStats.update({str(address):stats}) 
