@@ -103,6 +103,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
            stats.update({'max':latency})
            stats.update({'num':1})
            stats.update({'avg':latency})
+           stats.update({'parentSwitch':1})#changes of parent
         else:
             #get and update
            stats=self.latencyStats.get(str(address))
@@ -112,6 +113,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                stats.update({'max':latency})
            stats.update({'avg':((stats.get('avg')*stats.get('num'))+latency)/(stats.get('num')+1)})
            stats.update({'num':(stats.get('num')+1)})
+           if (stats.get('prefParent')!=parent):
+               stats.update({'parentSwitch':(stats.get('parentSwitch')+1)})#record parent change since last message
         #this fields are common
         stats.update({'lastVal':latency})
         stats.update({'prefParent':parent})
