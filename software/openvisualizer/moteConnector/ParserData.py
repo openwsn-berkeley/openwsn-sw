@@ -43,7 +43,7 @@ class ParserData(Parser.Parser):
         
         # log
         log.debug("received data {0}".format(input))
-    
+        #print ",".join(hex(c) for c in input)
         # ensure input not short longer than header
         self._checkLength(input)
     
@@ -80,13 +80,19 @@ class ParserData(Parser.Parser):
                 #skip 2 bytes of ICMP header being nexhop, hop limit,..
                 icmpHeader = input[25:27]
                 source=input[27:35]
+                for i in range(len(source)):
+                    input[15+i]=input[27+i]
+                auxx=input[15:23]
+                #print "{0}=={1}".format(auxx,source);    
+                    
+                    
                 rplheader=input[35:37]
     
                 if (rplheader[0]==155 and rplheader[1]==4):
                     #this is a DAO
                     eventType = 'data.local'
-                    #keep src and dest for local data 
-                    input = input[2:]
+                    #keep src and dest for local data --remove asn though
+                    input = input[7:]
                     log.debug("data is local")  
                     
                     return (eventType,input)
