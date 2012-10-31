@@ -295,8 +295,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         # checksum of all the fields checksum on ICMP Header
         checksum   = self._calculateCRC(dio[17:], len(dio[17:]))
-        dio[15]    = checksum[0]
-        dio[16]    = checksum[1]
+        dio[14]    = checksum[0]
+        dio[15]    = checksum[1]
         
         # log
         log.debug('sending DIO {0}'.format(' '.join(['%.2x'%c for c in dio])))
