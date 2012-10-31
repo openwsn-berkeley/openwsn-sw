@@ -13,6 +13,7 @@ log.addHandler(NullHandler())
 
 import threading
 import random
+from pprint import pprint
 
 class RPL(object):
     '''
@@ -20,6 +21,7 @@ class RPL(object):
     '''
     
     _HEADER_LEN = 43
+    _ADDR_LEN   = 8
 
     def __init__(self):
         '''
@@ -39,18 +41,25 @@ class RPL(object):
         parents     = []
         destination = self._parseDestination(dao)
         source      = self._parseSource(dao) 
+        #print ",".join(hex(c) for c in source)
         #check that the DAO has at least the minimum header
         if (len(dao) < self._HEADER_LEN):
              log.debug('received pkt different than expecte DAO. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao)))
              print 'received pkt different than expecte DAO. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao))
              return
-         
+        
+        if (len(source)!=self._ADDR_LEN):
+             log.debug('received pkt with src address different than expected. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao)))
+             print 'received pkt with src address different than expected. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao))
+             return
+          
         DAOheader   = self._retrieveDAOHeader(dao)
         parents     = self._parseParents(dao,DAOheader['Transit_information_length'])
         
         self.dataLock.acquire()
         self.routes.update({str(source):parents})
         self.dataLock.release()
+        pprint(self.routes) 
     
     def getRouteTo(self,destAddr):
         
@@ -109,6 +118,9 @@ class RPL(object):
     #1 byte path sequence 6, 
     #1 byte path lifetime 170,
     # parents addresses 0, 0, 0, 0, 0, 0, 0, 233
+
+#list: [9, 2, 44, 0, 146, 120, 19, 58, 64, 20, 21, 146, 9, 2, 44, 0, 146, 155, 4, 95, 5, 136, 64, 0, 153, 32, 1, 17, 17, 34, 34, 51, 
+# 51, 20, 21, 146, 9, 2, 44, 0, 155, 6, 6, 2, 0, 64, 74, 170, 20, 21, 146, 9, 2, 44, 0, 220, 20, 21, 146, 9, 2, 44, 0, 155]
 
     def _retrieveDAOHeader(self,dao):
         header={}
