@@ -54,7 +54,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         self.latencyStats     = {} #empty dictionary
         
-        #debug
+        #debug when lbr does not work
         #self.prefix="2001:1111:2222:3333"
         
         if not self.moduleInit:
@@ -134,6 +134,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     def _IPv6PacketReceived(self,data):
         #destination needs to be unpacked
         dest =struct.unpack('<BBBBBBBB',''.join([c for c in data[:8]])) 
+        #test only
+        #dest=data[:8]
         destination = list(dest)
        
         log.debug("packet to be sent to {0}".format("".join(str(c) for c in destination)))
@@ -144,11 +146,13 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         route=self.rpl.getRouteTo(destination)
         if not route:
+            log.debug("No route to required destination {0}".format("".join(str(c) for c in destination)))
+            #is that possible that this packet is an icmpv6 router adv? a ping??
             return #the list is empty. no route to host. TODO Check if this is the desired behaviour.
         
         # the route is here.
         log.debug("route src found {0}".format(route))
-        route.pop(1) #remove the last element as it is this node!!
+        route.pop() #remove the last element as it is this node!!
         
         if (len(route)>1):
             #more than one hop -- create the source routing header. 
@@ -162,7 +166,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             srcRouteHeader.append(0) #padding octets
             srcRouteHeader.append(0) #reserved
             srcRouteHeader.append(0) #reserved
-            nextHop=route[0] #this is the next hop that goes in front of the pkt so openserial can read it
+            nextHop=list(route[0]) #this is the next hop that goes in front of the pkt so openserial can read it
             for j in range(1,len(route)):
                 hop=route[j]
                 for i in range(len(hop)):
@@ -187,8 +191,15 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 nextHop.append(c)
             for d in pkt:
                 nextHop.append(d)
+                
+            #TODO No fragmentation so we need to check the size!!!!
+            if len(nextHop)>136:#127+8
+                 log.debug("packet too long. size {0}".format(len(nextHop)))
+                 return    
             # pkt reasembled with the src routing header. SEND IT
             lowpanmsg="".join(c for c in nextHop)
+            #debug xv
+            #lowpanmsg="".join(str(c) for c in nextHop)
             
         else:
             #--> destination is next hop.
