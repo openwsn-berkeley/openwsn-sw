@@ -62,8 +62,8 @@ class ParserData(Parser.Parser):
         log.debug("source address of the packet is {0} ".format(a))
        
         #check if the message is local or internet
-        if (len(input) > 25):
-            iphcHeader  = input[13:25]
+        if (len(input) > 35):
+            iphcHeader  = input[23:35]
             
             #from 6LoWPAN compression draft:
             # DAM/SAM 
@@ -82,7 +82,7 @@ class ParserData(Parser.Parser):
                 source=input[27:35]
                 for i in range(len(source)):
                     input[15+i]=input[27+i]
-                auxx=input[15:23]
+                #auxx=input[15:23]
                 #print "{0}=={1}".format(auxx,source);    
                     
                     
