@@ -120,6 +120,10 @@ class lbrClient(threading.Thread):
         # log
         log.debug("connecting to {2}@{0}:{1}".format(lbrAddr,lbrPort,netname))
         
+        #test source routing:
+        #self.timer = threading.Timer(20,self._testSourceRouting)
+        #self.timer.start()
+        
         # store connection params
         self._updateConnectParams(lbrAddr,lbrPort,netname)
         
@@ -194,9 +198,8 @@ class lbrClient(threading.Thread):
             
             # abort connection
             return
-        
-        if (len(input)!=20 or
-            input[0]!='P'):
+        #the packet should be at least size 20 which is P+prefix 
+        if (len(input) < 20 or input[0]!='P'):
             
             # disconnect
             self.disconnect('Invalid prefix information from LBR')
@@ -208,23 +211,22 @@ class lbrClient(threading.Thread):
         self.socket.settimeout(None)
         
         # record prefix
-        self._storePrefix(input[1:])
+        self._storePrefix(input[1:20])
         
         # update status
         self._updateStatus(self.STATUS_CONNECTED)
         
-        #test source routing:
-        #self.timer = threading.Timer(20,self._testSourceRouting)
-        #self.timer.start()
+     
   
   
     def _testSourceRouting(self):
         pkt=[]
         #[0, 0, 0, 0, 0, 0, 0, 233]
-        pkt=[20, 21, 146, 11, 3, 1, 0, 233] #destination address
+        pkt=[20, 21, 146, 9, 2, 44, 0, 216] #destination address
+        
         #pkt=[0, 0, 0, 0, 0, 0, 0, 233]
         
-        for i in range (127):
+        for i in range (50):
             pkt.append(i)
             
         dispatcher.send(
