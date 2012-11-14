@@ -140,73 +140,82 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
        
         log.debug("packet to be sent to {0}".format("".join(str(c) for c in destination)))
         
-        pkt=data[8:] 
-        # a source route in the routing table looks like that:
-        #{'[20, 21, 146, 11, 3, 1, 0, 233]': [[20, 21, 146, 11, 3, 1, 0, 233]]}
-        
-        route=self.rpl.getRouteTo(destination)
-        if not route:
-            log.debug("No route to required destination {0}".format("".join(str(c) for c in destination)))
-            #is that possible that this packet is an icmpv6 router adv? a ping??
-            return #the list is empty. no route to host. TODO Check if this is the desired behaviour.
-        
-        # the route is here.
-        log.debug("route src found {0}".format(route))
-        route.pop() #remove the last element as it is this node!!
-        
-        if (len(route)>1):
-            #more than one hop -- create the source routing header. 
-            srcRouteHeader=[]
-            srcRouteHeader.append(0x3A) #Next header
-            srcRouteHeader.append(0) #len of the routing header. to be set later
-            srcRouteHeader.append(0x03) #Routing type 3 fir src routing
-            srcRouteHeader.append(len(route)-1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
-            elided=0x08<<4 & 0x08 
-            srcRouteHeader.append(elided) #elided prefix -- all in our case
-            srcRouteHeader.append(0) #padding octets
-            srcRouteHeader.append(0) #reserved
-            srcRouteHeader.append(0) #reserved
-            nextHop=list(route[0]) #this is the next hop that goes in front of the pkt so openserial can read it
-            for j in range(1,len(route)):
-                hop=route[j]
-                for i in range(len(hop)):
-                     srcRouteHeader.append(hop[i]) #reserved
-            
-            #now set the length 
-            srcRouteHeader[1]=len(srcRouteHeader)
-        
-            #split the packet
-            #ipv6header=pkt[:10]  #TODO how long is that header???
-            #it is a chunk of bytes, lets unpack it
-            #ipv6tup =struct.unpack('<BBBBBBHH',''.join([c for c in pkt[:10]])) 
-            #ipv6header=list(ipv6tup)
-            #print " ".join(chr(c) for c in ipv6header)
-            ipv6header=pkt[:10]
-            pkt=pkt[10:]
-            #Split the packet, add the src routing header
-            #build the pkt as NEXT HOP + IPv6 Header + SRC ROUTING HEADER + REST OF THE PKT
-            for c in ipv6header:  
-                nextHop.append(c)
-            for c in srcRouteHeader:
-                nextHop.append(c)
-            for d in pkt:
-                nextHop.append(d)
-                
-            #TODO No fragmentation so we need to check the size!!!!
-            if len(nextHop)>136:#127+8
-                 log.debug("packet too long. size {0}".format(len(nextHop)))
-                 return    
-            # pkt reasembled with the src routing header. SEND IT
-            lowpanmsg="".join(c for c in nextHop)
-            #debug xv
-            #lowpanmsg="".join(str(c) for c in nextHop)
-            
-        else:
-            #--> destination is next hop.
-            # let the packet as is??
+        if (self._isbroadcast(destination)):
+            #bypass source routing as it is a broadcast packet.
+            #this is a RADV, once RPL works perfectly this pkt should be destroyed instead.
             lowpanmsg=data
-            pass     
-        
+            log.debug("broadcast packet {0}".format("".join(str(c) for c in data)))
+            #return #nothing is send RADV are not needed.
+        else:    
+            #pkt to a specific address
+            pkt=data[8:] 
+            # a source route in the routing table looks like that:
+            #{'[20, 21, 146, 11, 3, 1, 0, 233]': [[20, 21, 146, 11, 3, 1, 0, 233]]}
+            route=self.rpl.getRouteTo(destination)
+            if not route:
+                #can be me!!
+                log.debug("No route to required destination {0}".format("".join(str(c) for c in destination)))
+                #is that possible that this packet is an icmpv6 router adv? a ping??
+                #We decided that the GW is only L2 and hence cannot be ping etc...
+                return #the list is empty. no route to host. TODO Check if this is the desired behaviour.
+            
+            # the route is here.
+            log.debug("route src found {0}".format(route))
+            route.pop() #remove the last element as it is this node!!
+            
+            if (len(route)>1):
+                #more than one hop -- create the source routing header. 
+                srcRouteHeader=[]
+                srcRouteHeader.append(0x3A) #Next header
+                srcRouteHeader.append(0) #len of the routing header. to be set later
+                srcRouteHeader.append(0x03) #Routing type 3 fir src routing
+                srcRouteHeader.append(len(route)-1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
+                elided=0x08<<4 & 0x08 
+                srcRouteHeader.append(elided) #elided prefix -- all in our case
+                srcRouteHeader.append(0) #padding octets
+                srcRouteHeader.append(0) #reserved
+                srcRouteHeader.append(0) #reserved
+                nextHop=list(route[0]) #this is the next hop that goes in front of the pkt so openserial can read it
+                for j in range(1,len(route)):
+                    hop=route[j]
+                    for i in range(len(hop)):
+                         srcRouteHeader.append(hop[i]) #reserved
+                
+                #now set the length 
+                srcRouteHeader[1]=len(srcRouteHeader)
+                #10 bytes ipv6 header
+                ipv6header=pkt[:10]
+                pkt=pkt[10:]
+                #Split the packet, add the src routing header
+                #build the pkt as NEXT HOP + IPv6 Header + SRC ROUTING HEADER + REST OF THE PKT
+                for c in ipv6header:  
+                    nextHop.append(c)
+                for c in srcRouteHeader:
+                    nextHop.append(c)
+                for d in pkt:
+                    nextHop.append(d)
+                    
+                #TODO No fragmentation so we need to check the size!!!!
+                if len(nextHop)>136:#127+8
+                     log.debug("packet too long. size {0}".format(len(nextHop)))
+                     return    
+                # pkt reasembled with the src routing header. SEND IT
+                lowpanmsg="".join(c for c in nextHop)
+                
+                #debug xv
+                #lowpanmsg="".join(str(c) for c in nextHop)
+                
+            else:
+                #--> destination is next hop.
+                # let the packet as is??
+                if len(data)>136:#127+8
+                     log.debug("packet too long. size {0}".format(len(data)))
+                     print "packet too long. size {0}".format(len(data))
+                     return    
+                
+                lowpanmsg=data
+                pass     
+            
         dispatcher.send(
             signal        = 'dataForDagRoot',
             sender        = 'rpl',
@@ -216,7 +225,13 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         return
     
     
-    
+    def _isbroadcast(self,destination):
+        a = True
+        for x in destination:
+            a=(a and (x==255))
+        return a;
+        
+        
     def _receivedData_notif(self,notif):
         
         # log
