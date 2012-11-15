@@ -206,6 +206,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 #lowpanmsg="".join(str(c) for c in nextHop)
                 
             else:
+                log.debug("destination is next hop")
                 #--> destination is next hop.
                 # let the packet as is??
                 if len(data)>136:#127+8
