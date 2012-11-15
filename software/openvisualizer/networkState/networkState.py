@@ -144,6 +144,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             #bypass source routing as it is a broadcast packet.
             #this is a RADV, once RPL works perfectly this pkt should be destroyed instead.
             lowpanmsg=data
+            
             log.debug("broadcast packet {0}".format("".join(str(c) for c in data)))
             #return #nothing is send RADV are not needed.
         else:    
@@ -166,7 +167,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             if (len(route)>1):
                 #more than one hop -- create the source routing header. 
                 srcRouteHeader=[]
-                srcRouteHeader.append(0x3A) #Next header
+                srcRouteHeader.append(0x2b) #Next header should be 43 as RFC2460 page 11.
+                 
                 srcRouteHeader.append(0) #len of the routing header. to be set later
                 srcRouteHeader.append(0x03) #Routing type 3 fir src routing
                 srcRouteHeader.append(len(route)-1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
