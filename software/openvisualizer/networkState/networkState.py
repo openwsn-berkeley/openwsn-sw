@@ -18,6 +18,31 @@ import RPL
 
 class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     
+    MAX_SERIAL_PKT_SIZE = 136 #max lenght for a packet 8+127
+    
+    #src routing iphc header bytes
+    SR_DISPATCH_MASK = 3<<5
+    SR_TF_MASK       = 3<<3 #elided traffic fields.
+    SR_NH_MASK       = 0<<1 #not compressed next header as we need to advertise src routing header
+    SR_HLIM_MASK     = 1<<0 #hop limit 1?? 1hop only?
+    
+    SR_CID_MASK      = 0
+    SR_SAC_MASK      = 0
+    SR_SAM_MASK      = 0 #fully 128bit
+    SR_M_MASK        = 0
+    SR_DAC_MASK      = 0
+    SR_DAM_MASK      = 3 #compressed as it is in the src routing header??
+    SR_NH_VALUE      = 0x2b 
+    
+    SR_FIR_TYPE      = 0x03
+               
+    NHC_UDP_MASK     = 0xf8          # b1111 1000
+    NHC_UDP_ID       = 0xf0          # b1111 0000            
+    
+    IANA_UNDEFINED   = 0x00
+    IANA_UDP         = 0x11
+    #DIO header bytes
+    
     MOP_DIO_A      = 1<<5
     MOP_DIO_B      = 1<<4
     MOP_DIO_C      = 1<<3
@@ -26,7 +51,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     PRF_DIO_C      = 1<<0
     G_DIO          = 1<<7
     
-    DIO_PERIOD     = 10 # period between successive DIOs, in seconds
+    DIO_PERIOD     = 30 # period between successive DIOs, in seconds
     
     def __init__(self):
         
@@ -128,9 +153,33 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         pprint(self.latencyStats)        
         
     
+     
+    def _prepareSourceRoutingHeader(self, nextHeaderSRCRouting,list, route, len, srcRouteHeader):
+        #should be the same as in the original packet
+        
+        srcRouteHeader.append(nextHeaderSRCRouting) #Next header should be UDP 
+        srcRouteHeader.append(0) #len of the routing header. to be set later
+        srcRouteHeader.append(self.SR_FIR_TYPE) #Routing type 3 fir src routing
+        srcRouteHeader.append(len(route) - 1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
+        elided = 0x08 << 4 & 0x08
+        srcRouteHeader.append(elided) #elided prefix -- all in our case
+        srcRouteHeader.append(0) #padding octets
+        srcRouteHeader.append(0) #reserved
+        srcRouteHeader.append(0) #reserved
+        
+    
+        for j in range(0, len(route) - 1):
+            hop = route[j]
+            for i in range(len(hop)):
+                srcRouteHeader.append(hop[i]) #reserved
+        #now set the length
+        srcRouteHeader[1] = len(srcRouteHeader)
+    
+
       # the data received from the LBR should be:
       # - first 8 bytes: EUI64 of the final destination
       # - remainder: 6LoWPAN packet and above
+
     def _IPv6PacketReceived(self,data):
         #destination needs to be unpacked
         dest =struct.unpack('<BBBBBBBB',''.join([c for c in data[:8]])) 
@@ -159,46 +208,88 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 #is that possible that this packet is an icmpv6 router adv? a ping??
                 #We decided that the GW is only L2 and hence cannot be ping etc...
                 return #the list is empty. no route to host. TODO Check if this is the desired behaviour.
-            
+           
             # the route is here.
             log.debug("route src found {0}".format(route))
             route.pop() #remove the last element as it is this node!!
             
             if (len(route)>1):
-                #more than one hop -- create the source routing header. 
-                srcRouteHeader=[]
-                srcRouteHeader.append(0x2b) #Next header should be 43 as RFC2460 page 11.
-                 
-                srcRouteHeader.append(0) #len of the routing header. to be set later
-                srcRouteHeader.append(0x03) #Routing type 3 fir src routing
-                srcRouteHeader.append(len(route)-1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
-                elided=0x08<<4 & 0x08 
-                srcRouteHeader.append(elided) #elided prefix -- all in our case
-                srcRouteHeader.append(0) #padding octets
-                srcRouteHeader.append(0) #reserved
-                srcRouteHeader.append(0) #reserved
-                nextHop=list(route[0]) #this is the next hop that goes in front of the pkt so openserial can read it
-                for j in range(1,len(route)):
-                    hop=route[j]
-                    for i in range(len(hop)):
-                         srcRouteHeader.append(hop[i]) #reserved
+                #more than one hop -- create the source routing header taking into account the routing information 
                 
-                #now set the length 
-                srcRouteHeader[1]=len(srcRouteHeader)
-                #10 bytes ipv6 header
-                ipv6header=pkt[:10]
-                pkt=pkt[10:]
+                #      lowpan
+                #      dispatch:         0x3
+                #      tf:               0x3 (elided traffic fields)
+                #      nh:               0x1 (next-header compressed)
+                #      hlim:             0x1 (1 hop max)
+                #      cid:              0x0 (no inline context id)
+                #      sac:              0x0 (stateless src. addr. compr.)
+                #      sam:              0x0 (128b in-line addr.)
+                #      m:                0x0 (unicast)
+                #      dac:              0x0 (stateless dest. addr. compr.)
+                #      dam:              0x3 (elided addr., or 8b multicast)
+                #   src address
+                #      src_addr:         200104701f120f200000000000000002
+                #   dest address
+                #      dest_addr:       
+                #   udp
+                #      c:                0x1 (elided udp checksum)
+                #      p:                0x0 (udp port bits: s16_d16)
+                #      src_port:         0xa3b5
+                #      dest_port:        0x8
+                #   payload
+                #      length:           0x4
+                #      bytes:            6161610a
+                
+                ipv6header=pkt[:19]
+                iph =struct.unpack('<BBBBBBBBBBBBBBBBBBB',''.join([c for c in ipv6header])) 
+                iphl=list(iph)
+                iphcBytes=iphl[:2]#2bytes
+                srcAddress=iphl[2:18]
+                maybeUDP=iphl[18:19]
+                nextHeaderSRCRouting=self.IANA_UNDEFINED
+                
+                if (iphcBytes[0]&(~self.SR_NH_MASK)):
+                    #next header is compressed. check if it is UDP
+                    if ((maybeUDP[0]&self.NHC_UDP_MASK)==self.NHC_UDP_ID):
+                         nextHeaderSRCRouting=self.IANA_UDP
+                                 
+                print "IPv6 header {0}".format(",".join(hex(c) for c in iphl))
+                #the rest of the packet.
+                pkt=pkt[18:]
+                # modify IPHC header introducing nextHopHeader set as 0x2b
+                iphcBytes[0]=self.SR_DISPATCH_MASK|self.SR_TF_MASK|self.SR_NH_MASK|self.SR_HLIM_MASK
+                iphcBytes[1]=self.SR_CID_MASK|self.SR_SAC_MASK|self.SR_SAM_MASK|self.SR_M_MASK|self.SR_DAC_MASK|self.SR_DAM_MASK
+                iphcBytes.append(self.SR_NH_VALUE)#nextheader RPL src routing RFC2460 page 11..
+                
+                #create the src route header
+                srcRouteHeader=[]
+                self._prepareSourceRoutingHeader(nextHeaderSRCRouting,list, route, len, srcRouteHeader)
+                
                 #Split the packet, add the src routing header
                 #build the pkt as NEXT HOP + IPv6 Header + SRC ROUTING HEADER + REST OF THE PKT
-                for c in ipv6header:  
-                    nextHop.append(c)
+  
+                #this is the next hop that goes in front of the pkt so openserial can read it
+                
+                nextHop=[]
+                #after nexthop the packet is appended.
+                for c in list(route[len(route) - 1]):
+                    nextHop.append(chr(c))
+                #IPHC Header
+                for c in iphcBytes:  
+                    nextHop.append(chr(c))
+                #SRC Address
+                for c in srcAddress:  
+                    nextHop.append(chr(c))    
+                #srcRoutingHeader    
                 for c in srcRouteHeader:
-                    nextHop.append(c)
+                    nextHop.append(chr(c))
+                #rest of the pkt    
                 for d in pkt:
                     nextHop.append(d)
                     
                 #TODO No fragmentation so we need to check the size!!!!
-                if len(nextHop)>136:#127+8
+             
+                if len(nextHop)>self.MAX_SERIAL_PKT_SIZE:#127+8
                      log.debug("packet too long. size {0}".format(len(nextHop)))
                      return    
                 # pkt reasembled with the src routing header. SEND IT
@@ -211,7 +302,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 log.debug("destination is next hop")
                 #--> destination is next hop.
                 # let the packet as is??
-                if len(data)>136:#127+8
+                if len(data)>self.MAX_SERIAL_PKT_SIZE:#127+8
                      log.debug("packet too long. size {0}".format(len(data)))
                      print "packet too long. size {0}".format(len(data))
                      return    
@@ -296,7 +387,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         # ICMPv6 header
         dio.append(0x00)     # fake byte because of parsing in the iphc module 
-                             ## \bug fix this
+                             ## --- TODO  bug fix this
         dio.append(155)      # ICMPv6 type (155=RPL)
         dio.append(1)        # ICMPv6 CODE (for RPL 0x01=DIO)
         dio.append(0)        # cheksum (byte 1/2), to  be filled later

@@ -95,11 +95,11 @@ class lbrClient(threading.Thread):
                         continue
                     
                     # dispatch the prefix
-                    dispatcher.send(
-                        signal        = 'dataForDagRoot',
-                        sender        = 'lbrClient',
-                        data          = input,
-                    )
+                   # dispatcher.send(
+                   #     signal        = 'dataForDagRoot',
+                   #     sender        = 'lbrClient',
+                   #     data          = input,
+                   # )
                     
                     # dispatch the packet to network state to figure out source route.
                     dispatcher.send(
