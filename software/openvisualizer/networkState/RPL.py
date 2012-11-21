@@ -59,7 +59,7 @@ class RPL(object):
         #overwrites at every pkt. does not keep parents history.
         self.routes.update({str(source):parents})
         self.dataLock.release()
-        pprint(self.routes) 
+        #pprint(self.routes) 
     
     def getRouteTo(self,destAddr):
         

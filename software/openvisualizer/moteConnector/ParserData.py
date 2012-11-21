@@ -40,10 +40,8 @@ class ParserData(Parser.Parser):
     #======================== public ==========================================
     
     def parseInput(self,input):
-        
         # log
         log.debug("received data {0}".format(input))
-        #print ",".join(hex(c) for c in input)
         # ensure input not short longer than header
         self._checkLength(input)
     
@@ -64,7 +62,6 @@ class ParserData(Parser.Parser):
         #check if the message is local or internet
         if (len(input) > 35):
             iphcHeader  = input[23:35]
-            
             #from 6LoWPAN compression draft:
             # DAM/SAM 
             # 0 bits.  The address is fully elided.  The first 64 bits
@@ -82,10 +79,7 @@ class ParserData(Parser.Parser):
                 source=input[27:35]
                 for i in range(len(source)):
                     input[15+i]=input[27+i]
-                #auxx=input[15:23]
-                #print "{0}=={1}".format(auxx,source);    
-                    
-                    
+
                 rplheader=input[35:37]
     
                 if (rplheader[0]==155 and rplheader[1]==4):
@@ -115,9 +109,9 @@ class ParserData(Parser.Parser):
         log.debug("moteId={0}".format(moteId))
             #remove asn src and dest and mote id at the beginning.
         input = input[23:]
-        
+              
         #when the packet goes to internet it comes with the asn at the beginning as timestamp.
-        
+        #TODO encapsulate this into a function.. 
         #cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         #then notify a latency component that will plot that information.
         # port 61001==0xee,0x49

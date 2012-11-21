@@ -23,7 +23,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     #src routing iphc header bytes
     SR_DISPATCH_MASK = 3<<5
     SR_TF_MASK       = 3<<3 #elided traffic fields.
-    SR_NH_MASK       = 0<<1 #not compressed next header as we need to advertise src routing header
+    SR_NH_MASK       = 1<<2 #not compressed next header as we need to advertise src routing header
     SR_HLIM_MASK     = 1<<0 #hop limit 1?? 1hop only?
     
     SR_CID_MASK      = 0
@@ -158,22 +158,22 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         #should be the same as in the original packet
         
         srcRouteHeader.append(nextHeaderSRCRouting) #Next header should be UDP 
-        srcRouteHeader.append(0) #len of the routing header. to be set later
+        srcRouteHeader.append(len(route)-1) #len of the routing header. minus last element.
         srcRouteHeader.append(self.SR_FIR_TYPE) #Routing type 3 fir src routing
-        srcRouteHeader.append(len(route) - 1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
-        elided = 0x08 << 4 & 0x08
+        srcRouteHeader.append(len(route)-1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
+        elided = 0x08 << 4 | 0x08
         srcRouteHeader.append(elided) #elided prefix -- all in our case
         srcRouteHeader.append(0) #padding octets
         srcRouteHeader.append(0) #reserved
         srcRouteHeader.append(0) #reserved
         
     
-        for j in range(0, len(route) - 1):
-            hop = route[j]
+        for j in range(1, len(route)):
+            hop = route[(len(route) - 1)-j]#first hop is not needed..
             for i in range(len(hop)):
                 srcRouteHeader.append(hop[i]) #reserved
         #now set the length
-        srcRouteHeader[1] = len(srcRouteHeader)
+        #srcRouteHeader[1] = len(srcRouteHeader)/8 #lenght in 8-octets units.
     
 
       # the data received from the LBR should be:
@@ -248,16 +248,23 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 maybeUDP=iphl[18:19]
                 nextHeaderSRCRouting=self.IANA_UNDEFINED
                 
+                expandUDPHeader=False
+                
                 if (iphcBytes[0]&(~self.SR_NH_MASK)):
                     #next header is compressed. check if it is UDP
                     if ((maybeUDP[0]&self.NHC_UDP_MASK)==self.NHC_UDP_ID):
                          nextHeaderSRCRouting=self.IANA_UDP
+                         expandUDPHeader=True
+                         
                                  
-                print "IPv6 header {0}".format(",".join(hex(c) for c in iphl))
+                #print "IPv6 header {0}".format(",".join(hex(c) for c in iphl))
                 #the rest of the packet.
                 pkt=pkt[18:]
                 # modify IPHC header introducing nextHopHeader set as 0x2b
-                iphcBytes[0]=self.SR_DISPATCH_MASK|self.SR_TF_MASK|self.SR_NH_MASK|self.SR_HLIM_MASK
+                #NO header compression 
+                iphcBytes[0]=self.SR_DISPATCH_MASK|self.SR_TF_MASK|((~self.SR_NH_MASK) & 0x0f)|self.SR_HLIM_MASK
+                #print (hex(iphcBytes[0]))
+                
                 iphcBytes[1]=self.SR_CID_MASK|self.SR_SAC_MASK|self.SR_SAM_MASK|self.SR_M_MASK|self.SR_DAC_MASK|self.SR_DAM_MASK
                 iphcBytes.append(self.SR_NH_VALUE)#nextheader RPL src routing RFC2460 page 11..
                 
@@ -268,6 +275,33 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 #Split the packet, add the src routing header
                 #build the pkt as NEXT HOP + IPv6 Header + SRC ROUTING HEADER + REST OF THE PKT
   
+                if expandUDPHeader:
+                    udpH=pkt[:5]
+                    udpst =struct.unpack('<BBBBB',''.join([c for c in udpH]))
+                    newUdpHeader=[]
+                    newUdpHeader=list(udpst[1:5]) #skip first byte
+                    length=8+len(pkt[5:]) 
+                    lenB0= (length & 0xFF00) >> 8
+                    lenB1= length & 0x00FF
+                    newUdpHeader.append(lenB0)
+                    newUdpHeader.append(lenB1)
+                    newUdpHeader.append(0)#checksum
+                    newUdpHeader.append(0)#checksum
+                    #append the rest of the pkt a
+                    for c in pkt[5:]:
+                        byte=struct.unpack('<B',''.join([c]))
+                        newUdpHeader.append(byte[0])
+                        
+                    chsum=self._calculateCRC(newUdpHeader, len(newUdpHeader))
+                    newUdpHeader[6]=chsum[0]
+                    newUdpHeader[7]=chsum[1]
+                    
+                    #0xf4,0xda,0xfa,0xff,0xff
+                    #0xf4,0xd0,0xd9,0x0,0x7
+                    #expand header
+                    
+                    
+                #print "UDP header {0}".format(",".join(hex(c) for c in udpst))
                 #this is the next hop that goes in front of the pkt so openserial can read it
                 
                 nextHop=[]
@@ -284,8 +318,13 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 for c in srcRouteHeader:
                     nextHop.append(chr(c))
                 #rest of the pkt    
-                for d in pkt:
-                    nextHop.append(d)
+                if (expandUDPHeader):
+                    for d in newUdpHeader:
+                        nextHop.append(chr(d))
+                else:#the packet contains no compressed UDP header so copy it like that.
+                    for d in pkt:
+                        nextHop.append(d)        
+                    
                     
                 #TODO No fragmentation so we need to check the size!!!!
              
@@ -466,7 +505,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             i          -= 2
             
         if (i):
-            sum        += (0xFF & payload[length])<<8
+            sum        += (0xFF & payload[length-1])<<8
    
         while (sum>>16):
             sum         = (sum & 0xFFFF)+(sum >> 16)
