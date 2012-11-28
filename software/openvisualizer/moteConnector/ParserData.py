@@ -109,14 +109,14 @@ class ParserData(Parser.Parser):
         log.debug("moteId={0}".format(moteId))
             #remove asn src and dest and mote id at the beginning.
         input = input[23:]
-              
+        #print input      
         #when the packet goes to internet it comes with the asn at the beginning as timestamp.
         #TODO encapsulate this into a function.. 
         #cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         #then notify a latency component that will plot that information.
         # port 61001==0xee,0x49
         if (len(input) > 23):
-           if (input[22]==238 and input[23]==73):
+           if (input[36]==238 and input[37]==73):
             #udp port 61001 for udplatency app.
                aux=input[len(input)-5:]                 #last 5 bytes of the packet are the ASN in the UDP latency packet
                diff=self._asndiference(aux,asnbytes)    #calculate difference 

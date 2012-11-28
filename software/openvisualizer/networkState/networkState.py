@@ -195,7 +195,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             lowpanmsg=data
             
             log.debug("broadcast packet {0}".format("".join(str(c) for c in data)))
-            #return #nothing is send RADV are not needed.
+            return #nothing is send RADV are not needed.
         else:    
             #pkt to a specific address
             pkt=data[8:] 
