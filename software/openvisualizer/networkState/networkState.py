@@ -150,7 +150,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.stateLock.release()               
         #add to dictionary and compute stats...
         log.debug("Latency stats in mS {0}".format(self.latencyStats))
-        pprint(self.latencyStats)        
+        #pprint(self.latencyStats)        
         
     
      
