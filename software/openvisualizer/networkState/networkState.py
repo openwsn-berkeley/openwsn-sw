@@ -23,7 +23,10 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     #src routing iphc header bytes
     SR_DISPATCH_MASK = 3<<5
     SR_TF_MASK       = 3<<3 #elided traffic fields.
-    SR_NH_MASK       = 1<<2 #not compressed next header as we need to advertise src routing header
+    SR_NH_MASK       = SR_NH_SET<<2 #not compressed next header as we need to advertise src routing header
+    SR_NH_SET        = 0x01
+   
+    SR_NH_BIT_MASK   = 0<<2
     SR_HLIM_MASK     = 1<<0 #hop limit 1?? 1hop only?
     
     SR_CID_MASK      = 0
@@ -32,15 +35,16 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     SR_M_MASK        = 0
     SR_DAC_MASK      = 0
     SR_DAM_MASK      = 3 #compressed as it is in the src routing header??
-    SR_NH_VALUE      = 0x2b 
+    SR_NH_VALUE      = 0x2B 
     
     SR_FIR_TYPE      = 0x03
                
-    NHC_UDP_MASK     = 0xf8          # b1111 1000
-    NHC_UDP_ID       = 0xf0          # b1111 0000            
+    NHC_UDP_MASK     = 0xF8          # b1111 1000
+    NHC_UDP_ID       = 0xF0          # b1111 0000            
     
     IANA_UNDEFINED   = 0x00
     IANA_UDP         = 0x11
+    IANA_ICMPv6      = 0x3A
     #DIO header bytes
     
     MOP_DIO_A      = 1<<5
@@ -180,11 +184,61 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
       # - first 8 bytes: EUI64 of the final destination
       # - remainder: 6LoWPAN packet and above
 
+
+    def _expandUDPHeader(self, struct, c, list, pkt, len):
+        udpH = pkt[:5]
+        udpst = struct.unpack('<BBBBB', ''.join([c for c in udpH]))
+        newUdpHeader = []
+        newUdpHeader = list(udpst[1:5]) #skip first byte
+        length = 8 + len(pkt[5:])
+        lenB0 = (length & 0xFF00) >> 8
+        lenB1 = length & 0x00FF
+        newUdpHeader.append(lenB0)
+        newUdpHeader.append(lenB1)
+        newUdpHeader.append(0) #checksum
+        newUdpHeader.append(0) #checksum
+    #append the rest of the pkt a
+        for c in pkt[5:]:
+            byte = struct.unpack('<B', ''.join([c]))
+            newUdpHeader.append(byte[0])
+        
+        chsum = self._calculateCRC(newUdpHeader, len(newUdpHeader))
+        newUdpHeader[6] = chsum[0]
+        newUdpHeader[7] = chsum[1]
+        return c, newUdpHeader
+
+
+    def _assemblePkt(self, c, list, pkt, route, len, iphcBytes, expandUDPHeader, srcAddress, srcRouteHeader, newUdpHeader, nextHop):
+        for c in list(route[len(route) - 1]):
+            nextHop.append(chr(c))
+        
+    #IPHC Header
+        for c in iphcBytes:
+            nextHop.append(chr(c))
+        
+    #SRC Address
+        for c in srcAddress:
+            nextHop.append(chr(c))
+        
+    #srcRoutingHeader
+        for c in srcRouteHeader:
+            nextHop.append(chr(c))
+        
+    #rest of the pkt
+        if (expandUDPHeader):
+            for d in newUdpHeader:
+                nextHop.append(chr(d))
+        
+        else:
+            for d in pkt:
+                nextHop.append(d) #the packet contains no compressed UDP header so copy it like that.
+        
+        return c
+
     def _IPv6PacketReceived(self,data):
         #destination needs to be unpacked
         dest =struct.unpack('<BBBBBBBB',''.join([c for c in data[:8]])) 
-        #test only
-        #dest=data[:8]
+      
         destination = list(dest)
        
         log.debug("packet to be sent to {0}".format("".join(str(c) for c in destination)))
@@ -244,22 +298,26 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 iph =struct.unpack('<BBBBBBBBBBBBBBBBBBB',''.join([c for c in ipv6header])) 
                 iphl=list(iph)
                 iphcBytes=iphl[:2]#2bytes
-                srcAddress=iphl[2:18]
-                maybeUDP=iphl[18:19]
+                
                 nextHeaderSRCRouting=self.IANA_UNDEFINED
                 
                 expandUDPHeader=False
-                
-                if (iphcBytes[0]&(~self.SR_NH_MASK)):
+                #if NH is compressed (NH bit is = 1)
+                if (((iphcBytes[0] >> 2)& SR_NH_SET)==1):
                     #next header is compressed. check if it is UDP
+                    srcAddress=iphl[2:18]
+                    maybeUDP=iphl[18:19]
                     if ((maybeUDP[0]&self.NHC_UDP_MASK)==self.NHC_UDP_ID):
                          nextHeaderSRCRouting=self.IANA_UDP
                          expandUDPHeader=True
-                         
-                                 
-                #print "IPv6 header {0}".format(",".join(hex(c) for c in iphl))
-                #the rest of the packet.
-                pkt=pkt[18:]
+                         pkt=pkt[18:]
+                else:
+                    #NH is not compressed hence NH is the 3rd byte on the iphcBytes
+                     nextHeaderSRCRouting=iphl[2]
+                     srcAddress=iphl[3:19]      
+                     #the rest of the packet.
+                     pkt=pkt[19:]                 
+               
                 # modify IPHC header introducing nextHopHeader set as 0x2b
                 #NO header compression 
                 iphcBytes[0]=self.SR_DISPATCH_MASK|self.SR_TF_MASK|((~self.SR_NH_MASK) & 0x0f)|self.SR_HLIM_MASK
@@ -276,55 +334,16 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 #build the pkt as NEXT HOP + IPv6 Header + SRC ROUTING HEADER + REST OF THE PKT
   
                 if expandUDPHeader:
-                    udpH=pkt[:5]
-                    udpst =struct.unpack('<BBBBB',''.join([c for c in udpH]))
-                    newUdpHeader=[]
-                    newUdpHeader=list(udpst[1:5]) #skip first byte
-                    length=8+len(pkt[5:]) 
-                    lenB0= (length & 0xFF00) >> 8
-                    lenB1= length & 0x00FF
-                    newUdpHeader.append(lenB0)
-                    newUdpHeader.append(lenB1)
-                    newUdpHeader.append(0)#checksum
-                    newUdpHeader.append(0)#checksum
-                    #append the rest of the pkt a
-                    for c in pkt[5:]:
-                        byte=struct.unpack('<B',''.join([c]))
-                        newUdpHeader.append(byte[0])
-                        
-                    chsum=self._calculateCRC(newUdpHeader, len(newUdpHeader))
-                    newUdpHeader[6]=chsum[0]
-                    newUdpHeader[7]=chsum[1]
-                    
+                    c, newUdpHeader = self._expandUDPHeader(struct, c, list, pkt, len)     
                     #0xf4,0xda,0xfa,0xff,0xff
                     #0xf4,0xd0,0xd9,0x0,0x7
                     #expand header
                     
-                    
-                #print "UDP header {0}".format(",".join(hex(c) for c in udpst))
                 #this is the next hop that goes in front of the pkt so openserial can read it
                 
                 nextHop=[]
                 #after nexthop the packet is appended.
-                for c in list(route[len(route) - 1]):
-                    nextHop.append(chr(c))
-                #IPHC Header
-                for c in iphcBytes:  
-                    nextHop.append(chr(c))
-                #SRC Address
-                for c in srcAddress:  
-                    nextHop.append(chr(c))    
-                #srcRoutingHeader    
-                for c in srcRouteHeader:
-                    nextHop.append(chr(c))
-                #rest of the pkt    
-                if (expandUDPHeader):
-                    for d in newUdpHeader:
-                        nextHop.append(chr(d))
-                else:#the packet contains no compressed UDP header so copy it like that.
-                    for d in pkt:
-                        nextHop.append(d)        
-                    
+                c = self._assemblePkt(c, list, pkt, route, len, iphcBytes, expandUDPHeader, srcAddress, srcRouteHeader, newUdpHeader, nextHop)        
                     
                 #TODO No fragmentation so we need to check the size!!!!
              
@@ -333,9 +352,6 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                      return    
                 # pkt reasembled with the src routing header. SEND IT
                 lowpanmsg="".join(c for c in nextHop)
-                
-                #debug xv
-                #lowpanmsg="".join(str(c) for c in nextHop)
                 
             else:
                 log.debug("destination is next hop")
