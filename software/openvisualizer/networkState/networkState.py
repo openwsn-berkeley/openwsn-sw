@@ -23,8 +23,9 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     #src routing iphc header bytes
     SR_DISPATCH_MASK = 3<<5
     SR_TF_MASK       = 3<<3 #elided traffic fields.
-    SR_NH_MASK       = SR_NH_SET<<2 #not compressed next header as we need to advertise src routing header
     SR_NH_SET        = 0x01
+    SR_NH_MASK       = SR_NH_SET<<2 #not compressed next header as we need to advertise src routing header
+   
    
     SR_NH_BIT_MASK   = 0<<2
     SR_HLIM_MASK     = 1<<0 #hop limit 1?? 1hop only?
