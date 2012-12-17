@@ -186,7 +186,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
       # - remainder: 6LoWPAN packet and above
 
 
-    def _expandUDPHeader(self, struct, c, list, pkt, len):
+    def _expandUDPHeader(self, list, pkt, len):
         udpH = pkt[:5]
         udpst = struct.unpack('<BBBBB', ''.join([c for c in udpH]))
         newUdpHeader = []
@@ -206,10 +206,10 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         chsum = self._calculateCRC(newUdpHeader, len(newUdpHeader))
         newUdpHeader[6] = chsum[0]
         newUdpHeader[7] = chsum[1]
-        return c, newUdpHeader
+        return newUdpHeader
 
 
-    def _assemblePkt(self, c, list, pkt, route, len, iphcBytes, expandUDPHeader, srcAddress, srcRouteHeader, newUdpHeader, nextHop):
+    def _assemblePkt(self, pkt, route, iphcBytes, expandUDPHeader, srcAddress, srcRouteHeader, newUdpHeader, nextHop):
         for c in list(route[len(route) - 1]):
             nextHop.append(chr(c))
         
@@ -234,7 +234,6 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             for d in pkt:
                 nextHop.append(d) #the packet contains no compressed UDP header so copy it like that.
         
-        return c
 
     def _IPv6PacketReceived(self,data):
         #destination needs to be unpacked
@@ -304,7 +303,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 
                 expandUDPHeader=False
                 #if NH is compressed (NH bit is = 1)
-                if (((iphcBytes[0] >> 2)& SR_NH_SET)==1):
+                if (((iphcBytes[0] >> 2)& self.SR_NH_SET)==1):
                     #next header is compressed. check if it is UDP
                     srcAddress=iphl[2:18]
                     maybeUDP=iphl[18:19]
@@ -315,7 +314,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 else:
                     #NH is not compressed hence NH is the 3rd byte on the iphcBytes
                      nextHeaderSRCRouting=iphl[2]
-                     srcAddress=iphl[3:19]      
+                     srcAddress=iphl[3:19]
+                     expandUDPHeader=False      
                      #the rest of the packet.
                      pkt=pkt[19:]                 
                
@@ -335,16 +335,17 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 #build the pkt as NEXT HOP + IPv6 Header + SRC ROUTING HEADER + REST OF THE PKT
   
                 if expandUDPHeader:
-                    c, newUdpHeader = self._expandUDPHeader(struct, c, list, pkt, len)     
+                    newUdpHeader = self._expandUDPHeader(list, pkt, len)     
                     #0xf4,0xda,0xfa,0xff,0xff
                     #0xf4,0xd0,0xd9,0x0,0x7
                     #expand header
-                    
-                #this is the next hop that goes in front of the pkt so openserial can read it
+                else:
+                    newUdpHeader =[]
                 
+                #this is the next hop that goes in front of the pkt so openserial can read it
                 nextHop=[]
                 #after nexthop the packet is appended.
-                c = self._assemblePkt(c, list, pkt, route, len, iphcBytes, expandUDPHeader, srcAddress, srcRouteHeader, newUdpHeader, nextHop)        
+                self._assemblePkt( pkt, route, iphcBytes, expandUDPHeader, srcAddress, srcRouteHeader, newUdpHeader, nextHop)        
                     
                 #TODO No fragmentation so we need to check the size!!!!
              
