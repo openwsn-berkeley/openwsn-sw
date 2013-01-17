@@ -51,8 +51,9 @@ class ParserError(Parser.Parser):
                                     ERROR_DESC = self._translateErrorDescription(error_code,arg1,arg2)
                                 )
         # log
-        log.debug("error = {0}".format(output))
-        print "error = {0}".format(output)
+        msg = "error@{0} = {1}".format(moteId,output)
+        log.debug(msg)
+        print msg
         return ('error',input)
     
     #======================== private =========================================
