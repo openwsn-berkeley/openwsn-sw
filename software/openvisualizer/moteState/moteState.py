@@ -111,7 +111,8 @@ class StateMacStats(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        self.data[0]['syncCounter']         = notif.syncCounter
+        self.data[0]['numSyncPkt']          = notif.numSyncPkt
+        self.data[0]['numSyncAck']          = notif.numSyncAck
         self.data[0]['minCorrection']       = notif.minCorrection
         self.data[0]['maxCorrection']       = notif.maxCorrection
         self.data[0]['numDeSync']           = notif.numDeSync

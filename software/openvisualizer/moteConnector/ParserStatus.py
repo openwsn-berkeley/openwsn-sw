@@ -102,14 +102,13 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     5,
                                     'MacStats',
-                                    '<BhhB',
+                                    '<BBhhB',
                                     [
-                                        'syncCounter',               # 1 B
+                                        'numSyncPkt' ,               # 1 B
+                                        'numSyncAck',                # 1 B
                                         'minCorrection',             # 2 h
                                         'maxCorrection',             # 2 h
-                                                                     # 1 x
                                         'numDeSync'                  # 1 B
-                                                                     # 1 x
                                     ],
                                 )
         self._addFieldsParser   (
