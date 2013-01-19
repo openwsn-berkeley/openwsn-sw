@@ -44,9 +44,10 @@ class ParserError(Parser.Parser):
             raise ParserException(ParserException.DESERIALIZE,"could not extract data from {0}".format(input))
         
         # turn into string
-        output = "{COMPONENT}: {ERROR_DESC}".format(
-            COMPONENT  = self._translateCallingComponent(callingComponent)[-4:],
-            ERROR_DESC = self._translateErrorDescription(error_code,arg1,arg2)
+        output = "{MOTEID:x} [{COMPONENT}] {ERROR_DESC}".format(
+            COMPONENT  = self._translateCallingComponent(callingComponent),
+            MOTEID     = moteId,
+            ERROR_DESC = self._translateErrorDescription(error_code,arg1,arg2),
         )
         
         # log
