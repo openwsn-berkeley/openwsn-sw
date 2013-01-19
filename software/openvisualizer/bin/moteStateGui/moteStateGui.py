@@ -193,16 +193,13 @@ def main():
 import logging
 import logging.handlers
 
-# a log handler which prints to a series of (rotating) files
+#===== write everything to file
+
 fileLogHandler = logging.handlers.RotatingFileHandler('moteStateGui.log',
                                                   maxBytes=2000000,
                                                   backupCount=5,
                                                   mode='w')
 fileLogHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-
-# a log handler which prints to the console
-consoleLogHandler = logging.StreamHandler(sys.stdout)
-consoleLogHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s] %(message)s",datefmt='%H:%M:%S'))
 
 for loggerName in ['moteProbeUtils',
                    'moteProbe',
@@ -215,11 +212,16 @@ for loggerName in ['moteProbeUtils',
                    'moteState',
                    'lbrClient',
                    'networkState',]:
-    # write everything to file
     fileLogger = logging.getLogger(loggerName)
     fileLogger.setLevel(logging.DEBUG)
     fileLogger.addHandler(fileLogHandler)
-    # print "error" and higher on console
+
+#===== print errors reported by motes on console
+
+consoleLogHandler = logging.StreamHandler(sys.stdout)
+consoleLogHandler.setFormatter(logging.Formatter("%(asctime)s %(message)s",datefmt='%H:%M:%S'))
+    
+for loggerName in ['ParserError',]:
     consoleLogger = logging.getLogger(loggerName)
     consoleLogger.setLevel(logging.ERROR)
     consoleLogger.addHandler(consoleLogHandler)
