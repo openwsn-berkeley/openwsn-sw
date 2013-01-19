@@ -16,7 +16,7 @@ import StackDefines
 
 class ParserError(Parser.Parser):
     
-    HEADER_LENGTH       = 1
+    HEADER_LENGTH  = 1
     
     def __init__(self):
         
@@ -32,6 +32,7 @@ class ParserError(Parser.Parser):
         
         # log
         log.debug("received data {0}".format(input))
+        
         # parse packet
         try:
            (moteId,
@@ -39,21 +40,17 @@ class ParserError(Parser.Parser):
             error_code,
             arg1,
             arg2) = struct.unpack('>HBBHH',''.join([chr(c) for c in input]))
-         
         except struct.error:
-            #print "PARSER ERROR could not extract data from {0}".format(input)
             raise ParserException(ParserException.DESERIALIZE,"could not extract data from {0}".format(input))
+        
         # turn into string
-               
-            
-        output = "[{COMPONENT}] {ERROR_DESC}".format(
-                                    COMPONENT  = self._translateCallingComponent(callingComponent),
-                                    ERROR_DESC = self._translateErrorDescription(error_code,arg1,arg2)
-                                )
+        output = "{COMPONENT}: {ERROR_DESC}".format(
+            COMPONENT  = self._translateCallingComponent(callingComponent)[-4:],
+            ERROR_DESC = self._translateErrorDescription(error_code,arg1,arg2)
+        )
+        
         # log
-        msg = "error@{0} = {1}".format(moteId,output)
-        log.debug(msg)
-        print msg
+        log.error(output)
         return ('error',input)
     
     #======================== private =========================================

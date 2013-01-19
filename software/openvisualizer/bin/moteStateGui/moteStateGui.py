@@ -192,11 +192,18 @@ def main():
 #============================ application logging =============================
 import logging
 import logging.handlers
-logHandler = logging.handlers.RotatingFileHandler('moteStateGui.log',
+
+# a log handler which prints to a series of (rotating) files
+fileLogHandler = logging.handlers.RotatingFileHandler('moteStateGui.log',
                                                   maxBytes=2000000,
                                                   backupCount=5,
                                                   mode='w')
-logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
+fileLogHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
+
+# a log handler which prints to the console
+consoleLogHandler = logging.StreamHandler(sys.stdout)
+consoleLogHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s] %(message)s",datefmt='%H:%M:%S'))
+
 for loggerName in ['moteProbeUtils',
                    'moteProbe',
                    'moteConnector',
@@ -208,9 +215,14 @@ for loggerName in ['moteProbeUtils',
                    'moteState',
                    'lbrClient',
                    'networkState',]:
-    temp = logging.getLogger(loggerName)
-    temp.setLevel(logging.DEBUG)
-    temp.addHandler(logHandler)
+    # write everything to file
+    fileLogger = logging.getLogger(loggerName)
+    fileLogger.setLevel(logging.DEBUG)
+    fileLogger.addHandler(fileLogHandler)
+    # print "error" and higher on console
+    consoleLogger = logging.getLogger(loggerName)
+    consoleLogger.setLevel(logging.ERROR)
+    consoleLogger.addHandler(consoleLogHandler)
     
 if __name__=="__main__":
     main()
