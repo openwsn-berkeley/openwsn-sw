@@ -5,4 +5,4 @@ LBRADDR = lbr.openwsn.org
 LBRPORT = 8082
 
 # your user name
-USERNAME = xavi
+USERNAME = guest
