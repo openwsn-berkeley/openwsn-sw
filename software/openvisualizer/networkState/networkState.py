@@ -85,7 +85,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.latencyStats     = {} #empty dictionary
         
         #debug when lbr does not work
-        #self.prefix="2001:1111:2222:3333"
+        self.prefix="FE80:0000:0000:0000" #setting the prefix to a default value. This enables to setup local networks without having to connect to the LBR.
         
         if not self.moduleInit:
             # connect to dispatcher
