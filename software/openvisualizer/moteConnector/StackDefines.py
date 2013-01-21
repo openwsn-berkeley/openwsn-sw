@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Sat, 19 Jan 2013 13:49:09
+# on Mon, 21 Jan 2013 12:25:20
 #
 
 components = {
@@ -73,7 +73,7 @@ errorDescriptions = {
   16: "unsupported IEEE802.15.4 parameter {1} at location {0}",
   17: "got desynchronized at slotOffset {0}",
   18: "synchronized at slotOffset {0}",
-  19: "unusually large timeCorrection of {0} ticks (code location {1})",
+  19: "large timeCorrection of {0} ticks (code location {1})",
   20: "wrong state {0} in end of frame+sync",
   21: "wrong state {0} in startSlot, at slotOffset {1}",
   22: "wrong state {0} in timer fires, at slotOffset {1}",
@@ -97,5 +97,5 @@ errorDescriptions = {
   40: "wrong address type {0} (code location {1})",
   41: "isBridge mismatch (code location {0})",
   42: "header too long, length {1} (code location {0})",
- 683: "input length problem, length={0}",
+  43: "input length problem, length={0}",
 }

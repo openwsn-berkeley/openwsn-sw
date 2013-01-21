@@ -18,6 +18,9 @@ import RPL
 
 class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     
+    
+    DEFAULT_PREFIX = "FE80:0000:0000:0000"
+    
     MAX_SERIAL_PKT_SIZE = 136 #max lenght for a packet 8+127
     
     #src routing iphc header bytes
@@ -85,7 +88,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.latencyStats     = {} #empty dictionary
         
         #debug when lbr does not work
-        #self.prefix="2001:1111:2222:3333"
+        self.prefix=self.DEFAULT_PREFIX #setting the prefix to a default value. This enables to setup local networks without having to connect to the LBR.
         
         if not self.moduleInit:
             # connect to dispatcher
