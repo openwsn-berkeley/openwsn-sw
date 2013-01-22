@@ -137,6 +137,16 @@ class ParserStatus(Parser.Parser):
         self._addFieldsParser   (
                                     3,
                                     7,
+                                    'Backoff',
+                                    '<BB',
+                                    [
+                                        'backoffExponent',           # B
+                                        'backoff',                   # B
+                                    ],
+                                )
+        self._addFieldsParser   (
+                                    3,
+                                    8,
                                     'QueueRow',
                                     '<BBBBBBBBBBBBBBBBBBBB',
                                     [
@@ -164,7 +174,7 @@ class ParserStatus(Parser.Parser):
                                 )
         self._addFieldsParser   (
                                     3,
-                                    8,
+                                    9,
                                     'NeighborsRow',
                                     '<BBBBBBQQHbBBBBHH',
                                     [

@@ -143,6 +143,15 @@ class StateScheduleRow(StateElem):
                                            notif.lastUsedAsn_2_3,
                                            notif.lastUsedAsn_4)
 
+class StateBackoff(StateElem):
+    
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        self.data[0]['backoffExponent']     = notif.backoffExponent
+        self.data[0]['backoff']             = notif.backoff
+
 class StateQueueRow(StateElem):
     
     def update(self,creator,owner):
@@ -293,6 +302,7 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
     ST_MACSTATS         = 'MacStats'
     ST_SCHEDULEROW      = 'ScheduleRow'
     ST_SCHEDULE         = 'Schedule'
+    ST_BACKOFF          = 'Backoff'
     ST_QUEUEROW         = 'QueueRow'
     ST_QUEUE            = 'Queue'
     ST_NEIGHBORSROW     = 'NeighborsRow'
@@ -304,6 +314,7 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
                            ST_ASN,
                            ST_MACSTATS,
                            ST_SCHEDULE,
+                           ST_BACKOFF,
                            ST_QUEUE,
                            ST_NEIGHBORS,
                            ST_ISSYNC,
@@ -353,6 +364,7 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
                                                     ]
                                                 )
                                               )
+        self.state[self.ST_BACKOFF]         = StateBackoff()
         self.state[self.ST_QUEUE]           = StateQueue()
         self.state[self.ST_NEIGHBORS]       = StateTable(
                                                 StateNeighborsRow,
@@ -384,6 +396,8 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
                 self.state[self.ST_MACSTATS].update,
             self.parserStatus.named_tuple[self.ST_SCHEDULEROW]:
                 self.state[self.ST_SCHEDULE].update,
+            self.parserStatus.named_tuple[self.ST_BACKOFF]:
+                self.state[self.ST_BACKOFF].update,
             self.parserStatus.named_tuple[self.ST_QUEUEROW]:
                 self.state[self.ST_QUEUE].update,
             self.parserStatus.named_tuple[self.ST_NEIGHBORSROW]:
