@@ -63,6 +63,7 @@ class MoteStateGui(object):
                 ],
                 [
                     moteState.moteState.ST_SCHEDULE,
+                    moteState.moteState.ST_BACKOFF,
                 ],
                 [
                     moteState.moteState.ST_NEIGHBORS,

@@ -104,18 +104,18 @@ class ParserStatus(Parser.Parser):
                                     'MacStats',
                                     '<BBhhB',
                                     [
-                                        'numSyncPkt' ,               # 1 B
-                                        'numSyncAck',                # 1 B
-                                        'minCorrection',             # 2 h
-                                        'maxCorrection',             # 2 h
-                                        'numDeSync'                  # 1 B
+                                        'numSyncPkt' ,               # B
+                                        'numSyncAck',                # B
+                                        'minCorrection',             # h
+                                        'maxCorrection',             # h
+                                        'numDeSync'                  # B
                                     ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '<BHBBBBQQBBBBBBHHH',
+                                    '<BHBBBBQQBBBBHHH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
@@ -125,8 +125,6 @@ class ParserStatus(Parser.Parser):
                                         'neighbor_type',             # B
                                         'neighbor_bodyH',            # Q
                                         'neighbor_bodyL',            # Q
-                                        'backoffExponent',           # B
-                                        'backoff',                   # B
                                         'numRx',                     # B
                                         'numTx',                     # B
                                         'numTxACK',                  # B
@@ -134,12 +132,21 @@ class ParserStatus(Parser.Parser):
                                         'lastUsedAsn_2_3',           # H
                                         'lastUsedAsn_0_1',           # H
                                         'next',                      # H
-                                                                     # xxx
                                     ],
                                 )
         self._addFieldsParser   (
                                     3,
                                     7,
+                                    'Backoff',
+                                    '<BB',
+                                    [
+                                        'backoffExponent',           # B
+                                        'backoff',                   # B
+                                    ],
+                                )
+        self._addFieldsParser   (
+                                    3,
+                                    8,
                                     'QueueRow',
                                     '<BBBBBBBBBBBBBBBBBBBB',
                                     [
@@ -167,7 +174,7 @@ class ParserStatus(Parser.Parser):
                                 )
         self._addFieldsParser   (
                                     3,
-                                    8,
+                                    9,
                                     'NeighborsRow',
                                     '<BBBBBBQQHbBBBBHH',
                                     [
