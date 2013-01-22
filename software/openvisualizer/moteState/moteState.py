@@ -134,8 +134,6 @@ class StateScheduleRow(StateElem):
         self.data[0]['neighbor'].update(notif.neighbor_type,
                                         notif.neighbor_bodyH,
                                         notif.neighbor_bodyL)
-        self.data[0]['backoffExponent']     = notif.backoffExponent
-        self.data[0]['backoff']             = notif.backoff
         self.data[0]['numRx']               = notif.numRx
         self.data[0]['numTx']               = notif.numTx
         self.data[0]['numTxACK']            = notif.numTxACK
@@ -348,8 +346,6 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
                                                         'shared',
                                                         'channelOffset',
                                                         'neighbor',
-                                                        'backoffExponent',
-                                                        'backoff',
                                                         'numRx',
                                                         'numTx',
                                                         'numTxACK',
