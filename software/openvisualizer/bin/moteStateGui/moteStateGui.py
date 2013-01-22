@@ -219,7 +219,7 @@ for loggerName in ['moteProbeUtils',
 #===== print errors reported by motes on console
 
 consoleLogHandler = logging.StreamHandler(sys.stdout)
-consoleLogHandler.setFormatter(logging.Formatter("%(asctime)s %(message)s",datefmt='%H:%M:%S'))
+consoleLogHandler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s",datefmt='%H:%M:%S'))
     
 for loggerName in ['ParserInfoErrorCritical',]:
     consoleLogger = logging.getLogger(loggerName)

@@ -3,7 +3,7 @@ import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('ParserError')
+log = logging.getLogger('ParserInfoErrorCritical')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
@@ -14,14 +14,25 @@ import Parser
 
 import StackDefines
 
-class ParserError(Parser.Parser):
+class ParserInfoErrorCritical(Parser.Parser):
     
-    HEADER_LENGTH  = 1
+    HEADER_LENGTH       = 1
     
-    def __init__(self):
+    SEVERITY_INFO       = ord('I')
+    SEVERITY_ERROR      = ord('E')
+    SEVERITY_CRITICAL   = ord('C')
+    SEVERITY_ALL        = [SEVERITY_INFO,
+                           SEVERITY_ERROR,
+                           SEVERITY_CRITICAL,]
+    
+    def __init__(self,severity):
+        assert severity in self.SEVERITY_ALL
         
         # log
         log.debug("create instance")
+        
+        # store params
+        self.severity   = severity
         
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)
@@ -51,7 +62,15 @@ class ParserError(Parser.Parser):
         )
         
         # log
-        log.error(output)
+        if   self.severity==self.SEVERITY_INFO:
+            log.info(output)
+        elif self.severity==self.SEVERITY_ERROR:
+            log.error(output)
+        elif self.severity==self.SEVERITY_CRITICAL:
+            log.critical(output)
+        else:
+            raise SystemError("unexpected severity={0}".format(self.severity))
+        
         return ('error',input)
     
     #======================== private =========================================
