@@ -207,7 +207,7 @@ for loggerName in ['moteProbeUtils',
                    'OpenParser',
                    'Parser',
                    'ParserStatus',
-                   'ParserError',
+                   'ParserInfoErrorCritical',
                    'ParserData',
                    'moteState',
                    'lbrClient',
@@ -221,9 +221,9 @@ for loggerName in ['moteProbeUtils',
 consoleLogHandler = logging.StreamHandler(sys.stdout)
 consoleLogHandler.setFormatter(logging.Formatter("%(asctime)s %(message)s",datefmt='%H:%M:%S'))
     
-for loggerName in ['ParserError',]:
+for loggerName in ['ParserInfoErrorCritical',]:
     consoleLogger = logging.getLogger(loggerName)
-    consoleLogger.setLevel(logging.ERROR)
+    consoleLogger.setLevel(logging.INFO)
     consoleLogger.addHandler(consoleLogHandler)
     
 if __name__=="__main__":
