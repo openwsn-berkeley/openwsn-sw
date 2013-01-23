@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Tue, 22 Jan 2013 13:26:22
+# on Tue, 22 Jan 2013 23:03:11
 #
 
 components = {
@@ -60,12 +60,12 @@ errorDescriptions = {
    2: "received an echo reply",
    3: "getData asks for too few bytes, maxNumBytes={0}, fill level={1}",
    4: "the input buffer has overflown",
-   5: "unknown transport protocol {0} (code position {1})",
-   6: "wrong TCP state {0} (code position {1})",
-   7: "TCP reset while in state {0} (code position {1})",
-   8: "unsupported port number {0} (code position {1})",
-   9: "unexpected DAO (code position {0})",
-  10: "unsupported ICMPv6 type {0} (code position {1})",
+   5: "unknown transport protocol {0} (code location {1})",
+   6: "wrong TCP state {0} (code location {1})",
+   7: "TCP reset while in state {0} (code location {1})",
+   8: "unsupported port number {0} (code location {1})",
+   9: "unexpected DAO (code location {0})",
+  10: "unsupported ICMPv6 type {0} (code location {1})",
   11: "unsupported 6LoWPAN parameter {1} at location {0}",
   12: "no next hop",
   13: "invalid parameter",
@@ -78,7 +78,7 @@ errorDescriptions = {
   20: "unsupported IEEE802.15.4 parameter {1} at location {0}",
   21: "got desynchronized at slotOffset {0}",
   22: "synchronized at slotOffset {0}",
-  23: "large timeCorrection of {0} ticks (code location {1})",
+  23: "large timeCorrection: {0} ticks (code loc. {1})",
   24: "wrong state {0} in end of frame+sync",
   25: "wrong state {0} in startSlot, at slotOffset {1}",
   26: "wrong state {0} in timer fires, at slotOffset {1}",
