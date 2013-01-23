@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Tue, 22 Jan 2013 23:03:11
+# on Wed, 23 Jan 2013 00:40:43
 #
 
 components = {
@@ -78,7 +78,7 @@ errorDescriptions = {
   20: "unsupported IEEE802.15.4 parameter {1} at location {0}",
   21: "got desynchronized at slotOffset {0}",
   22: "synchronized at slotOffset {0}",
-  23: "large timeCorrection: {0} ticks (code loc. {1})",
+  23: "large timeCorr.: {0} ticks (code loc. {1})",
   24: "wrong state {0} in end of frame+sync",
   25: "wrong state {0} in startSlot, at slotOffset {1}",
   26: "wrong state {0} in timer fires, at slotOffset {1}",
