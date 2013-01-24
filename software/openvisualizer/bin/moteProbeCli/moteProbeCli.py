@@ -4,6 +4,7 @@ if __name__=='__main__':
     cur_path = sys.path[0]
     sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
     sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
+    sys.path.insert(0, os.path.join(cur_path, '..', '..','PyDispatcher-2.0.3'))# PyDispatcher-2.0.3/
 
 from moteProbe     import moteProbe
 from OpenCli       import OpenCli
