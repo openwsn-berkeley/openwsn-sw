@@ -1,4 +1,5 @@
 import logging
+
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
@@ -9,6 +10,7 @@ log.addHandler(NullHandler())
 import threading
 import serial
 import time
+import struct
 
 from pydispatch import dispatcher
 

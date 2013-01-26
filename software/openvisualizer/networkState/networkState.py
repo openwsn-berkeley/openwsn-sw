@@ -444,9 +444,9 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         dio.append(0x78)     # dispatch byte
         dio.append(0x33)     # dam sam
         dio.append(0x3A)     # next header (0x3A=ICMPv6)
-        
+        dio.append(0x00)     # this is hoplimit byte, it is tere because HLIM on dispatch byte is set to 00 (2 last bits) 
         # ICMPv6 header
-        dio.append(0x00)     # fake byte because of parsing in the iphc module 
+       
                              ## --- TODO  bug fix this
         dio.append(155)      # ICMPv6 type (155=RPL)
         dio.append(1)        # ICMPv6 CODE (for RPL 0x01=DIO)
