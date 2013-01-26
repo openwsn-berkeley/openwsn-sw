@@ -32,6 +32,7 @@ class SerialEchoMoteConnector(threading.Thread):
         self.testPktLen           = self.DFLT_TESTPKT_LENGTH
         self.numTestPkt           = self.DFLT_NUM_TESTPKT
         self.timeout              = self.DFLT_TIMEOUT
+        self.traceCb              = None
         self.busyTesting          = False
         self.lastSent             = []
         self.lastReceived         = []
@@ -62,8 +63,6 @@ class SerialEchoMoteConnector(threading.Thread):
                     
                     # handle input
                     if (chr(input[0])=='D'):
-                        
-                        print 'received'
                         
                         # don't handle if I'm not testing
                         with self.dataLock:
@@ -101,9 +100,29 @@ class SerialEchoMoteConnector(threading.Thread):
         with self.dataLock:
             self.timeout     = newTimeout
     
+    def setTrace(self,newTraceCb):
+        with self.dataLock:
+            self.traceCb     = newTraceCb
+    
     #===== run test
     
-    def test(self):
+    def test(self,blocking=True):
+        if blocking:
+            self._runtest()
+        else:
+            threading.Thread(target=self._runtest).start()
+    
+    #===== get test results
+    
+    def getStats(self):
+        returnVal = None
+        with self.dataLock:
+            returnVal = self.stats.copy()
+        return returnVal
+    
+    #======================== private =========================================
+    
+    def _runtest(self):
         
         # I'm testing
         with self.dataLock:
@@ -121,8 +140,6 @@ class SerialEchoMoteConnector(threading.Thread):
         # send packets and collect stats
         for i in range(numTestPkt):
             
-            print 'sending'
-            
             # prepare random packet to send
             packetToSend = [random.randint(0x00,0xff) for _ in range(testPktLen)]
             
@@ -135,35 +152,38 @@ class SerialEchoMoteConnector(threading.Thread):
             with self.dataLock:
                 self.stats['numSent']                 += 1
             
+            # log
+            self._log('\nsent:     {0}'.format(self.formatList(self.lastSent)))
+            
             # wait for answer
             self.waitForReply.clear()
             if self.waitForReply.wait(timeout):
+                
+                # log
+                self._log('received: {0}'.format(self.formatList(self.lastReceived)))
+                
                 # echo received
                 with self.dataLock:
-                    print 'sent:     {0}'.format(self.formatList(self.lastSent))
-                    print 'received: {0}'.format(self.formatList(self.lastReceived))
                     if self.lastReceived==self.lastSent:
                         self.stats['numOk']           += 1
                     else:
                         self.stats['numCorrupted']    += 1
+                        self._log('!! corrupted.')
             else:
                 # timeout
                 with self.dataLock:
                     self.stats['numTimeout']          += 1
+                    self._log('!! timeout.')
         
         # I'm not testing
         with self.dataLock:
             self.busyTesting = False
-        
-    #===== get test results
     
-    def getStats(self):
-        returnVal = None
+    def _log(self,msg):
+        log.debug(msg)
         with self.dataLock:
-            returnVal = self.stats.copy()
-        return returnVal
-    
-    #======================== private =========================================
+            if self.traceCb:
+                self.traceCb(msg)
     
     def _resetStats(self):
         with self.dataLock:

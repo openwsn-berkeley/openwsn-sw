@@ -47,6 +47,11 @@ class serialEchoCli(OpenCli):
                              'test serial port',
                              [],
                              self._handle_testserial)
+        self.registerCommand('trace',
+                             'trace',
+                             'activate console trace',
+                             ['on/off'],
+                             self._handle_trace)
         self.registerCommand('stats',
                              'st',
                              'print stats',
@@ -68,8 +73,14 @@ class serialEchoCli(OpenCli):
     def _handle_timeout(self,params):
         self.moteConnector_handler.setTimeout(params[0])
     
+    def _handle_trace(self,params):
+        if params[0] in [1,'on','yes']:
+            self.moteConnector_handler.setTrace(self._indicate_trace)
+        else:
+            self.moteConnector_handler.setTrace(None)
+    
     def _handle_testserial(self,params):
-        self.moteConnector_handler.test()
+        self.moteConnector_handler.test(blocking=False)
     
     def _handle_stats(self,params):
         stats = self.moteConnector_handler.getStats()
@@ -78,6 +89,9 @@ class serialEchoCli(OpenCli):
             output += ['- {0:<15} : {1}'.format(k,stats[k])]
         output  = '\n'.join(output)
         print output
+    
+    def _indicate_trace(self,debugText):
+        print debugText
     
     #===== helpers
     
