@@ -3,4 +3,4 @@ openwsn-sw
 
 OpenWSN software: stuff that runs on a computer
 
-For more information, see http://www.openwsn.org/.
+Part of UC Berkeley's OpenWSN project, http://www.openwsn.org/.
