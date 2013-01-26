@@ -1,5 +1,6 @@
 import sys
 import os
+
 if __name__=='__main__':
     cur_path = sys.path[0]
     sys.path.insert(0, os.path.join(cur_path, '..', '..','PyDispatcher-2.0.3'))# PyDispatcher-2.0.3/
@@ -8,86 +9,110 @@ if __name__=='__main__':
     
 from moteProbe     import moteProbe
 from moteConnector.SerialEchoMoteConnector import SerialEchoMoteConnector
-from moteState     import moteState
 from OpenCli       import OpenCli
 
-LOCAL_ADDRESS  = '127.0.0.1'
-TCP_PORT_START = 8090
+LOCAL_ADDRESS     = '127.0.0.1'
+TCP_PORT_START    = 8090
 MAX_BYTES_TO_SEND = 50
 
 class serialEchoCli(OpenCli):
     
-    def __init__(self,moteProbe_handlers,moteConnector_handlers,moteState_handlers):
+    def __init__(self,moteProbe_handler,moteConnector_handler):
         
         # store params
-        self.moteProbe_handlers     = moteProbe_handlers
-        self.moteConnector_handlers = moteConnector_handlers
-        self.moteState_handlers     = moteState_handlers
+        self.moteProbe_handler     = moteProbe_handler
+        self.moteConnector_handler = moteConnector_handler
     
         # initialize parent class
         OpenCli.__init__(self,"serial Echo Cli",self._quit_cb)
         
         # add commands
+        self.registerCommand('pklen',
+                             'pl',
+                             'test packet length, in bytes',
+                             ['pklen'],
+                             self._handle_pklen)
+        self.registerCommand('numpk',
+                             'num',
+                             'number of test packets',
+                             ['numpk'],
+                             self._handle_numpk)
+        self.registerCommand('timeout',
+                             'tout',
+                             'timeout for answer, in seconds',
+                             ['timeout'],
+                             self._handle_timeout)
         self.registerCommand('testserial',
                              't',
                              'test serial port',
                              [],
-                             self._handlerTestSerial)
+                             self._handle_testserial)
+        self.registerCommand('stats',
+                             'st',
+                             'print stats',
+                             [],
+                             self._handle_stats)
         
     #======================== public ==========================================
     
     #======================== private =========================================
     
-    #===== callbacks
+    #===== CLI command handlers
     
-    def _handlerTestSerial(self,params):
-        data="";
-        for i in range(MAX_BYTES_TO_SEND):
-            data+=str(i)
-            
-        self.moteConnector_handlers[0].write(data)
+    def _handle_pklen(self,params):
+        self.moteConnector_handler.setTestPktLength(params[0])
     
+    def _handle_numpk(self,params):
+        self.moteConnector_handler.setNumTestPkt(params[0])
+    
+    def _handle_timeout(self,params):
+        self.moteConnector_handler.setTimeout(params[0])
+    
+    def _handle_testserial(self,params):
+        self.moteConnector_handler.test()
+    
+    def _handle_stats(self,params):
+        stats = self.moteConnector_handler.getStats()
+        output  = []
+        for k in ['numSent','numOk','numCorrupted','numTimeout']:
+            output += ['- {0:<15} : {1}'.format(k,stats[k])]
+        output  = '\n'.join(output)
+        print output
     
     #===== helpers
     
     def _quit_cb(self):
-        
-        for mc in self.moteConnector_handlers:
-           mc.quit()
-        for mb in self.moteProbe_handlers:
-           mb.quit()
+        self.moteConnector_handler.quit()
+        self.moteProbe_handler.quit()
 
 def main():
     
-    moteProbe_handlers     = []
-    moteConnector_handlers = []
-    moteState_handlers     = []
+    moteProbe_handler        = None
+    moteConnector_handler    = None
     
-    # create a moteProbe for each mote connected to this computer
-    serialPorts    = moteProbe.utils.findSerialPorts()
-    tcpPorts       = [TCP_PORT_START+i for i in range(len(serialPorts))]
+    # find serial port
+    if len(sys.argv)>1:
+        serialPort = sys.argv[1]
+    else:
+        serialPort = moteProbe.utils.findSerialPorts()[0]
+    serialPort     = ('COM13', 115200)
+    tcpPort        = TCP_PORT_START
     
-    #picking the first available
-    moteProbe_handlers.append(moteProbe.moteProbe(serialPorts[0],tcpPorts[0]))
+    # create a moteProbe
+    moteProbe_handler = moteProbe.moteProbe(serialPort,tcpPort)
     
-    # create a moteConnector for each moteProbe
-    for mp in moteProbe_handlers:
-       moteConnector_handlers.append(SerialEchoMoteConnector(LOCAL_ADDRESS,mp.getTcpPort()))
-    
-    # create a moteState for each moteConnector
-    for mc in moteConnector_handlers:
-       moteState_handlers.append(moteState.moteState(mc))
+    # create a SerialEchoMoteConnector to attached to the moteProbe
+    moteConnector_handler = SerialEchoMoteConnector(
+                                LOCAL_ADDRESS,
+                                moteProbe_handler.getTcpPort()
+                            )
     
     # create an open CLI
-    cli = serialEchoCli(moteProbe_handlers,
-                       moteConnector_handlers,
-                       moteState_handlers)
+    cli = serialEchoCli(moteProbe_handler,
+                        moteConnector_handler)
     
     # start threads
-    for ms in moteState_handlers:
-       ms.start()
-    for mc in moteConnector_handlers:
-       mc.start()
+    moteConnector_handler.start()
     cli.start()
     
 #============================ application logging =============================
