@@ -8,14 +8,14 @@ if __name__=='__main__':
     sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
     
 from moteProbe     import moteProbe
-from moteConnector.SerialEchoMoteConnector import SerialEchoMoteConnector
+from moteConnector.SerialTester import SerialTester
 from OpenCli       import OpenCli
 
 LOCAL_ADDRESS     = '127.0.0.1'
 TCP_PORT_START    = 8090
 MAX_BYTES_TO_SEND = 50
 
-class serialEchoCli(OpenCli):
+class serialTesterCli(OpenCli):
     
     def __init__(self,moteProbe_handler,moteConnector_handler):
         
@@ -118,15 +118,14 @@ def main():
     # create a moteProbe
     moteProbe_handler = moteProbe.moteProbe(serialPort,tcpPort)
     
-    # create a SerialEchoMoteConnector to attached to the moteProbe
-    moteConnector_handler = SerialEchoMoteConnector(
+    # create a SerialTester to attached to the moteProbe
+    moteConnector_handler = SerialTester(
                                 LOCAL_ADDRESS,
                                 moteProbe_handler.getTcpPort()
                             )
     
     # create an open CLI
-    cli = serialEchoCli(moteProbe_handler,
-                        moteConnector_handler)
+    cli = serialTesterCli(moteProbe_handler,moteConnector_handler)
     
     # start threads
     moteConnector_handler.start()
@@ -135,13 +134,13 @@ def main():
 #============================ application logging =============================
 import logging
 import logging.handlers
-logHandler = logging.handlers.RotatingFileHandler('serialEchoCli.log',
+logHandler = logging.handlers.RotatingFileHandler('serialTesterCli.log',
                                                   maxBytes=2000000,
                                                   backupCount=5,
                                                   mode='w')
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in [
-                   'SerialEchoMoteConnector',
+                   'SerialTester',
                    'moteProbeSerialThread',
                    'OpenCli',
                    ]:
