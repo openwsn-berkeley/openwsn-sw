@@ -5,3 +5,4 @@
 *.log.4
 *.log.5
 *.pyc
+__pycache__
