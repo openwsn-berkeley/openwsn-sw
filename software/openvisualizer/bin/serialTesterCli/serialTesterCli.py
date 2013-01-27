@@ -60,6 +60,8 @@ class serialTesterCli(OpenCli):
         
         # by default, turn trace on
         self._handle_trace([1])
+        self._handle_pklen([10])
+        self._handle_numpk([1])
         
     #======================== public ==========================================
     
@@ -142,7 +144,7 @@ logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] 
 for loggerName in [
                    'SerialTester',
                    'moteProbeSerialThread',
-                   'OpenCli',
+                   'openhdlc',
                    ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
