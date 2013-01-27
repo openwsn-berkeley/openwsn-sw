@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Wed, 23 Jan 2013 00:55:56
+# on Sat, 26 Jan 2013 21:23:04
 #
 
 components = {
@@ -105,4 +105,5 @@ errorDescriptions = {
   47: "header too long, length {1} (code location {0})",
   48: "input length problem, length={0}",
   49: "booted",
+  50: "serial packet had bad CRC",
 }
