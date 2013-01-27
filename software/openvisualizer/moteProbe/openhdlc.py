@@ -1,11 +1,26 @@
 ##
 # \brief HDLC framing module.
 #
-# \author Min Ting
-# \date   October 2012
+# \author Min Ting, October 2012.
 #
 
+import logging
+class NullHandler(logging.Handler):
+    def emit(self, record):
+        pass
+log = logging.getLogger('openhdlc')
+log.setLevel(logging.ERROR)
+log.addHandler(NullHandler())
+
+class HdlcException(Exception):
+    pass
+
 class OpenHdlc(object):
+    
+    HDLC_FLAG              = '\x7e'
+    HDLC_FLAG_ESCAPED      = '\x5e'
+    HDLC_ESCAPE            = '\x7d'
+    HDLC_ESCAPE_ESCAPED    = '\x5d'
     
     FCS16TAB  = (
         0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
@@ -44,44 +59,84 @@ class OpenHdlc(object):
     
     #============================ public ======================================
     
-    def hdlcify(data):
+    def hdlcify(self,inBuf):
         '''
         \brief Build an hdlc frame.
         
         \note Use 0x00 for both addr byte, and control byte.
         '''
-        fcs       = self._fcs16(data)
-        data      = data + chr(fcs & 0xff) + chr((fcs & 0xff00) >> 8) #little endian
-        data      = data.replace("\x7D", "\x7D\x5D")
-        data      = data.replace("\x7E", "\x7D\x5E")
-        flag      = "\x7E"
-        frame     = flag + data + flag
-        return frame
+        
+        # make copy of input
+        outBuf     = inBuf[:]
+        
+        # calculate CRC
+        crc        = self._calculateCrc(inBuf)
+        crc = 0 # poipoi
+        
+        # append CRC
+        outBuf     = outBuf + chr(crc & 0xff) + chr((crc & 0xff00) >> 8)
+        
+        # stuff bytes
+        '''
+        outBuf     = outBuf.replace(self.HDLC_ESCAPE, self.HDLC_ESCAPE+self.HDLC_ESCAPE_ESCAPED)
+        outBuf     = outBuf.replace(self.HDLC_FLAG,   self.HDLC_ESCAPE+self.HDLC_FLAG_ESCAPED)
+        '''
+        
+        # add flags
+        outBuf     = self.HDLC_FLAG + outBuf + self.HDLC_FLAG
+        
+        return outBuf
 
-    def dehdlcify(frame):
+    def dehdlcify(self,inBuf):
         '''
         \brief Parse an hdlc frame.
         
         \returns the extracted frame, or -1 if wrong checksum
         '''
-        data      = frame[1:len(frame)-1] # remove 0x7e flags
-        data      = data.replace("\x7D\x5D", "\x7D")
-        data      = data.replace("\x7D\x5E", "\x7E")
-        end       = len(data)
-        fcs       = (ord(data[end-1])<<8) + ord(data[end-2]) #little endian
-        if fcs != self._fcs16(data[0:end-2]):
-            return -1
-        return data[0:end-2] # remove CRC
+        assert inBuf[ 0]==self.HDLC_FLAG
+        assert inBuf[-1]==self.HDLC_FLAG
+        
+        # make copy of input
+        outBuf     = inBuf[:]
+        log.debug("got           {0}".format(self._formatBuf(outBuf)))
+        
+        # remove flags
+        outBuf     = outBuf[1:-1]
+        log.debug("after flags:     {0}".format(self._formatBuf(outBuf)))
+        
+        # unstuff
+        '''
+        outBuf     = outBuf.replace(self.HDLC_ESCAPE+self.HDLC_FLAG_ESCAPED,   self.HDLC_FLAG)
+        outBuf     = outBuf.replace(self.HDLC_ESCAPE+self.HDLC_ESCAPE_ESCAPED, self.HDLC_ESCAPE)
+        log.debug("after unstuff:   {0}".format(self._formatBuf(outBuf)))
+        '''
+        
+        # check CRC
+        crcExp     = (ord(outBuf[-1])<<8) + ord(outBuf[-2])
+        log.debug("crcExp:  {0}".format(hex(crcExp)))
+        crcCalc    = self._calculateCrc(outBuf[:-2])
+        crcCalc    = 0 # poipoi
+        log.debug("crcCalc: {0}".format(hex(crcCalc)))
+        if crcExp!=crcCalc:
+            raise HdlcException('expected CRC={0}, calculated CRC={1}'.format(hex(crcExp),hex(crcCalc)))
+        
+        # remove CRC
+        outBuf     = outBuf[:-2] # remove CRC
+        
+        return outBuf
 
     #============================ private =====================================
-
-    def _fcs16(s):
+    
+    def _formatBuf(self,buf):
+        return '-'.join(["%02x"%ord(b) for b in buf])
+    
+    def _calculateCrc(self,buf):
         '''
-        \brief Compute the fcs16 checksum for the given string.
+        \brief Compute the fcs16 checksum for the given buffer.
         '''
-        fcsini    = 0xffff
-        fcs       = fcsini
-        for c in s:
-            tmp = fcs^(ord(c))
-            fcs = (fcs>> 8)^self.FCS16TAB[(tmp & 0xff)]
-        return fcsini - fcs
+        crcini     = 0xffff
+        crc        = crcini
+        for c in buf:
+            tmp    = crc^(ord(c))
+            crc    = (crc>> 8)^self.FCS16TAB[(tmp & 0xff)]
+        return crcini - crc
