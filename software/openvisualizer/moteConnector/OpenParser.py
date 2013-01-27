@@ -17,17 +17,16 @@ class OpenParser(Parser.Parser):
     
     HEADER_LENGTH  = 1
     
+    TYPE_DATA            = ord('D')
     TYPE_STATUS          = ord('S')
     TYPE_INFO            = ParserIEC.ParserInfoErrorCritical.SEVERITY_INFO
     TYPE_ERROR           = ParserIEC.ParserInfoErrorCritical.SEVERITY_ERROR
     TYPE_CRITICAL        = ParserIEC.ParserInfoErrorCritical.SEVERITY_CRITICAL
-    TYPE_DATA            = ord('D')
-    TYPE_ALL             = [TYPE_STATUS,
+    TYPE_ALL             = [TYPE_DATA,
+                            TYPE_STATUS,
                             TYPE_INFO,
                             TYPE_ERROR,
-                            TYPE_CRITICAL,
-                            TYPE_DATA,]
-    
+                            TYPE_CRITICAL,]
     
     def __init__(self):
         
