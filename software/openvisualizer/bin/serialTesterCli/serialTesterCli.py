@@ -24,7 +24,7 @@ class serialTesterCli(OpenCli):
         self.moteConnector_handler = moteConnector_handler
     
         # initialize parent class
-        OpenCli.__init__(self,"serial Echo Cli",self._quit_cb)
+        OpenCli.__init__(self,"Serial Tester",self._quit_cb)
         
         # add commands
         self.registerCommand('pklen',

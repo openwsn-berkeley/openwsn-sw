@@ -2,7 +2,7 @@ import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('SerialEchoMoteConnector')
+log = logging.getLogger('SerialTester')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
@@ -10,7 +10,7 @@ import threading
 import socket
 import random
 
-class SerialEchoMoteConnector(threading.Thread):
+class SerialTester(threading.Thread):
     
     DFLT_TESTPKT_LENGTH = 10  ##< number of bytes in a test packet
     DFLT_NUM_TESTPKT    = 20  ##< number of test packets to send
@@ -43,7 +43,7 @@ class SerialEchoMoteConnector(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name = 'serialEchoMoteConnector@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
+        self.name = 'SerialTester@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
         
     def run(self):
         # log
