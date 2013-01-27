@@ -58,6 +58,9 @@ class serialEchoCli(OpenCli):
                              [],
                              self._handle_stats)
         
+        # by default, turn trace on
+        self._handle_trace([1])
+        
     #======================== public ==========================================
     
     #======================== private =========================================
@@ -139,6 +142,7 @@ logHandler = logging.handlers.RotatingFileHandler('serialEchoCli.log',
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in [
                    'SerialEchoMoteConnector',
+                   'moteProbeSerialThread',
                    'OpenCli',
                    ]:
     temp = logging.getLogger(loggerName)
