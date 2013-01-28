@@ -151,7 +151,7 @@ class SerialTester(threading.Thread):
                 self.lastSent = packetToSend[:]
             
             # send
-            self.socket.send(''.join([OpenParser.OpenParser.TYPE_poipoi]+[chr(b) for b in packetToSend]))
+            self.socket.send(''.join([chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend]))
             with self.dataLock:
                 self.stats['numSent']                 += 1
             

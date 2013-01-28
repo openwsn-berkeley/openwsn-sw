@@ -6,7 +6,9 @@ sys.path.insert(0, os.path.join(cur_path, '..'))                           # mot
 sys.path.insert(0, os.path.join(cur_path, '..', '..','PyDispatcher-2.0.3'))# PyDispatcher-2.0.3/
 
 import random
+
 import openhdlc
+import openvisualizer_utils as u
 
 import logging
 import logging.handlers
@@ -37,9 +39,6 @@ for loggerName in   [
     
 #============================ helpers =========================================
 
-def formatBuf(buf):
-    return '-'.join(["%02x"%ord(b) for b in buf])
-
 #============================ tests ===========================================
 
 def test_randdomBackAndForth():
@@ -54,14 +53,14 @@ def test_randdomBackAndForth():
                 frame += [random.randint(0x00,0xff)]
             frame = ''.join([chr(b) for b in frame])
             
-            log.debug("frame:          {0}".format(formatBuf(frame)))
+            log.debug("frame:          {0}".format(u.formatBuf(frame)))
             
             # hdlcify
             frameHdlcified = hdlc.hdlcify(frame)
-            log.debug("hdlcified:   {0}".format(formatBuf(frameHdlcified)))
+            log.debug("hdlcified:   {0}".format(u.formatBuf(frameHdlcified)))
             
             # dehdlcify
             frameDehdlcified = hdlc.dehdlcify(frameHdlcified)
-            log.debug("dehdlcified:    {0}".format(formatBuf(frameDehdlcified)))
+            log.debug("dehdlcified:    {0}".format(u.formatBuf(frameDehdlcified)))
             
             assert frameDehdlcified==frame

@@ -14,6 +14,7 @@ import struct
 
 import openhdlc
 from moteConnector import OpenParser
+import openvisualizer_utils as u
 
 from pydispatch import dispatcher
 
@@ -29,9 +30,9 @@ class moteProbeSerialThread(threading.Thread):
         self.serialportBaudrate   = serialportBaudrate
         
         # local variables
-        self.serialInput          = ''
-        self.serialOutput         = ''
-        self.serialOutputLock     = threading.Lock()
+        self.inputBuf             = ''
+        self.outputBuf            = []
+        self.outputBufLock        = threading.RLock()
         self.state                = 'WAIT_HEADER'
         self.numdelimiter         = 0
         self.hdlc                 = openhdlc.OpenHdlc()
@@ -64,18 +65,19 @@ class moteProbeSerialThread(threading.Thread):
                     time.sleep(1)
                     break
                 else:
+                    #log.debug("received {0} ({1})".format(char,hex(ord(char))))
                     if    self.state == 'WAIT_HEADER':
-                        if char == self.hdlc.HDLC_FLAG:
+                        if char==self.hdlc.HDLC_FLAG:
                             self.numdelimiter     += 1
                         else:
                             self.numdelimiter      = 0
                         if self.numdelimiter==1:
                             self.state             = 'RECEIVING_COMMAND'
-                            self.serialInput       = char
+                            self.inputBuf          = char
                             self.numdelimiter      = 0
                     elif self.state == 'RECEIVING_COMMAND':
-                        self.serialInput = self.serialInput+char
-                        if char == self.hdlc.HDLC_FLAG:
+                        self.inputBuf = self.inputBuf+char
+                        if char==self.hdlc.HDLC_FLAG:
                             self.numdelimiter     += 1
                         else:
                             self.numdelimiter      = 0
@@ -83,19 +85,24 @@ class moteProbeSerialThread(threading.Thread):
                             self.state             = 'WAIT_HEADER'
                             self.numdelimiter      = 0
                             try:
-                                self.serialInput   = self.hdlc.dehdlcify(self.serialInput)
+                                self.inputBuf   = self.hdlc.dehdlcify(self.inputBuf)
                             except openhdlc.HdlcException:
                                 print "wrong CRC!"
-                            if self.serialInput==[OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST]:
-                                with self.serialOutputLock:
-                                    if(len(self.serialOutput)>0):
-                                        self.serial.write(self.hdlc.hdlcify(self.serialOutput))
-                                        self.serialOutput = ''
+                            if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
+                                with self.outputBufLock:
+                                    if self.outputBuf:
+                                        outputToWrite = self.outputBuf.pop(0)
+                                        self.serial.write(outputToWrite)
+                                        log.debug('sent {0} bytes over serial: {1}'.format(
+                                                len(outputToWrite),
+                                                u.formatBuf(outputToWrite),
+                                            )
+                                        )
                             else:
                                 # dispatch
                                 dispatcher.send(
                                     signal        = 'bytesFromSerialPort'+self.serialportName,
-                                    data          = self.serialInput[:],
+                                    data          = self.inputBuf[:],
                                 )
                     else:
                         raise SystemError("invalid state {0}".format(state))
@@ -103,13 +110,18 @@ class moteProbeSerialThread(threading.Thread):
     #======================== public ==========================================
     
     def send(self,data):
-        self.serialOutputLock.acquire()
-        if len(self.serialOutput)>255:
-            log.error("serialOutput overflow ({0} bytes)".format(len(self.serialOutput)))
+        # frame with HDLC
+        hdlcData = self.hdlc.hdlcify(data)
         
-        self.serialOutput += data[0]+ chr(len(self.serialOutput)) + data[1:]
-        if len(self.serialOutput)>251:
-            log.warning("serialOutput overflowing ({0} bytes)".format(len(self.serialOutput)))
-        self.serialOutputLock.release()
+        # add to outputBuf
+        with self.outputBufLock:
+            self.outputBuf += [hdlcData]
+        
+        # log
+        log.debug('added {0} bytes to outputBuf: {1}'.format(
+                len(hdlcData),
+                u.formatBuf(hdlcData),
+            )
+        )
     
     #======================== private =========================================

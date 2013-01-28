@@ -12,6 +12,8 @@ log = logging.getLogger('openhdlc')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
+import openvisualizer_utils as u
+
 class HdlcException(Exception):
     pass
 
@@ -98,17 +100,17 @@ class OpenHdlc(object):
         
         # make copy of input
         outBuf     = inBuf[:]
-        log.debug("got           {0}".format(self._formatBuf(outBuf)))
+        log.debug("got           {0}".format(u.formatBuf(outBuf)))
         
         # remove flags
         outBuf     = outBuf[1:-1]
-        log.debug("after flags:     {0}".format(self._formatBuf(outBuf)))
+        log.debug("after flags:     {0}".format(u.formatBuf(outBuf)))
         
         # unstuff
         '''
         outBuf     = outBuf.replace(self.HDLC_ESCAPE+self.HDLC_FLAG_ESCAPED,   self.HDLC_FLAG)
         outBuf     = outBuf.replace(self.HDLC_ESCAPE+self.HDLC_ESCAPE_ESCAPED, self.HDLC_ESCAPE)
-        log.debug("after unstuff:   {0}".format(self._formatBuf(outBuf)))
+        log.debug("after unstuff:   {0}".format(u.formatBuf(outBuf)))
         '''
         
         # check CRC
@@ -122,13 +124,11 @@ class OpenHdlc(object):
         
         # remove CRC
         outBuf     = outBuf[:-2] # remove CRC
+        log.debug("after CRC:       {0}".format(u.formatBuf(outBuf)))
         
         return outBuf
 
     #============================ private =====================================
-    
-    def _formatBuf(self,buf):
-        return '-'.join(["%02x"%ord(b) for b in buf])
     
     def _calculateCrc(self,buf):
         '''
