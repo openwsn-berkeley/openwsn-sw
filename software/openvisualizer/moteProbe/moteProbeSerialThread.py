@@ -30,12 +30,12 @@ class moteProbeSerialThread(threading.Thread):
         self.serialportBaudrate   = serialportBaudrate
         
         # local variables
+        self.hdlc                 = openhdlc.OpenHdlc()
+        self.lastRxByte           = self.hdlc.HDLC_FLAG
+        self.busyReceiving        = False
         self.inputBuf             = ''
         self.outputBuf            = []
         self.outputBufLock        = threading.RLock()
-        self.state                = 'WAIT_HEADER'
-        self.numdelimiter         = 0
-        self.hdlc                 = openhdlc.OpenHdlc()
         
         # initialize the parent class
         threading.Thread.__init__(self)
@@ -59,41 +59,50 @@ class moteProbeSerialThread(threading.Thread):
             self.serial = serial.Serial(self.serialportName,self.serialportBaudrate)
             while True: # read bytes from serial port
                 try:
-                    char = self.serial.read(1)
+                    rxByte = self.serial.read(1)
                 except Exception as err:
                     log.warning(err)
                     time.sleep(1)
                     break
                 else:
-                    #log.debug("received {0} ({1})".format(char,hex(ord(char))))
-                    if    self.state == 'WAIT_HEADER':
-                        if char==self.hdlc.HDLC_FLAG:
-                            self.numdelimiter     += 1
+                    #log.debug("received {0} ({1})".format(rxByte,hex(ord(rxByte))))
+                    if      (
+                                (not self.busyReceiving)             and 
+                                self.lastRxByte==self.hdlc.HDLC_FLAG and
+                                rxByte!=self.hdlc.HDLC_FLAG
+                            ):
+                        # start of frame
+                        
+                        self.busyReceiving       = True
+                        self.inputBuf            = self.hdlc.HDLC_FLAG
+                        self.inputBuf           += rxByte
+                    elif    (
+                                self.busyReceiving                   and
+                                rxByte!=self.hdlc.HDLC_FLAG
+                            ):
+                        # middle of frame
+                        
+                        self.inputBuf           += rxByte
+                    elif    (
+                                self.busyReceiving                   and
+                                rxByte==self.hdlc.HDLC_FLAG
+                            ):
+                        # end of frame
+                        
+                        self.busyReceiving       = False
+                        self.inputBuf           += rxByte
+                        
+                        try:
+                            self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
+                        except openhdlc.HdlcException:
+                            print "wrong CRC!"
                         else:
-                            self.numdelimiter      = 0
-                        if self.numdelimiter==1:
-                            self.state             = 'RECEIVING_COMMAND'
-                            self.inputBuf          = char
-                            self.numdelimiter      = 0
-                    elif self.state == 'RECEIVING_COMMAND':
-                        self.inputBuf = self.inputBuf+char
-                        if char==self.hdlc.HDLC_FLAG:
-                            self.numdelimiter     += 1
-                        else:
-                            self.numdelimiter      = 0
-                        if self.numdelimiter==1:
-                            self.state             = 'WAIT_HEADER'
-                            self.numdelimiter      = 0
-                            try:
-                                self.inputBuf   = self.hdlc.dehdlcify(self.inputBuf)
-                            except openhdlc.HdlcException:
-                                print "wrong CRC!"
                             if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
                                 with self.outputBufLock:
                                     if self.outputBuf:
                                         outputToWrite = self.outputBuf.pop(0)
                                         self.serial.write(outputToWrite)
-                                        log.debug('sent {0} bytes over serial: {1}'.format(
+                                        log.debug('sent {0} bytes over serial:   {1}'.format(
                                                 len(outputToWrite),
                                                 u.formatBuf(outputToWrite),
                                             )
@@ -104,8 +113,8 @@ class moteProbeSerialThread(threading.Thread):
                                     signal        = 'bytesFromSerialPort'+self.serialportName,
                                     data          = self.inputBuf[:],
                                 )
-                    else:
-                        raise SystemError("invalid state {0}".format(state))
+                    
+                    self.lastRxByte = rxByte
     
     #======================== public ==========================================
     
