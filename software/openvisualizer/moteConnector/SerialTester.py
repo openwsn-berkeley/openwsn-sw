@@ -91,18 +91,22 @@ class SerialTester(threading.Thread):
     #===== setup test
     
     def setTestPktLength(self,newLength):
+        assert type(newLength)==int
         with self.dataLock:
             self.testPktLen  = newLength
     
     def setNumTestPkt(self,newNum):
+        assert type(newNum)==int
         with self.dataLock:
             self.numTestPkt  = newNum
     
     def setTimeout(self,newTimeout):
+        assert type(newTimeout)==int
         with self.dataLock:
             self.timeout     = newTimeout
     
     def setTrace(self,newTraceCb):
+        assert callable(newTraceCb)
         with self.dataLock:
             self.traceCb     = newTraceCb
     
@@ -144,7 +148,7 @@ class SerialTester(threading.Thread):
             
             # prepare random packet to send
             #packetToSend = [random.randint(0x00,0xff) for _ in range(testPktLen)]
-            packetToSend = range(testPktLen)
+            packetToSend = [0x11*(i+1) for i in range(testPktLen)]
             
             # remember as last sent packet
             with self.dataLock:
@@ -156,7 +160,7 @@ class SerialTester(threading.Thread):
                 self.stats['numSent']                 += 1
             
             # log
-            self._log('\nsent:     {0}'.format(self.formatList(self.lastSent)))
+            self._log('sent:     {0}'.format(self.formatList(self.lastSent)))
             
             # wait for answer
             self.waitForReply.clear()

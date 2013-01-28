@@ -42,16 +42,16 @@ class serialTesterCli(OpenCli):
                              'timeout for answer, in seconds',
                              ['timeout'],
                              self._handle_timeout)
-        self.registerCommand('testserial',
-                             't',
-                             'test serial port',
-                             [],
-                             self._handle_testserial)
         self.registerCommand('trace',
                              'trace',
                              'activate console trace',
                              ['on/off'],
                              self._handle_trace)
+        self.registerCommand('testserial',
+                             't',
+                             'test serial port',
+                             [],
+                             self._handle_testserial)
         self.registerCommand('stats',
                              'st',
                              'print stats',
@@ -59,9 +59,10 @@ class serialTesterCli(OpenCli):
                              self._handle_stats)
         
         # by default, turn trace on
-        self._handle_trace([1])
         self._handle_pklen([10])
-        self._handle_numpk([1])
+        self._handle_numpk([10])
+        self._handle_timeout([1])
+        self._handle_trace([1])
         
     #======================== public ==========================================
     
@@ -70,13 +71,13 @@ class serialTesterCli(OpenCli):
     #===== CLI command handlers
     
     def _handle_pklen(self,params):
-        self.moteConnector_handler.setTestPktLength(params[0])
+        self.moteConnector_handler.setTestPktLength(int(params[0]))
     
     def _handle_numpk(self,params):
-        self.moteConnector_handler.setNumTestPkt(params[0])
+        self.moteConnector_handler.setNumTestPkt(int(params[0]))
     
     def _handle_timeout(self,params):
-        self.moteConnector_handler.setTimeout(params[0])
+        self.moteConnector_handler.setTimeout(int(params[0]))
     
     def _handle_trace(self,params):
         if params[0] in [1,'on','yes']:
