@@ -24,6 +24,8 @@ class OpenHdlc(object):
     HDLC_ESCAPE            = '\x7d'
     HDLC_ESCAPE_ESCAPED    = '\x5d'
     
+    CRC_MAGICVALUE         = 0xabcd
+    
     FCS16TAB  = (
         0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
         0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7, 
@@ -73,7 +75,7 @@ class OpenHdlc(object):
         
         # calculate CRC
         crc        = self._calculateCrc(inBuf)
-        crc = 0 # poipoi
+        crc        = self.CRC_MAGICVALUE # poipoi
         
         # append CRC
         outBuf     = outBuf + chr(crc & 0xff) + chr((crc & 0xff00) >> 8)
@@ -120,7 +122,7 @@ class OpenHdlc(object):
         crcExp     = (ord(outBuf[-1])<<8) + ord(outBuf[-2])
         log.debug("crcExp:  {0}".format(hex(crcExp)))
         crcCalc    = self._calculateCrc(outBuf[:-2])
-        crcCalc    = 0 # poipoi
+        crcCalc    = self.CRC_MAGICVALUE # poipoi
         log.debug("crcCalc: {0}".format(hex(crcCalc)))
         if crcExp!=crcCalc:
             raise HdlcException('expected CRC={0}, calculated CRC={1}'.format(hex(crcExp),hex(crcCalc)))
