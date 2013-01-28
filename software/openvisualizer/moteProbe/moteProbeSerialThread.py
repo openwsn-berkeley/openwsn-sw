@@ -11,7 +11,9 @@ import threading
 import serial
 import time
 import struct
+
 import openhdlc
+from moteConnector import OpenParser
 
 from pydispatch import dispatcher
 
@@ -84,7 +86,7 @@ class moteProbeSerialThread(threading.Thread):
                                 self.serialInput   = self.hdlc.dehdlcify(self.serialInput)
                             except openhdlc.HdlcException:
                                 print "wrong CRC!"
-                            if self.serialInput==['R']:
+                            if self.serialInput==[OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST]:
                                 with self.serialOutputLock:
                                     if(len(self.serialOutput)>0):
                                         self.serial.write(self.hdlc.hdlcify(self.serialOutput))

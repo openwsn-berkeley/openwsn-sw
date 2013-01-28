@@ -254,7 +254,7 @@ class lbrClient(threading.Thread):
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
     
-    #this is the callback exectued by moteConnectorConsumer. the filter is TYPE_DATA_INTERNET
+    # this is the callback executed by moteConnectorConsumer
     def send(self,lowpan):
         try:
             if self._isConnected():

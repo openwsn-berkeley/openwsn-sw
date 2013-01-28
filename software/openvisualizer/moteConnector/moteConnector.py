@@ -16,9 +16,9 @@ import ParserException
 
 class moteConnector(threading.Thread):
     
-    TYPE_STATUS    = OpenParser.OpenParser.TYPE_STATUS
-    TYPE_ERROR     = OpenParser.OpenParser.TYPE_ERROR
-    TYPE_DATA      = OpenParser.OpenParser.TYPE_DATA
+    SERFRAME_MOTE2PC_STATUS  = OpenParser.OpenParser.SERFRAME_MOTE2PC_STATUS
+    SERFRAME_MOTE2PC_ERROR   = OpenParser.OpenParser.SERFRAME_MOTE2PC_ERROR
+    SERFRAME_MOTE2PC_DATA    = OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA
     
     def __init__(self,moteProbeIp,moteProbeTcpPort):
         
@@ -120,7 +120,7 @@ class moteConnector(threading.Thread):
                 
                 self._subcribedDataForDagRoot = False
     
-    def write(self,data,headerByte='D'):
+    def write(self,data,headerByte=chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
         try:
             self.socket.send(headerByte+data)
         except socket.error:

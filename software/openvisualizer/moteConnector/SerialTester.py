@@ -10,6 +10,8 @@ import threading
 import socket
 import random
 
+from moteConnector import OpenParser
+
 class SerialTester(threading.Thread):
     
     DFLT_TESTPKT_LENGTH = 10  ##< number of bytes in a test packet
@@ -62,7 +64,7 @@ class SerialTester(threading.Thread):
                     input              = [ord(c) for c in inputString]
                     
                     # handle input
-                    if (chr(input[0])=='D'):
+                    if (chr(input[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
                         
                         # don't handle if I'm not testing
                         with self.dataLock:
@@ -71,7 +73,7 @@ class SerialTester(threading.Thread):
                         
                         with self.dataLock:
                             # record what I just received
-                            self.lastReceived = input[1+2+5:] # 'H' (1), moteId (2), ASN (5)
+                            self.lastReceived = input[1+2+5:] # type (1B), moteId (2B), ASN (5B)
                             
                             # wake up other thread
                             self.waitForReply.set()
@@ -149,7 +151,7 @@ class SerialTester(threading.Thread):
                 self.lastSent = packetToSend[:]
             
             # send
-            self.socket.send(''.join(['H']+[chr(b) for b in packetToSend]))
+            self.socket.send(''.join([OpenParser.OpenParser.TYPE_poipoi]+[chr(b) for b in packetToSend]))
             with self.dataLock:
                 self.stats['numSent']                 += 1
             
