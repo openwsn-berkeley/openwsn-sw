@@ -113,6 +113,9 @@ class OpenHdlc(object):
         log.debug("after unstuff:   {0}".format(u.formatBuf(outBuf)))
         '''
         
+        if len(outBuf)<2:
+            raise HdlcException('packet too short')
+        
         # check CRC
         crcExp     = (ord(outBuf[-1])<<8) + ord(outBuf[-2])
         log.debug("crcExp:  {0}".format(hex(crcExp)))
