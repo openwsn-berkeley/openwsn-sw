@@ -74,7 +74,10 @@ class OpenHdlc(object):
         outBuf     = inBuf[:]
         
         # calculate CRC
-        crc        = self._calculateCrc(inBuf)
+        crc        = self.HDLC_CRCINIT
+        for b in outBuf:
+            crc    = self._crcIteration(crc,b)
+        crc        = 0xffff-crc
         
         # append CRC
         outBuf     = outBuf + chr(crc & 0xff) + chr((crc & 0xff00) >> 8)
@@ -118,12 +121,11 @@ class OpenHdlc(object):
             raise HdlcException('packet too short')
         
         # check CRC
-        crcExp     = (ord(outBuf[-1])<<8) + ord(outBuf[-2])
-        log.debug("crcExp:  {0}".format(hex(crcExp)))
-        crcCalc    = self._calculateCrc(outBuf[:-2])
-        log.debug("crcCalc: {0}".format(hex(crcCalc)))
-        if crcExp!=crcCalc:
-            raise HdlcException('expected CRC={0}, calculated CRC={1}'.format(hex(crcExp),hex(crcCalc)))
+        crc        = self.HDLC_CRCINIT
+        for b in outBuf:
+            crc    = self._crcIteration(crc,b)
+        if crc!=self.HDLC_CRCGOOD:
+           raise HdlcException('expected CRC={0}, calculated CRC={1}'.format(hex(crcExp),hex(crcCalc)))
         
         # remove CRC
         outBuf     = outBuf[:-2] # remove CRC
@@ -133,13 +135,6 @@ class OpenHdlc(object):
 
     #============================ private =====================================
     
-    def _calculateCrc(self,buf):
-        '''
-        \brief Compute the fcs16 checksum for the given buffer.
-        '''
-        crcini     = self.HDLC_CRCINIT
-        crc        = crcini
-        for c in buf:
-            tmp    = crc^(ord(c))
-            crc    = (crc>> 8)^self.FCS16TAB[(tmp & 0xff)]
-        return crcini - crc
+    def _crcIteration(self,crc,b):
+        return (crc>>8)^self.FCS16TAB[((crc^(ord(b))) & 0xff)]
+    
