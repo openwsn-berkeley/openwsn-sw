@@ -9,7 +9,7 @@ import random
 
 import pytest
 
-import openhdlc
+import OpenHdlc
 import openvisualizer_utils as u
 
 import logging
@@ -34,7 +34,7 @@ logHandler = logging.handlers.RotatingFileHandler(LOGFILE_NAME,
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in   [
                         'test_hdlc',
-                        'openhdlc',
+                        'OpenHdlc',
                     ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
@@ -63,7 +63,7 @@ def test_buildRequestFrame():
     
     log.debug("\n---------- test_buildRequestFrame")
     
-    hdlc = openhdlc.OpenHdlc()
+    hdlc = OpenHdlc.OpenHdlc()
     
     # hdlcify
     frameHdlcified = hdlc.hdlcify('\x53')
@@ -73,7 +73,7 @@ def test_dehdlcifyToZero():
     
     log.debug("\n---------- test_dehdlcifyToZero")
     
-    hdlc = openhdlc.OpenHdlc()
+    hdlc = OpenHdlc.OpenHdlc()
     
     # frame
     frame = [0x53,0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xaa]
@@ -100,7 +100,7 @@ def test_randdomBackAndForth(randomFrame):
     
     log.debug("\n---------- test_randdomBackAndForth")
     
-    hdlc = openhdlc.OpenHdlc()
+    hdlc = OpenHdlc.OpenHdlc()
     
     log.debug("randomFrame:    {0}".format(u.formatBuf(randomFrame)))
     

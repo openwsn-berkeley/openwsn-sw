@@ -8,7 +8,7 @@ import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('openhdlc')
+log = logging.getLogger('OpenHdlc')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 

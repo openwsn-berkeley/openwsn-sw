@@ -145,7 +145,7 @@ logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] 
 for loggerName in [
                    'SerialTester',
                    'moteProbeSerialThread',
-                   'openhdlc',
+                   'OpenHdlc',
                    ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)

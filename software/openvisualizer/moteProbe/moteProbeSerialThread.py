@@ -12,7 +12,7 @@ import serial
 import time
 import struct
 
-import openhdlc
+import OpenHdlc
 from moteConnector import OpenParser
 import openvisualizer_utils as u
 
@@ -30,7 +30,7 @@ class moteProbeSerialThread(threading.Thread):
         self.serialportBaudrate   = serialportBaudrate
         
         # local variables
-        self.hdlc                 = openhdlc.OpenHdlc()
+        self.hdlc                 = OpenHdlc.OpenHdlc()
         self.lastRxByte           = self.hdlc.HDLC_FLAG
         self.busyReceiving        = False
         self.inputBuf             = ''
@@ -94,7 +94,7 @@ class moteProbeSerialThread(threading.Thread):
                         
                         try:
                             self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
-                        except openhdlc.HdlcException:
+                        except OpenHdlc.HdlcException:
                             print "wrong CRC!"
                         else:
                             if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
