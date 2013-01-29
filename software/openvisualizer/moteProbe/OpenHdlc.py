@@ -1,7 +1,7 @@
 ##
 # \brief HDLC framing module.
 #
-# \author Min Ting, October 2012.
+# \author Min Ting <tingm417@gmail.com>, October 2012.
 #
 
 import logging
