@@ -7,6 +7,8 @@ sys.path.insert(0, os.path.join(cur_path, '..', '..','PyDispatcher-2.0.3'))# PyD
 
 import random
 
+import pytest
+
 import openhdlc
 import openvisualizer_utils as u
 
@@ -26,6 +28,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 logHandler = logging.handlers.RotatingFileHandler(LOGFILE_NAME,
+                                                  maxBytes=2*1024*1024,
                                                   backupCount=5,
                                                   mode='w')
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
@@ -37,6 +40,21 @@ for loggerName in   [
     temp.setLevel(logging.DEBUG)
     temp.addHandler(logHandler)
     
+#============================ fixtures ========================================
+
+RANDOMFRAME = []
+for frameLen in range(1,100,5):
+    for run in range(100):
+        frame = []
+        for _ in range(frameLen):
+            frame += [random.randint(0x00,0xff)]
+        frame = ''.join([chr(b) for b in frame])
+        RANDOMFRAME.append(frame)
+
+@pytest.fixture(params=RANDOMFRAME)
+def randomFrame(request):
+    return request.param
+
 #============================ helpers =========================================
 
 #============================ tests ===========================================
@@ -78,29 +96,20 @@ def test_dehdlcifyToZero():
         crc    = (crc>> 8)^hdlc.FCS16TAB[(tmp & 0xff)]
         log.debug("after {0}, crc={1}".format(hex(ord(c)),hex(crc)))
 
-def test_randdomBackAndForth():
+def test_randdomBackAndForth(randomFrame):
     
     log.debug("\n---------- test_randdomBackAndForth")
     
     hdlc = openhdlc.OpenHdlc()
     
-    for frameLen in range(1,20):
-        for run in range(10):
-            # prepare random frame
-            frame = []
-            for _ in range(frameLen):
-                frame += [random.randint(0x00,0xff)]
-            frame = ''.join([chr(b) for b in frame])
-            
-            log.debug("frame:          {0}".format(u.formatBuf(frame)))
-            
-            # hdlcify
-            frameHdlcified = hdlc.hdlcify(frame)
-            log.debug("hdlcified:   {0}".format(u.formatBuf(frameHdlcified)))
-            
-            # dehdlcify
-            frameDehdlcified = hdlc.dehdlcify(frameHdlcified)
-            log.debug("dehdlcified:    {0}".format(u.formatBuf(frameDehdlcified)))
-            
-            assert frameDehdlcified==frame
-
+    log.debug("randomFrame:    {0}".format(u.formatBuf(randomFrame)))
+    
+    # hdlcify
+    frameHdlcified = hdlc.hdlcify(randomFrame)
+    log.debug("hdlcified:   {0}".format(u.formatBuf(frameHdlcified)))
+    
+    # dehdlcify
+    frameDehdlcified = hdlc.dehdlcify(frameHdlcified)
+    log.debug("dehdlcified:    {0}".format(u.formatBuf(frameDehdlcified)))
+    
+    assert frameDehdlcified==randomFrame
