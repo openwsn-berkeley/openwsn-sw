@@ -121,7 +121,7 @@ class OpenHdlc(object):
         for b in outBuf:
             crc    = self._crcIteration(crc,b)
         if crc!=self.HDLC_CRCGOOD:
-           raise HdlcException('expected CRC={0}, calculated CRC={1}'.format(hex(crcExp),hex(crcCalc)))
+           raise HdlcException('wrong CRC')
         
         # remove CRC
         outBuf     = outBuf[:-2] # remove CRC
