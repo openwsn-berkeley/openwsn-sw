@@ -94,8 +94,8 @@ class moteProbeSerialThread(threading.Thread):
                         
                         try:
                             self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
-                        except OpenHdlc.HdlcException:
-                            print "wrong CRC!"
+                        except OpenHdlc.HdlcException as err:
+                            log.warning('invalid serial frame: {0}'.format(err))
                         else:
                             if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
                                 with self.outputBufLock:
