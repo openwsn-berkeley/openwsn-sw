@@ -60,7 +60,7 @@ class serialTesterCli(OpenCli):
         
         # by default, turn trace on
         self._handle_pklen([10])
-        self._handle_numpk([10])
+        self._handle_numpk([1])
         self._handle_timeout([1])
         self._handle_trace([1])
         

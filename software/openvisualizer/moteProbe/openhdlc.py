@@ -23,8 +23,8 @@ class OpenHdlc(object):
     HDLC_FLAG_ESCAPED      = '\x5e'
     HDLC_ESCAPE            = '\x7d'
     HDLC_ESCAPE_ESCAPED    = '\x5d'
-    
-    CRC_MAGICVALUE         = 0xabcd
+    HDLC_CRCINIT           = 0xffff
+    HDLC_CRCGOOD           = 0xf0b8
     
     FCS16TAB  = (
         0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
@@ -75,7 +75,6 @@ class OpenHdlc(object):
         
         # calculate CRC
         crc        = self._calculateCrc(inBuf)
-        crc        = self.CRC_MAGICVALUE # poipoi
         
         # append CRC
         outBuf     = outBuf + chr(crc & 0xff) + chr((crc & 0xff00) >> 8)
@@ -122,7 +121,6 @@ class OpenHdlc(object):
         crcExp     = (ord(outBuf[-1])<<8) + ord(outBuf[-2])
         log.debug("crcExp:  {0}".format(hex(crcExp)))
         crcCalc    = self._calculateCrc(outBuf[:-2])
-        crcCalc    = self.CRC_MAGICVALUE # poipoi
         log.debug("crcCalc: {0}".format(hex(crcCalc)))
         if crcExp!=crcCalc:
             raise HdlcException('expected CRC={0}, calculated CRC={1}'.format(hex(crcExp),hex(crcCalc)))
@@ -139,7 +137,7 @@ class OpenHdlc(object):
         '''
         \brief Compute the fcs16 checksum for the given buffer.
         '''
-        crcini     = 0xffff
+        crcini     = self.HDLC_CRCINIT
         crc        = crcini
         for c in buf:
             tmp    = crc^(ord(c))

@@ -41,7 +41,46 @@ for loggerName in   [
 
 #============================ tests ===========================================
 
+def test_buildRequestFrame():
+    
+    log.debug("\n---------- test_buildRequestFrame")
+    
+    hdlc = openhdlc.OpenHdlc()
+    
+    # hdlcify
+    frameHdlcified = hdlc.hdlcify('\x53')
+    log.debug("request frame: {0}".format(u.formatBuf(frameHdlcified)))
+
+def test_dehdlcifyToZero():
+    
+    log.debug("\n---------- test_dehdlcifyToZero")
+    
+    hdlc = openhdlc.OpenHdlc()
+    
+    # frame
+    frame = [0x53,0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xaa]
+    frame = ''.join([chr(b) for b in frame])
+    log.debug("frame:      {0}".format(u.formatBuf(frame)))
+    
+    # hdlcify
+    frame = hdlc.hdlcify(frame)
+    log.debug("hdlcify: {0}".format(u.formatBuf(frame)))
+    
+    # remove flags
+    frame = frame[1:-1]
+    log.debug("no flags:   {0}".format(u.formatBuf(frame)))
+    
+    # calculate CRC
+    crcini     = 0xffff
+    crc        = crcini
+    for c in frame:
+        tmp    = crc^(ord(c))
+        crc    = (crc>> 8)^hdlc.FCS16TAB[(tmp & 0xff)]
+        log.debug("after {0}, crc={1}".format(hex(ord(c)),hex(crc)))
+
 def test_randdomBackAndForth():
+    
+    log.debug("\n---------- test_randdomBackAndForth")
     
     hdlc = openhdlc.OpenHdlc()
     
@@ -64,3 +103,4 @@ def test_randdomBackAndForth():
             log.debug("dehdlcified:    {0}".format(u.formatBuf(frameDehdlcified)))
             
             assert frameDehdlcified==frame
+
