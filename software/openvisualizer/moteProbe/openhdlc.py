@@ -83,10 +83,8 @@ class OpenHdlc(object):
         outBuf     = outBuf + chr(crc & 0xff) + chr((crc & 0xff00) >> 8)
         
         # stuff bytes
-        '''
         outBuf     = outBuf.replace(self.HDLC_ESCAPE, self.HDLC_ESCAPE+self.HDLC_ESCAPE_ESCAPED)
         outBuf     = outBuf.replace(self.HDLC_FLAG,   self.HDLC_ESCAPE+self.HDLC_FLAG_ESCAPED)
-        '''
         
         # add flags
         outBuf     = self.HDLC_FLAG + outBuf + self.HDLC_FLAG
@@ -111,11 +109,9 @@ class OpenHdlc(object):
         log.debug("after flags:     {0}".format(u.formatBuf(outBuf)))
         
         # unstuff
-        '''
         outBuf     = outBuf.replace(self.HDLC_ESCAPE+self.HDLC_FLAG_ESCAPED,   self.HDLC_FLAG)
         outBuf     = outBuf.replace(self.HDLC_ESCAPE+self.HDLC_ESCAPE_ESCAPED, self.HDLC_ESCAPE)
         log.debug("after unstuff:   {0}".format(u.formatBuf(outBuf)))
-        '''
         
         if len(outBuf)<2:
             raise HdlcException('packet too short')
