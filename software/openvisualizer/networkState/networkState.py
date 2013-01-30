@@ -50,14 +50,13 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     IANA_UDP         = 0x11
     IANA_ICMPv6      = 0x3A
     #DIO header bytes
-    
+    DIO_OPT_GROUNDED = 1<<7
     MOP_DIO_A      = 1<<5
     MOP_DIO_B      = 1<<4
     MOP_DIO_C      = 1<<3
     PRF_DIO_A      = 1<<2
     PRF_DIO_B      = 1<<1
     PRF_DIO_C      = 1<<0
-    G_DIO          = 1<<7
     
     DIO_PERIOD     = 30 # period between successive DIOs, in seconds
     
@@ -460,7 +459,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         dio.append(0)        # rank (byte 2/2)
         
         # DIO options
-        aux = self.MOP_DIO_A | self.MOP_DIO_B | self.MOP_DIO_C;
+        aux = self.DIO_OPT_GROUNDED|self.MOP_DIO_A | self.MOP_DIO_B | self.MOP_DIO_C;
         #aux = aux & (not self.PRF_DIO_A) & (not self.PRF_DIO_B) & (not self.PRF_DIO_C) & (not self.G_DIO)
         dio.append(aux)
           
@@ -471,7 +470,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         # DODAGID
         dio += li
         
-        dio.append(0x03)     # options
+        #dio.append(0x03)     # options
         
         # checksum of all the fields checksum on ICMP Header
         checksum   = self._calculateCRC(dio[17:], len(dio[17:]))

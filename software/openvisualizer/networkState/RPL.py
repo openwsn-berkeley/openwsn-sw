@@ -140,15 +140,14 @@ class RPL(object):
         
         #DODAGID 16bytes
         header['DODAGID'] = dao[20:36]
-        header['RPL_option'] = dao[36]
-        
+                
         #transit information object
-        header['Transit_information_type'] = dao[37]
-        header['Transit_information_length'] = dao[38]
-        header['Transit_information_flags'] = dao[39]
-        header['Transit_information_path_control'] = dao[40]
-        header['Transit_information_path_sequence'] = dao[41]
-        header['Transit_information_path_lifetime'] = dao[42]
+        header['Transit_information_type'] = dao[36]
+        header['Transit_information_length'] = dao[37]
+        header['Transit_information_flags'] = dao[38]
+        header['Transit_information_path_control'] = dao[39]
+        header['Transit_information_path_sequence'] = dao[40]
+        header['Transit_information_path_lifetime'] = dao[41]
         #dao=dao[35:]
         for c in range(self._HEADER_LEN): dao.pop(0)
         return header
