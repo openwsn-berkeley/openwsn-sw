@@ -20,7 +20,7 @@ class RPL(object):
     classdocs
     '''
     
-    _HEADER_LEN = 43
+    _HEADER_LEN = 42
     _ADDR_LEN   = 8
 
     def __init__(self):
