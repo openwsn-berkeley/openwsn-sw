@@ -147,10 +147,10 @@ class SerialTester(threading.Thread):
         for i in range(numTestPkt):
             
             # prepare random packet to send
-            #packetToSend = [random.randint(0x00,0xff) for _ in range(testPktLen)]
-            packetToSend = [0x11*(i+1) for i in range(testPktLen)]
-            packetToSend[2] = 0x7e
-            packetToSend[5] = 0x7d
+            packetToSend = [random.randint(0x00,0xff) for _ in range(testPktLen)]
+            #packetToSend = [0x11*(i+1) for i in range(testPktLen)]
+            #packetToSend[2] = 0x7e
+            #packetToSend[5] = 0x7d
             
             # remember as last sent packet
             with self.dataLock:
