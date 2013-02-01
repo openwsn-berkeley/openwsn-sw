@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Thu, 31 Jan 2013 14:16:11
+# on Fri, 01 Feb 2013 15:39:53
 #
 
 components = {
@@ -107,4 +107,5 @@ errorDescriptions = {
   49: "input length problem, length={0}",
   50: "booted",
   51: "invalid serial frame",
+  52: "invalid packet frome radio, length {1} (code location {0})",
 }
