@@ -20,7 +20,8 @@ class RPL(object):
     classdocs
     '''
     
-    _HEADER_LEN = 42
+    _HEADER_LEN = 36 #DO len until transit information header
+    _TRANSIT_INFORMATION_HEADER_LEN = 6
     _ADDR_LEN   = 8
 
     def __init__(self):
@@ -42,10 +43,17 @@ class RPL(object):
         source      = self._parseSource(dao) 
         #print ",".join(hex(c) for c in source)
         #check that the DAO has at least the minimum header
+
+        
         if (len(dao) < self._HEADER_LEN):
-             log.debug('received pkt different than expecte DAO. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao)))
-             print 'received pkt different than expecte DAO. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao))
+             log.debug('received DAO with a too short header. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao)))
+             print 'received DAO with a too short header. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao))
              return
+        
+        if (len(dao) < (self._HEADER_LEN + self._TRANSIT_INFORMATION_HEADER_LEN)):
+             log.debug('received DAO without transit information header. This means that this node is reporting that has no parents or in its routing table there are no other nodes with a rank lower than its own. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao)))
+             print 'received DAO without transit information header. This means that this node is reporting that has no parents or in its routing table there are no other nodes with a rank lower than its own. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao))
+             return 
         
         if (len(source)!=self._ADDR_LEN):
              log.debug('received pkt with src address different than expected. src {0}, dest {1}, pkt {2}'.format(" ".join(hex(c) for c in source)," ".join(hex(c) for c in destination)," ".join(hex(c) for c in dao)))
@@ -150,6 +158,8 @@ class RPL(object):
         header['Transit_information_path_lifetime'] = dao[41]
         #dao=dao[35:]
         for c in range(self._HEADER_LEN): dao.pop(0)
+        
+        for c in range(self._TRANSIT_INFORMATION_HEADER_LEN): dao.pop(0)
         return header
         
     
