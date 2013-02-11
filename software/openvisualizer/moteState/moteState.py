@@ -209,6 +209,7 @@ class StateNeighborsRow(StateElem):
         self.data[0]['numRx']                    = notif.numRx
         self.data[0]['numTx']                    = notif.numTx
         self.data[0]['numTxACK']                 = notif.numTxACK
+        self.data[0]['numWraps']                 = notif.numWraps
         if 'asn' not in self.data[0]:
             self.data[0]['asn']                  = typeAsn.typeAsn()
         self.data[0]['asn'].update(notif.asn_0_1,
@@ -380,6 +381,7 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
                                                         'numRx',
                                                         'numTx',
                                                         'numTxACK',
+                                                        'numWraps',
                                                         'asn',
                                                     ]
                                                 ))
