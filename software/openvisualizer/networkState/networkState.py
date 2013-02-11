@@ -1,3 +1,9 @@
+'''
+\brief Module which coordinate RPL DIO and DAO messages.
+
+\author Xavi Vilajosana <xvilajosana@eecs.berkeley.edu>, January 2013.
+'''
+
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -18,47 +24,47 @@ import RPL
 
 class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     
+    LINK_LOCAL_PREFIX        = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix.
+    MAX_SERIAL_PKT_SIZE      = 8+127                       ##< Maximum length for a serial packet.
+    DIO_PERIOD               = 10                          ##< period between successive DIOs, in seconds.
     
-    DEFAULT_PREFIX = "FE80:0000:0000:0000"
+    # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
+    IANA_UNDEFINED           = 0x00
+    IANA_PROTOCOL_UDP        = 17
+    IANA_PROTOCOL_IPv6ROUTE  = 43
     
-    MAX_SERIAL_PKT_SIZE = 136 #max lenght for a packet 8+127
+    #=== 6LoWPAN header (RFC6282)
+    # byte 0
+    SR_DISPATCH_MASK         = 3<<5                        ##< Dispatch
+    SR_TF_MASK               = 3<<3                        ##< Traffic Fields
+    SR_NH_SET                = 0x01                        ##< Next Header
+    SR_NH_MASK               = SR_NH_SET<<2                ##< not compressed next header as we need to advertise src routing header
+    SR_HLIM_MASK             = 1<<0                        ##< Hop Limit
+    # byte 1
+    SR_CID_MASK              = 0                           ##< Context Identifier Extension
+    SR_SAC_MASK              = 0                           ##< Source Address Compression
+    SR_SAM_MASK              = 0                           ##< Source Address Mode
+    SR_M_MASK                = 0                           ##< Multicast Compression
+    SR_DAC_MASK              = 0                           ##< Destination Address Compression
+    SR_DAM_MASK              = 3                           ##< Destination Address Mode
+    # inline next header
+    SR_NH_VALUE              = IANA_PROTOCOL_IPv6ROUTE     ##< Next header
     
-    #src routing iphc header bytes
-    SR_DISPATCH_MASK = 3<<5
-    SR_TF_MASK       = 3<<3 #elided traffic fields.
-    SR_NH_SET        = 0x01
-    SR_NH_MASK       = SR_NH_SET<<2 #not compressed next header as we need to advertise src routing header
-   
-   
-    SR_NH_BIT_MASK   = 0<<2
-    SR_HLIM_MASK     = 1<<0 #hop limit 1?? 1hop only?
+    #=== RPL source routing header (RFC6554)
+    SR_FIR_TYPE              = 0x03                        ##< Routing Type
     
-    SR_CID_MASK      = 0
-    SR_SAC_MASK      = 0
-    SR_SAM_MASK      = 0 #fully 128bit
-    SR_M_MASK        = 0
-    SR_DAC_MASK      = 0
-    SR_DAM_MASK      = 3 #compressed as it is in the src routing header??
-    SR_NH_VALUE      = 0x2B 
+    #=== UDP header (RFC768)
+    NHC_UDP_MASK             = 0xF8                        ##< b1111 1000
+    NHC_UDP_ID               = 0xF0                        ##< b1111 0000
     
-    SR_FIR_TYPE      = 0x03
-               
-    NHC_UDP_MASK     = 0xF8          # b1111 1000
-    NHC_UDP_ID       = 0xF0          # b1111 0000            
-    
-    IANA_UNDEFINED   = 0x00
-    IANA_UDP         = 0x11
-    IANA_ICMPv6      = 0x3A
-    #DIO header bytes
-    DIO_OPT_GROUNDED = 1<<7
-    MOP_DIO_A      = 1<<5
-    MOP_DIO_B      = 1<<4
-    MOP_DIO_C      = 1<<3
-    PRF_DIO_A      = 1<<2
-    PRF_DIO_B      = 1<<1
-    PRF_DIO_C      = 1<<0
-    
-    DIO_PERIOD     = 30 # period between successive DIOs, in seconds
+    #=== RPL DIO (RFC6550)
+    DIO_OPT_GROUNDED         = 1<<7
+    MOP_DIO_A                = 1<<5
+    MOP_DIO_B                = 1<<4
+    MOP_DIO_C                = 1<<3
+    PRF_DIO_A                = 1<<2
+    PRF_DIO_B                = 1<<1
+    PRF_DIO_C                = 1<<0
     
     def __init__(self):
         
@@ -72,57 +78,389 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             self,
             signal           = 'inputFromMoteProbe.data.local',
             sender           = dispatcher.Any,
-            notifCallback    = self._receivedData_notif
+            notifCallback    = self._receivedMoteDataLocal_notif
         )
         
         # local variables
         self.stateLock            = threading.Lock()
         self.state                = {}
         self.rpl                  = RPL.RPL()
-        
-        self.prefix               = None
-        self.address              = None
+        self.networkPrefix        = self.LINK_LOCAL_PREFIX
+        self.dagRootEui64         = None
         self.moduleInit           = False
-        
-        self.latencyStats     = {} #empty dictionary
-        
-        #debug when lbr does not work
-        self.prefix=self.DEFAULT_PREFIX #setting the prefix to a default value. This enables to setup local networks without having to connect to the LBR.
+        self.latencyStats         = {}
         
         if not self.moduleInit:
             # connect to dispatcher
             dispatcher.connect(
-                self._setLocalAddr,
+                self._setDagRootEui64,
                 signal = 'infoDagRoot',
             )
             dispatcher.connect(
                 self._setNetworkPrefix,
                 signal = 'networkPrefix',
             )
-            #subscribe to LBR data to handle source routing.
+            # subscribe to LBR data to handle source routing.
             dispatcher.connect(
-                self._IPv6PacketReceived,
+                self._receivedInternetData_notif,
                 signal = 'dataFromInternet',
             )
-            #get latency information 
+            # get latency information 
             dispatcher.connect(
                 self._latencyStatsRcv,
                 signal = 'latency',
             )
             
-            #start the moteConnectorConsumer
+            # start the moteConnectorConsumer
             self.start()
             
             # send a DIO periodically
-            self._initDIOActivity(self.DIO_PERIOD) 
+            self._scheduleSendDIO(self.DIO_PERIOD) 
             self.moduleInit       = True
-        
+    
     #======================== public ==========================================
-    ''' This method is invoked whenever a UDP packet is send from a mote from UDPLatency application. This app listens at port 61001 
-        and computes the latency of a packet. Note that this app is a crosslayer app since the mote sends the data within a UDP packet 
-        and OpenVisualizer (ParserData) handles that packet and reads UDP payload to compute time difference. At bridge level on the dagroot, 
-        the ASN of the DAGROOt is appended to the serial port to be able to know what is the ASN at reception side. The LATENCY values are in uS.'''  
+    
+    #======================== private =========================================
+    
+    #==== handle bus commands
+    
+    def _setDagRootEui64(self,data):
+        '''
+        \brief Record the DAGroot's EUI64 address.
+        '''
+        with self.stateLock:
+            self.dagRootEui64     = data['eui64']
+    
+    def _setNetworkPrefix(self,data):
+        '''
+        \brief Record the network prefix.
+        '''
+        with self.stateLock:
+            self.networkPrefix    = data
+    
+    #===== send DIO
+    
+    def _scheduleSendDIO(self,interval):
+        '''
+        \brief Schedule to send a DIO sometime in the future.
+        
+        \param[in] interval In how many seconds the DIO is scheduled to be
+            sent.
+        '''
+        self.timer = threading.Timer(interval,self._sendDIO)
+        self.timer.start()
+    
+    def _sendDIO(self):
+        '''
+        \brief Send a DIO.
+        '''
+        # don't send DIO if I didn't discover the DAGroot EUI64.
+        if not self.dagRootEui64:
+            
+            # reschule to try again later
+            self._scheduleSendDIO(self.DIO_PERIOD)
+            
+            # stop here
+            return
+        
+        # the list of bytes to be sent to the DAGroot.
+        # - [8B]       destination MAC address
+        # - [variable] IPHC+ header
+        dio                  = []
+        
+        # next hop: broadcast address
+        dio                 += [0xff]*8
+        
+        # IPHC header
+        dio                 += [0x78]        # dispatch byte
+        dio                 += [0x33]        # dam sam
+        dio                 += [0x3A]        # next header (0x3A=ICMPv6)
+        dio                 += [0x00]        # HLIM
+        
+        # ICMPv6 header
+        idxICMPv6            = len(dio)      # remember where ICMPv6 starts
+        dio                 += [155]         # ICMPv6 type (155=RPL)
+        dio                 += [0x01]        # ICMPv6 CODE (for RPL 0x01=DIO)
+        idxICMPv6CS          = len(dio)      # remember where ICMPv6 checksum starts
+        dio                 += [0x00,0x00]   # placeholder for checksum (filled out later)
+        
+        # DIO header
+        dio                 += [0x00]        # instance ID
+        dio                 += [0x00]        # version number
+        dio                 += [0x00,0x00]   # rank
+        dio                 += [
+                                  self.DIO_OPT_GROUNDED |
+                                  self.MOP_DIO_A        |
+                                  self.MOP_DIO_B        |
+                                  self.MOP_DIO_C
+                               ]             # options: G | 0 | MOP | Prf
+        dio                 += [0x00]        # DTSN
+        dio                 += [0x00]        # flags
+        dio                 += [0x00]        # reserved
+        
+        # DODAGID
+        with self.stateLock:
+            dio             += self._hexstring2bytelist(self.networkPrefix.replace(':',''))
+            dio             += self.dagRootEui64
+        
+        # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
+        checksum             = self._calculateCRC(
+                                   dio[idxICMPv6:],
+                                   len(dio[idxICMPv6:])
+                               )
+        dio[idxICMPv6CS  ]   = checksum[0]
+        dio[idxICMPv6CS+1]   = checksum[1]
+        
+        # log
+        log.debug('sending DIO {0}'.format(self._formatByteList(dio)))
+        
+        # dispatch
+        dispatcher.send(
+            signal        = 'dataForDagRoot',
+            sender        = 'rpl',
+            data          = ''.join([chr(c) for c in dio]),
+        )
+        
+        # schedule the next DIO transmission
+        self._scheduleSendDIO(self.DIO_PERIOD)
+    
+    #===== received DAO
+    
+    def _receivedMoteDataLocal_notif(self,notif):
+        '''
+        \brief Called when receiving inputFromMoteProbe.data.local, probably a DAO.
+        '''
+        
+        # log
+        log.debug("received data local {0}".format(notif))
+               
+        # indicate data to RPL
+        self.rpl.update(notif)
+    
+    #===== received dataFromInternet
+    
+    def _receivedInternetData_notif(self,data):
+        
+        # packet received from LBR consists of:
+        # - [8B]        final destination's EUI64
+        # - [variable]  packet, starting with 6LoWPAN header
+        destination     = [ord(b) for b in data[:8]]
+        packet          = [ord(b) for b in data[8:]]
+        
+        # log
+        output  = []
+        output += ['Received packet from Internet:']
+        output += [' - destination: {0}'.format(self._formatByteList(destination))]
+        output += [' - packet:      {0}'.format(self._formatByteList(packet))]
+        output  = '\n'.join(output)
+        log.debug(output)
+        
+        if (self._isbroadcast(destination)):
+            # this packet is destined to broadcast address
+            
+            # log
+            log.debug("Packet for broadcast, dropping.")
+            
+            # stop here: we don't want to send broadcast packets into mesh
+            return
+            
+        # get source route to destination
+        route           = self.rpl.getRouteTo(destination)
+        if not route:
+            log.warning("No known source route to {0}".format(''.join(str(c) for c in destination)))
+            return
+       
+        # if you get here, a source route was found
+        
+        # log
+        log.debug("source route to {0}: {1}".format(destination,route))
+        
+        # remove last source routing element, which is DAGroot
+        route.pop()
+        
+        if (len(route)>1):
+            # Destination is more that one hop away.
+            
+            log.debug("Destination is multiple hops away.")
+            
+            # Insert a source routing header into packet.
+            
+            #   lowpan [2B]
+            #      dispatch:         0x3
+            #      tf:               0x3 (elided traffic fields)
+            #      nh:               0x1 (next-header compressed)
+            #      hlim:             0x1 (1 hop max)
+            #      cid:              0x0 (no inline context id)
+            #      sac:              0x0 (stateless src. addr. compr.)
+            #      sam:              0x0 (128b in-line addr.)
+            #      m:                0x0 (unicast)
+            #      dac:              0x0 (stateless dest. addr. compr.)
+            #      dam:              0x3 (elided addr., or 8b multicast)
+            #   src address [16B]
+            #      src_addr:         200104701f120f200000000000000002
+            #   dest address [0B]
+            #      dest_addr:       
+            #   udp
+            #      c:                0x1 (elided udp checksum)
+            #      p:                0x0 (udp port bits: s16_d16)
+            #      src_port:         0xa3b5
+            #      dest_port:        0x8
+            #   payload
+            #      length:           0x4
+            #      bytes:            6161610a
+            
+            iphcBytes                  = packet[:2]
+            
+            # extract nextHeaderVal and expandUDP
+            nextHeaderVal              = self.IANA_UNDEFINED
+            expandUDP                  = False
+            if (((iphcBytes[0]>>2) & self.SR_NH_SET)==1):
+                # next header is compressed. check if it is UDP
+                srcAddress             = packet[2:2+16]
+                maybeUDP               = packet[2+16:2+16+1]
+                if ((maybeUDP[0]&self.NHC_UDP_MASK)==self.NHC_UDP_ID):
+                    nextHeaderVal      = self.IANA_PROTOCOL_UDP
+                    expandUDP          = True
+                    packet             = packet[2+16:]
+            else:
+                # next header is not compressed, read directly from IPHC field
+                nextHeaderVal          = packet[2]
+                srcAddress             = packet[3:19]
+                expandUDP              = False      
+                packet                 = packet[2+1+16:]
+            
+            # log
+            log.debug('nextHeaderVal={0} expandUDP={1}'.format(nextHeaderVal,expandUDP))
+            
+            # modify IPHC header
+            iphcBytes[0]               = self.SR_DISPATCH_MASK      | \
+                                         self.SR_TF_MASK            | \
+                                         ((~self.SR_NH_MASK) & 0x0f)| \
+                                         self.SR_HLIM_MASK
+            iphcBytes[1]               = self.SR_CID_MASK           | \
+                                         self.SR_SAC_MASK           | \
+                                         self.SR_SAM_MASK           | \
+                                         self.SR_M_MASK             | \
+                                         self.SR_DAC_MASK           | \
+                                         self.SR_DAM_MASK
+            iphcBytes                 += [self.SR_NH_VALUE]
+            
+            # create the src route header
+            srcRouteHeader             = self._createSrcRouteHeader(nextHeaderVal,route)
+            
+            # expand the UDP header, if needed
+            if expandUDP:
+                expandedUdpDatagram    = self._expandUDPdatagram(packet)     
+            else:
+                expandedUdpDatagram    = []
+            
+            
+            # Assemble bytes to send
+            bytesToSend      = []
+            bytesToSend     += route[-1]              # next hop's EUI64
+            bytesToSend     += iphcBytes              # IPHC bytes
+            bytesToSend     += srcAddress             # source address
+            bytesToSend     += srcRouteHeader         # source routing header
+            if expandUDP:
+                bytesToSend += expandedUdpDatagram    # expanded UDP datagram (includes payload)
+            else:
+                bytesToSend += packet                 # untouched payload
+            
+        else:
+            
+            log.debug("Destination is one hop away.")
+            
+            # Assemble bytes to send
+            bytesToSend      = []
+            bytesToSend     += destination            # untouched destination
+            bytesToSend     += packet                 # untouched packet
+        
+        # verify max length
+        if len(bytesToSend)>self.MAX_SERIAL_PKT_SIZE:
+            log.error("packet too long, size={0}".format(len(nextHop)))
+            return  
+        
+        dispatcher.send(
+            signal        = 'dataForDagRoot',
+            sender        = 'rpl',
+            data          = ''.join([chr(b) for b in bytesToSend]),
+        )
+    
+    def _createSrcRouteHeader(self, nextHeaderVal, route):
+        '''
+        \brief Creates a source routing header per http://tools.ietf.org/html/rfc6554#section-3.
+        '''
+        
+        # create header
+        returnVal  = []
+        returnVal += [nextHeaderVal]        # Next Header.
+        returnVal += [len(route)-1]         # Hdr Ext Len. -1 to remove last element.
+        returnVal += [self.SR_FIR_TYPE]     # Routing Type. 3 for source routing.
+        returnVal += [len(route)-1]         # Segments Left. -1 because the first hop goes to the ipv6 destination address.
+        returnVal += [0x08 << 4 | 0x08]     # CmprI | CmprE. All prefixes elided.
+        returnVal += [0x00,0x00,0x00]       # padding (4b) + reserved (20b)
+        for j in range(1,len(route)):
+            hop = route[(len(route)-1)-j]   #first hop not needed
+            returnVal += hop
+            
+        # log
+        output  = []
+        output  = ['creating source header:']
+        output  = ['- nextHeaderVal: {0}'.format(nextHeaderVal)]
+        output  = ['- route:         {0}'.format(route)]
+        output  = ['- returnVal:     {0}'.format(self._formatByteList(returnVal))]
+        log.debug('source header')
+        
+        # return header
+        return returnVal
+    
+    def _expandUDPdatagram(self, pkt):
+        '''
+        \brief Turn a 6LoWPAN-compacted UDP header into a full-blown one.
+        
+        The formats are defined by:
+        - 6LoWPAN-compacted UDP header: http://tools.ietf.org/html/rfc6282#section-4.3.3
+        - full-blown UDP header:        http://tools.ietf.org/html/rfc768
+        
+        \param[in] pkt A bytelist representing a packet, starting after the
+            6LoWPAN header, i.e. at the UDP LOWPAN_NHC Format.
+        
+        \return A bytelist representing the same packet, but with full-blown
+            UDP header.
+        '''
+        oldUdp          = pkt[:5]
+        
+        # format new UDP header
+        newUdp          = []
+        newUdp         += oldUdp[1:3]                 # Source Port
+        newUdp         += oldUdp[3:5]                 # Destination Port
+        length          = 8+len(pkt[5:])
+        newUdp         += [(length & 0xFF00) >> 8]    # Length
+        newUdp         += [(length & 0x00FF) >> 0]
+        idxCS           = len(newUdp)                 # remember index of checksum
+        newUdp         += [0x00,0x00]                 # Checksum (placeholder) 
+        newUdp         += pkt[5:]                     # data octets
+        
+        # calculate checksum (do last)
+        checksum        = self._calculateCRC(newUdp, len(newUdp))
+        newUdp[idxCS]   = checksum[0]
+        newUdp[idxCS+1] = checksum[1]
+        
+        return newUdp
+    
+    #===== received latency data
+    
     def _latencyStatsRcv(self,data):
+        '''
+        This method is invoked whenever a UDP packet is send from a mote from
+        UDPLatency application. This app listens at port 61001 and computes the
+        latency of a packet. Note that this app is a crosslayer app since the
+        mote sends the data within a UDP packet and OpenVisualizer (ParserData)
+        handles that packet and reads UDP payload to compute time difference.
+        At bridge level on the dagroot, the ASN of the DAGROOt is appended to
+        the serial port to be able to know what is the ASN at reception side.
+        The LATENCY values are in uS.
+        '''
         address=",".join(hex(c) for c in data[0])
         latency=data[1]
         parent=",".join(hex(c) for c in data[2])
@@ -157,352 +495,22 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.stateLock.release()               
         #add to dictionary and compute stats...
         log.debug("Latency stats in mS {0}".format(self.latencyStats))
-        #pprint(self.latencyStats)        
-        
     
-     
-    def _prepareSourceRoutingHeader(self, nextHeaderSRCRouting,list, route, len, srcRouteHeader):
-        #should be the same as in the original packet
-        
-        srcRouteHeader.append(nextHeaderSRCRouting) #Next header should be UDP 
-        srcRouteHeader.append(len(route)-1) #len of the routing header. minus last element.
-        srcRouteHeader.append(self.SR_FIR_TYPE) #Routing type 3 fir src routing
-        srcRouteHeader.append(len(route)-1) #number of hops -- segments left . -1 because the first hop goes to the ipv6 destination address.
-        elided = 0x08 << 4 | 0x08
-        srcRouteHeader.append(elided) #elided prefix -- all in our case
-        srcRouteHeader.append(0) #padding octets
-        srcRouteHeader.append(0) #reserved
-        srcRouteHeader.append(0) #reserved
-        
+    #======================== helpers =========================================
     
-        for j in range(1, len(route)):
-            hop = route[(len(route) - 1)-j]#first hop is not needed..
-            for i in range(len(hop)):
-                srcRouteHeader.append(hop[i]) #reserved
-        #now set the length
-        #srcRouteHeader[1] = len(srcRouteHeader)/8 #lenght in 8-octets units.
-    
-
-      # the data received from the LBR should be:
-      # - first 8 bytes: EUI64 of the final destination
-      # - remainder: 6LoWPAN packet and above
-
-
-    def _expandUDPHeader(self, list, pkt, len):
-        udpH = pkt[:5]
-        udpst = struct.unpack('<BBBBB', ''.join([c for c in udpH]))
-        newUdpHeader = []
-        newUdpHeader = list(udpst[1:5]) #skip first byte
-        length = 8 + len(pkt[5:])
-        lenB0 = (length & 0xFF00) >> 8
-        lenB1 = length & 0x00FF
-        newUdpHeader.append(lenB0)
-        newUdpHeader.append(lenB1)
-        newUdpHeader.append(0) #checksum
-        newUdpHeader.append(0) #checksum
-    #append the rest of the pkt a
-        for c in pkt[5:]:
-            byte = struct.unpack('<B', ''.join([c]))
-            newUdpHeader.append(byte[0])
+    def _formatByteList(self,l):
+        '''
+        \brief Format a bytelist into an easy-to-read string.
         
-        chsum = self._calculateCRC(newUdpHeader, len(newUdpHeader))
-        newUdpHeader[6] = chsum[0]
-        newUdpHeader[7] = chsum[1]
-        return newUdpHeader
-
-
-    def _assemblePkt(self, pkt, route, iphcBytes, expandUDPHeader, srcAddress, srcRouteHeader, newUdpHeader, nextHop):
-        for c in list(route[len(route) - 1]):
-            nextHop.append(chr(c))
+        That is:  [0xab,0xcd,0xef,0x00] -> '(4 bytes) ab-cd-ef-00'
+        '''
+        return '({0} bytes) {1}'.format(len(l),'-'.join(["%02x"%b for b in l]))
         
-    #IPHC Header
-        for c in iphcBytes:
-            nextHop.append(chr(c))
-        
-    #SRC Address
-        for c in srcAddress:
-            nextHop.append(chr(c))
-        
-    #srcRoutingHeader
-        for c in srcRouteHeader:
-            nextHop.append(chr(c))
-        
-    #rest of the pkt
-        if (expandUDPHeader):
-            for d in newUdpHeader:
-                nextHop.append(chr(d))
-        
-        else:
-            for d in pkt:
-                nextHop.append(d) #the packet contains no compressed UDP header so copy it like that.
-        
-
-    def _IPv6PacketReceived(self,data):
-        #destination needs to be unpacked
-        dest =struct.unpack('<BBBBBBBB',''.join([c for c in data[:8]])) 
-      
-        destination = list(dest)
-       
-        log.debug("packet to be sent to {0}".format("".join(str(c) for c in destination)))
-        
-        if (self._isbroadcast(destination)):
-            #bypass source routing as it is a broadcast packet.
-            #this is a RADV, once RPL works perfectly this pkt should be destroyed instead.
-            lowpanmsg=data
-            
-            log.debug("broadcast packet {0}".format("".join(str(c) for c in data)))
-            return #nothing is send RADV are not needed.
-        else:    
-            #pkt to a specific address
-            pkt=data[8:] 
-            # a source route in the routing table looks like that:
-            #{'[20, 21, 146, 11, 3, 1, 0, 233]': [[20, 21, 146, 11, 3, 1, 0, 233]]}
-            route=self.rpl.getRouteTo(destination)
-            if not route:
-                #can be me!!
-                log.debug("No route to required destination {0}".format("".join(str(c) for c in destination)))
-                #is that possible that this packet is an icmpv6 router adv? a ping??
-                #We decided that the GW is only L2 and hence cannot be ping etc...
-                return #the list is empty. no route to host. TODO Check if this is the desired behaviour.
-           
-            # the route is here.
-            log.debug("route src found {0}".format(route))
-            route.pop() #remove the last element as it is this node!!
-            
-            if (len(route)>1):
-                #more than one hop -- create the source routing header taking into account the routing information 
-                
-                #      lowpan
-                #      dispatch:         0x3
-                #      tf:               0x3 (elided traffic fields)
-                #      nh:               0x1 (next-header compressed)
-                #      hlim:             0x1 (1 hop max)
-                #      cid:              0x0 (no inline context id)
-                #      sac:              0x0 (stateless src. addr. compr.)
-                #      sam:              0x0 (128b in-line addr.)
-                #      m:                0x0 (unicast)
-                #      dac:              0x0 (stateless dest. addr. compr.)
-                #      dam:              0x3 (elided addr., or 8b multicast)
-                #   src address
-                #      src_addr:         200104701f120f200000000000000002
-                #   dest address
-                #      dest_addr:       
-                #   udp
-                #      c:                0x1 (elided udp checksum)
-                #      p:                0x0 (udp port bits: s16_d16)
-                #      src_port:         0xa3b5
-                #      dest_port:        0x8
-                #   payload
-                #      length:           0x4
-                #      bytes:            6161610a
-                
-                ipv6header=pkt[:19]
-                iph =struct.unpack('<BBBBBBBBBBBBBBBBBBB',''.join([c for c in ipv6header])) 
-                iphl=list(iph)
-                iphcBytes=iphl[:2]#2bytes
-                
-                nextHeaderSRCRouting=self.IANA_UNDEFINED
-                
-                expandUDPHeader=False
-                #if NH is compressed (NH bit is = 1)
-                if (((iphcBytes[0] >> 2)& self.SR_NH_SET)==1):
-                    #next header is compressed. check if it is UDP
-                    srcAddress=iphl[2:18]
-                    maybeUDP=iphl[18:19]
-                    if ((maybeUDP[0]&self.NHC_UDP_MASK)==self.NHC_UDP_ID):
-                         nextHeaderSRCRouting=self.IANA_UDP
-                         expandUDPHeader=True
-                         pkt=pkt[18:]
-                else:
-                    #NH is not compressed hence NH is the 3rd byte on the iphcBytes
-                     nextHeaderSRCRouting=iphl[2]
-                     srcAddress=iphl[3:19]
-                     expandUDPHeader=False      
-                     #the rest of the packet.
-                     pkt=pkt[19:]                 
-               
-                # modify IPHC header introducing nextHopHeader set as 0x2b
-                #NO header compression 
-                iphcBytes[0]=self.SR_DISPATCH_MASK|self.SR_TF_MASK|((~self.SR_NH_MASK) & 0x0f)|self.SR_HLIM_MASK
-                #print (hex(iphcBytes[0]))
-                
-                iphcBytes[1]=self.SR_CID_MASK|self.SR_SAC_MASK|self.SR_SAM_MASK|self.SR_M_MASK|self.SR_DAC_MASK|self.SR_DAM_MASK
-                iphcBytes.append(self.SR_NH_VALUE)#nextheader RPL src routing RFC2460 page 11..
-                
-                #create the src route header
-                srcRouteHeader=[]
-                self._prepareSourceRoutingHeader(nextHeaderSRCRouting,list, route, len, srcRouteHeader)
-                
-                #Split the packet, add the src routing header
-                #build the pkt as NEXT HOP + IPv6 Header + SRC ROUTING HEADER + REST OF THE PKT
-  
-                if expandUDPHeader:
-                    newUdpHeader = self._expandUDPHeader(list, pkt, len)     
-                    #0xf4,0xda,0xfa,0xff,0xff
-                    #0xf4,0xd0,0xd9,0x0,0x7
-                    #expand header
-                else:
-                    newUdpHeader =[]
-                
-                #this is the next hop that goes in front of the pkt so openserial can read it
-                nextHop=[]
-                #after nexthop the packet is appended.
-                self._assemblePkt( pkt, route, iphcBytes, expandUDPHeader, srcAddress, srcRouteHeader, newUdpHeader, nextHop)        
-                    
-                #TODO No fragmentation so we need to check the size!!!!
-             
-                if len(nextHop)>self.MAX_SERIAL_PKT_SIZE:#127+8
-                     log.debug("packet too long. size {0}".format(len(nextHop)))
-                     return    
-                # pkt reasembled with the src routing header. SEND IT
-                lowpanmsg="".join(c for c in nextHop)
-                
-            else:
-                log.debug("destination is next hop")
-                #--> destination is next hop.
-                # let the packet as is??
-                if len(data)>self.MAX_SERIAL_PKT_SIZE:#127+8
-                     log.debug("packet too long. size {0}".format(len(data)))
-                     print "packet too long. size {0}".format(len(data))
-                     return    
-                
-                lowpanmsg=data
-                pass     
-            
-        dispatcher.send(
-            signal        = 'dataForDagRoot',
-            sender        = 'rpl',
-            data          = lowpanmsg,
-        )
-               
-        return
-    
-    
     def _isbroadcast(self,destination):
         a = True
         for x in destination:
             a=(a and (x==255))
         return a;
-        
-        
-    def _receivedData_notif(self,notif):
-        
-        # log
-        log.debug("received {0}".format(notif))
-               
-        # indicate data to RPL
-        self.rpl.update(notif)
-    
-    #======================== private =========================================
-    
-    def _initDIOActivity(self,initialPeriod):
-        '''
-        \brief Start sending DIOs.
-        
-        \note Only start when the prefix and the current mac address are
-              received.
-        '''
-        self.timer = threading.Timer(initialPeriod,self._sendDIO)
-        self.timer.start()
-        
-    
-    def _sendDIO(self):
-        
-        if (not self.address) or (not self.prefix):
-            self._initDIOActivity(self.DIO_PERIOD)
-            return #send only if the prefix is set
-        
-        li         = []
-        
-        self.stateLock.acquire() 
-        dodagid    = self.prefix   # 16-byte address
-        self.stateLock.release() 
-        
-        dodagid    = dodagid.replace(":","") #remove : from the string
-        
-        val = self._hextranslate(dodagid) # every 2 digits is an hex that is converted to int.
-
-        for a in val: #build the address, this is the prefix
-            li.append(a) 
-        
-        self.stateLock.acquire()
-        for b in self.address: #rest of the address
-            li.append(int(b)) 
-        self.stateLock.release()
-        
-        # the list of bytes to be sent to the DAGroot.
-        # - [8B]       destination MAC address
-        # - [variable] IPHC+ header
-        dio = []
-        
-        #destination one hop address : multicast address set to 0xffffffff
-        for i in range(8):
-            dio.append(0xff)
-        
-        # IPHC header
-        dio.append(0x78)     # dispatch byte
-        dio.append(0x33)     # dam sam
-        dio.append(0x3A)     # next header (0x3A=ICMPv6)
-        dio.append(0x00)     # this is hoplimit byte, it is tere because HLIM on dispatch byte is set to 00 (2 last bits) 
-        # ICMPv6 header
-       
-                             ## --- TODO  bug fix this
-        dio.append(155)      # ICMPv6 type (155=RPL)
-        dio.append(1)        # ICMPv6 CODE (for RPL 0x01=DIO)
-        dio.append(0)        # cheksum (byte 1/2), to  be filled later
-        dio.append(0)        # cheksum (byte 2/2), to  be filled later
-        
-        # RPL
-        dio.append(0)        # instance ID
-        dio.append(0)        # version number
-        dio.append(0)        # rank (byte 1/2)
-        dio.append(0)        # rank (byte 2/2)
-        
-        # DIO options
-        aux = self.DIO_OPT_GROUNDED|self.MOP_DIO_A | self.MOP_DIO_B | self.MOP_DIO_C;
-        #aux = aux & (not self.PRF_DIO_A) & (not self.PRF_DIO_B) & (not self.PRF_DIO_C) & (not self.G_DIO)
-        dio.append(aux)
-          
-        dio.append(0x33)     # DTSN
-        dio.append(0)        # flags
-        dio.append(0)        # reserved
-        
-        # DODAGID
-        dio += li
-        
-        #dio.append(0x03)     # options
-        
-        # checksum of all the fields checksum on ICMP Header
-        checksum   = self._calculateCRC(dio[17:], len(dio[17:]))
-        dio[14]    = checksum[0]
-        dio[15]    = checksum[1]
-        
-        # log
-        log.debug('sending DIO {0}'.format(' '.join(['%.2x'%c for c in dio])))
-        
-        # dispatch
-        dispatcher.send(
-            signal        = 'dataForDagRoot',
-            sender        = 'rpl',
-            data          = ''.join([chr(c) for c in dio]),
-        )
-        
-        # restart the timer
-        self._initDIOActivity(self.DIO_PERIOD)
-    
-    #==== bus event handlers
-        
-    def _setLocalAddr(self,data):
-        self.stateLock.acquire()
-        self.address    = data['eui64']
-        self.stateLock.release()
-        
-    def _setNetworkPrefix(self,data):
-        self.stateLock.acquire()
-        self.prefix     = data    
-        self.stateLock.release()
-    
-    #======================== helpers =========================================
     
     def _calculateCRC(self,payload,length):
         temp_checksum         = [0]*2
@@ -533,11 +541,24 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         checksum[0]     = (sum>>8) & 0xFF
         checksum[1]     = sum & 0xFF
     
-    def _hextranslate(self,s):
+    def _hexstring2bytelist(self,s):
+        '''
+        \brief Convert a string of hex caracters into a byte list.
+        
+        That is: 'abcdef00' -> [0xab,0xcd,0xef,0x00]
+        
+        \param[in] s The string to convert
+        
+        \returns A list of integers, each element in [0x00..0xff].
+        '''
+        assert type(s)==str
         assert len(s)%2 == 0
-        res = []
+        
+        returnVal = []
+        
         for i in range(len(s)/2):
             realIdx = i*2
-            res.append(int(s[realIdx:realIdx+2],16))
-        return res
+            returnVal.append(int(s[realIdx:realIdx+2],16))
+        
+        return returnVal
         

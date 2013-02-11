@@ -1,8 +1,9 @@
 '''
-Created on 17/08/2012
+\brief Module which receives DAO messages and calculates source routes.
 
-@author: xvilajosana
+\author Xavi Vilajosana <xvilajosana@eecs.berkeley.edu>, January 2013.
 '''
+
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
@@ -83,7 +84,6 @@ class RPL(object):
         
         return list
     
-  
     #======================== private =========================================
     
     def _getRouteTo_internal(self,destAddr,list):
@@ -192,7 +192,6 @@ class RPL(object):
         res=dao[0:8] #dest address starts at 0th byte in the packet. because it has been cut by get source
         for c in range(8): dao.pop(0)
         return res  
-    
     
     def _parseParents(self,dao,length):
         result=[]

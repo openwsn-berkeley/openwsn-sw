@@ -211,11 +211,16 @@ for loggerName in ['moteProbeUtils',
                    'ParserInfoErrorCritical',
                    'ParserData',
                    'moteState',
-                   'lbrClient',
-                   'networkState',]:
+                   'lbrClient',]:
     fileLogger = logging.getLogger(loggerName)
     fileLogger.setLevel(logging.ERROR)
     fileLogger.addHandler(fileLogHandler)
+for loggerName in ['networkState',
+                   'RPL']:
+    fileLogger = logging.getLogger(loggerName)
+    fileLogger.setLevel(logging.DEBUG)
+    fileLogger.addHandler(fileLogHandler)
+    
 
 #===== print errors reported by motes on console
 
