@@ -52,7 +52,9 @@ class RPL(object):
         log.debug(output)
         
         # retrieve DAO header
-        dao_header           = {}
+        dao_header              = {}
+        dao_transit_information = {}
+         
         try:
             # IPHC header
             dao_header['IPHC_b0']                               = dao[0]
@@ -72,29 +74,24 @@ class RPL(object):
             dao_header['RPL_DAO_Sequence']                      = dao[19]
             # DODAGID
             dao_header['DODAGID']                               = dao[20:36]
-            # transit information option
-            dao_header['Transit_information_type']              = dao[36]
-            dao_header['Transit_information_length']            = dao[37]
-            dao_header['Transit_information_flags']             = dao[38]
-            dao_header['Transit_information_path_control']      = dao[39]
-            dao_header['Transit_information_path_sequence']     = dao[40]
-            dao_header['Transit_information_path_lifetime']     = dao[41]
+           
+            dao              = dao[36:]
+            # retrieve transit information header and parents
+            parents              = []
+               
+            while (len(dao)>0):
+               # transit information option
+               dao_transit_information['Transit_information_type']              = dao[0]
+               dao_transit_information['Transit_information_length']            = dao[1]
+               dao_transit_information['Transit_information_flags']             = dao[2]
+               dao_transit_information['Transit_information_path_control']      = dao[3]
+               dao_transit_information['Transit_information_path_sequence']     = dao[4]
+               dao_transit_information['Transit_information_path_lifetime']     = dao[5]
+               parents += [dao[6:14]]#address of the parent.
+               dao=dao[14:] 
             
-            dao              = dao[42:]
         except IndexError:
             log.warning("DAO too short ({0} bytes), no space for DAO header".format(len(dao)))
-            return
-        
-        # log
-        log.debug('Transit_information_length={0}'.format(dao_header['Transit_information_length']))
-        
-        # retrieve parents
-        parents              = []
-        try:
-            for i in range(dao_header['Transit_information_length']):
-                parents     += [dao[i*8:(i+1)*8]]
-        except IndexError:
-            log.warning("could not retrieve parents from {0} bytes".format(len(dao)))
             return
         
         # log
