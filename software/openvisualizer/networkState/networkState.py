@@ -82,33 +82,33 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         )
         
         # local variables
-        self.stateLock            = threading.Lock()
-        self.state                = {}
-        self.rpl                  = RPL.RPL()
-        self.networkPrefix        = self.LINK_LOCAL_PREFIX
-        self.dagRootEui64         = None
-        self.moduleInit           = False
-        self.latencyStats         = {}
+        self.stateLock       = threading.Lock()
+        self.state           = {}
+        self.rpl             = RPL.RPL()
+        self.networkPrefix   = self.LINK_LOCAL_PREFIX
+        self.dagRootEui64    = None
+        self.moduleInit      = False
+        self.latencyStats    = {}
         
         if not self.moduleInit:
             # connect to dispatcher
             dispatcher.connect(
                 self._setDagRootEui64,
-                signal = 'infoDagRoot',
+                signal       = 'infoDagRoot',
             )
             dispatcher.connect(
                 self._setNetworkPrefix,
-                signal = 'networkPrefix',
+                signal       = 'networkPrefix',
             )
             # subscribe to LBR data to handle source routing.
             dispatcher.connect(
                 self._receivedInternetData_notif,
-                signal = 'dataFromInternet',
+                signal       = 'dataFromInternet',
             )
             # get latency information 
             dispatcher.connect(
                 self._latencyStatsRcv,
-                signal = 'latency',
+                signal       = 'latency',
             )
             
             # start the moteConnectorConsumer
@@ -116,7 +116,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             
             # send a DIO periodically
             self._scheduleSendDIO(self.DIO_PERIOD) 
-            self.moduleInit       = True
+            self.moduleInit  = True
     
     #======================== public ==========================================
     
@@ -232,10 +232,10 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         '''
         
         # log
-        log.debug("received data local {0}".format(notif))
+        log.debug("received data local {0}".format(self._formatByteList(notif)))
                
         # indicate data to RPL
-        self.rpl.update(notif)
+        self.rpl.indicateDAO(notif)
     
     #===== received dataFromInternet
     
@@ -248,14 +248,14 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         packet          = [ord(b) for b in data[8:]]
         
         # log
-        output  = []
-        output += ['Received packet from Internet:']
-        output += [' - destination: {0}'.format(self._formatByteList(destination))]
-        output += [' - packet:      {0}'.format(self._formatByteList(packet))]
-        output  = '\n'.join(output)
+        output          = []
+        output         += ['Received packet from Internet:']
+        output         += [' - destination: {0}'.format(self._formatByteList(destination))]
+        output         += [' - packet:      {0}'.format(self._formatByteList(packet))]
+        output          = '\n'.join(output)
         log.debug(output)
         
-        if (self._isbroadcast(destination)):
+        if destination==[0xff]*len(destination):
             # this packet is destined to broadcast address
             
             # log
@@ -279,9 +279,8 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         route.pop()
         
         if (len(route)>1):
-            # Destination is more that one hop away.
             
-            log.debug("Destination is multiple hops away.")
+            log.debug("Destination is more that one hop away.")
             
             # Insert a source routing header into packet.
             
@@ -354,7 +353,6 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             else:
                 expandedUdpDatagram    = []
             
-            
             # Assemble bytes to send
             bytesToSend      = []
             bytesToSend     += route[-1]              # next hop's EUI64
@@ -381,35 +379,38 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             return  
         
         dispatcher.send(
-            signal        = 'dataForDagRoot',
-            sender        = 'rpl',
-            data          = ''.join([chr(b) for b in bytesToSend]),
+            signal           = 'dataForDagRoot',
+            sender           = 'rpl',
+            data             = ''.join([chr(b) for b in bytesToSend]),
         )
     
     def _createSrcRouteHeader(self, nextHeaderVal, route):
         '''
-        \brief Creates a source routing header per http://tools.ietf.org/html/rfc6554#section-3.
+        \brief Creates a source routing header.
+        
+        Header format described in http://tools.ietf.org/html/rfc6554#section-3.
         '''
         
         # create header
-        returnVal  = []
-        returnVal += [nextHeaderVal]        # Next Header.
-        returnVal += [len(route)-1]         # Hdr Ext Len. -1 to remove last element.
-        returnVal += [self.SR_FIR_TYPE]     # Routing Type. 3 for source routing.
-        returnVal += [len(route)-1]         # Segments Left. -1 because the first hop goes to the ipv6 destination address.
-        returnVal += [0x08 << 4 | 0x08]     # CmprI | CmprE. All prefixes elided.
-        returnVal += [0x00,0x00,0x00]       # padding (4b) + reserved (20b)
+        returnVal            = []
+        returnVal           += [nextHeaderVal]             # Next Header.
+        returnVal           += [len(route)-1]              # Hdr Ext Len. -1 to remove last element.
+        returnVal           += [self.SR_FIR_TYPE]          # Routing Type. 3 for source routing.
+        returnVal           += [len(route)-1]              # Segments Left. -1 because the first hop goes to the ipv6 destination address.
+        returnVal           += [0x08 << 4 | 0x08]          # CmprI | CmprE. All prefixes elided.
+        returnVal           += [0x00,0x00,0x00]            # padding (4b) + reserved (20b)
         for j in range(1,len(route)):
-            hop = route[(len(route)-1)-j]   #first hop not needed
-            returnVal += hop
+            hop              = route[(len(route)-1)-j]     # first hop not needed
+            returnVal       += hop
             
         # log
-        output  = []
-        output  = ['creating source header:']
-        output  = ['- nextHeaderVal: {0}'.format(nextHeaderVal)]
-        output  = ['- route:         {0}'.format(route)]
-        output  = ['- returnVal:     {0}'.format(self._formatByteList(returnVal))]
-        log.debug('source header')
+        output               = []
+        output               = ['creating source header:']
+        output               = ['- nextHeaderVal: {0}'.format(nextHeaderVal)]
+        output               = ['- route:         {0}'.format(route)]
+        output               = ['- returnVal:     {0}'.format(self._formatByteList(returnVal))]
+        output               = '\n'.join(output)
+        log.debug(output)
         
         # return header
         return returnVal
@@ -428,23 +429,23 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         \return A bytelist representing the same packet, but with full-blown
             UDP header.
         '''
-        oldUdp          = pkt[:5]
+        oldUdp               = pkt[:5]
         
         # format new UDP header
-        newUdp          = []
-        newUdp         += oldUdp[1:3]                 # Source Port
-        newUdp         += oldUdp[3:5]                 # Destination Port
-        length          = 8+len(pkt[5:])
-        newUdp         += [(length & 0xFF00) >> 8]    # Length
-        newUdp         += [(length & 0x00FF) >> 0]
-        idxCS           = len(newUdp)                 # remember index of checksum
-        newUdp         += [0x00,0x00]                 # Checksum (placeholder) 
-        newUdp         += pkt[5:]                     # data octets
+        newUdp               = []
+        newUdp              += oldUdp[1:3]                 # Source Port
+        newUdp              += oldUdp[3:5]                 # Destination Port
+        length               = 8+len(pkt[5:])
+        newUdp              += [(length & 0xFF00) >> 8]    # Length
+        newUdp              += [(length & 0x00FF) >> 0]
+        idxCS                = len(newUdp)                 # remember index of checksum
+        newUdp              += [0x00,0x00]                 # Checksum (placeholder) 
+        newUdp              += pkt[5:]                     # data octets
         
         # calculate checksum (do last)
-        checksum        = self._calculateCRC(newUdp, len(newUdp))
-        newUdp[idxCS]   = checksum[0]
-        newUdp[idxCS+1] = checksum[1]
+        checksum             = self._calculateCRC(newUdp, len(newUdp))
+        newUdp[idxCS]        = checksum[0]
+        newUdp[idxCS+1]      = checksum[1]
         
         return newUdp
     
@@ -453,13 +454,17 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     def _latencyStatsRcv(self,data):
         '''
         This method is invoked whenever a UDP packet is send from a mote from
-        UDPLatency application. This app listens at port 61001 and computes the
-        latency of a packet. Note that this app is a crosslayer app since the
-        mote sends the data within a UDP packet and OpenVisualizer (ParserData)
-        handles that packet and reads UDP payload to compute time difference.
-        At bridge level on the dagroot, the ASN of the DAGROOt is appended to
-        the serial port to be able to know what is the ASN at reception side.
-        The LATENCY values are in uS.
+        UDPLatency application. This application listens at port 61001 and 
+        computes the latency of a packet. Note that this app is crosslayer
+        since the mote sends the data within a UDP packet and OpenVisualizer
+        (ParserData) handles that packet and reads UDP payload to compute time
+        difference.
+        
+        At the bridge module on the DAGroot, the ASN of the DAGroot is appended
+        to the serial port to be able to know what is the ASN at reception
+        side.
+        
+        Calculcate latency values are in us.
         '''
         address=",".join(hex(c) for c in data[0])
         latency=data[1]
@@ -505,12 +510,6 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         That is:  [0xab,0xcd,0xef,0x00] -> '(4 bytes) ab-cd-ef-00'
         '''
         return '({0} bytes) {1}'.format(len(l),'-'.join(["%02x"%b for b in l]))
-        
-    def _isbroadcast(self,destination):
-        a = True
-        for x in destination:
-            a=(a and (x==255))
-        return a;
     
     def _calculateCRC(self,payload,length):
         temp_checksum         = [0]*2
@@ -520,7 +519,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         temp_checksum[1]     ^= 0xFF;
         
         # log
-        log.debug("checksum calculated {0},{1}".format(temp_checksum[0],temp_checksum[1]))
+        log.debug("checksum calculated {0:x},{1:x}".format(temp_checksum[0],temp_checksum[1]))
        
         return temp_checksum
     

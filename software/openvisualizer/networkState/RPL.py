@@ -20,12 +20,12 @@ class RPL(object):
     def __init__(self):
         
         # local variables
-        self.dataLock   = threading.Lock()
-        self.parents    = {}
-     
+        self.dataLock        = threading.Lock()
+        self.parents         = {}
+    
     #======================== public ==========================================
         
-    def update(self,dao):    
+    def indicateDAO(self,dao):    
         '''
         \brief Indicate a new DAO was received.
         
