@@ -16,6 +16,9 @@ import threading
 from   openType import typeUtils as u
 
 class RPL(object):
+   
+    _TARGET_INFORMATION_TYPE  = 0x05
+    _TRANSIT_INFORMATION_TYPE = 0x06
     
     def __init__(self):
         
@@ -54,7 +57,8 @@ class RPL(object):
         # retrieve DAO header
         dao_header              = {}
         dao_transit_information = {}
-         
+        dao_target_information = {}
+        
         try:
             # IPHC header
             dao_header['IPHC_b0']                               = dao[0]
@@ -78,18 +82,29 @@ class RPL(object):
             dao              = dao[36:]
             # retrieve transit information header and parents
             parents              = []
-               
-            while (len(dao)>0):
+            children             = []
+                          
+            while (len(dao)>0):  
+               if (dao[0]==self._TRANSIT_INFORMATION_TYPE): 
                # transit information option
-               dao_transit_information['Transit_information_type']              = dao[0]
-               dao_transit_information['Transit_information_length']            = dao[1]
-               dao_transit_information['Transit_information_flags']             = dao[2]
-               dao_transit_information['Transit_information_path_control']      = dao[3]
-               dao_transit_information['Transit_information_path_sequence']     = dao[4]
-               dao_transit_information['Transit_information_path_lifetime']     = dao[5]
-               parents += [dao[6:14]]#address of the parent.
-               dao=dao[14:] 
-            
+                   dao_transit_information['Transit_information_type']              = dao[0]
+                   dao_transit_information['Transit_information_length']            = dao[1]
+                   dao_transit_information['Transit_information_flags']             = dao[2]
+                   dao_transit_information['Transit_information_path_control']      = dao[3]
+                   dao_transit_information['Transit_information_path_sequence']     = dao[4]
+                   dao_transit_information['Transit_information_path_lifetime']     = dao[5]
+                   parents += [dao[6:14]]#address of the parent.
+                   dao=dao[14:]
+               elif  (dao[0]==self._TARGET_INFORMATION_TYPE):
+                   dao_target_information['Target_information_type']                = dao[0]
+                   dao_target_information['Target_information_length']              = dao[1]
+                   dao_target_information['Target_information_flags']               = dao[2]
+                   dao_target_information['Target_information_prefix_length']       = dao[3]
+                   children += [dao[4:12]]#address of the parent.
+                   dao=dao[12:]
+               else:
+                   log.warning("DAO with wrong Option. Neither Transit nor Target. Option is ({0})".format(dao[0]))
+                   return
         except IndexError:
             log.warning("DAO too short ({0} bytes), no space for DAO header".format(len(dao)))
             return
@@ -98,6 +113,14 @@ class RPL(object):
         output               = []
         output              += ['parents:']
         for p in parents:
+            output          += ['- {0}'.format(u.formatAddress(p))]
+        output               = '\n'.join(output)
+        log.debug(output)
+        
+        
+        output               = []
+        output              += ['children:']
+        for p in children:
             output          += ['- {0}'.format(u.formatAddress(p))]
         output               = '\n'.join(output)
         log.debug(output)
