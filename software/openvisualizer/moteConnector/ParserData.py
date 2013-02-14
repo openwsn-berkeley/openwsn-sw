@@ -17,7 +17,7 @@ import Parser
 class ParserData(Parser.Parser):
     
     HEADER_LENGTH  = 2
-    MSPERSLOT       = 15 #ms per slot.
+    MSPERSLOT      = 15 #ms per slot.
     
     IPHC_SAM       = 4
     IPHC_DAM       = 0
