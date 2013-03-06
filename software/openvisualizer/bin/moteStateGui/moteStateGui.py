@@ -23,6 +23,8 @@ TCP_PORT_START = 8090
 class MoteStateGui(object):
     
     GUI_UPDATE_PERIOD = 500
+    MENUENTRY_STATE   = 'mote state'
+    MENUENTRY_LBR     = 'lbr'
     
     def __init__(self,moteProbe_handlers,
                       moteConnector_handlers,
@@ -39,15 +41,10 @@ class MoteStateGui(object):
         
         # local variables
         self.window                 = OpenWindow.OpenWindow("mote state GUI")
-        # frames to switch through using the menu
-        self.menuFrames             = []
         
-        #===== (empty) menu
-        menubar                     = Tkinter.Menu(self.window)
-        self.window.config(menu=menubar)
-        
-        #===== mote states
-        stateMenu = Tkinter.Menu(menubar, tearoff=0)
+        #===== mote states frame
+        menuNames  = []
+        menuFrames = []
         for ms in self.moteState_handlers:
             thisFrame               = Tkinter.Frame(self.window)
             frameOrganization = [
@@ -88,19 +85,21 @@ class MoteStateGui(object):
                             )
                     tempFrameState.show()
             
-            # add this frame to the menuFrames
-            self.menuFrames.append(thisFrame)
-            
-            # register this frame with its menu
-            temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
-            stateMenu.add_command(label='{0}:{1}'.format(ms.moteConnector.moteProbeIp,ms.moteConnector.moteProbeTcpPort),  command=temp_lambda)
-        menubar.add_cascade(label="mote states",menu=stateMenu)
+            menuNames  += ['{0}:{1}'.format(ms.moteConnector.moteProbeIp,ms.moteConnector.moteProbeTcpPort)]
+            menuFrames += [thisFrame]
+        
+        # add to menu
+        self.window.addMenuList(
+            listname =  self.MENUENTRY_STATE,
+            names =     menuNames,
+            frames =    menuFrames,
+        )
         
         #===== network state
         
         # TODO
         
-        #===== frameLbr
+        #===== lbr frame
         
         thisFrame       = Tkinter.Frame(self.window)
         
@@ -110,12 +109,11 @@ class MoteStateGui(object):
                                                     row=1)
         tempFrameLbr.show()
         
-        # add this frame to the menuFrames
-        self.menuFrames.append(thisFrame)
-        
-        # register this frame with its menu
-        temp_lambda = lambda x=thisFrame:self._menuFrameSwitch(x)
-        menubar.add_command(label="lbr",  command=temp_lambda)
+        # add to menu
+        self.window.addMenuItem(
+            name =      self.MENUENTRY_LBR,
+            frame =     thisFrame,
+        )
         
     #======================== public ==========================================
     
@@ -124,13 +122,6 @@ class MoteStateGui(object):
     
     #======================== private =========================================
     
-    def _menuFrameSwitch(self,frameToSwitchTo):
-        for mf in self.menuFrames:
-            if mf==frameToSwitchTo:
-                mf.grid(row=0)
-            else:
-                mf.grid_forget()
-        self.window.update_idletasks()
     
 class MoteStateGui_app(object):
     
