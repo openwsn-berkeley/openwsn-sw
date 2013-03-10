@@ -73,7 +73,7 @@ class MoteStateGui(object):
                 for column in range(len(frameOrganization[row])):
                     stateType = frameOrganization[row][column]
                     tempFrameState =  OpenFrameState.OpenFrameState(
-                                tempRowFrame,
+                                guiParent=tempRowFrame,
                                 frameName=stateType,
                                 row=0,
                                 column=column
