@@ -115,7 +115,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '<BHBBBBQQBBBBHHH',
+                                    '<BHBBBBQQBBBBHH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
@@ -131,7 +131,6 @@ class ParserStatus(Parser.Parser):
                                         'lastUsedAsn_4',             # B
                                         'lastUsedAsn_2_3',           # H
                                         'lastUsedAsn_0_1',           # H
-                                        'next',                      # H
                                     ],
                                 )
         self._addFieldsParser   (
@@ -225,7 +224,7 @@ class ParserStatus(Parser.Parser):
         # call the next header parser
         for key in self.fieldsParsingKeys:
             if statusElem==key.val:
-            
+               
                 # log
                 log.debug("parsing {0}, ({1} bytes) as {2}".format(input,len(input),key.name))
                 
@@ -242,6 +241,7 @@ class ParserStatus(Parser.Parser):
                                 len(input),
                                 str(err)
                             )
+                                          
                         )
                 
                 # map to name tuple

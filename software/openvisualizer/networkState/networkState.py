@@ -375,7 +375,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         # verify max length
         if len(bytesToSend)>self.MAX_SERIAL_PKT_SIZE:
-            log.error("packet too long, size={0}".format(len(nextHop)))
+            log.error("packet too long, size={0}".format(len(bytesToSend)))
             return  
         
         dispatcher.send(
