@@ -102,13 +102,14 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     5,
                                     'MacStats',
-                                    '<BBhhB',
+                                    '<BBhhBf',
                                     [
                                         'numSyncPkt' ,               # B
                                         'numSyncAck',                # B
                                         'minCorrection',             # h
                                         'maxCorrection',             # h
-                                        'numDeSync'                  # B
+                                        'numDeSync',                 # B
+                                        'dutyCycle'                  # H
                                     ],
                                 )
         self._addFieldsParser   (
@@ -130,7 +131,7 @@ class ParserStatus(Parser.Parser):
                                         'numTxACK',                  # B
                                         'lastUsedAsn_4',             # B
                                         'lastUsedAsn_2_3',           # H
-                                        'lastUsedAsn_0_1',           # H
+                                        'lastUsedAsn_0_1'            # H
                                     ],
                                 )
         self._addFieldsParser   (
@@ -246,7 +247,6 @@ class ParserStatus(Parser.Parser):
                 
                 # map to name tuple
                 returnTuple = self.named_tuple[key.name](*fields)
-                
                 # log
                 log.debug("parsed into {0}".format(returnTuple))
                 
