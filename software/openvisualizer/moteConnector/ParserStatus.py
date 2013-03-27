@@ -109,7 +109,7 @@ class ParserStatus(Parser.Parser):
                                         'minCorrection',             # h
                                         'maxCorrection',             # h
                                         'numDeSync',                 # B
-                                        'dutyCycle'                  # H
+                                        'dutyCycle'                  # f
                                     ],
                                 )
         self._addFieldsParser   (
