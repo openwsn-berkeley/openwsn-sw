@@ -69,6 +69,8 @@ class OpenWindow(Tkinter.Tk):
             label  = listname,
             menu   = listMenu,
         )
+        
+        return listMenu
     
     def startGui(self):
         self.mainloop()

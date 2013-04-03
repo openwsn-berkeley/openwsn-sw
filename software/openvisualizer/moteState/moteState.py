@@ -230,6 +230,12 @@ class StateIdManager(StateElem):
         StateElem.__init__(self)
         self.moteConnector = moteConnector
     
+    def get16bAddr(self):
+        try:
+            return self.data[0]['my16bID'].addr[:]
+        except IndexError:
+            return None
+    
     def update(self,notif):
     
         # update state

@@ -20,6 +20,23 @@ import Tkinter
 LOCAL_ADDRESS  = '127.0.0.1'
 TCP_PORT_START = 8090
 
+class MenuUpdateFrame(Tkinter.Frame):
+    
+    def setMoteStateHandler(self,ms):
+        self.ms              = ms
+    
+    def setMenuList(self,menuList):
+        self.menuList        = menuList
+    
+    def updateMenuLabel(self,indexToUpdate):
+        rawLabel  = self.ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()
+        if rawLabel:
+            menuLabel = ''.join(['%02x'%b for b in rawLabel])
+            self.menuList.entryconfig(
+                indexToUpdate,
+                label=menuLabel,
+            )
+    
 class MoteStateGui(object):
     
     GUI_UPDATE_PERIOD = 500
@@ -38,15 +55,17 @@ class MoteStateGui(object):
         self.moteState_handlers     = moteState_handlers
         self.lbrClient_handler      = lbrClient_handler
         self.lbrConnectParams_cb    = lbrConnectParams_cb
+        self.menuFrames             = []
         
         # local variables
         self.window                 = OpenWindow.OpenWindow("mote state GUI")
         
         #===== mote states frame
-        menuNames  = []
-        menuFrames = []
+        menuNames                   = []
+        self.menuFrames             = []
         for ms in self.moteState_handlers:
-            thisFrame               = Tkinter.Frame(self.window)
+            thisFrame               = MenuUpdateFrame(self.window)
+            thisFrame.setMoteStateHandler(ms)
             frameOrganization = [
                 [
                     moteState.moteState.ST_ISSYNC,
@@ -72,7 +91,7 @@ class MoteStateGui(object):
                 tempRowFrame.grid(row=row)
                 for column in range(len(frameOrganization[row])):
                     stateType = frameOrganization[row][column]
-                    tempFrameState =  OpenFrameState.OpenFrameState(
+                    tempFrameState = OpenFrameState.OpenFrameState(
                                 guiParent=tempRowFrame,
                                 frameName=stateType,
                                 row=0,
@@ -85,14 +104,21 @@ class MoteStateGui(object):
                             )
                     tempFrameState.show()
             
-            menuNames  += ['{0}:{1}'.format(ms.moteConnector.moteProbeIp,ms.moteConnector.moteProbeTcpPort)]
-            menuFrames += [thisFrame]
+            menuNames       += ['{0}:{1}'.format(ms.moteConnector.moteProbeIp,ms.moteConnector.moteProbeTcpPort)]
+            self.menuFrames += [thisFrame]
         
         # add to menu
-        self.window.addMenuList(
+        menuList = self.window.addMenuList(
             listname =  self.MENUENTRY_STATE,
             names =     menuNames,
-            frames =    menuFrames,
+            frames =    self.menuFrames,
+        )
+        
+        for menuFrame in self.menuFrames:
+            menuFrame.setMenuList(menuList)
+        
+        menuList.config(
+            postcommand=self._updateMenuFrameNames
         )
         
         #===== network state
@@ -122,6 +148,9 @@ class MoteStateGui(object):
     
     #======================== private =========================================
     
+    def _updateMenuFrameNames(self):
+        for i in range(len(self.menuFrames)):
+            self.menuFrames[i].updateMenuLabel(i)
     
 class MoteStateGui_app(object):
     
