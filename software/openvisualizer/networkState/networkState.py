@@ -14,7 +14,6 @@ log.addHandler(NullHandler())
 
 import threading
 import struct
-from pprint import pprint
 from datetime import datetime
 
 from pydispatch import dispatcher
@@ -77,9 +76,13 @@ class networkState(eventBusClient.eventBusClient):
         eventBusClient.eventBusClient.__init__(
             self,
             name             = 'networkState',
-            signal           = 'fromMote.data.local',
-            sender           = dispatcher.Any,
-            notifCallback    = self._receivedMoteDataLocal_notif
+            registrations =  [
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'fromMote.data.local',
+                    'callback' : self._receivedMoteDataLocal_notif
+                }
+            ]
         )
         
         # local variables
@@ -111,9 +114,6 @@ class networkState(eventBusClient.eventBusClient):
                 self._latencyStatsRcv,
                 signal       = 'latency',
             )
-            
-            # start the eventBusClient
-            self.start()
             
             # send a DIO periodically
             self._scheduleSendDIO(self.DIO_PERIOD) 
@@ -226,16 +226,16 @@ class networkState(eventBusClient.eventBusClient):
     
     #===== received DAO
     
-    def _receivedMoteDataLocal_notif(self,notif):
+    def _receivedMoteDataLocal_notif(self,sender,signal,data):
         '''
         \brief Called when receiving fromMote.data.local, probably a DAO.
         '''
         
         # log
-        log.debug("received data local {0}".format(self._formatByteList(notif)))
+        log.debug("received data local {0}".format(self._formatByteList(data)))
                
         # indicate data to RPL
-        self.rpl.indicateDAO(notif)
+        self.rpl.indicateDAO(data)
     
     #===== received lowpanToMesh
     

@@ -11,49 +11,44 @@ import Queue
 
 from pydispatch import dispatcher
 
-class eventBusClient(threading.Thread):
+class eventBusClient(object):
     
-    QUEUESIZE = 100
+    WILDCARD  = '*'
     
-    def __init__(self,name,signal,sender,notifCallback):
+    def __init__(self,name,registrations):
+        
+        assert type(name)==str
+        assert type(registrations)==list
+        for r in registrations:
+            assert type(r)==dict
+            for k in r.keys():
+                assert k in ['signal','sender','callback']
         
         # log
         log.debug("create instance")
         
         # store params
-        self.notifCallback = notifCallback
-        self.sender        = sender
-        
-        # initialize parent class
-        threading.Thread.__init__(self)
+        self.dataLock        = threading.RLock()
+        self.registrations   = []
         
         # give this thread a name
-        self.name          = name
+        self.name            = name
         
         # local variables
-        self.goOn          = True
-        self.dataQueue     = Queue.Queue(self.QUEUESIZE)
+        self.goOn            = True
+        
+        # register registrations
+        for r in registrations:
+            self.register(
+                sender       = r['sender'],
+                signal       = r['signal'],
+                callback     = r['callback'],
+            )
         
         # connect to dispatcher
         dispatcher.connect(
-            self._eventBusNotification,
-            signal = signal,
+            receiver = self._eventBusNotification,
         )
-        
-    def run(self):
-        # log
-        log.debug("starting to run")
-    
-        while self.goOn:
-        
-            # get data from the queue
-            newData = self.dataQueue.get()
-            
-            # log
-            log.debug("got data: {0}".format(newData))
-            
-            # call the callback
-            self.notifCallback(newData)
     
     #======================== public ==========================================
     
@@ -64,14 +59,55 @@ class eventBusClient(threading.Thread):
             data   = data,
         )
     
+    def register(self,sender,signal,callback):
+        
+        newRegistration = {
+            'sender':        sender,
+            'signal':        signal,
+            'callback':      callback,
+            'numRx':         0,
+        }
+        with self.dataLock:
+            self.registrations += [newRegistration]
+    
+    def unregister(self,sender,signal,callback):
+        pass
+    
     #======================== private =========================================
     
     def _eventBusNotification(self,signal,sender,data):
         
-        if (self.sender!=dispatcher.Any) and (sender!=self.sender):
-            return
+        with self.dataLock:
+            for r in self.registrations:
+                if (
+                        self._signalsEquivalent(r['signal'],signal) and
+                        (r['sender']==sender or r['sender']==self.WILDCARD)
+                    ):
+                    
+                    # call the callback
+                    r['callback'](
+                        sender = sender,
+                        signal = signal,
+                        data   = data,
+                    )
+                    
+                    # indicate to sender I have succesfully received the message
+                    return True
         
-        if self.dataQueue.full():
-            raise SystemError("Queue is full")
-        
-        self.dataQueue.put(data)
+        # indicate to sender I could not deliver message
+        return False
+    
+    def _signalsEquivalent(self,s1,s2):
+        if type(s1)==type(s2)==str:
+            if (s1==s2) or (s1==self.WILDCARD) or (s2==self.WILDCARD):
+                return True
+            else:
+                return False
+        elif type(s1)==type(s2)==tuple:
+            assert len(s1)==len(s2)==3
+            for i in range(3):
+                if (s1[i]==s2[i]) or (s1[i]==self.WILDCARD) or (s2[i]==self.WILDCARD):
+                    return True
+                else:
+                    return False
+        return False

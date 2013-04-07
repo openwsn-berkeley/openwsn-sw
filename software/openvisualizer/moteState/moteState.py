@@ -9,7 +9,6 @@ log.addHandler(NullHandler())
 import copy
 import time
 import threading
-import pprint
 import json
 
 from moteConnector import ParserStatus
@@ -341,12 +340,16 @@ class moteState(eventBusClient.eventBusClient):
                                     self.moteConnector.moteProbeIp,
                                     self.moteConnector.moteProbeTcpPort,
                                 ),
-            signal           = 'fromMote.status',
-            sender           = 'moteConnector@{0}:{1}'.format(
-                                    self.moteConnector.moteProbeIp,
-                                    self.moteConnector.moteProbeTcpPort,
-                                ),
-            notifCallback    = self._receivedData_notif,
+            registrations    = [
+                {
+                    'sender'      : 'moteConnector@{0}:{1}'.format(
+                                        self.moteConnector.moteProbeIp,
+                                        self.moteConnector.moteProbeTcpPort,
+                                    ),
+                    'signal'      : 'fromMote.status',
+                    'callback'    : self._receivedStatus_notif,
+                },
+            ]
         )
         
         # local variables
@@ -446,10 +449,10 @@ class moteState(eventBusClient.eventBusClient):
     
     #======================== private =========================================
     
-    def _receivedData_notif(self,notif):
+    def _receivedStatus_notif(self,sender,signal,data):
         
         # log
-        log.debug("received {0}".format(notif))
+        log.debug("received {0}".format(data))
         
         # lock the state data
         self.stateLock.acquire()
@@ -457,16 +460,16 @@ class moteState(eventBusClient.eventBusClient):
         # call handler
         found = False
         for k,v in self.notifHandlers.items():
-            if self._isnamedtupleinstance(notif,k):
+            if self._isnamedtupleinstance(data,k):
                 found = True
-                v(notif)
+                v(data)
                 break
         
         # unlock the state data
         self.stateLock.release()
         
         if found==False:
-            raise SystemError("No handler for notif {0}".format(notif))
+            raise SystemError("No handler for data {0}".format(data))
     
     def _isnamedtupleinstance(self,var,tupleInstance):
         return var._fields==tupleInstance._fields
