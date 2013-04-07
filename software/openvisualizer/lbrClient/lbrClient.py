@@ -96,7 +96,7 @@ class lbrClient(threading.Thread):
                     
                     # dispatch the packet to network state to figure out source route.
                     dispatcher.send(
-                        signal        = 'dataFromInternet',
+                        signal        = 'lowpanToMesh',
                         sender        = 'lbrClient',
                         data          = input,
                     )
@@ -223,7 +223,7 @@ class lbrClient(threading.Thread):
             pkt.append(i)
             
         dispatcher.send(
-             signal        = 'dataFromInternet',
+             signal        = 'lowpanToMesh',
              sender        = 'lbrClient',
              data          = pkt,
              )

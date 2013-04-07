@@ -103,7 +103,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             # subscribe to LBR data to handle source routing.
             dispatcher.connect(
                 self._receivedInternetData_notif,
-                signal       = 'dataFromInternet',
+                signal       = 'lowpanToMesh',
             )
             # get latency information 
             dispatcher.connect(
@@ -216,7 +216,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         
         # dispatch
         dispatcher.send(
-            signal        = 'dataForDagRoot',
+            signal        = 'bytesToMesh',
             sender        = 'rpl',
             data          = ''.join([chr(c) for c in dio]),
         )
@@ -237,7 +237,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         # indicate data to RPL
         self.rpl.indicateDAO(notif)
     
-    #===== received dataFromInternet
+    #===== received lowpanToMesh
     
     def _receivedInternetData_notif(self,data):
         
@@ -379,7 +379,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
             return  
         
         dispatcher.send(
-            signal           = 'dataForDagRoot',
+            signal           = 'bytesToMesh',
             sender           = 'rpl',
             data             = ''.join([chr(b) for b in bytesToSend]),
         )

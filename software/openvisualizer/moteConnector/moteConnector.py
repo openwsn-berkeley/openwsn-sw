@@ -99,7 +99,7 @@ class moteConnector(threading.Thread):
                 # connect to dispatcher
                 dispatcher.connect(
                     self.write,
-                    signal='dataForDagRoot',
+                    signal='bytesToMesh',
                 )
                 
                 self._subcribedDataForDagRoot = True
@@ -111,7 +111,7 @@ class moteConnector(threading.Thread):
                 # disconnect from dispatcher
                 dispatcher.disconnect(
                     self.write,
-                    signal='dataForDagRoot',
+                    signal='bytesToMesh',
                 )
                 
                 self._subcribedDataForDagRoot = False
