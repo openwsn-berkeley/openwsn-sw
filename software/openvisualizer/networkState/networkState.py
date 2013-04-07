@@ -76,7 +76,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         # initialize parent class
         MoteConnectorConsumer.MoteConnectorConsumer.__init__(
             self,
-            signal           = 'inputFromMoteProbe.data.local',
+            signal           = 'fromMote.data.local',
             sender           = dispatcher.Any,
             notifCallback    = self._receivedMoteDataLocal_notif
         )
@@ -228,7 +228,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
     
     def _receivedMoteDataLocal_notif(self,notif):
         '''
-        \brief Called when receiving inputFromMoteProbe.data.local, probably a DAO.
+        \brief Called when receiving fromMote.data.local, probably a DAO.
         '''
         
         # log

@@ -34,7 +34,7 @@ class lbrClient(threading.Thread):
         self.stats                = {}
         self.connectSem           = threading.Lock()
         self.connectorConsumer    = MoteConnectorConsumer.MoteConnectorConsumer(
-            signal        = 'inputFromMoteProbe.data.internet',
+            signal        = 'fromMote.data.internet',
             sender        = dispatcher.Any,
             notifCallback = self.send,
         )

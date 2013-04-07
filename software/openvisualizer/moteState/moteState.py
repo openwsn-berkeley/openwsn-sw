@@ -339,7 +339,7 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
         # initialize parent class
         MoteConnectorConsumer.MoteConnectorConsumer.__init__(
             self,
-            signal        = 'inputFromMoteProbe.status',
+            signal        = 'fromMote.status',
             sender        = 'moteConnector@{0}:{1}'.format(
                                 self.moteConnector.moteProbeIp,
                                 self.moteConnector.moteProbeTcpPort,

@@ -16,10 +16,6 @@ import ParserException
 
 class moteConnector(threading.Thread):
     
-    SERFRAME_MOTE2PC_STATUS  = OpenParser.OpenParser.SERFRAME_MOTE2PC_STATUS
-    SERFRAME_MOTE2PC_ERROR   = OpenParser.OpenParser.SERFRAME_MOTE2PC_ERROR
-    SERFRAME_MOTE2PC_DATA    = OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA
-    
     def __init__(self,moteProbeIp,moteProbeTcpPort):
         
         # log
@@ -79,7 +75,7 @@ class moteConnector(threading.Thread):
                     else:
                         # dispatch                            
                         dispatcher.send(
-                            signal        = 'inputFromMoteProbe.'+eventSubType,
+                            signal        = 'fromMote.'+eventSubType,
                             sender        = self.name,
                             data          = parsedNotif,
                         )
