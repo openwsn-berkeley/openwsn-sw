@@ -113,7 +113,7 @@ class moteConnector(threading.Thread):
             
             if self._subcribedDataForDagRoot:
                 # disconnect from dispatcher
-                dispatcher.connect(
+                dispatcher.disconnect(
                     self.write,
                     signal='dataForDagRoot',
                 )
