@@ -35,7 +35,7 @@ class moteProbeSocketThread(threading.Thread):
         # subscribe to dispatcher
         dispatcher.connect(
             self.send,
-            signal='bytesFromSerialPort'+self.serialportName,
+            signal='fromProbeSerial@'+self.serialportName,
         )
     
     def run(self):
@@ -64,7 +64,7 @@ class moteProbeSocketThread(threading.Thread):
                     
                     # dispatch
                     dispatcher.send(
-                        signal        = 'bytesFromTcpPort'+self.serialportName,
+                        signal        = 'fromProbeSocket@'+self.serialportName,
                         data          = bytesReceived
                     )
                     
