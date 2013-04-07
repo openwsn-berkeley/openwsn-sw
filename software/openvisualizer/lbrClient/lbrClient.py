@@ -94,13 +94,6 @@ class lbrClient(threading.Thread):
                         log.error("received packet from LBR which is too short ({0} bytes)".format(len(input)))
                         continue
                     
-                    # dispatch the prefix
-                    # dispatcher.send(
-                    #     signal        = 'dataForDagRoot',
-                    #     sender        = 'lbrClient',
-                    #     data          = input,
-                    # )
-                    
                     # dispatch the packet to network state to figure out source route.
                     dispatcher.send(
                         signal        = 'dataFromInternet',

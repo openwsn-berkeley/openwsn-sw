@@ -40,7 +40,6 @@ class MoteConnectorConsumer(threading.Thread):
         
         # connect to dispatcher
         dispatcher.connect(
-            #notifCallback,
             self._eventBusNotification,
             signal = signal,
         )
