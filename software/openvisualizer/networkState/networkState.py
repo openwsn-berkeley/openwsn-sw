@@ -216,8 +216,7 @@ class networkState(eventBusClient.eventBusClient):
         log.debug('sending DIO {0}'.format(self._formatByteList(dio)))
         
         # dispatch
-        dispatcher.send(
-            sender        = 'rpl',
+        self.dispatch(
             signal        = 'bytesToMesh',
             data          = ''.join([chr(c) for c in dio]),
         )
@@ -379,8 +378,8 @@ class networkState(eventBusClient.eventBusClient):
             log.error("packet too long, size={0}".format(len(nextHop)))
             return  
         
-        dispatcher.send(
-            sender           = 'rpl',
+        # dispatch
+        self.dispatch(
             signal           = 'bytesToMesh',
             data             = ''.join([chr(b) for b in bytesToSend]),
         )
