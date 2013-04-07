@@ -15,7 +15,7 @@ import json
 from pydispatch import dispatcher
 
 from moteConnector import ParserStatus
-from moteConnector import MoteConnectorConsumer
+from eventBus      import eventBusClient
 from openType      import openType,         \
                           typeAsn,          \
                           typeAddr,         \
@@ -302,7 +302,7 @@ class StateTable(StateElem):
             self.data.append(self.meta[0]['rowClass']())
         self.data[notif.row].update(notif)
 
-class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
+class moteState(eventBusClient.eventBusClient):
     
     ST_OUPUTBUFFER      = 'OutputBuffer'
     ST_ASN              = 'Asn'
@@ -337,7 +337,7 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
         self.moteConnector                  = moteConnector
         
         # initialize parent class
-        MoteConnectorConsumer.MoteConnectorConsumer.__init__(
+        eventBusClient.eventBusClient.__init__(
             self,
             signal        = 'fromMote.status',
             sender        = 'moteConnector@{0}:{1}'.format(

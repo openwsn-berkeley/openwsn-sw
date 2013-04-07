@@ -2,20 +2,16 @@ import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('moteConnectorConsumer')
+log = logging.getLogger('eventBusClient')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
-import socket
 import Queue
 
 from pydispatch import dispatcher
 
-import OpenParser
-import ParserException
-
-class MoteConnectorConsumer(threading.Thread):
+class eventBusClient(threading.Thread):
     
     QUEUESIZE = 100
     
@@ -32,7 +28,7 @@ class MoteConnectorConsumer(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name          = 'MoteConnectorConsumer'
+        self.name          = 'eventBusClient'
         
         # local variables
         self.goOn          = True

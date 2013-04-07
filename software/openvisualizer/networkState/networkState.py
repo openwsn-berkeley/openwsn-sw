@@ -19,10 +19,10 @@ from datetime import datetime
 
 from pydispatch import dispatcher
 
-from moteConnector import MoteConnectorConsumer
+from eventBus import eventBusClient
 import RPL
 
-class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
+class networkState(eventBusClient.eventBusClient):
     
     LINK_LOCAL_PREFIX        = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix.
     MAX_SERIAL_PKT_SIZE      = 8+127                       ##< Maximum length for a serial packet.
@@ -74,7 +74,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
         # store params
         
         # initialize parent class
-        MoteConnectorConsumer.MoteConnectorConsumer.__init__(
+        eventBusClient.eventBusClient.__init__(
             self,
             signal           = 'fromMote.data.local',
             sender           = dispatcher.Any,
@@ -111,7 +111,7 @@ class networkState(MoteConnectorConsumer.MoteConnectorConsumer):
                 signal       = 'latency',
             )
             
-            # start the moteConnectorConsumer
+            # start the eventBusClient
             self.start()
             
             # send a DIO periodically
