@@ -216,8 +216,8 @@ class networkState(eventBusClient.eventBusClient):
         
         # dispatch
         dispatcher.send(
-            signal        = 'bytesToMesh',
             sender        = 'rpl',
+            signal        = 'bytesToMesh',
             data          = ''.join([chr(c) for c in dio]),
         )
         
@@ -379,8 +379,8 @@ class networkState(eventBusClient.eventBusClient):
             return  
         
         dispatcher.send(
-            signal           = 'bytesToMesh',
             sender           = 'rpl',
+            signal           = 'bytesToMesh',
             data             = ''.join([chr(b) for b in bytesToSend]),
         )
     

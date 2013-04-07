@@ -270,8 +270,8 @@ class StateIdManager(StateElem):
         
             # dispatch
             dispatcher.send(
-                signal        = 'infoDagRoot',
                 sender        = 'StateIdManager',
+                signal        = 'infoDagRoot',
                 data          = {
                                     'ip':      self.moteConnector.moteProbeIp,
                                     'tcpPort': self.moteConnector.moteProbeTcpPort,

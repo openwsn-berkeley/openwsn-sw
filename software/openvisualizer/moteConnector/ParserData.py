@@ -155,8 +155,8 @@ class ParserData(Parser.Parser):
                if (timeinus<0xFFFF):
                #notify latency manager component. only if a valid value
                   dispatcher.send(
-                     signal        = 'latency',
                      sender        = 'parserData',
+                     signal        = 'latency',
                      data          = (node,timeinus,parent),
                   )
                else:

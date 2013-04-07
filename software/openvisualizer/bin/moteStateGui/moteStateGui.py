@@ -15,6 +15,7 @@ from lbrClient     import lbrClient
 import OpenWindow
 import OpenFrameState
 import OpenFrameLbr
+import OpenFrameEventBus
 
 import Tkinter
 
@@ -43,18 +44,21 @@ class MoteStateGui(object):
     GUI_UPDATE_PERIOD      = 500
     MENUENTRY_STATE        = 'mote state'
     MENUENTRY_LBRCLIENT    = 'lbrClient'
+    MENUENTRY_EVENTBUS     = 'eventBus'
     
-    def __init__(self,moteProbes,
+    def __init__(self,eventBusMonitor,
+                      moteProbes,
                       moteConnectors,
                       moteStates,
                       lbrClient,
                       lbrConnectParams_cb):
         
         # store params
-        self.moteProbes     = moteProbes
-        self.moteConnectors = moteConnectors
-        self.moteStates     = moteStates
-        self.lbrClient      = lbrClient
+        self.eventBusMonitor        = eventBusMonitor
+        self.moteProbes             = moteProbes
+        self.moteConnectors         = moteConnectors
+        self.moteStates             = moteStates
+        self.lbrClient              = lbrClient
         self.lbrConnectParams_cb    = lbrConnectParams_cb
         self.menuFrames             = []
         
@@ -122,10 +126,6 @@ class MoteStateGui(object):
             postcommand=self._updateMenuFrameNames
         )
         
-        #===== network state
-        
-        # TODO
-        
         #===== lbrClient frame
         
         thisFrame            = Tkinter.Frame(self.window)
@@ -141,6 +141,23 @@ class MoteStateGui(object):
         # add to menu
         self.window.addMenuItem(
             name =      self.MENUENTRY_LBRCLIENT,
+            frame =     thisFrame,
+        )
+        
+        #===== eventBusMonitor Frame
+        
+        thisFrame            = Tkinter.Frame(self.window)
+        
+        tempFrameEventBus    = OpenFrameEventBus.OpenFrameEventBus(
+            thisFrame,
+            self.eventBusMonitor,
+            row=1
+        )
+        tempFrameEventBus.show()
+        
+        # add to menu
+        self.window.addMenuItem(
+            name =      self.MENUENTRY_EVENTBUS,
             frame =     thisFrame,
         )
         
@@ -190,6 +207,7 @@ class MoteStateGui_app(object):
         
         # create an open GUI
         gui = MoteStateGui(
+            self.eventBusMonitor,
             self.moteProbes,
             self.moteConnectors,
             self.moteStates,

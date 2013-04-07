@@ -75,8 +75,8 @@ class moteConnector(threading.Thread):
                     else:
                         # dispatch                            
                         dispatcher.send(
-                            signal        = 'fromMote.'+eventSubType,
                             sender        = self.name,
+                            signal        = 'fromMote.'+eventSubType,
                             data          = parsedNotif,
                         )
                 

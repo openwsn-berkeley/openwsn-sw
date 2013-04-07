@@ -64,6 +64,7 @@ class moteProbeSocketThread(threading.Thread):
                     
                     # dispatch
                     dispatcher.send(
+                        sender        = self.name,
                         signal        = 'fromProbeSocket@'+self.serialportName,
                         data          = bytesReceived
                     )

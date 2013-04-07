@@ -96,8 +96,8 @@ class lbrClient(threading.Thread):
                     
                     # dispatch the packet to network state to figure out source route.
                     dispatcher.send(
-                        signal        = 'lowpanToMesh',
                         sender        = 'lbrClient',
+                        signal        = 'lowpanToMesh',
                         data          = input,
                     )
             
@@ -223,10 +223,10 @@ class lbrClient(threading.Thread):
             pkt.append(i)
             
         dispatcher.send(
-             signal        = 'lowpanToMesh',
-             sender        = 'lbrClient',
-             data          = pkt,
-             )
+            sender      = 'lbrClient',
+            signal      = 'lowpanToMesh',
+            data        = pkt,
+        )
         #start the timer again
         #self.timer = threading.Timer(20,self._testSourceRouting)
         #self.timer.start()
@@ -367,7 +367,7 @@ class lbrClient(threading.Thread):
         
         # dispatch
         dispatcher.send(
-            signal      = 'networkPrefix',
             sender      = 'lbrClient',
+            signal      = 'networkPrefix',
             data        = prefix,
         )

@@ -7,6 +7,8 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
+import copy
+import json
 
 from pydispatch import dispatcher
 
@@ -34,15 +36,29 @@ class eventBusMonitor(object):
     #======================== public ==========================================
     
     def getStats(self):
+        
+        # get a copy of stats
         with self.statsLock:
-            return copy.deepcopy(self.stats)
+            tempStats = copy.deepcopy(self.stats)
+        
+        # format as a dictionnary
+        returnVal = [
+            {
+                'sender': str(k[0]),
+                'signal': str(k[1]),
+                'num':    v,
+            } for (k,v) in tempStats.items()
+        ]
+        
+        # send back JSON string
+        return json.dumps(returnVal)
     
     #======================== private =========================================
     
     def _eventBusNotification(self,signal,sender,data):
         
         with self.statsLock:
-            key = (signal,sender)
+            key = (sender,signal)
             if key not in self.stats:
                 self.stats[key] = 0
             self.stats[key] += 1
