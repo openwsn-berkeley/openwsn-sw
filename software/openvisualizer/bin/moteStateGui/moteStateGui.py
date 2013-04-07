@@ -10,7 +10,7 @@ from eventBus      import eventBusMonitor
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
-from networkState  import networkState
+from RPL           import RPL
 import OpenWindow
 import OpenFrameState
 import OpenFrameLbr
@@ -155,7 +155,7 @@ class MoteStateGui_app(object):
         self.moteProbes           = []
         self.moteConnectors       = []
         self.moteStates           = []
-        self.networkState         = None
+        self.rpl                  = None
         
         # create an eventBusMonitor
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -174,8 +174,8 @@ class MoteStateGui_app(object):
         for mc in self.moteConnectors:
            self.moteStates.append(moteState.moteState(mc))
         
-        # create one networkState
-        self.networkState = networkState.networkState()
+        # create a rpl instance
+        self.rpl = RPL.RPL()
         
         # create an open GUI
         gui = MoteStateGui(
@@ -222,8 +222,8 @@ for loggerName in ['moteProbeUtils',
     fileLogger = logging.getLogger(loggerName)
     fileLogger.setLevel(logging.ERROR)
     fileLogger.addHandler(fileLogHandler)
-for loggerName in ['networkState',
-                   'RPL']:
+for loggerName in ['RPL',
+                   'SourceRoute']:
     fileLogger = logging.getLogger(loggerName)
     fileLogger.setLevel(logging.DEBUG)
     fileLogger.addHandler(fileLogHandler)

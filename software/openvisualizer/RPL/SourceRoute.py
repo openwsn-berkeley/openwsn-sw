@@ -2,20 +2,21 @@
 \brief Module which receives DAO messages and calculates source routes.
 
 \author Xavi Vilajosana <xvilajosana@eecs.berkeley.edu>, January 2013.
+\author Thomas Watteyne <watteyne@eecs.berkeley.edu>, April 2013.
 '''
 
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('RPL')
+log = logging.getLogger('SourceRoute')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
 from   openType import typeUtils as u
 
-class RPL(object):
+class SourceRoute(object):
    
     _TARGET_INFORMATION_TYPE  = 0x05
     _TRANSIT_INFORMATION_TYPE = 0x06
@@ -131,7 +132,7 @@ class RPL(object):
         with self.dataLock:
             self.parents.update({tuple(source):parents})
     
-    def getRouteTo(self,destAddr):
+    def getSourceRoute(self,destAddr):
         '''
         \brief Retrieve the source route to a given mote.
         
@@ -144,7 +145,7 @@ class RPL(object):
         sourceRoute = []
         with self.dataLock:
             try:
-                self._getRouteTo_internal(destAddr,sourceRoute)
+                self._getSourceRoute_internal(destAddr,sourceRoute)
             except Exception as err:
                 log.error(err)
                 raise
@@ -153,7 +154,7 @@ class RPL(object):
     
     #======================== private =========================================
     
-    def _getRouteTo_internal(self,destAddr,sourceRoute):
+    def _getSourceRoute_internal(self,destAddr,sourceRoute):
         
         if not destAddr:
             # no more parents
@@ -175,7 +176,7 @@ class RPL(object):
             sourceRoute     += [parent]
             
             # add non empty parents recursively
-            nextparent       = self._getRouteTo_internal(parent,sourceRoute)
+            nextparent       = self._getSourceRoute_internal(parent,sourceRoute)
             
             if nextparent:
                 sourceRoute += [nextparent]

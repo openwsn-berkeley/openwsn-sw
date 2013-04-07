@@ -2,13 +2,14 @@
 \brief Module which coordinate RPL DIO and DAO messages.
 
 \author Xavi Vilajosana <xvilajosana@eecs.berkeley.edu>, January 2013.
+\author Thomas Watteyne <watteyne@eecs.berkeley.edu>, April 2013.
 '''
 
 import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('networkState')
+log = logging.getLogger('RPL')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
@@ -19,9 +20,9 @@ from datetime import datetime
 from pydispatch import dispatcher
 
 from eventBus import eventBusClient
-import RPL
+import SourceRoute
 
-class networkState(eventBusClient.eventBusClient):
+class RPL(eventBusClient.eventBusClient):
     
     LINK_LOCAL_PREFIX        = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix.
     MAX_SERIAL_PKT_SIZE      = 8+127                       ##< Maximum length for a serial packet.
@@ -75,7 +76,7 @@ class networkState(eventBusClient.eventBusClient):
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
-            name             = 'networkState',
+            name             = 'RPL',
             registrations =  [
                 {
                     'sender'   : self.WILDCARD,
@@ -88,7 +89,7 @@ class networkState(eventBusClient.eventBusClient):
         # local variables
         self.stateLock       = threading.Lock()
         self.state           = {}
-        self.rpl             = RPL.RPL()
+        self.sourceRoute     = SourceRoute.SourceRoute()
         self.networkPrefix   = self.LINK_LOCAL_PREFIX
         self.dagRootEui64    = None
         self.moduleInit      = False
@@ -234,8 +235,8 @@ class networkState(eventBusClient.eventBusClient):
         # log
         log.debug("received data local {0}".format(self._formatByteList(data)))
                
-        # indicate data to RPL
-        self.rpl.indicateDAO(data)
+        # indicate data to sourceRoute
+        self.sourceRoute.indicateDAO(data)
     
     #===== received lowpanToMesh
     
@@ -265,7 +266,7 @@ class networkState(eventBusClient.eventBusClient):
             return
             
         # get source route to destination
-        route           = self.rpl.getRouteTo(destination)
+        route           = self.sourceRoute.getSourceRoute(destination)
         if not route:
             log.warning("No known source route to {0}".format(''.join(str(c) for c in destination)))
             return
