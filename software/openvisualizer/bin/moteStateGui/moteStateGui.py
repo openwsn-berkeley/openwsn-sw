@@ -39,9 +39,9 @@ class MenuUpdateFrame(Tkinter.Frame):
     
 class MoteStateGui(object):
     
-    GUI_UPDATE_PERIOD = 500
-    MENUENTRY_STATE   = 'mote state'
-    MENUENTRY_LBR     = 'lbr'
+    GUI_UPDATE_PERIOD      = 500
+    MENUENTRY_STATE        = 'mote state'
+    MENUENTRY_LBRCLIENT    = 'lbrClient'
     
     def __init__(self,moteProbe_handlers,
                       moteConnector_handlers,
@@ -125,19 +125,21 @@ class MoteStateGui(object):
         
         # TODO
         
-        #===== lbr frame
+        #===== lbrClient frame
         
-        thisFrame       = Tkinter.Frame(self.window)
+        thisFrame            = Tkinter.Frame(self.window)
         
-        tempFrameLbr    = OpenFrameLbr.OpenFrameLbr(thisFrame,
-                                                    self.lbrClient_handler,
-                                                    self.lbrConnectParams_cb,
-                                                    row=1)
-        tempFrameLbr.show()
+        tempFrameLbrClient   = OpenFrameLbr.OpenFrameLbr(
+            thisFrame,
+            self.lbrClient_handler,
+            self.lbrConnectParams_cb,
+            row=1
+        )
+        tempFrameLbrClient.show()
         
         # add to menu
         self.window.addMenuItem(
-            name =      self.MENUENTRY_LBR,
+            name =      self.MENUENTRY_LBRCLIENT,
             frame =     thisFrame,
         )
         
@@ -200,9 +202,11 @@ class MoteStateGui_app(object):
     
     def indicateConnectParams(self,connectParams):
         try:
-            self.lbrClient_handler.connect(connectParams['LBRADDR'],
-                                               connectParams['LBRPORT'],
-                                               connectParams['USERNAME'])
+            self.lbrClient_handler.connect(
+                connectParams['LBRADDR'],
+                connectParams['LBRPORT'],
+                connectParams['USERNAME']
+            )
         except KeyError:
             log.error("malformed connectParams={0}".format(connectParams))
     
