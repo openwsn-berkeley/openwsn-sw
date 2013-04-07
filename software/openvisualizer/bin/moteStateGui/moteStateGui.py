@@ -11,7 +11,6 @@ from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
 from networkState  import networkState
-from lbrClient     import lbrClient
 import OpenWindow
 import OpenFrameState
 import OpenFrameLbr
@@ -43,23 +42,18 @@ class MoteStateGui(object):
     
     GUI_UPDATE_PERIOD      = 500
     MENUENTRY_STATE        = 'mote state'
-    MENUENTRY_LBRCLIENT    = 'lbrClient'
     MENUENTRY_EVENTBUS     = 'eventBus'
     
     def __init__(self,eventBusMonitor,
                       moteProbes,
                       moteConnectors,
-                      moteStates,
-                      lbrClient,
-                      lbrConnectParams_cb):
+                      moteStates):
         
         # store params
         self.eventBusMonitor        = eventBusMonitor
         self.moteProbes             = moteProbes
         self.moteConnectors         = moteConnectors
         self.moteStates             = moteStates
-        self.lbrClient              = lbrClient
-        self.lbrConnectParams_cb    = lbrConnectParams_cb
         self.menuFrames             = []
         
         # local variables
@@ -126,24 +120,6 @@ class MoteStateGui(object):
             postcommand=self._updateMenuFrameNames
         )
         
-        #===== lbrClient frame
-        
-        thisFrame            = Tkinter.Frame(self.window)
-        
-        tempFrameLbrClient   = OpenFrameLbr.OpenFrameLbr(
-            thisFrame,
-            self.lbrClient,
-            self.lbrConnectParams_cb,
-            row=1
-        )
-        tempFrameLbrClient.show()
-        
-        # add to menu
-        self.window.addMenuItem(
-            name =      self.MENUENTRY_LBRCLIENT,
-            frame =     thisFrame,
-        )
-        
         #===== eventBusMonitor Frame
         
         thisFrame            = Tkinter.Frame(self.window)
@@ -180,7 +156,6 @@ class MoteStateGui_app(object):
         self.moteConnectors       = []
         self.moteStates           = []
         self.networkState         = None
-        self.lbrClient            = None
         
         # create an eventBusMonitor
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -202,38 +177,20 @@ class MoteStateGui_app(object):
         # create one networkState
         self.networkState = networkState.networkState()
         
-        # create one lbrClient
-        self.lbrClient    = lbrClient.lbrClient()
-        
         # create an open GUI
         gui = MoteStateGui(
             self.eventBusMonitor,
             self.moteProbes,
             self.moteConnectors,
             self.moteStates,
-            self.lbrClient,
-            self.indicateConnectParams
         )
         
         # start threads
-        self.lbrClient.start()
-        for ms in self.moteStates:
-           ms.start()
         for mc in self.moteConnectors:
            mc.start()
         gui.start()
     
     #======================== GUI callbacks ===================================
-    
-    def indicateConnectParams(self,connectParams):
-        try:
-            self.lbrClient.connect(
-                connectParams['LBRADDR'],
-                connectParams['LBRPORT'],
-                connectParams['USERNAME']
-            )
-        except KeyError:
-            log.error("malformed connectParams={0}".format(connectParams))
     
 def main():
     app = MoteStateGui_app()
@@ -270,7 +227,6 @@ for loggerName in ['networkState',
     fileLogger = logging.getLogger(loggerName)
     fileLogger.setLevel(logging.DEBUG)
     fileLogger.addHandler(fileLogHandler)
-    
 
 #===== print errors reported by motes on console
 
