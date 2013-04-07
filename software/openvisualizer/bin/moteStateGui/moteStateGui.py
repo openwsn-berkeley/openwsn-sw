@@ -6,6 +6,7 @@ if __name__=='__main__':
     sys.path.insert(0, os.path.join(here, '..', '..'))                                # openvisualizer/
     sys.path.insert(0, os.path.join(here, '..', '..', '..', 'openUI'))                # openUI/
 
+from eventBus      import eventBusMonitor
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
@@ -43,17 +44,17 @@ class MoteStateGui(object):
     MENUENTRY_STATE        = 'mote state'
     MENUENTRY_LBRCLIENT    = 'lbrClient'
     
-    def __init__(self,moteProbe_handlers,
-                      moteConnector_handlers,
-                      moteState_handlers,
-                      lbrClient_handler,
+    def __init__(self,moteProbes,
+                      moteConnectors,
+                      moteStates,
+                      lbrClient,
                       lbrConnectParams_cb):
         
         # store params
-        self.moteProbe_handlers     = moteProbe_handlers
-        self.moteConnector_handlers = moteConnector_handlers
-        self.moteState_handlers     = moteState_handlers
-        self.lbrClient_handler      = lbrClient_handler
+        self.moteProbes     = moteProbes
+        self.moteConnectors = moteConnectors
+        self.moteStates     = moteStates
+        self.lbrClient      = lbrClient
         self.lbrConnectParams_cb    = lbrConnectParams_cb
         self.menuFrames             = []
         
@@ -63,7 +64,7 @@ class MoteStateGui(object):
         #===== mote states frame
         menuNames                   = []
         self.menuFrames             = []
-        for ms in self.moteState_handlers:
+        for ms in self.moteStates:
             thisFrame               = MenuUpdateFrame(self.window)
             thisFrame.setMoteStateHandler(ms)
             frameOrganization = [
@@ -131,7 +132,7 @@ class MoteStateGui(object):
         
         tempFrameLbrClient   = OpenFrameLbr.OpenFrameLbr(
             thisFrame,
-            self.lbrClient_handler,
+            self.lbrClient,
             self.lbrConnectParams_cb,
             row=1
         )
@@ -157,44 +158,50 @@ class MoteStateGui(object):
 class MoteStateGui_app(object):
     
     def __init__(self):
-        self.moteProbe_handlers        = []
-        self.moteConnector_handlers    = []
-        self.moteState_handlers        = []
-        self.networkState_handler      = None
-        self.lbrClient_handler         = None
+        self.eventBusMonitor      = None
+        self.moteProbes           = []
+        self.moteConnectors       = []
+        self.moteStates           = []
+        self.networkState         = None
+        self.lbrClient            = None
+        
+        # create an eventBusMonitor
+        self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
         
         # create a moteProbe for each mote connected to this computer
         serialPorts    = moteProbe.utils.findSerialPorts()
         tcpPorts       = [TCP_PORT_START+i for i in range(len(serialPorts))]
         for (serialPort,tcpPort) in zip(serialPorts,tcpPorts):
-            self.moteProbe_handlers.append(moteProbe.moteProbe(serialPort,tcpPort))
+            self.moteProbes.append(moteProbe.moteProbe(serialPort,tcpPort))
         
         # create a moteConnector for each moteProbe
-        for mp in self.moteProbe_handlers:
-           self.moteConnector_handlers.append(moteConnector.moteConnector(LOCAL_ADDRESS,mp.getTcpPort()))
+        for mp in self.moteProbes:
+           self.moteConnectors.append(moteConnector.moteConnector(LOCAL_ADDRESS,mp.getTcpPort()))
         
         # create a moteState for each moteConnector
-        for mc in self.moteConnector_handlers:
-           self.moteState_handlers.append(moteState.moteState(mc))
+        for mc in self.moteConnectors:
+           self.moteStates.append(moteState.moteState(mc))
         
         # create one networkState
-        self.networkState_handler = networkState.networkState()
+        self.networkState = networkState.networkState()
         
         # create one lbrClient
-        self.lbrClient_handler    = lbrClient.lbrClient()
+        self.lbrClient    = lbrClient.lbrClient()
         
         # create an open GUI
-        gui = MoteStateGui(self.moteProbe_handlers,
-                           self.moteConnector_handlers,
-                           self.moteState_handlers,
-                           self.lbrClient_handler,
-                           self.indicateConnectParams)
+        gui = MoteStateGui(
+            self.moteProbes,
+            self.moteConnectors,
+            self.moteStates,
+            self.lbrClient,
+            self.indicateConnectParams
+        )
         
         # start threads
-        self.lbrClient_handler.start()
-        for ms in self.moteState_handlers:
+        self.lbrClient.start()
+        for ms in self.moteStates:
            ms.start()
-        for mc in self.moteConnector_handlers:
+        for mc in self.moteConnectors:
            mc.start()
         gui.start()
     
@@ -202,7 +209,7 @@ class MoteStateGui_app(object):
     
     def indicateConnectParams(self,connectParams):
         try:
-            self.lbrClient_handler.connect(
+            self.lbrClient.connect(
                 connectParams['LBRADDR'],
                 connectParams['LBRPORT'],
                 connectParams['USERNAME']
@@ -235,6 +242,7 @@ for loggerName in ['moteProbeUtils',
                    'ParserInfoErrorCritical',
                    'ParserData',
                    'moteState',
+                   'eventBusMonitor',
                    'lbrClient',]:
     fileLogger = logging.getLogger(loggerName)
     fileLogger.setLevel(logging.ERROR)
