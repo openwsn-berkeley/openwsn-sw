@@ -34,6 +34,7 @@ class lbrClient(threading.Thread):
         self.stats                = {}
         self.connectSem           = threading.Lock()
         self.eventBusClient       = eventBusClient.eventBusClient(
+            name          = 'lbrClient',
             signal        = 'fromMote.data.internet',
             sender        = dispatcher.Any,
             notifCallback = self.send,

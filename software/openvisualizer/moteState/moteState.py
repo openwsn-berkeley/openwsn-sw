@@ -12,8 +12,6 @@ import threading
 import pprint
 import json
 
-from pydispatch import dispatcher
-
 from moteConnector import ParserStatus
 from eventBus      import eventBusClient
 from openType      import openType,         \
@@ -226,9 +224,10 @@ class StateIsSync(StateElem):
 
 class StateIdManager(StateElem):
     
-    def __init__(self,moteConnector):
+    def __init__(self,eventBusClient,moteConnector):
         StateElem.__init__(self)
-        self.moteConnector = moteConnector
+        self.eventBusClient  = eventBusClient
+        self.moteConnector   = moteConnector
     
     def get16bAddr(self):
         try:
@@ -269,8 +268,7 @@ class StateIdManager(StateElem):
         if self.data[0]['isDAGroot']==1:
         
             # dispatch
-            dispatcher.send(
-                sender        = 'StateIdManager',
+            self.eventBusClient.dispatch(
                 signal        = 'infoDagRoot',
                 data          = {
                                     'ip':      self.moteConnector.moteProbeIp,
@@ -334,17 +332,21 @@ class moteState(eventBusClient.eventBusClient):
         log.debug("create instance")
         
         # store params
-        self.moteConnector                  = moteConnector
+        self.moteConnector   = moteConnector
         
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
-            signal        = 'fromMote.status',
-            sender        = 'moteConnector@{0}:{1}'.format(
-                                self.moteConnector.moteProbeIp,
-                                self.moteConnector.moteProbeTcpPort,
-                            ),
-            notifCallback = self._receivedData_notif,
+            name             = 'moteState@{0}:{1}'.format(
+                                    self.moteConnector.moteProbeIp,
+                                    self.moteConnector.moteProbeTcpPort,
+                                ),
+            signal           = 'fromMote.status',
+            sender           = 'moteConnector@{0}:{1}'.format(
+                                    self.moteConnector.moteProbeIp,
+                                    self.moteConnector.moteProbeTcpPort,
+                                ),
+            notifCallback    = self._receivedData_notif,
         )
         
         # local variables
@@ -392,7 +394,10 @@ class moteState(eventBusClient.eventBusClient):
                                                     ]
                                                 ))
         self.state[self.ST_ISSYNC]          = StateIsSync()
-        self.state[self.ST_IDMANAGER]       = StateIdManager(self.moteConnector)
+        self.state[self.ST_IDMANAGER]       = StateIdManager(
+                                                self,
+                                                self.moteConnector
+                                              )
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         
         self.notifHandlers = {

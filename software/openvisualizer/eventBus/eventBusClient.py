@@ -15,7 +15,7 @@ class eventBusClient(threading.Thread):
     
     QUEUESIZE = 100
     
-    def __init__(self,signal,sender,notifCallback):
+    def __init__(self,name,signal,sender,notifCallback):
         
         # log
         log.debug("create instance")
@@ -28,7 +28,7 @@ class eventBusClient(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name          = 'eventBusClient'
+        self.name          = name
         
         # local variables
         self.goOn          = True
@@ -56,6 +56,13 @@ class eventBusClient(threading.Thread):
             self.notifCallback(newData)
     
     #======================== public ==========================================
+    
+    def dispatch(self,signal,data):
+        dispatcher.send(
+            sender = self.name,
+            signal = signal,
+            data   = data,
+        )
     
     #======================== private =========================================
     

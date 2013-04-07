@@ -76,6 +76,7 @@ class networkState(eventBusClient.eventBusClient):
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
+            name             = 'networkState',
             signal           = 'fromMote.data.local',
             sender           = dispatcher.Any,
             notifCallback    = self._receivedMoteDataLocal_notif
