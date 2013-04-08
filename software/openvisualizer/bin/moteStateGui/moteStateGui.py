@@ -11,6 +11,7 @@ from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
 from RPL           import RPL
+from openLbr       import openLbr
 from openTun       import openTun
 import OpenWindow
 import OpenFrameState
@@ -43,18 +44,21 @@ class MoteStateGui(object):
     
     GUI_UPDATE_PERIOD      = 500
     MENUENTRY_STATE        = 'mote state'
+    MENUENTRY_LBR          = 'lbr'
     MENUENTRY_EVENTBUS     = 'eventBus'
     
     def __init__(self,eventBusMonitor,
                       moteProbes,
                       moteConnectors,
-                      moteStates):
+                      moteStates,
+                      openLbr):
         
         # store params
         self.eventBusMonitor        = eventBusMonitor
         self.moteProbes             = moteProbes
         self.moteConnectors         = moteConnectors
         self.moteStates             = moteStates
+        self.openLbr                = openLbr
         self.menuFrames             = []
         
         # local variables
@@ -121,6 +125,9 @@ class MoteStateGui(object):
             postcommand=self._updateMenuFrameNames
         )
         
+        #===== openLbr Frame
+        # TODO
+        
         #===== eventBusMonitor Frame
         
         thisFrame            = Tkinter.Frame(self.window)
@@ -157,6 +164,7 @@ class MoteStateGui_app(object):
         self.moteConnectors  = []
         self.moteStates      = []
         self.rpl             = None
+        self.openLbr         = None
         self.openTun         = None
         
         # create an eventBusMonitor
@@ -179,6 +187,9 @@ class MoteStateGui_app(object):
         # create a rpl instance
         self.rpl             = RPL.RPL()
         
+        # create an openLbr instance
+        self.openLbr         = openLbr.OpenLbr()
+        
         # create an openTun instance
         self.openTun         = openTun.OpenTun()
         
@@ -188,6 +199,7 @@ class MoteStateGui_app(object):
             self.moteProbes,
             self.moteConnectors,
             self.moteStates,
+            self.openLbr,
         )
         
         # start threads

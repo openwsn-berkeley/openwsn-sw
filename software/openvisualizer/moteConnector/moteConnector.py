@@ -116,12 +116,18 @@ class moteConnector(threading.Thread):
                 
                 self._subcribedDataForDagRoot = False
     
-    def write(self,data,headerByte=chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
+    def write(self,data,headerByte=OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
+        # convert to string
+        pass
+        '''
+        dataToSend = ''.join(headerByte+data)
+        
         try:
-            self.socket.send(headerByte+data)
+            self.socket.send(dataToSend)
         except socket.error:
             log.error(err)
             pass
+        '''
     
     def quit(self):
         raise NotImplementedError()
