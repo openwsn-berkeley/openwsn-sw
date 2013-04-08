@@ -69,6 +69,9 @@ class TunReadThread(threading.Thread):
         
         # give this thread a name
         self.name                 = 'readThread'
+        
+        # start myself
+        self.start()
     
     def run(self):
         
