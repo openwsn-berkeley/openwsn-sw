@@ -92,33 +92,30 @@ class RPL(eventBusClient.eventBusClient):
         self.sourceRoute     = SourceRoute.SourceRoute()
         self.networkPrefix   = self.LINK_LOCAL_PREFIX
         self.dagRootEui64    = None
-        self.moduleInit      = False
         self.latencyStats    = {}
         
-        if not self.moduleInit:
-            # connect to dispatcher
-            dispatcher.connect(
-                self._setDagRootEui64,
-                signal       = 'infoDagRoot',
-            )
-            dispatcher.connect(
-                self._setNetworkPrefix,
-                signal       = 'networkPrefix',
-            )
-            # subscribe to LBR data to handle source routing.
-            dispatcher.connect(
-                self._receivedInternetData_notif,
-                signal       = 'lowpanToMesh',
-            )
-            # get latency information 
-            dispatcher.connect(
-                self._latencyStatsRcv,
-                signal       = 'latency',
-            )
-            
-            # send a DIO periodically
-            self._scheduleSendDIO(self.DIO_PERIOD) 
-            self.moduleInit  = True
+        # connect to dispatcher
+        dispatcher.connect(
+            self._setDagRootEui64,
+            signal       = 'infoDagRoot',
+        )
+        dispatcher.connect(
+            self._setNetworkPrefix,
+            signal       = 'networkPrefix',
+        )
+        # subscribe to LBR data to handle source routing.
+        dispatcher.connect(
+            self._receivedInternetData_notif,
+            signal       = 'lowpanToMesh',
+        )
+        # get latency information 
+        dispatcher.connect(
+            self._latencyStatsRcv,
+            signal       = 'latency',
+        )
+        
+        # send a DIO periodically
+        self._scheduleSendDIO(self.DIO_PERIOD) 
     
     #======================== public ==========================================
     
