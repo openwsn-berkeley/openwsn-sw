@@ -16,6 +16,8 @@ import win32file
 import win32event
 import pywintypes
 
+from eventBus import eventBusClient
+
 #============================ defines =========================================
 
 ## IPv4 configuration of your TUN interface (represented as a list of integers)
@@ -161,7 +163,7 @@ class OpenTun(eventBusClient.eventBusClient):
             data          = data,
         )
     
-    def _createTun():
+    def _createTunIf(self):
         '''
         \brief Open a TUN/TAP interface and switch it to TUN mode.
         
@@ -170,7 +172,7 @@ class OpenTun(eventBusClient.eventBusClient):
         '''
         
         # retrieve the ComponentId from the TUN/TAP interface
-        componentId = _get_tuntap_ComponentId()
+        componentId = self._get_tuntap_ComponentId()
         print('componentId = {0}'.format(componentId))
         
         # create a win32file for manipulating the TUN/TAP interface
@@ -217,7 +219,7 @@ class OpenTun(eventBusClient.eventBusClient):
     
     #======================== helpers =========================================
     
-    def _get_tuntap_ComponentId():
+    def _get_tuntap_ComponentId(self):
         '''
         \brief Retrieve the instance ID of the TUN/TAP interface from the Windows
             registry,

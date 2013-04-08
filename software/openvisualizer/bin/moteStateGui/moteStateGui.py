@@ -11,6 +11,7 @@ from moteProbe     import moteProbe
 from moteConnector import moteConnector
 from moteState     import moteState
 from RPL           import RPL
+from openTun       import openTun
 import OpenWindow
 import OpenFrameState
 import OpenFrameLbr
@@ -151,18 +152,19 @@ class MoteStateGui(object):
 class MoteStateGui_app(object):
     
     def __init__(self):
-        self.eventBusMonitor      = None
-        self.moteProbes           = []
-        self.moteConnectors       = []
-        self.moteStates           = []
-        self.rpl                  = None
+        self.eventBusMonitor = None
+        self.moteProbes      = []
+        self.moteConnectors  = []
+        self.moteStates      = []
+        self.rpl             = None
+        self.openTun         = None
         
         # create an eventBusMonitor
-        self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
+        self.eventBusMonitor = eventBusMonitor.eventBusMonitor()
         
         # create a moteProbe for each mote connected to this computer
-        serialPorts    = moteProbe.utils.findSerialPorts()
-        tcpPorts       = [TCP_PORT_START+i for i in range(len(serialPorts))]
+        serialPorts          = moteProbe.utils.findSerialPorts()
+        tcpPorts             = [TCP_PORT_START+i for i in range(len(serialPorts))]
         for (serialPort,tcpPort) in zip(serialPorts,tcpPorts):
             self.moteProbes.append(moteProbe.moteProbe(serialPort,tcpPort))
         
@@ -175,7 +177,10 @@ class MoteStateGui_app(object):
            self.moteStates.append(moteState.moteState(mc))
         
         # create a rpl instance
-        self.rpl = RPL.RPL()
+        self.rpl             = RPL.RPL()
+        
+        # create an openTun instance
+        self.openTun         = openTun.OpenTun()
         
         # create an open GUI
         gui = MoteStateGui(
