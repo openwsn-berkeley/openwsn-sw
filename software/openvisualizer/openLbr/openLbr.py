@@ -117,7 +117,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             # convert IPv6 dictionnary into 6LoWPAN dictionnary
             lowpan           = self.ipv6_to_lowpan(ipv6)
             
-            # TODO: add source route
+            # TODO: request source route from RPL and add to lowpan dictionary
             
             # turn dictionnary of fields into raw bytes
             lowpan_bytes     = self.reassemble_lowpan(lowpan)
@@ -127,8 +127,8 @@ class OpenLbr(eventBusClient.eventBusClient):
             
             # dispatch
             self.dispatch(
-                signal        = 'bytesToMesh',
-                data          = lowpan,
+                signal       = 'bytesToMesh',
+                data         = lowpan,
             )
             
         except (ValueError,NotImplementedError) as err:
