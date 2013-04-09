@@ -87,8 +87,14 @@ class TunReadThread(threading.Thread):
             # convert input from a string to a byte list
             p = [ord(b) for b in p]
             
-            # print input
-            #print 'in: l: {0} p: {1}'.format(l,formatByteList(p))
+            # make sure it's an IPv6 packet (starts with 0x6x)
+            if (p[0]&0xf0)!=0x60:
+               # this is not an IPv6 packet
+               continue
+            
+            # because of the nature of tun for Windows, p contains ETHERNET_MTU
+            # bytes. Cut at length of IPv6 packet.
+            p = p[:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
             
             # call the callback
             self.callback(p)
@@ -176,7 +182,6 @@ class OpenTun(eventBusClient.eventBusClient):
         
         # retrieve the ComponentId from the TUN/TAP interface
         componentId = self._get_tuntap_ComponentId()
-        print('componentId = {0}'.format(componentId))
         
         # create a win32file for manipulating the TUN/TAP interface
         tunIf = win32file.CreateFile(
@@ -188,7 +193,6 @@ class OpenTun(eventBusClient.eventBusClient):
             win32file.FILE_ATTRIBUTE_SYSTEM | win32file.FILE_FLAG_OVERLAPPED,
             None
         )
-        print('tunIf      = {0}'.format(tunIf.handle))
         
         # have Windows consider the interface now connected
         win32file.DeviceIoControl(

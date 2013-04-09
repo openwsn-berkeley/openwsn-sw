@@ -220,7 +220,7 @@ import logging.handlers
 #===== write everything to file
 
 fileLogHandler = logging.handlers.RotatingFileHandler('moteStateGui.log',
-                                                  maxBytes=2000000,
+                                                  #maxBytes=2000000,
                                                   backupCount=5,
                                                   mode='w')
 fileLogHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
@@ -240,7 +240,8 @@ for loggerName in ['moteProbeUtils',
     fileLogger.setLevel(logging.ERROR)
     fileLogger.addHandler(fileLogHandler)
 for loggerName in ['RPL',
-                   'SourceRoute']:
+                   'SourceRoute',
+                   'openLbr',]:
     fileLogger = logging.getLogger(loggerName)
     fileLogger.setLevel(logging.DEBUG)
     fileLogger.addHandler(fileLogHandler)

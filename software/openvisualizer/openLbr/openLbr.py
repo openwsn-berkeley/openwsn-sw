@@ -7,6 +7,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 from eventBus import eventBusClient
+import openvisualizer_utils as u
 
 #============================ parameters ======================================
 
@@ -101,18 +102,28 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         try:
             
-            # turn raw byte into dictionnary of fields
-            ipv6   = self.disassemble_ipv6(data)
+            ipv6_bytes       = data
             
-            print 'poipoi IPv6 dest={0}'.format(ipv6['dst_addr'])
+            # turn raw byte into dictionnary of fields
+            ipv6             = self.disassemble_ipv6(ipv6_bytes)
+            
+             # filter out multicast packets
+            if ipv6['dst_addr'][0]==0xff:
+                return
+            
+            # log
+            log.debug(self._format_IPv6(ipv6,ipv6_bytes))
             
             # convert IPv6 dictionnary into 6LoWPAN dictionnary
-            lowpan = self.ipv6_to_lowpan(ipv6)
+            lowpan           = self.ipv6_to_lowpan(ipv6)
             
             # TODO: add source route
             
             # turn dictionnary of fields into raw bytes
-            lowpan = self.reassemble_lowpan(lowpan)
+            lowpan_bytes     = self.reassemble_lowpan(lowpan)
+            
+            # log
+            log.debug(self._format_lowpan(lowpan,lowpan_bytes))
             
             # dispatch
             self.dispatch(
@@ -235,7 +246,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             lowpan['hlim'] = []
         else:
             hlim   = self.IPHC_HLIM_INLINE
-        returnVal += [(self.IPHC_DISPATCH << 5) + (tf << 3) + (nh << 2) + (hlim << 0)]
+        returnVal += [(self.IPHC_DISPATCH<<5) + (tf<<3) + (nh<<2) + (hlim<<0)]
         
         # Byte2: CID(1b) SAC(1b) SAM(2b) M(1b) DAC(2b) DAM(2b)
         if len(lowpan['cid'])==0:
@@ -273,10 +284,13 @@ class OpenLbr(eventBusClient.eventBusClient):
         returnVal += lowpan['cid']
         returnVal += lowpan['src_addr']
         returnVal += lowpan['dst_addr']
+        returnVal += lowpan['payload']
         
         return returnVal
-        
-    # inflate 6LoWPAN header into IPv6 header (input: binary 6LoWPAN; output: disassembled IPv6 packet)
+    
+    #===== 6LoWPAN -> IPv6
+    
+    '''
     def lowpan_to_ipv6(pkt_lowpan):
         pkt_ipv6 = dict()
         ptr = 2
@@ -376,7 +390,6 @@ class OpenLbr(eventBusClient.eventBusClient):
         pkt_ipv6['payload_length'] = len(pkt_ipv6['payload'])
         return pkt_ipv6
     
-    # reassemble an IPv6 packet previously disassembled
     def reassemble_ipv6_packet(pkt):
         pktw = []
         pktw.append(chr((6 << 4) + (pkt['traffic_class'] >> 4)))
@@ -394,8 +407,92 @@ class OpenLbr(eventBusClient.eventBusClient):
         pktws = ''.join(pktw)
         pktws = pktws + pkt['payload']
         return pktws
-    
+    '''
     #======================== helpers =========================================
+    
+    #===== formatting
+    
+    def _format_IPv6(self,ipv6,ipv6_bytes):
+        output  = []
+        output += ['']
+        output += ['']
+        output += ['============================= IPv6 packet =====================================']
+        output += ['']
+        output += ['Version:           {0}'.format(ipv6['version'])]
+        output += ['Traffic class:     {0}'.format(ipv6['traffic_class'])]
+        output += ['Flow label:        {0}'.format(ipv6['flow_label'])]
+        output += ['Payload length:    {0}'.format(ipv6['payload_length'])]
+        output += ['Hop Limit:         {0}'.format(ipv6['hop_limit'])]
+        output += ['Next header:       {0}'.format(ipv6['next_header'])]
+        output += ['Source Addr.:      {0}'.format(u.formatIPv6Addr(ipv6['src_addr']))]
+        output += ['Destination Addr.: {0}'.format(u.formatIPv6Addr(ipv6['dst_addr']))]
+        output += ['Payload:           {0}'.format(u.formatBuf(ipv6['payload']))]
+        output += ['']
+        output += [self._formatWireshark(ipv6_bytes)]
+        output += ['']
+        return '\n'.join(output)
+    
+    def _format_lowpan(self,lowpan,lowpan_bytes):
+        output  = []
+        output += ['']
+        output += ['']
+        output += ['============================= lowpan packet ===================================']
+        output += ['']
+        output += ['tf:                {0}'.format(u.formatBuf(lowpan['tf']))]
+        output += ['nh:                {0}'.format(u.formatBuf(lowpan['nh']))]
+        output += ['hlim:              {0}'.format(u.formatBuf(lowpan['hlim']))]
+        output += ['cid:               {0}'.format(u.formatBuf(lowpan['cid']))]
+        output += ['src_addr:          {0}'.format(u.formatBuf(lowpan['src_addr']))]
+        output += ['dst_addr:          {0}'.format(u.formatBuf(lowpan['dst_addr']))]
+        output += ['payload:           {0}'.format(u.formatBuf(lowpan['payload']))]
+        output += ['']
+        output += [self._formatWireshark(lowpan_bytes)]
+        output += ['']
+        return '\n'.join(output)
+    
+    def _formatWireshark(self,pkt):
+        NUM_BYTES_PER_LINE        = 16
+        
+        output                    = []
+        index                     = 0
+        while index<len(pkt):
+            this_line             = []
+            
+            # get the bytes for this line
+            bytes                 = pkt[index:index+NUM_BYTES_PER_LINE]
+            
+            # print the header
+            this_line            += ['%06x '%index]
+            
+            # print the bytes (gather the end_chars)
+            end_chars             = []
+            end_chars            += ['  ']
+            for b in bytes:
+                # print the bytes
+                this_line        += [' %02x'%b]
+                # gather the end_chars
+                if b>32 and b<127:
+                    end_chars    += [chr(b)]
+                else:
+                    end_chars    += ['.']
+            
+            # pad
+            for _ in range(len(bytes),NUM_BYTES_PER_LINE):
+                this_line        += ['   ']
+            
+            # print the end_chars
+            this_line            += end_chars
+            
+            # store the line
+            this_line             = ''.join(this_line)
+            output               += [this_line]
+            
+            # increment index
+            index                += NUM_BYTES_PER_LINE
+        
+        return '\n'.join(output)
+    
+    #===== misc
     
     @classmethod
     def _buf2int(self,buf,startBit=None,numBits=None):
@@ -413,39 +510,4 @@ class OpenLbr(eventBusClient.eventBusClient):
             returnVal += buf[i]<<(8*(len(buf)-i-1))
         return returnVal
     
-    # print IPv6 packet (input: disassembled IPv6 packet)
-    def print_ipv6(pkt):
-        print "--IPv6 packet--"
-        print "Version:"       , pkt['version']
-        print "Traffic class:" , pkt['traffic_class']
-        print "Flow label:"    , pkt['flow_label']
-        print "Payload length:", pkt['payload_length']
-        print "Next header:"   , pkt['next_header']
-        print "Hop limit:"     , pkt['hop_limit']
-        print "Src address:"   , binascii.hexlify(pkt['src_addr'])
-        print "Dst address:"   , binascii.hexlify(pkt['dst_addr'])
-        print "Payload:"       , binascii.hexlify(pkt['payload'])
-        pkt_reassembled = reassemble_ipv6_packet(pkt)
-        output_wireshark(pkt_reassembled)
-
-    # print 6lowPAN packet
-    def print_lowpan(pkt6):
-        print "--6LowPAN packet--"
-        output_wireshark(pkt6)
     
-    def output_wireshark(line):
-        num_bytes_per_line = 16
-        index=0
-        for line_index in range(len(line)/num_bytes_per_line+1):
-            chars = ''
-            sys.stdout.write(openhex(index,6))
-            while index<(line_index+1)*num_bytes_per_line and index<len(line):
-                if ord(line[index])>32 and ord(line[index])<127:
-                    chars += line[index]
-                else:
-                    chars += '.'
-                sys.stdout.write(openhex(ord(line[index]),2))
-                index += 1
-            for i in range(index,(line_index+1)*num_bytes_per_line):
-                sys.stdout.write('   ')
-            sys.stdout.write(chars+'\n')
