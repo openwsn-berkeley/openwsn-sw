@@ -1,4 +1,7 @@
 
+def formatStringBuf(buf):
+    return '-'.join(["%02x"%ord(b) for b in buf])
+
 def formatBuf(buf):
     return '({0:>2}B) {1}'.format(
         len(buf),
