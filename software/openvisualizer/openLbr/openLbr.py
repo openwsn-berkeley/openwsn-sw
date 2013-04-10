@@ -142,7 +142,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             # dispatch
             self.dispatch(
                 signal       = 'bytesToMesh',
-                data         = lowpan,
+                data         = lowpan_bytes,
             )
             
         except (ValueError,NotImplementedError) as err:
@@ -331,8 +331,6 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         # payload
         returnVal += lowpan['payload']
-        
-        print returnVal
         
         return returnVal
     
