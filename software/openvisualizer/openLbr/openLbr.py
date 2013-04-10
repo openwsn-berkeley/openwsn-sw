@@ -23,6 +23,12 @@ class OpenLbr(eventBusClient.eventBusClient):
       Internet Protocol, Version 6 (IPv6) Specification
     '''
     
+     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
+    IANA_UNDEFINED           = 0x00
+    IANA_PROTOCOL_UDP        = 17
+    IANA_PROTOCOL_IPv6ROUTE  = 43
+    
+    
     IPv6_HEADER_LEN    = 40  ##< Number of bytes in an IPv6 header.
     
     IPHC_DISPATCH      = 3
@@ -61,6 +67,18 @@ class OpenLbr(eventBusClient.eventBusClient):
     IPHC_DAM_64B       = 1
     IPHC_DAM_16B       = 2
     IPHC_DAM_ELIDED    = 3
+    
+     # inline next header
+    SR_NH_VALUE              = IANA_PROTOCOL_IPv6ROUTE     ##< Next header
+    
+        #=== RPL source routing header (RFC6554)
+    SR_FIR_TYPE              = 0x03                        ##< Routing Type
+    
+    #=== UDP header (RFC768)
+    NHC_UDP_MASK             = 0xF8                        ##< b1111 1000
+    NHC_UDP_ID               = 0xF0                        ##< b1111 0000
+    
+    
     
     def __init__(self):
         
@@ -119,8 +137,25 @@ class OpenLbr(eventBusClient.eventBusClient):
             
             # TODO: request source route from RPL and add to lowpan dictionary
             
+            sourceRoute=[]
+            
+            #call subscribers of SourceRoute 
+            sourceRoute =  self.dispatch(signal = 'getSourceRoute', 
+                                        data=lowpan['dst_addr'],)
+            
+            #TODO check if src route is empty
+            
+            
+            #if not empty create the source route header from the list of addresses and add it to the lowpan dictionary
+            
+            srouteheader={}
+          
+            expandUDP,srcRoutePresent = self.create_sourceroute_header(sourceRoute,lowpan,srouteheader)
+                  
             # turn dictionnary of fields into raw bytes
-            lowpan_bytes     = self.reassemble_lowpan(lowpan)
+            lowpan_bytes     = self.reassemble_lowpan(lowpan,srouteheader,srcRoutePresent,expandUDP)
+            
+            #TODO: where do we add the next hop at the front of the packet??
             
             # log
             log.debug(self._format_lowpan(lowpan,lowpan_bytes))
@@ -134,6 +169,100 @@ class OpenLbr(eventBusClient.eventBusClient):
         except (ValueError,NotImplementedError) as err:
             log.error(err)
             pass        
+    
+    
+    def create_sourceroute_header(self, route, lowpan, srouteheader):
+        '''
+        \brief turn a source route list of addresses into into dictionnary representing 
+        the source route header
+
+        '''
+        # remove last source routing element, which is DAGroot
+        route.pop()
+        
+        if (len(route)<1):
+            #no src routing header needed.
+            log.debug("Destination is one hop away.") 
+            return False,False
+        
+        log.debug("Destination is more that one hop away.")
+        
+        # Insert a source routing header into packet.
+        nh=lowpan['nh']
+        #TODO check if this is compressed or not!! 
+        
+        # extract nextHeaderVal and expandUDP
+        nextHeaderVal              = [self.IANA_UNDEFINED]
+        expandUDP                  = False
+        
+        if (((nh>>2) & self.SR_NH_SET)==1):
+            #next header is compressed    
+            #check if UDP header is present  to be expanded.
+            payload=lowpan['payload']
+            if ((payload[0]&self.NHC_UDP_MASK)==self.NHC_UDP_ID):
+                nextHeaderVal      = [self.IANA_PROTOCOL_UDP]
+                expandUDP          = True
+        else:        
+            # next header is not compressed, read directly from IPHC field
+            nextHeaderVal          = nh
+            expandUDP              = False 
+        
+        #set next header as source routing header.
+        lowpan['nh']=[self.IANA_PROTOCOL_IPv6ROUTE]  
+        
+        srouteheader['nh']          = nextHeaderVal     
+        srouteheader['hdrExtLen']   = [len(route)-1]
+        srouteheader['routingType'] = [self.SR_FIR_TYPE]
+        srouteheader['segmentsleft']= [len(route)-1]
+        srouteheader['CmprI|CmprE'] = [0x08 << 4 | 0x08] #all prefix elided
+        srouteheader['Padding']     = [0x00,0x00,0x00]
+        
+        hoplist=[]
+        
+        for j in range(1,len(route)):
+            hop              = route[(len(route)-1)-j]     # first hop not needed
+            hoplist          += [hop]
+    
+        srouteheader['hoplist']     =   hoplist #already in the correct order   
+        
+        return expandUDP,True
+            
+            
+    
+    def _expandUDPdatagram(self, pkt):
+        '''
+        \brief Turn a 6LoWPAN-compacted UDP header into a full-blown one.
+        
+        The formats are defined by:
+        - 6LoWPAN-compacted UDP header: http://tools.ietf.org/html/rfc6282#section-4.3.3
+        - full-blown UDP header:        http://tools.ietf.org/html/rfc768
+        
+        \param[in] pkt A bytelist representing a packet, starting after the
+            6LoWPAN header, i.e. at the UDP LOWPAN_NHC Format.
+        
+        \return A bytelist representing the same packet, but with full-blown
+            UDP header.
+        '''
+        oldUdp               = pkt[:5]
+        
+        # format new UDP header
+        newUdp               = []
+        newUdp              += oldUdp[1:3]                 # Source Port
+        newUdp              += oldUdp[3:5]                 # Destination Port
+        length               = 8+len(pkt[5:])
+        newUdp              += [(length & 0xFF00) >> 8]    # Length
+        newUdp              += [(length & 0x00FF) >> 0]
+        idxCS                = len(newUdp)                 # remember index of checksum
+        newUdp              += [0x00,0x00]                 # Checksum (placeholder) 
+        newUdp              += pkt[5:]                     # data octets
+        
+        # calculate checksum (do last)
+        checksum             = openvisualizer_utils.calculateCRC(newUdp, len(newUdp))
+        newUdp[idxCS]        = checksum[0]
+        newUdp[idxCS+1]      = checksum[1]
+        
+        return newUdp  
+    
     
     def disassemble_ipv6(self,ipv6):
         '''
@@ -216,7 +345,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         # join
         return lowpan
     
-    def reassemble_lowpan(self,lowpan):
+    def reassemble_lowpan(self,lowpan,srouteheader,sroutepresent,expandUDP):
         '''
         \brief Turn dictionnary of 6LoWPAN header fields into byte array.
         
@@ -283,7 +412,26 @@ class OpenLbr(eventBusClient.eventBusClient):
         returnVal += lowpan['hlim']
         returnVal += lowpan['cid']
         returnVal += lowpan['src_addr']
-        returnVal += lowpan['dst_addr']
+       
+        #add the source routing header if needed.
+        if (sroutepresent):
+           returnVal        += srouteheader['nh']   
+           returnVal        += srouteheader['hdrExtLen']
+           returnVal        += srouteheader['routingType'] 
+           returnVal        += srouteheader['segmentsleft']
+           returnVal        += srouteheader['CmprI|CmprE']
+           returnVal        += srouteheader['Padding']
+           #append hops
+           for j in range(0,len(srouteheader['hoplist'])):
+               hop          = route[j]     
+               returnVal       += hop
+        else:  
+           #regular packet, no src routing needed, add dest address as usually   
+           returnVal += lowpan['dst_addr']
+        
+        if (expandUDP):
+           lowpan['payload']    = self._expandUDPdatagram(lowpan['payload'])   
+           
         returnVal += lowpan['payload']
         
         return returnVal
