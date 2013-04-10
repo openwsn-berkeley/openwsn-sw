@@ -23,62 +23,51 @@ class OpenLbr(eventBusClient.eventBusClient):
       Internet Protocol, Version 6 (IPv6) Specification
     '''
     
-     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
-    IANA_UNDEFINED           = 0x00
-    IANA_PROTOCOL_UDP        = 17
+    # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
     IANA_PROTOCOL_IPv6ROUTE  = 43
     
+    # Number of bytes in an IPv6 header.
+    IPv6_HEADER_LEN          = 40
     
-    IPv6_HEADER_LEN    = 40  ##< Number of bytes in an IPv6 header.
+    IPHC_DISPATCH            = 3
     
-    IPHC_DISPATCH      = 3
+    IPHC_TF_4B               = 0
+    IPHC_TF_3B               = 1
+    IPHC_TF_1B               = 2
+    IPHC_TF_ELIDED           = 3
+
+    IPHC_NH_INLINE           = 0
+    IPHC_NH_COMPRESSED       = 1
+
+    IPHC_HLIM_INLINE         = 0
+    IPHC_HLIM_1              = 1
+    IPHC_HLIM_64             = 2
+    IPHC_HLIM_255            = 3 
+
+    IPHC_CID_NO              = 0
+    IPHC_CID_YES             = 1
+
+    IPHC_SAC_STATELESS       = 0
+    IPHC_SAC_STATEFUL        = 1
+
+    IPHC_SAM_128B            = 0
+    IPHC_SAM_64B             = 1
+    IPHC_SAM_16B             = 2
+    IPHC_SAM_ELIDED          = 3
+
+    IPHC_M_NO                = 0
+    IPHC_M_YES               = 1
+
+    IPHC_DAC_STATELESS       = 0
+    IPHC_DAC_STATEFUL        = 1
+
+    IPHC_DAM_128B            = 0
+    IPHC_DAM_64B             = 1
+    IPHC_DAM_16B             = 2
+    IPHC_DAM_ELIDED          = 3
     
-    IPHC_TF_4B         = 0
-    IPHC_TF_3B         = 1
-    IPHC_TF_1B         = 2
-    IPHC_TF_ELIDED     = 3
-
-    IPHC_NH_INLINE     = 0
-    IPHC_NH_COMPRESSED = 1
-
-    IPHC_HLIM_INLINE   = 0
-    IPHC_HLIM_1        = 1
-    IPHC_HLIM_64       = 2
-    IPHC_HLIM_255      = 3 
-
-    IPHC_CID_NO        = 0
-    IPHC_CID_YES       = 1
-
-    IPHC_SAC_STATELESS = 0
-    IPHC_SAC_STATEFUL  = 1
-
-    IPHC_SAM_128B      = 0
-    IPHC_SAM_64B       = 1
-    IPHC_SAM_16B       = 2
-    IPHC_SAM_ELIDED    = 3
-
-    IPHC_M_NO          = 0
-    IPHC_M_YES         = 1
-
-    IPHC_DAC_STATELESS = 0
-    IPHC_DAC_STATEFUL  = 1
-
-    IPHC_DAM_128B      = 0
-    IPHC_DAM_64B       = 1
-    IPHC_DAM_16B       = 2
-    IPHC_DAM_ELIDED    = 3
-    
-     # inline next header
-    SR_NH_VALUE              = IANA_PROTOCOL_IPv6ROUTE     ##< Next header
-    
-        #=== RPL source routing header (RFC6554)
-    SR_FIR_TYPE              = 0x03                        ##< Routing Type
-    
-    #=== UDP header (RFC768)
-    NHC_UDP_MASK             = 0xF8                        ##< b1111 1000
-    NHC_UDP_ID               = 0xF0                        ##< b1111 0000
-    
-    
+    #=== RPL source routing header (RFC6554)
+    SR_FIR_TYPE              = 0x03
     
     def __init__(self):
         
@@ -113,7 +102,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         \brief Converts a IPv6 packet into a 6LoWPAN packet.
         
         This function assumes there is a component listening on the EventBus
-        which answers in the 'getSourceRoute' signal.
+        which answers to the 'getSourceRoute' signal.
         
         This function dispatches the 6LoWPAN packet with signal 'bytesToMesh'.
         '''
@@ -135,27 +124,17 @@ class OpenLbr(eventBusClient.eventBusClient):
             # convert IPv6 dictionnary into 6LoWPAN dictionnary
             lowpan           = self.ipv6_to_lowpan(ipv6)
             
-            # TODO: request source route from RPL and add to lowpan dictionary
+            # add the source route to this destination
+            lowpan['route'] = self._getSourceRoute(lowpan['dst_addr'])
             
-            sourceRoute=[]
+            if not lowpan['route']:
+                # no source route could be found
+                log.warning('no source route to {0}'.format(lowpan['dst_addr']))
+                # TODO: return ICMPv6 message
+                return
             
-            #call subscribers of SourceRoute 
-            sourceRoute =  self.dispatch(signal = 'getSourceRoute', 
-                                        data=lowpan['dst_addr'],)
-            
-            #TODO check if src route is empty
-            
-            
-            #if not empty create the source route header from the list of addresses and add it to the lowpan dictionary
-            
-            srouteheader={}
-          
-            expandUDP,srcRoutePresent = self.create_sourceroute_header(sourceRoute,lowpan,srouteheader)
-                  
             # turn dictionnary of fields into raw bytes
-            lowpan_bytes     = self.reassemble_lowpan(lowpan,srouteheader,srcRoutePresent,expandUDP)
-            
-            #TODO: where do we add the next hop at the front of the packet??
+            lowpan_bytes     = self.reassemble_lowpan(lowpan)
             
             # log
             log.debug(self._format_lowpan(lowpan,lowpan_bytes))
@@ -168,101 +147,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             
         except (ValueError,NotImplementedError) as err:
             log.error(err)
-            pass        
-    
-    
-    def create_sourceroute_header(self, route, lowpan, srouteheader):
-        '''
-        \brief turn a source route list of addresses into into dictionnary representing 
-        the source route header
-
-        '''
-        # remove last source routing element, which is DAGroot
-        route.pop()
-        
-        if (len(route)<1):
-            #no src routing header needed.
-            log.debug("Destination is one hop away.") 
-            return False,False
-        
-        log.debug("Destination is more that one hop away.")
-        
-        # Insert a source routing header into packet.
-        nh=lowpan['nh']
-        #TODO check if this is compressed or not!! 
-        
-        # extract nextHeaderVal and expandUDP
-        nextHeaderVal              = [self.IANA_UNDEFINED]
-        expandUDP                  = False
-        
-        if (((nh>>2) & self.SR_NH_SET)==1):
-            #next header is compressed    
-            #check if UDP header is present  to be expanded.
-            payload=lowpan['payload']
-            if ((payload[0]&self.NHC_UDP_MASK)==self.NHC_UDP_ID):
-                nextHeaderVal      = [self.IANA_PROTOCOL_UDP]
-                expandUDP          = True
-        else:        
-            # next header is not compressed, read directly from IPHC field
-            nextHeaderVal          = nh
-            expandUDP              = False 
-        
-        #set next header as source routing header.
-        lowpan['nh']=[self.IANA_PROTOCOL_IPv6ROUTE]  
-        
-        srouteheader['nh']          = nextHeaderVal     
-        srouteheader['hdrExtLen']   = [len(route)-1]
-        srouteheader['routingType'] = [self.SR_FIR_TYPE]
-        srouteheader['segmentsleft']= [len(route)-1]
-        srouteheader['CmprI|CmprE'] = [0x08 << 4 | 0x08] #all prefix elided
-        srouteheader['Padding']     = [0x00,0x00,0x00]
-        
-        hoplist=[]
-        
-        for j in range(1,len(route)):
-            hop              = route[(len(route)-1)-j]     # first hop not needed
-            hoplist          += [hop]
-    
-        srouteheader['hoplist']     =   hoplist #already in the correct order   
-        
-        return expandUDP,True
-            
-            
-    
-    def _expandUDPdatagram(self, pkt):
-        '''
-        \brief Turn a 6LoWPAN-compacted UDP header into a full-blown one.
-        
-        The formats are defined by:
-        - 6LoWPAN-compacted UDP header: http://tools.ietf.org/html/rfc6282#section-4.3.3
-        - full-blown UDP header:        http://tools.ietf.org/html/rfc768
-        
-        \param[in] pkt A bytelist representing a packet, starting after the
-            6LoWPAN header, i.e. at the UDP LOWPAN_NHC Format.
-        
-        \return A bytelist representing the same packet, but with full-blown
-            UDP header.
-        '''
-        oldUdp               = pkt[:5]
-        
-        # format new UDP header
-        newUdp               = []
-        newUdp              += oldUdp[1:3]                 # Source Port
-        newUdp              += oldUdp[3:5]                 # Destination Port
-        length               = 8+len(pkt[5:])
-        newUdp              += [(length & 0xFF00) >> 8]    # Length
-        newUdp              += [(length & 0x00FF) >> 0]
-        idxCS                = len(newUdp)                 # remember index of checksum
-        newUdp              += [0x00,0x00]                 # Checksum (placeholder) 
-        newUdp              += pkt[5:]                     # data octets
-        
-        # calculate checksum (do last)
-        checksum             = openvisualizer_utils.calculateCRC(newUdp, len(newUdp))
-        newUdp[idxCS]        = checksum[0]
-        newUdp[idxCS+1]      = checksum[1]
-        
-        return newUdp  
-    
+            pass
     
     def disassemble_ipv6(self,ipv6):
         '''
@@ -345,7 +230,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         # join
         return lowpan
     
-    def reassemble_lowpan(self,lowpan,srouteheader,sroutepresent,expandUDP):
+    def reassemble_lowpan(self,lowpan):
         '''
         \brief Turn dictionnary of 6LoWPAN header fields into byte array.
         
@@ -353,86 +238,101 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         \return A list of bytes representing the 6LoWPAN packet.
         '''
-        returnVal = []
+        returnVal            = []
         
         # Byte1: 011(3b) TF(2b) NH(1b) HLIM(2b)
         if len(lowpan['tf'])==0:
-            tf     = self.IPHC_TF_ELIDED
+            tf               = self.IPHC_TF_ELIDED
         else:
             raise NotImplementedError()
         if len(lowpan['nh'])==1:
-            nh     = self.IPHC_NH_INLINE
+            nh               = self.IPHC_NH_INLINE
         else:
-            nh     = self.IPHC_NH_COMPRESSED
+            nh               = self.IPHC_NH_COMPRESSED
         if   lowpan['hlim']==1:
-            hlim   = self.IPHC_HLIM_1
+            hlim             = self.IPHC_HLIM_1
             lowpan['hlim'] = []
         elif lowpan['hlim']==64:
-            hlim   = self.IPHC_HLIM_64
+            hlim             = self.IPHC_HLIM_64
             lowpan['hlim'] = []
         elif lowpan['hlim']==255:
-            hlim   = self.IPHC_HLIM_255
+            hlim             = self.IPHC_HLIM_255
             lowpan['hlim'] = []
         else:
-            hlim   = self.IPHC_HLIM_INLINE
-        returnVal += [(self.IPHC_DISPATCH<<5) + (tf<<3) + (nh<<2) + (hlim<<0)]
+            hlim             = self.IPHC_HLIM_INLINE
+        returnVal           += [(self.IPHC_DISPATCH<<5) + (tf<<3) + (nh<<2) + (hlim<<0)]
         
         # Byte2: CID(1b) SAC(1b) SAM(2b) M(1b) DAC(2b) DAM(2b)
         if len(lowpan['cid'])==0:
-            cid    = self.IPHC_CID_NO
+            cid              = self.IPHC_CID_NO
         else:
-            cid    = self.IPHC_CID_YES
-        sac        = self.IPHC_SAC_STATELESS
+            cid              = self.IPHC_CID_YES
+        sac                  = self.IPHC_SAC_STATELESS
         if   len(lowpan['src_addr'])==128/8:
-            sam    = self.IPHC_SAM_128B
+            sam              = self.IPHC_SAM_128B
         elif len(lowpan['src_addr'])==64/8:
-            sam    = IPHC_SAM_64B
+            sam              = IPHC_SAM_64B
         elif len(lowpan['src_addr'])==16/8:
-            sam    = self.IPHC_SAM_16B
+            sam              = self.IPHC_SAM_16B
         elif len(lowpan['src_addr'])==0:
-            sam    = self.IPHC_SAM_ELIDED
+            sam              = self.IPHC_SAM_ELIDED
         else:
             raise SystemError()
-        dac        = self.IPHC_DAC_STATELESS
-        m          = self.IPHC_M_NO
+        dac                  = self.IPHC_DAC_STATELESS
+        m                    = self.IPHC_M_NO
         if   len(lowpan['dst_addr'])==128/8:
-            dam    = self.IPHC_DAM_128B
+            dam              = self.IPHC_DAM_128B
         elif len(lowpan['dst_addr'])==64/8:
-            dam    = self.IPHC_DAM_64B
+            dam              = self.IPHC_DAM_64B
         elif len(lowpan['dst_addr'])==16/8:
-            dam    = self.IPHC_DAM_16B
+            dam              = self.IPHC_DAM_16B
         elif len(lowpan['dst_addr'])==0:
-            dam    = self.IPHC_DAM_ELIDED
+            dam              = self.IPHC_DAM_ELIDED
         else:
             raise SystemError()
-        returnVal += [(cid << 7) + (sac << 6) + (sam << 4) + (m << 3) + (dac << 2) + (dam << 0)]
+        returnVal           += [(cid << 7) + (sac << 6) + (sam << 4) + (m << 3) + (dac << 2) + (dam << 0)]
         
-        returnVal += lowpan['tf']
-        returnVal += lowpan['nh']
-        returnVal += lowpan['hlim']
-        returnVal += lowpan['cid']
-        returnVal += lowpan['src_addr']
-       
-        #add the source routing header if needed.
-        if (sroutepresent):
-           returnVal        += srouteheader['nh']   
-           returnVal        += srouteheader['hdrExtLen']
-           returnVal        += srouteheader['routingType'] 
-           returnVal        += srouteheader['segmentsleft']
-           returnVal        += srouteheader['CmprI|CmprE']
-           returnVal        += srouteheader['Padding']
-           #append hops
-           for j in range(0,len(srouteheader['hoplist'])):
-               hop          = route[j]     
-               returnVal       += hop
-        else:  
-           #regular packet, no src routing needed, add dest address as usually   
-           returnVal += lowpan['dst_addr']
+        # tf
+        returnVal           += lowpan['tf']
         
-        if (expandUDP):
-           lowpan['payload']    = self._expandUDPdatagram(lowpan['payload'])   
-           
+        # nh
+        if len(lowpan['route'])==1:
+            # destination is next hop
+            returnVal       += lowpan['nh']
+        else:
+            # source route needed
+            returnVal       += [self.IANA_PROTOCOL_IPv6ROUTE]
+        
+        # hlim
+        returnVal           += lowpan['hlim']
+        
+        # cid
+        returnVal           += lowpan['cid']
+        
+        # src_addr
+        returnVal           += lowpan['src_addr']
+        
+        if len(lowpan['route'])==1:
+            # destination is next hop
+            
+            # dest_addr
+            returnVal       += lowpan['dest_addr']
+        else:
+            # source route needed
+            
+            returnVal       += lowpan['nh']                     # Next Header
+            returnVal       += [len(lowpan['route'])]           # Hdr Ext Len. -1 to remove last element
+            returnVal       += [self.SR_FIR_TYPE]               # Routing Type. 3 for source routing
+            returnVal       += [len(lowpan['route'])]           # Segments Left. -1 because the first hop goes to the ipv6 destination address.
+            returnVal       += [0x08 << 4 | 0x08]               # CmprI | CmprE. All prefixes elided.
+            returnVal       += [0x00,0x00,0x00]                 # padding (4b) + reserved (20b)
+            for hop in lowpan['route']:
+               returnVal    += hop
+        
+        # payload
         returnVal += lowpan['payload']
+        
+        print returnVal
         
         return returnVal
     
@@ -556,7 +456,20 @@ class OpenLbr(eventBusClient.eventBusClient):
         pktws = pktws + pkt['payload']
         return pktws
     '''
+    
     #======================== helpers =========================================
+    
+    #===== source route
+    
+    def _getSourceRoute(self,destination):
+        temp = self.dispatch(
+            signal       = 'getSourceRoute', 
+            data         = destination,
+        )
+        for (function,returnVal) in temp:
+            if returnVal:
+                return returnVal
+        raise SystemError('No answer to signal getSourceRoute')
     
     #===== formatting
     
@@ -581,18 +494,22 @@ class OpenLbr(eventBusClient.eventBusClient):
         return '\n'.join(output)
     
     def _format_lowpan(self,lowpan,lowpan_bytes):
-        output  = []
-        output += ['']
-        output += ['']
-        output += ['============================= lowpan packet ===================================']
-        output += ['']
-        output += ['tf:                {0}'.format(u.formatBuf(lowpan['tf']))]
-        output += ['nh:                {0}'.format(u.formatBuf(lowpan['nh']))]
-        output += ['hlim:              {0}'.format(u.formatBuf(lowpan['hlim']))]
-        output += ['cid:               {0}'.format(u.formatBuf(lowpan['cid']))]
-        output += ['src_addr:          {0}'.format(u.formatBuf(lowpan['src_addr']))]
-        output += ['dst_addr:          {0}'.format(u.formatBuf(lowpan['dst_addr']))]
-        output += ['payload:           {0}'.format(u.formatBuf(lowpan['payload']))]
+        output          = []
+        output         += ['']
+        output         += ['']
+        output         += ['============================= lowpan packet ===================================']
+        output         += ['']
+        output         += ['tf:                {0}'.format(u.formatBuf(lowpan['tf']))]
+        output         += ['nh:                {0}'.format(u.formatBuf(lowpan['nh']))]
+        output         += ['hlim:              {0}'.format(u.formatBuf(lowpan['hlim']))]
+        output         += ['cid:               {0}'.format(u.formatBuf(lowpan['cid']))]
+        output         += ['src_addr:          {0}'.format(u.formatBuf(lowpan['src_addr']))]
+        output         += ['dst_addr:          {0}'.format(u.formatBuf(lowpan['dst_addr']))]
+        if 'route' in lowpan:
+            output     += ['source route:']
+            for hop in lowpan['route']:
+                output += [' - {0}'.format(u.formatAddr(hop))]
+        output         += ['payload:           {0}'.format(u.formatBuf(lowpan['payload']))]
         output += ['']
         output += [self._formatWireshark(lowpan_bytes)]
         output += ['']
@@ -657,5 +574,3 @@ class OpenLbr(eventBusClient.eventBusClient):
         for i in range(len(buf)):
             returnVal += buf[i]<<(8*(len(buf)-i-1))
         return returnVal
-    
-    

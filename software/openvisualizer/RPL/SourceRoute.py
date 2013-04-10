@@ -26,8 +26,6 @@ class SourceRoute(object):
         # local variables
         self.dataLock        = threading.Lock()
         self.parents         = {}
-        
-     
     
     #======================== public ==========================================
         
@@ -140,7 +138,7 @@ class SourceRoute(object):
         
         \param[in] destAddr The EUI64 address of the final destination.
         
-        \return The source route, a list of EUI64 address, order from
+        \return The source route, a list of EUI64 address, ordered from
             destination to source.
         '''
         
@@ -151,6 +149,8 @@ class SourceRoute(object):
             except Exception as err:
                 log.error(err)
                 raise
+        
+        return [[0xaa]*8,[0xbb]*8,[0xcc]*8,] # poipoipoipoi
         
         return sourceRoute
     

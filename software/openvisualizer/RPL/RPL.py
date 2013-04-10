@@ -84,7 +84,12 @@ class RPL(eventBusClient.eventBusClient):
                     'sender'   : self.WILDCARD,
                     'signal'   : 'fromMote.data.local',
                     'callback' : self._receivedMoteDataLocal_notif
-                }
+                },
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'getSourceRoute',
+                    'callback' : self._getSourceRoute
+                },
             ]
         )
         
@@ -106,19 +111,11 @@ class RPL(eventBusClient.eventBusClient):
             self._setNetworkPrefix,
             signal       = 'networkPrefix',
         )
-#        # subscribe to LBR data to handle source routing. @deprecated: this has to be moved to openLBr.
-#        dispatcher.connect(
-#            self._receivedInternetData_notif,
-#            signal       = 'lowpanToMesh',
-#        )
         # get latency information 
         dispatcher.connect(
             self._latencyStatsRcv,
             signal       = 'latency',
         )
-        
-        #register to source route requests
-        self.register(self, self.WILDCARD, self._getSourceRoute)
         
         # send a DIO periodically
         self._scheduleSendDIO(self.DIO_PERIOD) 
@@ -129,10 +126,9 @@ class RPL(eventBusClient.eventBusClient):
     
     #==== handle bus commands
     
-    #return the source route when requested
-    def _getSourceRoute(self,data):
-        return  self.sourceRoute.getSourceRoute(data)
-
+    def _getSourceRoute(self,sender,signal,data):
+        destination = data
+        return self.sourceRoute.getSourceRoute(destination)
     
     def _setDagRootEui64(self,data):
         '''
@@ -246,220 +242,6 @@ class RPL(eventBusClient.eventBusClient):
         # indicate data to sourceRoute
         self.sourceRoute.indicateDAO(data)
     
-    #===== received lowpanToMesh
-    
-    #===========================================================================
-    # def _receivedInternetData_notif(self,data):
-    #    
-    #    # packet received from LBR consists of:
-    #    # - [8B]        final destination's EUI64
-    #    # - [variable]  packet, starting with 6LoWPAN header
-    #    destination     = [ord(b) for b in data[:8]]
-    #    packet          = [ord(b) for b in data[8:]]
-    #    
-    #    # log
-    #    output          = []
-    #    output         += ['Received packet from Internet:']
-    #    output         += [' - destination: {0}'.format(self._formatByteList(destination))]
-    #    output         += [' - packet:      {0}'.format(self._formatByteList(packet))]
-    #    output          = '\n'.join(output)
-    #    log.debug(output)
-    #    
-    #    if destination==[0xff]*len(destination):
-    #        # this packet is destined to broadcast address
-    #        
-    #        # log
-    #        log.debug("Packet for broadcast, dropping.")
-    #        
-    #        # stop here: we don't want to send broadcast packets into mesh
-    #        return
-    #        
-    #    # get source route to destination
-    #    route           = self.sourceRoute.getSourceRoute(destination)
-    #    if not route:
-    #        log.warning("No known source route to {0}".format(''.join(str(c) for c in destination)))
-    #        return
-    #   
-    #    # if you get here, a source route was found
-    #    
-    #    # log
-    #    log.debug("source route to {0}: {1}".format(destination,route))
-    #    
-    #    # remove last source routing element, which is DAGroot
-    #    route.pop()
-    #    
-    #    if (len(route)>1):
-    #        
-    #        log.debug("Destination is more that one hop away.")
-    #        
-    #        # Insert a source routing header into packet.
-    #        
-    #        #   lowpan [2B]
-    #        #      dispatch:         0x3
-    #        #      tf:               0x3 (elided traffic fields)
-    #        #      nh:               0x1 (next-header compressed)
-    #        #      hlim:             0x1 (1 hop max)
-    #        #      cid:              0x0 (no inline context id)
-    #        #      sac:              0x0 (stateless src. addr. compr.)
-    #        #      sam:              0x0 (128b in-line addr.)
-    #        #      m:                0x0 (unicast)
-    #        #      dac:              0x0 (stateless dest. addr. compr.)
-    #        #      dam:              0x3 (elided addr., or 8b multicast)
-    #        #   src address [16B]
-    #        #      src_addr:         200104701f120f200000000000000002
-    #        #   dest address [0B]
-    #        #      dest_addr:       
-    #        #   udp
-    #        #      c:                0x1 (elided udp checksum)
-    #        #      p:                0x0 (udp port bits: s16_d16)
-    #        #      src_port:         0xa3b5
-    #        #      dest_port:        0x8
-    #        #   payload
-    #        #      length:           0x4
-    #        #      bytes:            6161610a
-    #        
-    #        iphcBytes                  = packet[:2]
-    #        
-    #        # extract nextHeaderVal and expandUDP
-    #        nextHeaderVal              = self.IANA_UNDEFINED
-    #        expandUDP                  = False
-    #        if (((iphcBytes[0]>>2) & self.SR_NH_SET)==1):
-    #            # next header is compressed. check if it is UDP
-    #            srcAddress             = packet[2:2+16]
-    #            maybeUDP               = packet[2+16:2+16+1]
-    #            if ((maybeUDP[0]&self.NHC_UDP_MASK)==self.NHC_UDP_ID):
-    #                nextHeaderVal      = self.IANA_PROTOCOL_UDP
-    #                expandUDP          = True
-    #                packet             = packet[2+16:]
-    #        else:
-    #            # next header is not compressed, read directly from IPHC field
-    #            nextHeaderVal          = packet[2]
-    #            srcAddress             = packet[3:19]
-    #            expandUDP              = False      
-    #            packet                 = packet[2+1+16:]
-    #        
-    #        # log
-    #        log.debug('nextHeaderVal={0} expandUDP={1}'.format(nextHeaderVal,expandUDP))
-    #        
-    #        # modify IPHC header
-    #        iphcBytes[0]               = self.SR_DISPATCH_MASK      | \
-    #                                     self.SR_TF_MASK            | \
-    #                                     ((~self.SR_NH_MASK) & 0x0f)| \
-    #                                     self.SR_HLIM_MASK
-    #        iphcBytes[1]               = self.SR_CID_MASK           | \
-    #                                     self.SR_SAC_MASK           | \
-    #                                     self.SR_SAM_MASK           | \
-    #                                     self.SR_M_MASK             | \
-    #                                     self.SR_DAC_MASK           | \
-    #                                     self.SR_DAM_MASK
-    #        iphcBytes                 += [self.SR_NH_VALUE]
-    #        
-    #        # create the src route header
-    #        srcRouteHeader             = self._createSrcRouteHeader(nextHeaderVal,route)
-    #        
-    #        # expand the UDP header, if needed
-    #        if expandUDP:
-    #            expandedUdpDatagram    = self._expandUDPdatagram(packet)     
-    #        else:
-    #            expandedUdpDatagram    = []
-    #        
-    #        # Assemble bytes to send
-    #        bytesToSend      = []
-    #        bytesToSend     += route[-1]              # next hop's EUI64
-    #        bytesToSend     += iphcBytes              # IPHC bytes
-    #        bytesToSend     += srcAddress             # source address
-    #        bytesToSend     += srcRouteHeader         # source routing header
-    #        if expandUDP:
-    #            bytesToSend += expandedUdpDatagram    # expanded UDP datagram (includes payload)
-    #        else:
-    #            bytesToSend += packet                 # untouched payload
-    #        
-    #    else:
-    #        
-    #        log.debug("Destination is one hop away.")
-    #        
-    #        # Assemble bytes to send
-    #        bytesToSend      = []
-    #        bytesToSend     += destination            # untouched destination
-    #        bytesToSend     += packet                 # untouched packet
-    #    
-    #    # verify max length
-    #    if len(bytesToSend)>self.MAX_SERIAL_PKT_SIZE:
-    #        log.error("packet too long, size={0}".format(len(nextHop)))
-    #        return  
-    #    
-    #    # dispatch
-    #    self.dispatch(
-    #        signal           = 'bytesToMesh',
-    #        data             = ''.join([chr(b) for b in bytesToSend]),
-    #    )
-    # 
-    # def _createSrcRouteHeader(self, nextHeaderVal, route):
-    #    '''
-    #    \brief Creates a source routing header.
-    #    
-    #    Header format described in http://tools.ietf.org/html/rfc6554#section-3.
-    #    '''
-    #    
-    #    # create header
-    #    returnVal            = []
-    #    returnVal           += [nextHeaderVal]             # Next Header.
-    #    returnVal           += [len(route)-1]              # Hdr Ext Len. -1 to remove last element.
-    #    returnVal           += [self.SR_FIR_TYPE]          # Routing Type. 3 for source routing.
-    #    returnVal           += [len(route)-1]              # Segments Left. -1 because the first hop goes to the ipv6 destination address.
-    #    returnVal           += [0x08 << 4 | 0x08]          # CmprI | CmprE. All prefixes elided.
-    #    returnVal           += [0x00,0x00,0x00]            # padding (4b) + reserved (20b)
-    #    for j in range(1,len(route)):
-    #        hop              = route[(len(route)-1)-j]     # first hop not needed
-    #        returnVal       += hop
-    #        
-    #    # log
-    #    output               = []
-    #    output               = ['creating source header:']
-    #    output               = ['- nextHeaderVal: {0}'.format(nextHeaderVal)]
-    #    output               = ['- route:         {0}'.format(route)]
-    #    output               = ['- returnVal:     {0}'.format(self._formatByteList(returnVal))]
-    #    output               = '\n'.join(output)
-    #    log.debug(output)
-    #    
-    #    # return header
-    #    return returnVal
-    # 
-    # def _expandUDPdatagram(self, pkt):
-    #    '''
-    #    \brief Turn a 6LoWPAN-compacted UDP header into a full-blown one.
-    #    
-    #    The formats are defined by:
-    #    - 6LoWPAN-compacted UDP header: http://tools.ietf.org/html/rfc6282#section-4.3.3
-    #    - full-blown UDP header:        http://tools.ietf.org/html/rfc768
-    #    
-    #    \param[in] pkt A bytelist representing a packet, starting after the
-    #        6LoWPAN header, i.e. at the UDP LOWPAN_NHC Format.
-    #    
-    #    \return A bytelist representing the same packet, but with full-blown
-    #        UDP header.
-    #    '''
-    #    oldUdp               = pkt[:5]
-    #    
-    #    # format new UDP header
-    #    newUdp               = []
-    #    newUdp              += oldUdp[1:3]                 # Source Port
-    #    newUdp              += oldUdp[3:5]                 # Destination Port
-    #    length               = 8+len(pkt[5:])
-    #    newUdp              += [(length & 0xFF00) >> 8]    # Length
-    #    newUdp              += [(length & 0x00FF) >> 0]
-    #    idxCS                = len(newUdp)                 # remember index of checksum
-    #    newUdp              += [0x00,0x00]                 # Checksum (placeholder) 
-    #    newUdp              += pkt[5:]                     # data octets
-    #    
-    #    # calculate checksum (do last)
-    #    checksum             = self._calculateCRC(newUdp, len(newUdp))
-    #    newUdp[idxCS]        = checksum[0]
-    #    newUdp[idxCS+1]      = checksum[1]
-    #    
-    #    return newUdp
-    #===========================================================================
-    
     #===== received latency data
     
     def _latencyStatsRcv(self,data):
@@ -521,35 +303,6 @@ class RPL(eventBusClient.eventBusClient):
         That is:  [0xab,0xcd,0xef,0x00] -> '(4 bytes) ab-cd-ef-00'
         '''
         return '({0} bytes) {1}'.format(len(l),'-'.join(["%02x"%b for b in l]))
-    
-#    def _calculateCRC(self,payload,length):
-#        temp_checksum         = [0]*2
-#        
-#        self._oneComplementSum(temp_checksum,payload,len(payload));
-#        temp_checksum[0]     ^= 0xFF;
-#        temp_checksum[1]     ^= 0xFF;
-#        
-#        # log
-#        log.debug("checksum calculated {0:x},{1:x}".format(temp_checksum[0],temp_checksum[1]))
-#       
-#        return temp_checksum
-#    
-#    def _oneComplementSum(self,checksum,payload,length):
-#        sum   = 0xFFFF & (checksum[0]<<8 | checksum[1])
-#        i     = length
-#        
-#        while (i>1):
-#            sum        += 0xFFFF & (payload[length-i]<<8 | (payload[length-i+1]))
-#            i          -= 2
-#            
-#        if (i):
-#            sum        += (0xFF & payload[length-1])<<8
-#   
-#        while (sum>>16):
-#            sum         = (sum & 0xFFFF)+(sum >> 16)
-#   
-#        checksum[0]     = (sum>>8) & 0xFF
-#        checksum[1]     = sum & 0xFF
     
     def _hexstring2bytelist(self,s):
         '''

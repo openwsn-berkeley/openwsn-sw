@@ -53,7 +53,7 @@ class eventBusClient(object):
     #======================== public ==========================================
     
     def dispatch(self,signal,data):
-        dispatcher.send(
+        return dispatcher.send(
             sender = self.name,
             signal = signal,
             data   = data,
@@ -85,17 +85,11 @@ class eventBusClient(object):
                     ):
                     
                     # call the callback
-                    r['callback'](
+                    return r['callback'](
                         sender = sender,
                         signal = signal,
                         data   = data,
                     )
-                    
-                    # indicate to sender I have succesfully received the message
-                    return True
-        
-        # indicate to sender I could not deliver message
-        return False
     
     def _signalsEquivalent(self,s1,s2):
         if type(s1)==type(s2)==str:
