@@ -312,12 +312,10 @@ class OpenLbr(eventBusClient.eventBusClient):
         # src_addr
         returnVal           += lowpan['src_addr']
         
-        if len(lowpan['route'])==1:
-            # destination is next hop
-            
-            # dest_addr
-            returnVal       += lowpan['dest_addr']
-        else:
+        # dst_addr
+        returnVal           += lowpan['dst_addr']
+        
+        if len(lowpan['route'])>1:
             # source route needed
             
             returnVal       += lowpan['nh']                     # Next Header
