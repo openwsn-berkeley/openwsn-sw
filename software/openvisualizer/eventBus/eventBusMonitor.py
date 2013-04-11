@@ -94,7 +94,6 @@ class eventBusMonitor(object):
             mac += data
             
             # CRC
-            print hex(binascii.crc32(''.join([chr(b) for b in mac])))
             mac += u.calculateFCS(mac)
             
             try:
