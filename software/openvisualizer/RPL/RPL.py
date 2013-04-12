@@ -26,49 +26,49 @@ import openvisualizer_utils as u
 
 class RPL(eventBusClient.eventBusClient):
     
-    #LINK_LOCAL_PREFIX        = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix. -- poipoi xv this is a hack to be able to parse 128b addr in the motes
-    LINK_LOCAL_PREFIX        = "BBBB:0000:0000:0000"       ##< IPv6 link-local prefix.
+    #LINK_LOCAL_PREFIX             = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix. -- poipoi xv this is a hack to be able to parse 128b addr in the motes
+    LINK_LOCAL_PREFIX             = "BBBB:0000:0000:0000"       ##< IPv6 link-local prefix.
     
-    MAX_SERIAL_PKT_SIZE      = 8+127                       ##< Maximum length for a serial packet.
-    DIO_PERIOD               = 10                          ##< period between successive DIOs, in seconds.
+    MAX_SERIAL_PKT_SIZE           = 8+127                       ##< Maximum length for a serial packet.
+    DIO_PERIOD                    = 10                          ##< period between successive DIOs, in seconds.
     
     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
-    IANA_UNDEFINED           = 0x00
-    IANA_PROTOCOL_UDP        = 17
-    IANA_PROTOCOL_IPv6ROUTE  = 43
+    IANA_UNDEFINED                = 0x00
+    IANA_PROTOCOL_UDP             = 17
+    IANA_PROTOCOL_IPv6ROUTE       = 43
     
     #=== 6LoWPAN header (RFC6282)
     # byte 0
-    SR_DISPATCH_MASK         = 3<<5                        ##< Dispatch
-    SR_TF_MASK               = 3<<3                        ##< Traffic Fields
-    SR_NH_SET                = 0x01                        ##< Next Header
-    SR_NH_MASK               = SR_NH_SET<<2                ##< not compressed next header as we need to advertise src routing header
-    SR_HLIM_MASK             = 1<<0                        ##< Hop Limit
+    SR_DISPATCH_MASK              = 3<<5                        ##< Dispatch
+    SR_TF_MASK                    = 3<<3                        ##< Traffic Fields
+    SR_NH_SET                     = 0x01                        ##< Next Header
+    SR_NH_MASK                    = SR_NH_SET<<2                ##< not compressed next header as we need to advertise src routing header
+    SR_HLIM_MASK                  = 1<<0                        ##< Hop Limit
     # byte 1
-    SR_CID_MASK              = 0                           ##< Context Identifier Extension
-    SR_SAC_MASK              = 0                           ##< Source Address Compression
-    SR_SAM_MASK              = 0                           ##< Source Address Mode
-    SR_M_MASK                = 0                           ##< Multicast Compression
-    SR_DAC_MASK              = 0                           ##< Destination Address Compression
-    SR_DAM_MASK              = 3                           ##< Destination Address Mode
+    SR_CID_MASK                   = 0                           ##< Context Identifier Extension
+    SR_SAC_MASK                   = 0                           ##< Source Address Compression
+    SR_SAM_MASK                   = 0                           ##< Source Address Mode
+    SR_M_MASK                     = 0                           ##< Multicast Compression
+    SR_DAC_MASK                   = 0                           ##< Destination Address Compression
+    SR_DAM_MASK                   = 3                           ##< Destination Address Mode
     # inline next header
-    SR_NH_VALUE              = IANA_PROTOCOL_IPv6ROUTE     ##< Next header
+    SR_NH_VALUE                   = IANA_PROTOCOL_IPv6ROUTE     ##< Next header
     
     #=== RPL source routing header (RFC6554)
-    SR_FIR_TYPE              = 0x03                        ##< Routing Type
+    SR_FIR_TYPE                   = 0x03                        ##< Routing Type
     
     #=== UDP header (RFC768)
-    NHC_UDP_MASK             = 0xF8                        ##< b1111 1000
-    NHC_UDP_ID               = 0xF0                        ##< b1111 0000
+    NHC_UDP_MASK                  = 0xF8                        ##< b1111 1000
+    NHC_UDP_ID                    = 0xF0                        ##< b1111 0000
     
     #=== RPL DIO (RFC6550)
-    DIO_OPT_GROUNDED         = 1<<7
-    MOP_DIO_A                = 1<<5
-    MOP_DIO_B                = 1<<4
-    MOP_DIO_C                = 1<<3
-    PRF_DIO_A                = 1<<2
-    PRF_DIO_B                = 1<<1
-    PRF_DIO_C                = 1<<0
+    DIO_OPT_GROUNDED              = 1<<7
+    MOP_DIO_A                     = 1<<5
+    MOP_DIO_B                     = 1<<4
+    MOP_DIO_C                     = 1<<3
+    PRF_DIO_A                     = 1<<2
+    PRF_DIO_B                     = 1<<1
+    PRF_DIO_C                     = 1<<0
     
     def __init__(self):
         
@@ -80,44 +80,43 @@ class RPL(eventBusClient.eventBusClient):
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
-            name             = 'RPL',
-            registrations =  [
+            name                  = 'RPL',
+            registrations         =  [
                 {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'fromMote.data.local',
-                    'callback' : self._receivedMoteDataLocal_notif
+                    'sender'      : self.WILDCARD,
+                    'signal'      : 'fromMote.data.local',
+                    'callback'    : self._fromMoteDataLocal_notif,
                 },
                 {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'getSourceRoute',
-                    'callback' : self._getSourceRoute
+                    'sender'      : self.WILDCARD,
+                    'signal'      : 'getSourceRoute',
+                    'callback'    : self._getSourceRoute_notif,
+                },
+                {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : 'infoDagRoot',
+                    'callback'    : self._infoDagRoot_notif,
+                },
+                {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : 'networkPrefix',
+                    'callback'    : self._networkPrefix_notif,
+                },
+                {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : 'latency',
+                    'callback'    : self._latency_notif,
                 },
             ]
         )
         
         # local variables
-        self.stateLock       = threading.Lock()
-        self.state           = {}
-        self.sourceRoute     = SourceRoute.SourceRoute()
-        self.networkPrefix   = self.LINK_LOCAL_PREFIX
-        self.dagRootEui64    = None
-        self.latencyStats    = {}
-        
-        # connect to dispatcher
-        
-        dispatcher.connect(
-            self._setDagRootEui64,
-            signal       = 'infoDagRoot',
-        )
-        dispatcher.connect(
-            self._setNetworkPrefix,
-            signal       = 'networkPrefix',
-        )
-        # get latency information 
-        dispatcher.connect(
-            self._latencyStatsRcv,
-            signal       = 'latency',
-        )
+        self.stateLock            = threading.Lock()
+        self.state                = {}
+        self.sourceRoute          = SourceRoute.SourceRoute()
+        self.networkPrefix        = self.LINK_LOCAL_PREFIX
+        self.dagRootEui64         = None
+        self.latencyStats         = {}
         
         # send a DIO periodically
         self._scheduleSendDIO(self.DIO_PERIOD) 
@@ -126,13 +125,24 @@ class RPL(eventBusClient.eventBusClient):
     
     #======================== private =========================================
     
-    #==== handle bus commands
+    #==== handle EventBus notifications
     
-    def _getSourceRoute(self,sender,signal,data):
+    def _fromMoteDataLocal_notif(self,sender,signal,data):
+        '''
+        \brief Called when receiving fromMote.data.local, probably a DAO.
+        '''
+        
+        # log
+        log.debug("received data local {0}".format(self._formatByteList(data)))
+               
+        # indicate data to sourceRoute
+        self.sourceRoute.indicateDAO(data)
+    
+    def _getSourceRoute_notif(self,sender,signal,data):
         destination = data
         return self.sourceRoute.getSourceRoute(destination)
     
-    def _setDagRootEui64(self,data):
+    def _infoDagRoot_notif(self,sender,signal,data):
         '''
         \brief Record the DAGroot's EUI64 address.
         '''
@@ -141,12 +151,62 @@ class RPL(eventBusClient.eventBusClient):
             for c in data['eui64']:
                 self.dagRootEui64     +=[int(c)]
     
-    def _setNetworkPrefix(self,data):
+    def _networkPrefix_notif(self,sender,signal,data):
         '''
         \brief Record the network prefix.
         '''
         with self.stateLock:
             self.networkPrefix    = data
+    
+    def _latency_notif(self,sender,signal,data):
+        '''
+        This method is invoked whenever a UDP packet is send from a mote from
+        UDPLatency application. This application listens at port 61001 and 
+        computes the latency of a packet. Note that this app is crosslayer
+        since the mote sends the data within a UDP packet and OpenVisualizer
+        (ParserData) handles that packet and reads UDP payload to compute time
+        difference.
+        
+        At the bridge module on the DAGroot, the ASN of the DAGroot is appended
+        to the serial port to be able to know what is the ASN at reception
+        side.
+        
+        Calculcate latency values are in us.
+        '''
+        address    = ",".join(hex(c) for c in data[0])
+        latency    = data[1]
+        parent     = ",".join(hex(c) for c in data[2])
+        
+        stats      = {} #dictionary of stats
+        
+        if (self.latencyStats.get(str(address)) is None):
+           #none for this node.. create initial stats
+           stats.update({'min':latency})
+           stats.update({'max':latency})
+           stats.update({'num':1})
+           stats.update({'avg':latency})
+           stats.update({'parentSwitch':1})#changes of parent
+        else:
+            #get and update
+           stats=self.latencyStats.get(str(address))
+           if (stats.get('min')>latency):
+               stats.update({'min':latency})
+           if (stats.get('max')<latency):
+               stats.update({'max':latency})
+           stats.update({'avg':((stats.get('avg')*stats.get('num'))+latency)/(stats.get('num')+1)})
+           stats.update({'num':(stats.get('num')+1)})
+           if (stats.get('prefParent')!=parent):
+               stats.update({'parentSwitch':(stats.get('parentSwitch')+1)})#record parent change since last message
+        #this fields are common
+        stats.update({'lastVal':latency})
+        stats.update({'prefParent':parent})
+        stats.update({'lastMsg':datetime.now()})
+        
+        self.stateLock.acquire()  
+        self.latencyStats.update({str(address):stats}) 
+        self.stateLock.release()               
+        #add to dictionary and compute stats...
+        log.debug("Latency stats in mS {0}".format(self.latencyStats))
     
     #===== send DIO
     
@@ -179,7 +239,7 @@ class RPL(eventBusClient.eventBusClient):
         dio                  = []
         
         # next hop: broadcast address
-        nextHop             = [0xff]*8
+        nextHop              = [0xff]*8
         
         # IPHC header
         dio                 += [0x78]        # dispatch byte
@@ -224,77 +284,12 @@ class RPL(eventBusClient.eventBusClient):
         
         # dispatch
         self.dispatch(
-            signal        = 'bytesToMesh',
-            data          =  (nextHop,dio)   #(''.join([chr(c) for c in nextHop]),''.join([chr(c) for c in dio])),
+            signal          = 'bytesToMesh',
+            data            =  (nextHop,dio)   #(''.join([chr(c) for c in nextHop]),''.join([chr(c) for c in dio])),
         )
         
         # schedule the next DIO transmission
         self._scheduleSendDIO(self.DIO_PERIOD)
-    
-    #===== received DAO
-    
-    def _receivedMoteDataLocal_notif(self,sender,signal,data):
-        '''
-        \brief Called when receiving fromMote.data.local, probably a DAO.
-        '''
-        
-        # log
-        log.debug("received data local {0}".format(self._formatByteList(data)))
-               
-        # indicate data to sourceRoute
-        self.sourceRoute.indicateDAO(data)
-    
-    #===== received latency data
-    
-    def _latencyStatsRcv(self,data):
-        '''
-        This method is invoked whenever a UDP packet is send from a mote from
-        UDPLatency application. This application listens at port 61001 and 
-        computes the latency of a packet. Note that this app is crosslayer
-        since the mote sends the data within a UDP packet and OpenVisualizer
-        (ParserData) handles that packet and reads UDP payload to compute time
-        difference.
-        
-        At the bridge module on the DAGroot, the ASN of the DAGroot is appended
-        to the serial port to be able to know what is the ASN at reception
-        side.
-        
-        Calculcate latency values are in us.
-        '''
-        address=",".join(hex(c) for c in data[0])
-        latency=data[1]
-        parent=",".join(hex(c) for c in data[2])
-        
-        stats={}#dictionary of stats
-        
-        if (self.latencyStats.get(str(address)) is None):
-           #none for this node.. create initial stats
-           stats.update({'min':latency})
-           stats.update({'max':latency})
-           stats.update({'num':1})
-           stats.update({'avg':latency})
-           stats.update({'parentSwitch':1})#changes of parent
-        else:
-            #get and update
-           stats=self.latencyStats.get(str(address))
-           if (stats.get('min')>latency):
-               stats.update({'min':latency})
-           if (stats.get('max')<latency):
-               stats.update({'max':latency})
-           stats.update({'avg':((stats.get('avg')*stats.get('num'))+latency)/(stats.get('num')+1)})
-           stats.update({'num':(stats.get('num')+1)})
-           if (stats.get('prefParent')!=parent):
-               stats.update({'parentSwitch':(stats.get('parentSwitch')+1)})#record parent change since last message
-        #this fields are common
-        stats.update({'lastVal':latency})
-        stats.update({'prefParent':parent})
-        stats.update({'lastMsg':datetime.now()})
-        
-        self.stateLock.acquire()  
-        self.latencyStats.update({str(address):stats}) 
-        self.stateLock.release()               
-        #add to dictionary and compute stats...
-        log.debug("Latency stats in mS {0}".format(self.latencyStats))
     
     #======================== helpers =========================================
     
