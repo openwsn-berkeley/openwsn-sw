@@ -67,35 +67,37 @@ class eventBusMonitor(object):
         
         if signal=='bytesToMesh':
             
+            (nextHop,lowpan) = data
+            
             # ZEP header
-            zep  = []
-            zep += [ord('E'),ord('X')]     # Protocol ID String
-            zep += [0x02]                  # Protocol Version
-            zep += [0x01]                  # Type
-            zep += [0x00]                  # Channel ID
-            zep += [0x00,0x01]             # Device ID
-            zep += [0x01]                  # LQI/CRC mode
-            zep += [0xff]
-            zep += [0x01]*8                # timestamp
-            zep += [0x02]*4                # sequence number
-            zep += [0x00]*10               # reserved
-            zep += [21+len(data[1])+2]        # length
+            zep    = []
+            zep   += [ord('E'),ord('X')]     # Protocol ID String
+            zep   += [0x02]                  # Protocol Version
+            zep   += [0x01]                  # Type
+            zep   += [0x00]                  # Channel ID
+            zep   += [0x00,0x01]             # Device ID
+            zep   += [0x01]                  # LQI/CRC mode
+            zep   += [0xff]
+            zep   += [0x01]*8                # timestamp
+            zep   += [0x02]*4                # sequence number
+            zep   += [0x00]*10               # reserved
+            zep   += [21+len(lowpan)+2]        # length
             
             # IEEE802.15.4
-            mac  = []
-            mac += [0x41]
-            mac += [0xcc]
-            mac += [0x66]
-            mac += [0xff,0xff]
-            mac += [0x01]*8
-            mac += [0x02]*8
+            mac    = []
+            mac   += [0x41]
+            mac   += [0xcc]
+            mac   += [0x66]
+            mac   += [0xff,0xff]
+            mac   += [0x01]*8
+            mac   += [0x02]*8
             
             # 6LoWPAN
-            mac += data[1]  #data[0] is nexthop address
+            mac   += lowpan
             
             # CRC
 
-            mac += u.calculateFCS(mac)
+            mac   += u.calculateFCS(mac)
             
             try:
                 self.socket.sendto(
@@ -104,7 +106,6 @@ class eventBusMonitor(object):
                 )
             except ValueError as err:
                 print err
-                print udpPacket
         
         with self.statsLock:
             key = (sender,signal)
