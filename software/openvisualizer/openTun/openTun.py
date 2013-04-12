@@ -140,6 +140,15 @@ class OpenTun(eventBusClient.eventBusClient):
             self.tunIf,
             self._v6ToMesh_notif
         )
+        
+        # TODO: retrieve network prefix from interface settings
+        
+        # announce network prefix
+        self.dispatch(
+            signal        = 'networkPrefix',
+            data          = "BBBB:0000:0000:0000",
+        )
+        
     
     #======================== public ==========================================
     

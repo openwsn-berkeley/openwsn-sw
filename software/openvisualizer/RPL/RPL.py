@@ -26,8 +26,7 @@ import openvisualizer_utils as u
 
 class RPL(eventBusClient.eventBusClient):
     
-    #LINK_LOCAL_PREFIX             = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix. -- poipoi xv this is a hack to be able to parse 128b addr in the motes
-    LINK_LOCAL_PREFIX             = "BBBB:0000:0000:0000"       ##< IPv6 link-local prefix.
+    LINK_LOCAL_PREFIX             = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix.
     
     MAX_SERIAL_PKT_SIZE           = 8+127                       ##< Maximum length for a serial packet.
     DIO_PERIOD                    = 10                          ##< period between successive DIOs, in seconds.
