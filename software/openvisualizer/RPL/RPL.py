@@ -26,7 +26,9 @@ import openvisualizer_utils as u
 
 class RPL(eventBusClient.eventBusClient):
     
-    LINK_LOCAL_PREFIX        = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix.
+    #LINK_LOCAL_PREFIX        = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix. -- poipoi xv this is a hack to be able to parse 128b addr in the motes
+    LINK_LOCAL_PREFIX        = "BBBB:0000:0000:0000"       ##< IPv6 link-local prefix.
+    
     MAX_SERIAL_PKT_SIZE      = 8+127                       ##< Maximum length for a serial packet.
     DIO_PERIOD               = 10                          ##< period between successive DIOs, in seconds.
     
@@ -135,7 +137,9 @@ class RPL(eventBusClient.eventBusClient):
         \brief Record the DAGroot's EUI64 address.
         '''
         with self.stateLock:
-            self.dagRootEui64     = data['eui64']
+            self.dagRootEui64     = []
+            for c in data['eui64']:
+                self.dagRootEui64     +=[int(c)]
     
     def _setNetworkPrefix(self,data):
         '''
@@ -175,7 +179,7 @@ class RPL(eventBusClient.eventBusClient):
         dio                  = []
         
         # next hop: broadcast address
-        dio                 += [0xff]*8
+        nextHop             = [0xff]*8
         
         # IPHC header
         dio                 += [0x78]        # dispatch byte
@@ -210,10 +214,8 @@ class RPL(eventBusClient.eventBusClient):
             dio             += self.dagRootEui64
         
         # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
-        checksum             = u.calculateCRC(
-                                   dio[idxICMPv6:],
-                                   len(dio[idxICMPv6:])
-                               )
+        checksum             = u.calculateCRC(dio[idxICMPv6:])
+                               
         dio[idxICMPv6CS  ]   = checksum[0]
         dio[idxICMPv6CS+1]   = checksum[1]
         
@@ -223,7 +225,7 @@ class RPL(eventBusClient.eventBusClient):
         # dispatch
         self.dispatch(
             signal        = 'bytesToMesh',
-            data          = ''.join([chr(c) for c in dio]),
+            data          =  (nextHop,dio)   #(''.join([chr(c) for c in nextHop]),''.join([chr(c) for c in dio])),
         )
         
         # schedule the next DIO transmission

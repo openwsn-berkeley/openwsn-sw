@@ -118,17 +118,16 @@ class moteConnector(threading.Thread):
     
     def write(self,data,headerByte=OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
         # convert to string
-        pass
-        '''
-        dataToSend = ''.join(headerByte+data)
+        #pass
+        dataToSend = []
+        dataToSend = [headerByte]+data[0]+data[1]
         
         try:
-            self.socket.send(dataToSend)
+            self.socket.send("".join(chr(c) for c in dataToSend))
         except socket.error:
             log.error(err)
             pass
-        '''
-    
+            
     def quit(self):
         raise NotImplementedError()
     

@@ -102,11 +102,11 @@ class moteProbeSerialThread(threading.Thread):
                                     if self.outputBuf:
                                         outputToWrite = self.outputBuf.pop(0)
                                         self.serial.write(outputToWrite)
-                                        log.debug('sent {0} bytes over serial:   {1}'.format(
-                                                len(outputToWrite),
-                                                u.formatBuf(outputToWrite),
-                                            )
-                                        )
+                                        #log.debug('sent {0} bytes over serial:   {1}'.format(
+                                        #        len(outputToWrite),
+                                        #        u.formatBuf(outputToWrite),
+                                        #    )
+                                        #)
                             else:
                                 # dispatch
                                 dispatcher.send(
@@ -128,10 +128,10 @@ class moteProbeSerialThread(threading.Thread):
             self.outputBuf += [hdlcData]
         
         # log
-        log.debug('added {0} bytes to outputBuf: {1}'.format(
-                len(hdlcData),
-                u.formatBuf(hdlcData),
-            )
-        )
+#        log.debug('added {0} bytes to outputBuf: {1}'.format(
+#                len(hdlcData),
+#                u.formatBuf(hdlcData),
+#            )
+#        )
     
     #======================== private =========================================

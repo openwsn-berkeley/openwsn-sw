@@ -117,7 +117,7 @@ class SourceRoute(object):
             output          += ['- {0}'.format(u.formatAddress(p))]
         output               = '\n'.join(output)
         log.debug(output)
-        
+        print output
         
         output               = []
         output              += ['children:']
@@ -125,6 +125,8 @@ class SourceRoute(object):
             output          += ['- {0}'.format(u.formatAddress(p))]
         output               = '\n'.join(output)
         log.debug(output)
+        
+        
         
         # if you get here, the DAO was parsed correctly
         
@@ -150,7 +152,7 @@ class SourceRoute(object):
                 log.error(err)
                 raise
         
-        return [[0xaa]*8,[0xbb]*8,[0xcc]*8,] # poipoipoipoi
+        #return [[0xaa]*8,[0xbb]*8,[0xcc]*8,] # poipoipoipoi
         
         return sourceRoute
     

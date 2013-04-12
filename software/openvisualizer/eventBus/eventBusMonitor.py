@@ -79,7 +79,7 @@ class eventBusMonitor(object):
             zep += [0x01]*8                # timestamp
             zep += [0x02]*4                # sequence number
             zep += [0x00]*10               # reserved
-            zep += [21+len(data)+2]        # length
+            zep += [21+len(data[1])+2]        # length
             
             # IEEE802.15.4
             mac  = []
@@ -91,10 +91,10 @@ class eventBusMonitor(object):
             mac += [0x02]*8
             
             # 6LoWPAN
-            mac += data
+            mac += data[1]  #data[0] is nexthop address
             
             # CRC
-            print hex(binascii.crc32(''.join([chr(b) for b in mac])))
+            #print hex(binascii.crc32(''.join([chr(b) for b in mac])))
             mac += u.calculateFCS(mac)
             
             try:
