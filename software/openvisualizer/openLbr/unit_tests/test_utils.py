@@ -12,6 +12,7 @@ import json
 import pytest
 
 from openLbr import openLbr
+import openvisualizer_utils as u
 
 #============================ logging =========================================
 
@@ -58,3 +59,9 @@ def test_sourceRoute(expectedBuf2int):
     (expBuf,expInt) = json.loads(expectedBuf2int)
     
     assert openLbr.OpenLbr._buf2int(expBuf)==expInt
+
+def test_byteinverse():
+    assert u.byteinverse(0x01)==0x80
+    assert u.byteinverse(0x02)==0x40
+    assert u.byteinverse(0x04)==0x20
+    assert u.byteinverse(0x81)==0x81

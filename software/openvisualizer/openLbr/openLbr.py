@@ -322,12 +322,10 @@ class OpenLbr(eventBusClient.eventBusClient):
         # src_addr
         returnVal           += lowpan['src_addr']
         
-        if len(lowpan['route'])==1:
-            # destination is next hop
-            
-            # dest_addr
-            returnVal       += lowpan['dest_addr']
-        else:
+        # dst_addr
+        returnVal           += lowpan['dst_addr']
+        
+        if len(lowpan['route'])>1:
             # source route needed
             if (len(lowpan['dst_addr'])==16): #this is a hack by now as the src routing table is only 8B and not 128, so I need to get the prefix from the destination address as I know are the same.
                 prefix=lowpan['dst_addr'][:8]

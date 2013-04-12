@@ -94,7 +94,7 @@ class eventBusMonitor(object):
             mac += data[1]  #data[0] is nexthop address
             
             # CRC
-            #print hex(binascii.crc32(''.join([chr(b) for b in mac])))
+
             mac += u.calculateFCS(mac)
             
             try:
