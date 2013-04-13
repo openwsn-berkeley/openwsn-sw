@@ -145,7 +145,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             lowpan['nextHop'] = lowpan['route'][len(lowpan['route'])-1] #get next hop as this has to be the destination address, this is the last element on the list
             # turn dictionnary of fields into raw bytes
             lowpan_bytes     = self.reassemble_lowpan(lowpan)
-            print lowpan_bytes
+            #print lowpan_bytes
             # log
             log.debug(self._format_lowpan(lowpan,lowpan_bytes))
             
@@ -322,15 +322,12 @@ class OpenLbr(eventBusClient.eventBusClient):
         # src_addr
         returnVal           += lowpan['src_addr']
         
-        # dst_addr
-        returnVal           += lowpan['dst_addr']
-        
         if len(lowpan['route'])>1:
             # source route needed
             if (len(lowpan['dst_addr'])==16): #this is a hack by now as the src routing table is only 8B and not 128, so I need to get the prefix from the destination address as I know are the same.
                 prefix=lowpan['dst_addr'][:8]
                     
-            returnVal       += prefix + lowpan['nextHop']                # dest address is next hop in source routing
+            returnVal       += prefix + lowpan['nextHop']                # dest address is next hop in source routing -- poipoi xv prefix needs to be removed once hc works well
             returnVal       += lowpan['nh']                     # Next Header
             returnVal       += [len(lowpan['route'])-1]           # Hdr Ext Len. -1 to remove last element
             returnVal       += [self.SR_FIR_TYPE]               # Routing Type. 3 for source routing
@@ -339,6 +336,10 @@ class OpenLbr(eventBusClient.eventBusClient):
             returnVal       += [0x00,0x00,0x00]                 # padding (4b) + reserved (20b)
             for hop in lowpan['route'][:len(lowpan['route'])-1]:  #skip first hop as it is in the destination address
                returnVal    += hop
+        
+        else:# in case of 1hop destination address is the same as ipv6 destination address
+             # dst_addr
+             returnVal           += lowpan['dst_addr']
         
         # payload
         returnVal += lowpan['payload']

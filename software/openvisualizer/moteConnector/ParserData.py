@@ -44,7 +44,6 @@ class ParserData(Parser.Parser):
         log.debug("received data {0}".format(input))
         # ensure input not short longer than header
         self._checkLength(input)
-    
         headerBytes = input[:2]
         #asn comes in the next 5bytes.  
         asnbytes=input[2:7]
