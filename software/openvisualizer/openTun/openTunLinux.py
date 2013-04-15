@@ -135,7 +135,7 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         # announce network prefix
         self.dispatch(
             signal        = 'networkPrefix',
-            data          = self.IPV6PREFIX,
+            data          = IPV6PREFIX,
         )
         
     
@@ -175,28 +175,28 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         \return The handler of the interface, which can be used for later
             read/write operations.
         '''
-        debug.info("opening tun interface")
+        log.info("opening tun interface")
         f=os.open("/dev/net/tun", os.O_RDWR)
         ifs=ioctl(f,TUNSETIFF,struct.pack("16sH","tun%d",IFF_TUN)) 
         ifname=ifs[:16].strip("\x00")
         
         
         # configure IPv6 address
-        debug.info("configuring IPv6 address...")
+        log.info("configuring IPv6 address...")
         v = os.system('ifconfig ' + ifname + ' inet6 add ' + IPV6PREFIX + '::1/64')
         v = os.system('ifconfig ' + ifname + ' inet6 add fe80::1/64')
         v = os.system('ifconfig ' + ifname + ' up')
                 
         # set static route
-        debug.info("setting up static route...")
+        log.info("setting up static route...")
         os.system('route -A inet6 add ' + IPV6PREFIX + '::/64 dev ' + ifname)
         
         
         # enable IPv6 forwarding
-        debug.info("enabling IPv6 forwarding...")
+        log.info("enabling IPv6 forwarding...")
         os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')       
         
-        return tunIf
+        return f
     
     #======================== helpers =========================================
     
