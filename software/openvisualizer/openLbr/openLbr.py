@@ -7,6 +7,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 from eventBus import eventBusClient
+import threading
 import openvisualizer_utils as u
 
 #============================ parameters ======================================
@@ -25,6 +26,8 @@ class OpenLbr(eventBusClient.eventBusClient):
     
     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
     IANA_PROTOCOL_IPv6ROUTE  = 43
+    IANA_UDP                 = 17
+    IANA_ICMPv6              = 58
     
     # Number of bytes in an IPv6 header.
     IPv6_HEADER_LEN          = 40
@@ -69,13 +72,21 @@ class OpenLbr(eventBusClient.eventBusClient):
     #=== RPL source routing header (RFC6554)
     SR_FIR_TYPE              = 0x03
     
+    #=== UDP Header compression (RFC6282) 
+    
+    NHC_UDP_MASK             = 0xF8
+    NHC_UDP_ID               = 0xF0
+    
     def __init__(self):
         
         # log
         log.debug("create instance")
         
         # store params
-        
+        self.stateLock            = threading.Lock()
+        self.networkPrefix        = None
+        self.dagRootEui64         = None
+         
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
@@ -85,7 +96,17 @@ class OpenLbr(eventBusClient.eventBusClient):
                     'sender'   : self.WILDCARD,
                     'signal'   : 'v6ToMesh',
                     'callback' : self._v6ToMesh_notif
-                }
+                },
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'networkPrefix', #subscribe to prefi
+                    'callback' : self._setPrefix_notif
+                },
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'infoDagRoot',
+                    'callback' : self._infoDagRoot_notif, 
+                },
             ]
         )
         
@@ -154,6 +175,65 @@ class OpenLbr(eventBusClient.eventBusClient):
                 signal       = 'bytesToMesh',
                 data         = (lowpan['nextHop'],lowpan_bytes),
             )
+            
+        except (ValueError,NotImplementedError) as err:
+            log.error(err)
+            pass
+    
+    
+    def _meshToV6_notif(self,sender,signal,data):
+        '''
+        \brief Converts a 6LowPAN packet into a IPv6 packet.
+        
+        This function dispatches the IPv6 packet with signal 'according to the destination address, protocol_type and port'.
+        
+        '''
+        try:
+           ipv6dic={}
+           #build lowpan dictionary from the data
+           ipv6dic = lowpan_to_ipv6(data)
+           success = True
+           dispatchSignal = None
+           
+           #read next header
+           if (ipv6dic['next_header']==self.IANA_ICMPv6):
+               #icmp header
+               ipv6dic['icmpv6_type']==ipv6dic['payload'][0]
+               ipv6dic['icmpv6_code']==ipv6dic['payload'][1]
+               ipv6dic['icmpv6_checksum']==ipv6dic['payload'][2:3]
+               ipv6dic['app_payload']=ipv6dic['payload'][3:]
+               #this function does the job
+               dispatchSignal=self.ICMPv6_PROTOCOL+"".join(ipv6dic['dst_addr']+ipv6dic['icmpv6_type'])
+               
+           elif(ipv6dic['next_header']==self.IANA_UDP):
+               #udp header -- can be compressed.. assume first it is not compressed.
+               if (ipvdic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID):
+                  #NH UDP is compressed TODO.. uncompress it
+                  #ipv6dic['udp_src_port']==ipv6dic['payload'][1]
+                  #ipv6dic['udp_dest_port']==ipv6dic['payload'][2:4]
+                  #ipv6dic['udp_length']==ipv6dic['payload'][4:6]
+                  #ipv6dic['udp_checksum']==ipv6dic['payload'][6:8]
+                  ipv6dic['app_payload']=ipv6dic['payload'][4:]
+               else:
+                  #No UDP header compressed    
+                  ipv6dic['udp_src_port']==ipv6dic['payload'][:2]
+                  ipv6dic['udp_dest_port']==ipv6dic['payload'][2:4]
+                  ipv6dic['udp_length']==ipv6dic['payload'][4:6]
+                  ipv6dic['udp_checksum']==ipv6dic['payload'][6:8]
+                  ipv6dic['app_payload']=ipv6dic['payload'][8:]
+               
+               dispatchSignal=self.UDP_PROTOCOL+"".join(ipv6dic['dst_addr']+ipv6dic['udp_dest_port'])   
+           #keep payload and app_payload in case we want to assemble the message later.     
+           success = self._dispatchProtocol(self,dispatchSignal,ipv6dic['app_payload'])    
+           
+           if success == True:
+               return
+                    
+           # assemble the packet and dispatch it again as nobody answer 
+           ipv6pkt=self.reassemble_ipv6_packet(ipvdic)       
+           
+           success = self._dispatchProtocol(self,dispatchSignal,ipv6pkt)    
+           #TODO if fails throw exception
             
         except (ValueError,NotImplementedError) as err:
             log.error(err)
@@ -348,15 +428,14 @@ class OpenLbr(eventBusClient.eventBusClient):
     
     #===== 6LoWPAN -> IPv6
     
-    '''
     def lowpan_to_ipv6(pkt_lowpan):
-        pkt_ipv6 = dict()
+                
+        pkt_ipv6 = {}
         ptr = 2
         if ((ord(pkt_lowpan[0]) >> 5) != 0x003):
-            errorMessage = " ERROR [lowpan_to_ipv6] not a 6LowPAN packet"
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.error("ERROR not a 6LowPAN packet")
             return   
+        
         # tf
         tf = (ord(pkt_lowpan[0]) >> 3) & 0x03
         if (tf == IPHC_TF_3B):
@@ -365,23 +444,18 @@ class OpenLbr(eventBusClient.eventBusClient):
         elif (tf == IPHC_TF_ELIDED):
             pkt_ipv6['flow_label'] = 0
         else:
-            errorMessage = " ERROR [lowpan_to_ipv6] unsupported or wrong tf"
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.error("Unsupported or wrong tf")
         # nh
         nh = (ord(pkt_lowpan[0]) >> 2) & 0x01
         if (nh == IPHC_NH_INLINE):
             pkt_ipv6['next_header'] = ord(pkt_lowpan[ptr])
             ptr = ptr+1
         elif (nh == IPHC_NH_COMPRESSED):
-            errorMessage = " ERROR [lowpan_to_ipv6] unsupported nh==IPHC_NH_COMPRESSED."
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.error("unsupported nh==IPHC_NH_COMPRESSED")
             pass
         else:
-            errorMessage = " ERROR [lowpan_to_ipv6] wrong nh=="+str(nh)
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.error("wrong nh field nh="+str(nh))
+            
         # hlim
         hlim = ord(pkt_lowpan[0]) & 0x03
         if (hlim == IPHC_HLIM_INLINE):
@@ -394,53 +468,46 @@ class OpenLbr(eventBusClient.eventBusClient):
         elif (hlim == IPHC_HLIM_255):
             pkt_ipv6['hop_limit'] = 255
         else:
-            errorMessage = " ERROR [lowpan_to_ipv6] wrong hlim=="+str(hlim)
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.error("wrong hlim=="+str(hlim))
         # sam
         sam = (ord(pkt_lowpan[1]) >> 4) & 0x03
         if (sam == IPHC_SAM_ELIDED):
-            errorMessage = " ERROR [lowpan_to_ipv6] unsupported sam==IPHC_SAM_ELIDED"
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.error("unsupported sam==IPHC_SAM_ELIDED")
         elif (sam == IPHC_SAM_16B):
             a1 = pkt_lowpan[ptr]
             a2 = pkt_lowpan[ptr+1]
             ptr = ptr+2
             s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
-            pkt_ipv6['src_addr'] = my_openprefix.IP64B_PREFIX+s
+            pkt_ipv6['src_addr'] = self.networkPrefix+s
+    
         elif (sam == IPHC_SAM_64B):
-            pkt_ipv6['src_addr'] = ''.join(my_openprefix.IP64B_PREFIX)+(pkt_lowpan[ptr:ptr+8])
+            pkt_ipv6['src_addr'] = ''.join(self.networkPrefix)+(pkt_lowpan[ptr:ptr+8])
             ptr = ptr + 8
         elif (sam == IPHC_SAM_128B):
             pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
             ptr = ptr + 16
         else:
-            errorMessage = " ERROR [lowpan_to_ipv6] wrong sam=="+str(sam)
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.error("wrong sam=="+str(sam))
+            
         # dam
         dam = (ord(pkt_lowpan[1]) & 0x03)
         if (dam == IPHC_DAM_ELIDED):
-            errorMessage = " ERROR [lowpan_to_ipv6] unsupported dam==IPHC_DAM_ELIDED"
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
+            pkt_ipv6['dst_addr'] = ''.join(self.networkPrefix+self.dagRootEui64)
         elif (dam == IPHC_DAM_16B):
             a1 = pkt_lowpan[ptr]
             a2 = pkt_lowpan[ptr+1]
             ptr = ptr+2
             s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
-            pkt_ipv6['dst_addr'] = my_openprefix.IP64B_PREFIX+s
+            pkt_ipv6['dst_addr'] = self.networPrefix+s
         elif (dam == IPHC_DAM_64B):
-            pkt_ipv6['dst_addr'] = ''.join(my_openprefix.IP64B_PREFIX)+pkt_lowpan[ptr:ptr+8]
+            pkt_ipv6['dst_addr'] = ''.join(self.networkPrefix)+pkt_lowpan[ptr:ptr+8]
             ptr = ptr + 8
         elif (dam == IPHC_DAM_128B):
             pkt_ipv6['dst_addr'] = pkt_lowpan[ptr:ptr+16]
             ptr = ptr + 16
         else:
-            errorMessage = " ERROR [lowpan_to_ipv6] wrong dam=="+str(dam)
-            sys.stderr.write("\n"+datetime.datetime.now().strftime("%m/%d/%Y %H:%M:%S")+errorMessage)
-            print errorMessage
+            log.error("wrong dam=="+str(dam))
         # payload
         pkt_ipv6['version']        = 6
         pkt_ipv6['traffic_class']  = 0
@@ -465,7 +532,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         pktws = ''.join(pktw)
         pktws = pktws + pkt['payload']
         return pktws
-    '''
+    
     
     #======================== helpers =========================================
     
@@ -481,7 +548,37 @@ class OpenLbr(eventBusClient.eventBusClient):
                 return returnVal
         raise SystemError('No answer to signal getSourceRoute')
     
-    #===== formatting
+    
+    def _dispatchProtocol(self,signal,data):
+        ''' used to sent to the eventBus a signal and look whether someone responds or no'''
+        temp = self.dispatch(
+              signal       = signal,
+              data         = data,
+        )
+        for (function,returnVal) in temp:
+            if returnVal:
+                return True
+            else:
+                return False
+    
+    def _setPrefix_notif(self,sender,signal, data):
+        '''
+        \brief Record the network prefix.
+        '''
+        with self.stateLock:
+            self.networkPrefix    = data  
+            
+            
+    def _infoDagRoot_notif(self,sender,signal,data):
+        '''
+        \brief Record the DAGroot's EUI64 address.
+        '''
+        with self.stateLock:
+            self.dagRootEui64     = []
+            for c in data['eui64']:
+                self.dagRootEui64     +=[int(c)]  
+
+#===== formatting
     
     def _format_IPv6(self,ipv6,ipv6_bytes):
         output  = []

@@ -14,6 +14,8 @@ from pydispatch import dispatcher
 class eventBusClient(object):
     
     WILDCARD  = '*'
+    ICMPv6_PROTOCOL='icmpv6'
+    UDP_PROTOCOL='udp'
     
     def __init__(self,name,registrations):
         

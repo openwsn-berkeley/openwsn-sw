@@ -35,7 +35,7 @@ class RPL(eventBusClient.eventBusClient):
     IANA_UNDEFINED                = 0x00
     IANA_PROTOCOL_UDP             = 17
     IANA_PROTOCOL_IPv6ROUTE       = 43
-    
+    IANA_ICMPv6_RPL_TYPE          = 155              
     #=== 6LoWPAN header (RFC6282)
     # byte 0
     SR_DISPATCH_MASK              = 3<<5                        ##< Dispatch
@@ -141,6 +141,8 @@ class RPL(eventBusClient.eventBusClient):
         destination = data
         return self.sourceRoute.getSourceRoute(destination)
     
+    
+    #TODO when we get assigned a prefix and a moteid, then we can subscribe to ICMPv6, DAO Type for our address
     def _infoDagRoot_notif(self,sender,signal,data):
         '''
         \brief Record the DAGroot's EUI64 address.
@@ -149,7 +151,11 @@ class RPL(eventBusClient.eventBusClient):
             self.dagRootEui64     = []
             for c in data['eui64']:
                 self.dagRootEui64     +=[int(c)]
-    
+        #signal to which this component is subscribed.
+        signal=self._ICMPv6_PROTOCOL+"".join(self.networkPrefix+self.dagRootEui64)+self.IANA_ICMPv6_RPL_TYPE
+        #register as soon as I get an address
+        self._register(self,self.WILDCARD,signal,self._fromMoteDataLocal_notif)    
+         
     def _networkPrefix_notif(self,sender,signal,data):
         '''
         \brief Record the network prefix.
