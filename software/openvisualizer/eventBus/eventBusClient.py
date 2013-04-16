@@ -14,8 +14,13 @@ from pydispatch import dispatcher
 class eventBusClient(object):
     
     WILDCARD  = '*'
-    ICMPv6_PROTOCOL='icmpv6'
-    UDP_PROTOCOL='udp'
+    
+    PROTO_ICMPv6 = 'icmpv6'
+    PROTO_UDP = 'udp'
+    PROTO_ALL = [
+        PROTO_ICMPv6,
+        PROTO_UDP
+    ]
     
     def __init__(self,name,registrations):
         
@@ -73,7 +78,15 @@ class eventBusClient(object):
             self.registrations += [newRegistration]
     
     def unregister(self,sender,signal,callback):
-        pass
+        rem = None
+        for s in self.registrations:
+            if self._signalsEquivalent(s, signal):
+                rem=s
+                break
+        if (rem!=None):
+            self.registrations.remove(remove) 
+                   
+    
     
     #======================== private =========================================
     
@@ -107,3 +120,16 @@ class eventBusClient(object):
                 else:
                     return False
         return False
+    
+    
+    def _dispatchProtocol(self,signal,data):
+        ''' used to sent to the eventBus a signal and look whether someone responds or not'''
+        temp = self.dispatch(
+              signal       = signal,
+              data         = data,
+        )
+        for (function,returnVal) in temp:
+            if returnVal:
+                return True
+            else:
+                return False

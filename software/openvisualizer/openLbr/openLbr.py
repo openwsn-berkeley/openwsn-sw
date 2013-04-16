@@ -90,22 +90,27 @@ class OpenLbr(eventBusClient.eventBusClient):
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
-            name             = 'OpenTun',
+            name             = 'OpenLBR',
             registrations =  [
                 {
-                    'sender'   : self.WILDCARD,
+                    'sender'   : self.WILDCARD, #signal from internet to the mesh network
                     'signal'   : 'v6ToMesh',
                     'callback' : self._v6ToMesh_notif
                 },
                 {
                     'sender'   : self.WILDCARD,
-                    'signal'   : 'networkPrefix', #subscribe to prefi
+                    'signal'   : 'networkPrefix', #signal once a prefix is set.
                     'callback' : self._setPrefix_notif
                 },
                 {
                     'sender'   : self.WILDCARD,
-                    'signal'   : 'infoDagRoot',
+                    'signal'   : 'infoDagRoot', #signal once a dagroot id is received
                     'callback' : self._infoDagRoot_notif, 
+                },
+                {
+                    'sender'   : self.WILDCARD, #signal when a pkt from the mesh arrives and has to be forwarded to Internet (or local)
+                    'signal'   : 'fromMote.data', #only to data (any), not status nor error
+                    'callback' : self._meshToV6_notif, 
                 },
             ]
         )
@@ -203,7 +208,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                ipv6dic['icmpv6_checksum']==ipv6dic['payload'][2:3]
                ipv6dic['app_payload']=ipv6dic['payload'][3:]
                #this function does the job
-               dispatchSignal=self.ICMPv6_PROTOCOL+"".join(ipv6dic['dst_addr']+ipv6dic['icmpv6_type'])
+               dispatchSignal=(ipv6dic['dst_addr'],self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
                
            elif(ipv6dic['next_header']==self.IANA_UDP):
                #udp header -- can be compressed.. assume first it is not compressed.
@@ -214,6 +219,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                   #ipv6dic['udp_length']==ipv6dic['payload'][4:6]
                   #ipv6dic['udp_checksum']==ipv6dic['payload'][6:8]
                   ipv6dic['app_payload']=ipv6dic['payload'][4:]
+                  raise NotImplementedError()
                else:
                   #No UDP header compressed    
                   ipv6dic['udp_src_port']==ipv6dic['payload'][:2]
@@ -222,9 +228,12 @@ class OpenLbr(eventBusClient.eventBusClient):
                   ipv6dic['udp_checksum']==ipv6dic['payload'][6:8]
                   ipv6dic['app_payload']=ipv6dic['payload'][8:]
                
-               dispatchSignal=self.UDP_PROTOCOL+"".join(ipv6dic['dst_addr']+ipv6dic['udp_dest_port'])   
-           #keep payload and app_payload in case we want to assemble the message later.     
-           success = self._dispatchProtocol(self,dispatchSignal,ipv6dic['app_payload'])    
+               dispatchSignal=(ipv6dic['dst_addr'],self.PROTO_UDP,ipv6dic['udp_dest_port'])
+                  
+           #keep payload and app_payload in case we want to assemble the message later. 
+           #ass source address is being retrieved from the IPHC header, the signal includes it in case
+           #receiver such as RPL DAO processing needs to know the source.    
+           success = self._dispatchProtocol(self,dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
            
            if success == True:
                return
@@ -232,7 +241,7 @@ class OpenLbr(eventBusClient.eventBusClient):
            # assemble the packet and dispatch it again as nobody answer 
            ipv6pkt=self.reassemble_ipv6_packet(ipvdic)       
            
-           success = self._dispatchProtocol(self,dispatchSignal,ipv6pkt)    
+           success = self._dispatchProtocol(self,'v6ToInternet',ipv6pkt)    
            #TODO if fails throw exception
             
         except (ValueError,NotImplementedError) as err:
@@ -549,17 +558,6 @@ class OpenLbr(eventBusClient.eventBusClient):
         raise SystemError('No answer to signal getSourceRoute')
     
     
-    def _dispatchProtocol(self,signal,data):
-        ''' used to sent to the eventBus a signal and look whether someone responds or no'''
-        temp = self.dispatch(
-              signal       = signal,
-              data         = data,
-        )
-        for (function,returnVal) in temp:
-            if returnVal:
-                return True
-            else:
-                return False
     
     def _setPrefix_notif(self,sender,signal, data):
         '''

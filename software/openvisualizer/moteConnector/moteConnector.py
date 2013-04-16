@@ -9,12 +9,12 @@ log.addHandler(NullHandler())
 import threading
 import socket
 
-from pydispatch import dispatcher
+from eventBus import eventBusClient
 
 import OpenParser
 import ParserException
 
-class moteConnector(threading.Thread):
+class moteConnector(threading.Thread,eventBusClient.eventBusClient):
     
     def __init__(self,moteProbeIp,moteProbeTcpPort):
         
@@ -31,17 +31,25 @@ class moteConnector(threading.Thread):
         self.goOn                      = True
         self._subcribedDataForDagRoot  = False
         
+        
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name             = 'MoteConnector',
+            registrations =  [
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'infoDagRoot', #signal once a dagroot id is received
+                    'callback' : self._updateConnectedToDagRoot, 
+                },
+            ]
+        )
+        
         # initialize parent class
         threading.Thread.__init__(self)
         
         # give this thread a name
         self.name = 'moteConnector@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
         
-        # connect to dispatcher
-        dispatcher.connect(
-            self._updateConnectedToDagRoot,
-            signal='infoDagRoot',
-        )
         
     def run(self):
         # log
@@ -73,12 +81,9 @@ class moteConnector(threading.Thread):
                         log.error(str(err))
                         pass
                     else:
-                        # dispatch                            
-                        dispatcher.send(
-                            sender        = self.name,
-                            signal        = 'fromMote.'+eventSubType,
-                            data          = parsedNotif,
-                        )
+                        # dispatch
+                        self._dispatch(self,'fromMote.'+eventSubType,parsedNotif)                           
+                        
                 
             except socket.error as err:
                 log.error(err)
@@ -97,24 +102,17 @@ class moteConnector(threading.Thread):
             if not self._subcribedDataForDagRoot:
                 
                 # connect to dispatcher
-                dispatcher.connect(
-                    self.write,
-                    signal='bytesToMesh',
-                )
-                
-                self._subcribedDataForDagRoot = True
+              self.register(self,self.name,'bytesToMesh',self.write)
+        
+              self._subcribedDataForDagRoot = True
             
         else:
             # this moteConnector is *not* connected to a DAGroot
             
             if self._subcribedDataForDagRoot:
                 # disconnect from dispatcher
-                dispatcher.disconnect(
-                    self.write,
-                    signal='bytesToMesh',
-                )
-                
-                self._subcribedDataForDagRoot = False
+              self.unregister(self,self.name,'bytesToMesh',self.write)
+              self._subcribedDataForDagRoot = False
     
     def write(self,data,headerByte=OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
         # convert to string

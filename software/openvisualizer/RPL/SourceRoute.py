@@ -29,7 +29,7 @@ class SourceRoute(object):
     
     #======================== public ==========================================
         
-    def indicateDAO(self,dao):    
+    def indicateDAO(self,tup):    
         '''
         \brief Indicate a new DAO was received.
         
@@ -39,9 +39,8 @@ class SourceRoute(object):
         
         # retrieve source and destination
         try:
-            destination      = dao[0:8]
-            source           = dao[8:16]
-            dao              = dao[16:]
+            source           = tup[0]
+            dao              = tup[1]
         except IndexError:
             log.warning("DAO too short ({0} bytes), no space for destination and source".format(len(dao)))
             return
@@ -49,7 +48,6 @@ class SourceRoute(object):
         # log
         output               = []
         output              += ['received DAO:']
-        output              += ['- destination : {0}'.format(u.formatAddress(destination))]
         output              += ['- source :      {0}'.format(u.formatAddress(source))]
         output              += ['- dao :         {0}'.format(u.formatBuf(dao))]
         output               = '\n'.join(output)
@@ -61,26 +59,15 @@ class SourceRoute(object):
         dao_target_information = {}
         
         try:
-            # IPHC header
-            dao_header['IPHC_b0']                               = dao[0]
-            dao_header['IPHC_b1']                               = dao[1]
-            dao_header['IPv6_nextHeader']                       = dao[2]
-            dao_header['IPv6_hoplimit']                         = dao[3]
-            dao_header['source_address']                        = dao[4:12]
-            # ICMPv6 header
-            dao_header['ICMPv6_RPLType']                        = dao[12]
-            dao_header['ICMPv6_Code']                           = dao[13]
-            dao_header['ICMPv6_CheckSum_b0']                    = dao[14]
-            dao_header['ICMPv6_CheckSum_b1']                    = dao[15]
             # RPL header
-            dao_header['RPL_InstanceID']                        = dao[16]
-            dao_header['RPL_flags']                             = dao[17]
-            dao_header['RPL_Reserved']                          = dao[18]
-            dao_header['RPL_DAO_Sequence']                      = dao[19]
+            dao_header['RPL_InstanceID']                        = dao[0]
+            dao_header['RPL_flags']                             = dao[1]
+            dao_header['RPL_Reserved']                          = dao[2]
+            dao_header['RPL_DAO_Sequence']                      = dao[3]
             # DODAGID
-            dao_header['DODAGID']                               = dao[20:36]
+            dao_header['DODAGID']                               = dao[4:20]
            
-            dao              = dao[36:]
+            dao              = dao[20:]
             # retrieve transit information header and parents
             parents              = []
             children             = []
