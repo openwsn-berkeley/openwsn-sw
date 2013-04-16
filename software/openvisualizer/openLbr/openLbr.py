@@ -191,7 +191,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         try:
            ipv6dic={}
            #build lowpan dictionary from the data
-           ipv6dic = lowpan_to_ipv6(data)
+           ipv6dic = self.lowpan_to_ipv6(data)
            success = True
            dispatchSignal = None
            
