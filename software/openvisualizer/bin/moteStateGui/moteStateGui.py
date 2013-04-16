@@ -13,6 +13,7 @@ from moteState     import moteState
 from RPL           import RPL
 from openLbr       import openLbr
 from openTun       import openTun
+from RPL           import UDPLatency
 import OpenWindow
 import OpenFrameState
 import OpenFrameLbr
@@ -166,6 +167,7 @@ class MoteStateGui_app(object):
         self.rpl             = None
         self.openLbr         = None
         self.openTun         = None
+        self.udpLatency      = None
         
         # create an eventBusMonitor
         self.eventBusMonitor = eventBusMonitor.eventBusMonitor()
@@ -193,6 +195,7 @@ class MoteStateGui_app(object):
         # create an openTun instance
         self.openTun         = openTun.OpenTun()
         
+        self.udpLatency      = UDPLatency.UDPLatency()
         # create an open GUI
         gui = MoteStateGui(
             self.eventBusMonitor,
