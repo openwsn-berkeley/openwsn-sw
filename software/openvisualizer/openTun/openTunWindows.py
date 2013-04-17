@@ -140,13 +140,14 @@ class OpenTunWindows(eventBusClient.eventBusClient):
             self.tunIf,
             self._v6ToMesh_notif
         )
-        
+ 
+  
         # TODO: retrieve network prefix from interface settings
         
         # announce network prefix
         self.dispatch(
             signal        = 'networkPrefix',
-            data          = "BBBB:0000:0000:0000",
+            data          = [0xBB,0xBB,0x0,0x0,0x0,0x0,0x0,0x0],#"BBBB:0000:0000:0000"
         )
         
     
@@ -165,7 +166,7 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         data  = ''.join([chr(b) for b in data])
         
         # write over tuntap interface
-        win32file.WriteFile(self.tuntap, data, self.overlappedTx)
+        win32file.WriteFile(self.tunIf, data, self.overlappedTx)
         win32event.WaitForSingleObject(self.overlappedTx.hEvent, win32event.INFINITE)
         self.overlappedTx.Offset = self.overlappedTx.Offset + len(data)
     

@@ -108,7 +108,8 @@ class ParserData(Parser.Parser):
            pass      
        
         eventType='data'
-        return (eventType,input)
+        #notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header
+        return (eventType,(source,input))
 
  #======================== private =========================================
  

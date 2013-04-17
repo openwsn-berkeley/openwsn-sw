@@ -203,45 +203,66 @@ class OpenLbr(eventBusClient.eventBusClient):
            #read next header
            if (ipv6dic['next_header']==self.IANA_ICMPv6):
                #icmp header
-               ipv6dic['icmpv6_type']==ipv6dic['payload'][0]
-               ipv6dic['icmpv6_code']==ipv6dic['payload'][1]
-               ipv6dic['icmpv6_checksum']==ipv6dic['payload'][2:3]
-               ipv6dic['app_payload']=ipv6dic['payload'][3:]
+               ipv6dic['icmpv6_type']=ipv6dic['payload'][0]
+               ipv6dic['icmpv6_code']=ipv6dic['payload'][1]
+               ipv6dic['icmpv6_checksum']=ipv6dic['payload'][2:4]
+               ipv6dic['app_payload']=ipv6dic['payload'][4:]
                #this function does the job
-               dispatchSignal=(ipv6dic['dst_addr'],self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
+               dispatchSignal=(",".join(chr(c) for c in ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
                
            elif(ipv6dic['next_header']==self.IANA_UDP):
                #udp header -- can be compressed.. assume first it is not compressed.
                if (ipvdic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID):
-                  #NH UDP is compressed TODO.. uncompress it
-                  #ipv6dic['udp_src_port']==ipv6dic['payload'][1]
-                  #ipv6dic['udp_dest_port']==ipv6dic['payload'][2:4]
-                  #ipv6dic['udp_length']==ipv6dic['payload'][4:6]
-                  #ipv6dic['udp_checksum']==ipv6dic['payload'][6:8]
-                  ipv6dic['app_payload']=ipv6dic['payload'][4:]
-                  raise NotImplementedError()
+                  
+                  oldUdp=ipv6dic['payload'][:5]
+                  #re-arrange fields and inflate
+                  newUdp = []
+                  newUdp += oldUdp[1:3] # Source Port
+                  newUdp += oldUdp[3:5] # Destination Port
+                  length = 8+len(pkt[5:])
+                  newUdp += [(length & 0xFF00) >> 8] # Length
+                  newUdp += [(length & 0x00FF) >> 0]
+                  idxCS = len(newUdp) # remember index of checksum
+                  newUdp += [0x00,0x00] # Checksum (placeholder)
+                  #append payload to compute crc again
+                  newUdp += ipv6dic['payload'][5:] # data octets
+                  
+                  checksum = u.calculateCRC(newUdp)
+                  #fill crc with the right value.
+                  newUdp[idxCS] = checksum[0]
+                  newUdp[idxCS+1] = checksum[1]
+                  #keep fields for later processing if needed
+                  ipv6dic['udp_src_port']=newUdp[:2]
+                  ipv6dic['udp_dest_port']=newUdp[2:4]
+                  ipv6dic['udp_length']=newUdp[4:6]
+                  ipv6dic['udp_checksum']=newUdp[6:8]
+                  ipv6dic['app_payload']=newUdp[8:]
+                 
+                  #substitute udp header by the uncompressed header.               
+                  ipv6dic['payload'] =newUdp[:8] + ipv6dic['payload'][5:]
                else:
                   #No UDP header compressed    
-                  ipv6dic['udp_src_port']==ipv6dic['payload'][:2]
-                  ipv6dic['udp_dest_port']==ipv6dic['payload'][2:4]
-                  ipv6dic['udp_length']==ipv6dic['payload'][4:6]
-                  ipv6dic['udp_checksum']==ipv6dic['payload'][6:8]
+                  ipv6dic['udp_src_port']=ipv6dic['payload'][:2]
+                  ipv6dic['udp_dest_port']=ipv6dic['payload'][2:4]
+                  ipv6dic['udp_length']=ipv6dic['payload'][4:6]
+                  ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
                   ipv6dic['app_payload']=ipv6dic['payload'][8:]
                
-               dispatchSignal=(ipv6dic['dst_addr'],self.PROTO_UDP,ipv6dic['udp_dest_port'])
+               dispatchSignal=(",".join(c for c in ipv6dic['dst_addr']),self.PROTO_UDP,ipv6dic['udp_dest_port'][0])
                   
            #keep payload and app_payload in case we want to assemble the message later. 
            #ass source address is being retrieved from the IPHC header, the signal includes it in case
-           #receiver such as RPL DAO processing needs to know the source.    
-           success = self._dispatchProtocol(self,dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
+           #receiver such as RPL DAO processing needs to know the source.               
+                   
+           success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
            
            if success == True:
                return
                     
            # assemble the packet and dispatch it again as nobody answer 
-           ipv6pkt=self.reassemble_ipv6_packet(ipvdic)       
+           ipv6pkt=self.reassemble_ipv6_packet(ipv6dic)       
            
-           success = self._dispatchProtocol(self,'v6ToInternet',ipv6pkt)    
+           success = self._dispatchProtocol('v6ToInternet',ipv6pkt)    
            #TODO if fails throw exception
             
         except (ValueError,NotImplementedError) as err:
@@ -437,82 +458,86 @@ class OpenLbr(eventBusClient.eventBusClient):
     
     #===== 6LoWPAN -> IPv6
     
-    def lowpan_to_ipv6(pkt_lowpan):
+    def lowpan_to_ipv6(self,data):
                 
         pkt_ipv6 = {}
+        mac_prev_hop=data[0]
+        pkt_lowpan=data[1]
         ptr = 2
-        if ((ord(pkt_lowpan[0]) >> 5) != 0x003):
+        if ((pkt_lowpan[0] >> 5) != 0x003):
             log.error("ERROR not a 6LowPAN packet")
             return   
         
         # tf
-        tf = (ord(pkt_lowpan[0]) >> 3) & 0x03
-        if (tf == IPHC_TF_3B):
-            pkt_ipv6['flow_label'] = (ord(pkt_lowpan[ptr]) << 16) + (ord(pkt_lowpan[ptr+1]) << 8) + (ord(pkt_lowpan[ptr+2]) << 0)
+        tf = ((pkt_lowpan[0]) >> 3) & 0x03
+        if (tf == self.IPHC_TF_3B):
+            pkt_ipv6['flow_label'] = ((pkt_lowpan[ptr]) << 16) + ((pkt_lowpan[ptr+1]) << 8) + ((pkt_lowpan[ptr+2]) << 0)
             ptr = ptr + 3
-        elif (tf == IPHC_TF_ELIDED):
+        elif (tf == self.IPHC_TF_ELIDED):
             pkt_ipv6['flow_label'] = 0
         else:
             log.error("Unsupported or wrong tf")
         # nh
-        nh = (ord(pkt_lowpan[0]) >> 2) & 0x01
-        if (nh == IPHC_NH_INLINE):
-            pkt_ipv6['next_header'] = ord(pkt_lowpan[ptr])
+        nh = ((pkt_lowpan[0]) >> 2) & 0x01
+        if (nh == self.IPHC_NH_INLINE):
+            pkt_ipv6['next_header'] = (pkt_lowpan[ptr])
             ptr = ptr+1
-        elif (nh == IPHC_NH_COMPRESSED):
+        elif (nh == self.IPHC_NH_COMPRESSED):
             log.error("unsupported nh==IPHC_NH_COMPRESSED")
             pass
         else:
             log.error("wrong nh field nh="+str(nh))
             
         # hlim
-        hlim = ord(pkt_lowpan[0]) & 0x03
-        if (hlim == IPHC_HLIM_INLINE):
-            pkt_ipv6['hop_limit'] = ord(pkt_lowpan[ptr])
+        hlim = (pkt_lowpan[0]) & 0x03
+        if (hlim == self.IPHC_HLIM_INLINE):
+            pkt_ipv6['hop_limit'] = (pkt_lowpan[ptr])
             ptr = ptr+1
-        elif (hlim == IPHC_HLIM_1):
+        elif (hlim == self.IPHC_HLIM_1):
             pkt_ipv6['hop_limit'] = 1
-        elif (hlim == IPHC_HLIM_64):
+        elif (hlim == self.IPHC_HLIM_64):
             pkt_ipv6['hop_limit'] = 64
-        elif (hlim == IPHC_HLIM_255):
+        elif (hlim == self.IPHC_HLIM_255):
             pkt_ipv6['hop_limit'] = 255
         else:
             log.error("wrong hlim=="+str(hlim))
         # sam
-        sam = (ord(pkt_lowpan[1]) >> 4) & 0x03
-        if (sam == IPHC_SAM_ELIDED):
+        sam = ((pkt_lowpan[1]) >> 4) & 0x03
+        if (sam == self.IPHC_SAM_ELIDED):
             log.error("unsupported sam==IPHC_SAM_ELIDED")
-        elif (sam == IPHC_SAM_16B):
+            pkt_ipv6['src_addr'] = self.networkPrefix + mac_prev_hop
+            
+        elif (sam == self.IPHC_SAM_16B):
             a1 = pkt_lowpan[ptr]
             a2 = pkt_lowpan[ptr+1]
             ptr = ptr+2
             s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
             pkt_ipv6['src_addr'] = self.networkPrefix+s
     
-        elif (sam == IPHC_SAM_64B):
-            pkt_ipv6['src_addr'] = ''.join(self.networkPrefix)+(pkt_lowpan[ptr:ptr+8])
+        elif (sam == self.IPHC_SAM_64B):
+            pkt_ipv6['src_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
             ptr = ptr + 8
-        elif (sam == IPHC_SAM_128B):
+        elif (sam == self.IPHC_SAM_128B):
             pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
             ptr = ptr + 16
         else:
             log.error("wrong sam=="+str(sam))
             
         # dam
-        dam = (ord(pkt_lowpan[1]) & 0x03)
-        if (dam == IPHC_DAM_ELIDED):
+        dam = ((pkt_lowpan[1]) & 0x03)
+        if (dam == self.IPHC_DAM_ELIDED):
             log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
-            pkt_ipv6['dst_addr'] = ''.join(self.networkPrefix+self.dagRootEui64)
-        elif (dam == IPHC_DAM_16B):
+            pkt_ipv6['dst_addr'] = self.networkPrefix+self.dagRootEui64
+        elif (dam == self.IPHC_DAM_16B):
             a1 = pkt_lowpan[ptr]
             a2 = pkt_lowpan[ptr+1]
             ptr = ptr+2
             s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
             pkt_ipv6['dst_addr'] = self.networPrefix+s
-        elif (dam == IPHC_DAM_64B):
-            pkt_ipv6['dst_addr'] = ''.join(self.networkPrefix)+pkt_lowpan[ptr:ptr+8]
+        elif (dam == self.IPHC_DAM_64B):
+            pkt_ipv6['dst_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
             ptr = ptr + 8
-        elif (dam == IPHC_DAM_128B):
+        elif (dam == self.IPHC_DAM_128B):
             pkt_ipv6['dst_addr'] = pkt_lowpan[ptr:ptr+16]
             ptr = ptr + 16
         else:
@@ -524,23 +549,23 @@ class OpenLbr(eventBusClient.eventBusClient):
         pkt_ipv6['payload_length'] = len(pkt_ipv6['payload'])
         return pkt_ipv6
     
-    def reassemble_ipv6_packet(pkt):
+    def reassemble_ipv6_packet(self,pkt):
         pktw = []
-        pktw.append(chr((6 << 4) + (pkt['traffic_class'] >> 4)))
-        pktw.append(chr( ((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16) ))
-        pktw.append(chr( (pkt['flow_label'] >> 8) & 0x00FF ))
-        pktw.append(chr( pkt['flow_label'] & 0x0000FF ))
-        pktw.append(chr( pkt['payload_length'] >> 8 ))
-        pktw.append(chr( pkt['payload_length'] & 0x00FF ))
-        pktw.append(chr( pkt['next_header'] ))
-        pktw.append(chr( pkt['hop_limit'] ))
+        pktw.append(((6 << 4) + (pkt['traffic_class'] >> 4)))
+        pktw.append(( ((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16) ))
+        pktw.append(( (pkt['flow_label'] >> 8) & 0x00FF ))
+        pktw.append(( pkt['flow_label'] & 0x0000FF ))
+        pktw.append(( pkt['payload_length'] >> 8 ))
+        pktw.append(( pkt['payload_length'] & 0x00FF ))
+        pktw.append(( pkt['next_header'] ))
+        pktw.append(( pkt['hop_limit'] ))
         for i in range(0,16):
-            pktw.append( pkt['src_addr'][i] )
+            pktw.append( (pkt['src_addr'][i]) )
         for i in range(0,16):
-            pktw.append( pkt['dst_addr'][i] ) 
-        pktws = ''.join(pktw)
-        pktws = pktws + pkt['payload']
-        return pktws
+            pktw.append( (pkt['dst_addr'][i]) ) 
+        
+        return pktw + pkt['payload']
+        
     
     
     #======================== helpers =========================================

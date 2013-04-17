@@ -129,7 +129,8 @@ class eventBusClient(object):
               data         = data,
         )
         for (function,returnVal) in temp:
-            if returnVal:
+            if returnVal!=None:
                 return True
-            else:
-                return False
+            
+        return False
+

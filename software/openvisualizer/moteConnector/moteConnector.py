@@ -30,11 +30,17 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
         self.parser                    = OpenParser.OpenParser()
         self.goOn                      = True
         self._subcribedDataForDagRoot  = False
+          
+        # initialize parent class
+      
+        threading.Thread.__init__(self)
         
-        
+        # give this thread a name
+        self.name = 'moteConnector@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
+       
         eventBusClient.eventBusClient.__init__(
             self,
-            name             = 'MoteConnector',
+            name             = self.name,
             registrations =  [
                 {
                     'sender'   : self.WILDCARD,
@@ -42,14 +48,7 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
                     'callback' : self._updateConnectedToDagRoot, 
                 },
             ]
-        )
-        
-        # initialize parent class
-        threading.Thread.__init__(self)
-        
-        # give this thread a name
-        self.name = 'moteConnector@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
-        
+        )    
         
     def run(self):
         # log
@@ -82,7 +81,7 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
                         pass
                     else:
                         # dispatch
-                        self._dispatch(self,'fromMote.'+eventSubType,parsedNotif)                           
+                        self.dispatch('fromMote.'+eventSubType,parsedNotif)                           
                         
                 
             except socket.error as err:
@@ -91,7 +90,7 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
     
     #======================== public ==========================================
     
-    def _updateConnectedToDagRoot(self,data):
+    def _updateConnectedToDagRoot(self,sender,signal,data):
         if  (
                (self.moteProbeIp==data['ip'])
                and
@@ -102,7 +101,7 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
             if not self._subcribedDataForDagRoot:
                 
                 # connect to dispatcher
-              self.register(self,self.name,'bytesToMesh',self.write)
+              self.register(self.WILDCARD,'bytesToMesh',self.write)
         
               self._subcribedDataForDagRoot = True
             
@@ -111,10 +110,10 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
             
             if self._subcribedDataForDagRoot:
                 # disconnect from dispatcher
-              self.unregister(self,self.name,'bytesToMesh',self.write)
+              self.unregister(self.WILDCARD,'bytesToMesh',self.write)
               self._subcribedDataForDagRoot = False
     
-    def write(self,data,headerByte=OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
+    def write(self,sender,signal,data,headerByte=OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
         # convert to string
         #pass
         dataToSend = []

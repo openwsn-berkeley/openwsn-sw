@@ -40,6 +40,9 @@ class SourceRoute(object):
         # retrieve source and destination
         try:
             source           = tup[0]
+            if len(source)>8: 
+                source=source[len(source)-8:]
+            print source    
             dao              = tup[1]
         except IndexError:
             log.warning("DAO too short ({0} bytes), no space for destination and source".format(len(dao)))

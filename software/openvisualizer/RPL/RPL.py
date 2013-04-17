@@ -122,10 +122,11 @@ class RPL(eventBusClient.eventBusClient):
         '''
         
         # log
-        log.debug("received data local {0}".format(self._formatByteList(data)))
+        #log.debug("received data local {0}".format(self._formatByteList(data)))
                
         # indicate data to sourceRoute
         self.sourceRoute.indicateDAO(data)
+        return True
     
     def _getSourceRoute_notif(self,sender,signal,data):
         destination = data
@@ -142,10 +143,9 @@ class RPL(eventBusClient.eventBusClient):
             for c in data['eui64']:
                 self.dagRootEui64     +=[int(c)]
         #signal to which this component is subscribed.
-        signal=(self.networkPrefix + self.dagRootEui64,self.PROTO_ICMPv6,self.IANA_ICMPv6_RPL_TYPE)
-        
+        signal=(",".join(chr(c) for c in (self.networkPrefix + self.dagRootEui64)),self.PROTO_ICMPv6,self.IANA_ICMPv6_RPL_TYPE)
         #register as soon as I get an address
-        self._register(self,self.WILDCARD,signal,self._fromMoteDataLocal_notif)    
+        self.register(self.WILDCARD,signal,self._fromMoteDataLocal_notif)    
          
     def _networkPrefix_notif(self,sender,signal,data):
         '''
@@ -217,7 +217,7 @@ class RPL(eventBusClient.eventBusClient):
         
         # DODAGID
         with self.stateLock:
-            dio             += self._hexstring2bytelist(self.networkPrefix.replace(':',''))
+            dio             += self.networkPrefix #self._hexstring2bytelist(self.networkPrefix.replace(':',''))
             dio             += self.dagRootEui64
         
         # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
