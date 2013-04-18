@@ -207,12 +207,13 @@ class OpenLbr(eventBusClient.eventBusClient):
                ipv6dic['icmpv6_code']=ipv6dic['payload'][1]
                ipv6dic['icmpv6_checksum']=ipv6dic['payload'][2:4]
                ipv6dic['app_payload']=ipv6dic['payload'][4:]
+             
                #this function does the job
-               dispatchSignal=(",".join(chr(c) for c in ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
+               dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
                
            elif(ipv6dic['next_header']==self.IANA_UDP):
                #udp header -- can be compressed.. assume first it is not compressed.
-               if (ipvdic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID):
+               if (ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID):
                   
                   oldUdp=ipv6dic['payload'][:5]
                   #re-arrange fields and inflate
@@ -248,7 +249,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                   ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
                   ipv6dic['app_payload']=ipv6dic['payload'][8:]
                
-               dispatchSignal=(",".join(c for c in ipv6dic['dst_addr']),self.PROTO_UDP,ipv6dic['udp_dest_port'][0])
+               dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,tuple(ipv6dic['udp_dest_port']))
                   
            #keep payload and app_payload in case we want to assemble the message later. 
            #ass source address is being retrieved from the IPHC header, the signal includes it in case

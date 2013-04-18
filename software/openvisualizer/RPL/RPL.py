@@ -143,7 +143,7 @@ class RPL(eventBusClient.eventBusClient):
             for c in data['eui64']:
                 self.dagRootEui64     +=[int(c)]
         #signal to which this component is subscribed.
-        signal=(",".join(chr(c) for c in (self.networkPrefix + self.dagRootEui64)),self.PROTO_ICMPv6,self.IANA_ICMPv6_RPL_TYPE)
+        signal=(tuple(self.networkPrefix + self.dagRootEui64),self.PROTO_ICMPv6,self.IANA_ICMPv6_RPL_TYPE)
         #register as soon as I get an address
         self.register(self.WILDCARD,signal,self._fromMoteDataLocal_notif)    
          
