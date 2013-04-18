@@ -53,11 +53,12 @@ class TunReadThread(threading.Thread):
     ETHERNET_MTU        = 1500
     IPv6_HEADER_LENGTH  = 40
     
-    def __init__(self,tunIf,callback):
+    def __init__(self,tunIf,callback ):
     
         # store params
         self.tunIf                = tunIf
         self.callback             = callback
+        
         
         # local variables
         self.goOn                 = True
@@ -136,9 +137,16 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         
         # local variables
         self.tunIf           = self._createTunIf()
+        
+     
+        
+        self.overlappedTx         = pywintypes.OVERLAPPED()
+        self.overlappedTx.hEvent  = win32event.CreateEvent(None, 0, 0, None)
+        
+        
         self.tunReadThread   = TunReadThread(
             self.tunIf,
-            self._v6ToMesh_notif
+            self._v6ToMesh_notif,
         )
  
   
