@@ -81,24 +81,30 @@ class TunReadThread(threading.Thread):
         while self.goOn:
             
             # wait for data
-            l, p = win32file.ReadFile(self.tunIf, rxbuffer, self.overlappedRx)
-            win32event.WaitForSingleObject(self.overlappedRx.hEvent, win32event.INFINITE)
-            self.overlappedRx.Offset = self.overlappedRx.Offset + len(p)
-            
-            # convert input from a string to a byte list
-            p = [ord(b) for b in p]
-            
-            # make sure it's an IPv6 packet (starts with 0x6x)
-            if (p[0]&0xf0)!=0x60:
-               # this is not an IPv6 packet
-               continue
-            
-            # because of the nature of tun for Windows, p contains ETHERNET_MTU
-            # bytes. Cut at length of IPv6 packet.
-            p = p[:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
-            
-            # call the callback
-            self.callback(p)
+            try:
+                l, p = win32file.ReadFile(self.tunIf, rxbuffer, self.overlappedRx)
+                win32event.WaitForSingleObject(self.overlappedRx.hEvent, win32event.INFINITE)
+                self.overlappedRx.Offset = self.overlappedRx.Offset + len(p)
+                
+                # convert input from a string to a byte list
+                p = [ord(b) for b in p]
+                #print "tun input"
+                #print p
+                # make sure it's an IPv6 packet (starts with 0x6x)
+                if (p[0]&0xf0)!=0x60:
+                   # this is not an IPv6 packet
+                   continue
+                
+                # because of the nature of tun for Windows, p contains ETHERNET_MTU
+                # bytes. Cut at length of IPv6 packet.
+                p = p[:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
+                
+                # call the callback
+                self.callback(p)
+            except Exception as err:
+                print err
+                log.error(err)
+                
     
     #======================== public ==========================================
     
@@ -174,9 +180,14 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         data  = ''.join([chr(b) for b in data])
         
         # write over tuntap interface
-        win32file.WriteFile(self.tunIf, data, self.overlappedTx)
-        win32event.WaitForSingleObject(self.overlappedTx.hEvent, win32event.INFINITE)
-        self.overlappedTx.Offset = self.overlappedTx.Offset + len(data)
+        try:
+            win32file.WriteFile(self.tunIf, data, self.overlappedTx)
+            win32event.WaitForSingleObject(self.overlappedTx.hEvent, win32event.INFINITE)
+            self.overlappedTx.Offset = self.overlappedTx.Offset + len(data)
+        except Exception as err:
+            print err
+            log.error(err)
+                
     
     def _v6ToMesh_notif(self,data):
         '''

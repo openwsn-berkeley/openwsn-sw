@@ -175,6 +175,8 @@ class OpenLbr(eventBusClient.eventBusClient):
             # log
             log.debug(self._format_lowpan(lowpan,lowpan_bytes))
             
+            #print "output:"
+            #print lowpan_bytes
             # dispatch
             self.dispatch(
                 signal       = 'bytesToMesh',
