@@ -26,10 +26,12 @@ class OpenTun():
         self.openTun         = None
         
         # store params
-        if os.name=='nt':
+        if   os.name=='nt':
             self.openTun         = openTunWindows.OpenTunWindows()
         elif os.name=='posix':
             self.openTun         = openTunLinux.OpenTunLinux()        
+        else:
+            raise NotImplementedError('OS {0} not supported'.format(os.name))
     
     #======================== public ==========================================
     
