@@ -59,7 +59,6 @@ class TunReadThread(threading.Thread):
         self.tunIf                = tunIf
         self.callback             = callback
         
-        
         # local variables
         self.goOn                 = True
         self.overlappedRx         = pywintypes.OVERLAPPED()
@@ -131,8 +130,8 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
-            name             = 'OpenTun',
-            registrations =  [
+            name                  = 'OpenTun',
+            registrations         = [
                 {
                     'sender'   : self.WILDCARD,
                     'signal'   : 'v6ToInternet',
@@ -142,20 +141,14 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         )
         
         # local variables
-        self.tunIf           = self._createTunIf()
-        
-     
-        
+        self.tunIf                = self._createTunIf()
         self.overlappedTx         = pywintypes.OVERLAPPED()
         self.overlappedTx.hEvent  = win32event.CreateEvent(None, 0, 0, None)
-        
-        
-        self.tunReadThread   = TunReadThread(
+        self.tunReadThread        = TunReadThread(
             self.tunIf,
             self._v6ToMesh_notif,
         )
- 
-  
+        
         # TODO: retrieve network prefix from interface settings
         
         # announce network prefix
@@ -163,7 +156,6 @@ class OpenTunWindows(eventBusClient.eventBusClient):
             signal        = 'networkPrefix',
             data          = [0xBB,0xBB,0x0,0x0,0x0,0x0,0x0,0x0],#"BBBB:0000:0000:0000"
         )
-        
     
     #======================== public ==========================================
     

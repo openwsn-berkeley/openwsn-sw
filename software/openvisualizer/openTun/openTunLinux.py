@@ -15,21 +15,18 @@ import struct
 
 from fcntl import ioctl
 
-
 from eventBus import eventBusClient
 
 #============================ defines =========================================
 
 ## IPv4 configuration of your TUN interface (represented as a list of integers)
-TUN_IPv4_ADDRESS    = [ 10,  2,0,1] ##< The IPv4 address of the TUN interface.
-TUN_IPv4_NETWORK    = [ 10,  2,0,0] ##< The IPv4 address of the TUN interface's network.
-TUN_IPv4_NETMASK    = [255,255,0,0] ##< The IPv4 netmask of the TUN interface.
+TUN_IPv4_ADDRESS   = [ 10,  2,0,1] ##< The IPv4 address of the TUN interface.
+TUN_IPv4_NETWORK   = [ 10,  2,0,0] ##< The IPv4 address of the TUN interface's network.
+TUN_IPv4_NETMASK   = [255,255,0,0] ##< The IPv4 netmask of the TUN interface.
 
-IPV6PREFIX   = "BBBB:0000:0000:0000"
-IFF_TUN      = 0x0001
-TUNSETIFF    = 0x400454ca
- 
- 
+IPV6PREFIX         = "BBBB:0000:0000:0000"
+IFF_TUN            = 0x0001
+TUNSETIFF          = 0x400454ca
 
 #============================ helper classes ==================================
 
@@ -124,7 +121,7 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         
         # local variables
         self.tunIf           = self._createTunIf()
-       
+        
         self.tunReadThread   = TunReadThread(
             self.tunIf,
             self._v6ToMesh_notif
@@ -137,7 +134,6 @@ class OpenTunLinux(eventBusClient.eventBusClient):
             signal        = 'networkPrefix',
             data          = IPV6PREFIX,
         )
-        
     
     #======================== public ==========================================
     
@@ -175,24 +171,23 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         \return The handler of the interface, which can be used for later
             read/write operations.
         '''
+        #=====
         log.info("opening tun interface")
         f=os.open("/dev/net/tun", os.O_RDWR)
         ifs=ioctl(f,TUNSETIFF,struct.pack("16sH","tun%d",IFF_TUN)) 
         ifname=ifs[:16].strip("\x00")
         
-        
-        # configure IPv6 address
+        #=====
         log.info("configuring IPv6 address...")
         v = os.system('ifconfig ' + ifname + ' inet6 add ' + IPV6PREFIX + '::1/64')
         v = os.system('ifconfig ' + ifname + ' inet6 add fe80::1/64')
         v = os.system('ifconfig ' + ifname + ' up')
                 
-        # set static route
-        log.info("setting up static route...")
+        #=====
+        log.info("adding static route route...")
         os.system('route -A inet6 add ' + IPV6PREFIX + '::/64 dev ' + ifname)
         
-        
-        # enable IPv6 forwarding
+        #=====
         log.info("enabling IPv6 forwarding...")
         os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')       
         
