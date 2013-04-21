@@ -25,41 +25,13 @@ import openvisualizer_utils as u
 
 class RPL(eventBusClient.eventBusClient):
     
-    LINK_LOCAL_PREFIX             = "FE80:0000:0000:0000"       ##< IPv6 link-local prefix.
-    
-    MAX_SERIAL_PKT_SIZE           = 8+127                       ##< Maximum length for a serial packet.
-    DIO_PERIOD                    = 10                          ##< period between successive DIOs, in seconds.
+    # Period between successive DIOs, in seconds.
+    DIO_PERIOD                    = 10                          
     
     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
-    IANA_UNDEFINED                = 0x00
-    IANA_PROTOCOL_UDP             = 17
-    IANA_PROTOCOL_IPv6ROUTE       = 43
     IANA_ICMPv6_RPL_TYPE          = 155              
-    #=== 6LoWPAN header (RFC6282)
-    # byte 0
-    SR_DISPATCH_MASK              = 3<<5                        ##< Dispatch
-    SR_TF_MASK                    = 3<<3                        ##< Traffic Fields
-    SR_NH_SET                     = 0x01                        ##< Next Header
-    SR_NH_MASK                    = SR_NH_SET<<2                ##< not compressed next header as we need to advertise src routing header
-    SR_HLIM_MASK                  = 1<<0                        ##< Hop Limit
-    # byte 1
-    SR_CID_MASK                   = 0                           ##< Context Identifier Extension
-    SR_SAC_MASK                   = 0                           ##< Source Address Compression
-    SR_SAM_MASK                   = 0                           ##< Source Address Mode
-    SR_M_MASK                     = 0                           ##< Multicast Compression
-    SR_DAC_MASK                   = 0                           ##< Destination Address Compression
-    SR_DAM_MASK                   = 3                           ##< Destination Address Mode
-    # inline next header
-    SR_NH_VALUE                   = IANA_PROTOCOL_IPv6ROUTE     ##< Next header
     
-    #=== RPL source routing header (RFC6554)
-    SR_FIR_TYPE                   = 0x03                        ##< Routing Type
-    
-    #=== UDP header (RFC768)
-    NHC_UDP_MASK                  = 0xF8                        ##< b1111 1000
-    NHC_UDP_ID                    = 0xF0                        ##< b1111 0000
-    
-    #=== RPL DIO (RFC6550)
+    # RPL DIO (RFC6550)
     DIO_OPT_GROUNDED              = 1<<7
     MOP_DIO_A                     = 1<<5
     MOP_DIO_B                     = 1<<4
@@ -82,8 +54,8 @@ class RPL(eventBusClient.eventBusClient):
             registrations         =  [
                 {
                     'sender'      : self.WILDCARD,
-                    'signal'      : 'getSourceRoute',
-                    'callback'    : self._getSourceRoute_notif,
+                    'signal'      : 'networkPrefix',
+                    'callback'    : self._networkPrefix_notif,
                 },
                 {
                     'sender'      : self.WILDCARD,
@@ -92,8 +64,8 @@ class RPL(eventBusClient.eventBusClient):
                 },
                 {
                     'sender'      : self.WILDCARD,
-                    'signal'      : 'networkPrefix',
-                    'callback'    : self._networkPrefix_notif,
+                    'signal'      : 'getSourceRoute',
+                    'callback'    : self._getSourceRoute_notif,
                 },
             ]
         )
@@ -101,9 +73,9 @@ class RPL(eventBusClient.eventBusClient):
         # local variables
         self.stateLock            = threading.Lock()
         self.state                = {}
-        self.sourceRoute          = SourceRoute.SourceRoute()
-        self.networkPrefix        = self.LINK_LOCAL_PREFIX
+        self.networkPrefix        = None
         self.dagRootEui64         = None
+        self.sourceRoute          = SourceRoute.SourceRoute()
         self.latencyStats         = {}
         
         # send a DIO periodically
@@ -114,6 +86,34 @@ class RPL(eventBusClient.eventBusClient):
     #======================== private =========================================
     
     #==== handle EventBus notifications
+    
+    def _networkPrefix_notif(self,sender,signal,data):
+        '''
+        \brief Record the network prefix.
+        '''
+        # store
+        with self.stateLock:
+            self.networkPrefix    = data[:]
+    
+    def _infoDagRoot_notif(self,sender,signal,data):
+        '''
+        \brief Record the DAGroot's EUI64 address.
+        '''
+        # store
+        with self.stateLock:
+            self.dagRootEui64     = data['eui64'][:]
+        
+        # register to RPL traffic
+        if self.networkPrefix and self.dagRootEui64:
+            self.register(
+                self.WILDCARD,
+                (
+                    tuple(self.networkPrefix + self.dagRootEui64),
+                    self.PROTO_ICMPv6,
+                    self.IANA_ICMPv6_RPL_TYPE
+                ),
+                self._fromMoteDataLocal_notif,
+            )
     
     def _fromMoteDataLocal_notif(self,sender,signal,data):
         '''
@@ -130,27 +130,6 @@ class RPL(eventBusClient.eventBusClient):
     def _getSourceRoute_notif(self,sender,signal,data):
         destination = data
         return self.sourceRoute.getSourceRoute(destination)
-    
-    #TODO when we get assigned a prefix and a moteid, then we can subscribe to ICMPv6, DAO Type for our address
-    def _infoDagRoot_notif(self,sender,signal,data):
-        '''
-        \brief Record the DAGroot's EUI64 address.
-        '''
-        with self.stateLock:
-            self.dagRootEui64     = []
-            for c in data['eui64']:
-                self.dagRootEui64     +=[int(c)]
-        #signal to which this component is subscribed.
-        signal=(tuple(self.networkPrefix + self.dagRootEui64),self.PROTO_ICMPv6,self.IANA_ICMPv6_RPL_TYPE)
-        #register as soon as I get an address
-        self.register(self.WILDCARD,signal,self._fromMoteDataLocal_notif)    
-         
-    def _networkPrefix_notif(self,sender,signal,data):
-        '''
-        \brief Record the network prefix.
-        '''
-        with self.stateLock:
-            self.networkPrefix    = data
     
     #===== send DIO
     
