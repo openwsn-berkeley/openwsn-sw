@@ -40,6 +40,8 @@ for loggerName in ['test_utils',
 
 #============================ fixtures ========================================
 
+#===== expectedBuf2int
+
 EXPECTEDBUF2INT = [
     #           buf          int
     json.dumps(([0x01,0x02], 0x0102)),
@@ -49,6 +51,35 @@ EXPECTEDBUF2INT = [
 @pytest.fixture(params=EXPECTEDBUF2INT)
 def expectedBuf2int(request):
     return request.param
+
+#===== expectedhex2buf
+
+EXPECTEDHEX2BUF = [
+    #           hex          buf
+    json.dumps(('abcd',      [0xab,0xcd])),
+    json.dumps(('',          [])),
+    json.dumps(('aa',        [0xaa])),
+]
+
+@pytest.fixture(params=EXPECTEDHEX2BUF)
+def expectedhex2buf(request):
+    return request.param
+
+#===== expectedbyteinverse
+
+EXPECTEDBYTEINVERSE = [
+    #           b    b_inverse
+    json.dumps((0x01,0x80)),
+    json.dumps((0x02,0x40)),
+    json.dumps((0x04,0x20)),
+    json.dumps((0x81,0x81)),
+]
+
+@pytest.fixture(params=EXPECTEDBYTEINVERSE)
+def expectedbyteinverse(request):
+    return request.param
+
+#===== expectedformatipv6
 
 EXPECTEDFORMATIPv6 = [
     json.dumps(
@@ -94,11 +125,17 @@ def test_buf2int(expectedBuf2int):
     
     assert u.buf2int(expBuf)==expInt
 
-def test_byteinverse():
-    assert u.byteinverse(0x01)==0x80
-    assert u.byteinverse(0x02)==0x40
-    assert u.byteinverse(0x04)==0x20
-    assert u.byteinverse(0x81)==0x81
+def test_hex2buf(expectedhex2buf):
+    (expHex,expBuf) = json.loads(expectedhex2buf)
+    expHex = str(expHex)
+    
+    assert u.hex2buf(expHex)==expBuf
+
+def test_byteinverse(expectedbyteinverse):
+    (b,b_inverse) = json.loads(expectedbyteinverse)
+    
+    assert u.byteinverse(b)==b_inverse
+    assert u.byteinverse(b_inverse)==b
 
 def test_formatIPv6Addr(expectedformatipv6):
     

@@ -21,7 +21,6 @@ from pydispatch import dispatcher
 
 from eventBus import eventBusClient
 import SourceRoute
-
 import openvisualizer_utils as u
 
 class RPL(eventBusClient.eventBusClient):
@@ -132,7 +131,6 @@ class RPL(eventBusClient.eventBusClient):
         destination = data
         return self.sourceRoute.getSourceRoute(destination)
     
-    
     #TODO when we get assigned a prefix and a moteid, then we can subscribe to ICMPv6, DAO Type for our address
     def _infoDagRoot_notif(self,sender,signal,data):
         '''
@@ -153,7 +151,6 @@ class RPL(eventBusClient.eventBusClient):
         '''
         with self.stateLock:
             self.networkPrefix    = data
-    
     
     #===== send DIO
     
@@ -217,7 +214,7 @@ class RPL(eventBusClient.eventBusClient):
         
         # DODAGID
         with self.stateLock:
-            dio             += self.networkPrefix #self._hexstring2bytelist(self.networkPrefix.replace(':',''))
+            dio             += self.networkPrefix
             dio             += self.dagRootEui64
         
         # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
@@ -227,7 +224,7 @@ class RPL(eventBusClient.eventBusClient):
         dio[idxICMPv6CS+1]   = checksum[1]
         
         # log
-        log.debug('sending DIO {0}'.format(self._formatByteList(dio)))
+        log.debug('sending DIO {0}'.format(u.formatBuf(dio)))
         
         # dispatch
         self.dispatch(
@@ -237,35 +234,3 @@ class RPL(eventBusClient.eventBusClient):
         
         # schedule the next DIO transmission
         self._scheduleSendDIO(self.DIO_PERIOD)
-    
-    #======================== helpers =========================================
-    
-    def _formatByteList(self,l):
-        '''
-        \brief Format a bytelist into an easy-to-read string.
-        
-        That is:  [0xab,0xcd,0xef,0x00] -> '(4 bytes) ab-cd-ef-00'
-        '''
-        return '({0} bytes) {1}'.format(len(l),'-'.join(["%02x"%b for b in l]))
-    
-    def _hexstring2bytelist(self,s):
-        '''
-        \brief Convert a string of hex caracters into a byte list.
-        
-        That is: 'abcdef00' -> [0xab,0xcd,0xef,0x00]
-        
-        \param[in] s The string to convert
-        
-        \returns A list of integers, each element in [0x00..0xff].
-        '''
-        assert type(s)==str
-        assert len(s)%2 == 0
-        
-        returnVal = []
-        
-        for i in range(len(s)/2):
-            realIdx = i*2
-            returnVal.append(int(s[realIdx:realIdx+2],16))
-        
-        return returnVal
-        
