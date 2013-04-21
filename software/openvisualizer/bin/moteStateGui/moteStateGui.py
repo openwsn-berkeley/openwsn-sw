@@ -6,6 +6,9 @@ if __name__=='__main__':
     sys.path.insert(0, os.path.join(here, '..', '..'))                                # openvisualizer/
     sys.path.insert(0, os.path.join(here, '..', '..', '..', 'openUI'))                # openUI/
 
+import logging
+import logging.config
+
 from eventBus      import eventBusMonitor
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
@@ -211,53 +214,13 @@ class MoteStateGui_app(object):
         gui.start()
     
     #======================== GUI callbacks ===================================
-    
+
+#============================ main ============================================
+
 def main():
+    appDir = '.'
+    logging.config.fileConfig(os.path.join(appDir,'logging.conf'), {'logDir': appDir})
     app = MoteStateGui_app()
-    
-    
-#============================ application logging =============================
-import logging
-import logging.handlers
 
-#===== write everything to file
-
-fileLogHandler = logging.handlers.RotatingFileHandler('moteStateGui.log',
-                                                  #maxBytes=2000000,
-                                                  backupCount=5,
-                                                  mode='w')
-fileLogHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-
-for loggerName in ['moteProbeUtils',
-                   'moteProbe',
-                   'moteConnector',
-                   'OpenParser',
-                   'Parser',
-                   'ParserStatus',
-                   'ParserInfoErrorCritical',
-                   'ParserData',
-                   'moteState',
-                   'eventBusMonitor',
-                   'lbrClient',]:
-    fileLogger = logging.getLogger(loggerName)
-    fileLogger.setLevel(logging.ERROR)
-    fileLogger.addHandler(fileLogHandler)
-for loggerName in ['RPL',
-                   'SourceRoute',
-                   'openLbr',]:
-    fileLogger = logging.getLogger(loggerName)
-    fileLogger.setLevel(logging.DEBUG)
-    fileLogger.addHandler(fileLogHandler)
-
-#===== print errors reported by motes on console
-
-consoleLogHandler = logging.StreamHandler(sys.stdout)
-consoleLogHandler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s",datefmt='%H:%M:%S'))
-    
-for loggerName in ['ParserInfoErrorCritical',]:
-    consoleLogger = logging.getLogger(loggerName)
-    consoleLogger.setLevel(logging.INFO)
-    consoleLogger.addHandler(consoleLogHandler)
-    
 if __name__=="__main__":
     main()
