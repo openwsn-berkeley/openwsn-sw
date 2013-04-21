@@ -2,6 +2,7 @@ import json
 
 import OpenFrame
 import OpenTable
+import openvisualizer_utils as u
 
 class OpenFrameEventBus(OpenFrame.OpenFrame):
     
@@ -42,6 +43,15 @@ class OpenFrameEventBus(OpenFrame.OpenFrame):
         
         # load stats
         newStats = json.loads(self.eventBusMonitor.getStats())
+        
+        for i in range(len(newStats)):
+            if type(newStats[i]['signal'])==list and len(newStats[i]['signal'])==3:
+                [ip,tran,port] = newStats[i]['signal']
+                signal  = []
+                signal += [u.formatIPv6Addr(ip)]
+                signal += [tran]
+                signal += [str(port)]
+                newStats[i]['signal'] = ','.join(signal)
         
         # update table
         self.dataTable.update(

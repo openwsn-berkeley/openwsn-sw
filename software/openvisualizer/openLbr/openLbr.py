@@ -299,7 +299,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         returnVal['traffic_class']     = ((ipv6[0] & 0x0F) << 4) + (ipv6[1] >> 4)
         returnVal['flow_label']        = ((ipv6[1] & 0x0F) << 16) + (ipv6[2] << 8) + ipv6[3]
-        returnVal['payload_length']    = self._buf2int(ipv6[4:6])
+        returnVal['payload_length']    = u.buf2int(ipv6[4:6])
         returnVal['next_header']       = ipv6[6]
         returnVal['hop_limit']         = ipv6[7]
         returnVal['src_addr']          = ipv6[8:8+16]
@@ -689,21 +689,3 @@ class OpenLbr(eventBusClient.eventBusClient):
             index                += NUM_BYTES_PER_LINE
         
         return '\n'.join(output)
-    
-    #===== misc
-    
-    @classmethod
-    def _buf2int(self,buf,startBit=None,numBits=None):
-        '''
-        \brief Converts some consecutive bytes of a buffer into an integer.
-        
-        \note Big-endianness is assumed.
-        
-        \param[in] buf      Byte array.
-        \param[in] startBit Bit to start at.
-        \param[in] numBits  Number of bits of interest.
-        '''
-        returnVal = 0
-        for i in range(len(buf)):
-            returnVal += buf[i]<<(8*(len(buf)-i-1))
-        return returnVal

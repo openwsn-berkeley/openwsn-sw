@@ -52,8 +52,8 @@ class eventBusMonitor(object):
         # format as a dictionnary
         returnVal = [
             {
-                'sender': str(k[0]),
-                'signal': str(k[1]),
+                'sender': k[0],
+                'signal': k[1],
                 'num':    v,
             } for (k,v) in tempStats.items()
         ]

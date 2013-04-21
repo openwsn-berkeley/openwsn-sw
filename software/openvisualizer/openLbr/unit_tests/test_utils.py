@@ -50,18 +50,60 @@ EXPECTEDBUF2INT = [
 def expectedBuf2int(request):
     return request.param
 
+EXPECTEDFORMATIPv6 = [
+    json.dumps(
+        (
+            [                                                   # list
+                0x01,0x23,0x45,0x67,0x89,0xab,0xcd,0xef,
+                0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10
+            ],
+            '123:4567:89ab:cdef:fedc:ba98:7654:3210'            # string
+        )
+    ),
+    json.dumps(
+        (
+            [                                                   # list
+                0x01,0x23,0x45,0x67,0x00,0x00,0xcd,0xef,
+                0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10
+            ],
+            '123:4567:0:cdef:fedc:ba98:7654:3210'               # string
+        )
+    ),
+    json.dumps(
+        (
+            [                                                   # list
+                0x01,0x23,0x45,0x67,0x00,0x00,0x00,0x00,
+                0xfe,0xdc,0xba,0x98,0x76,0x54,0x32,0x10
+            ],
+            '123:4567:0:0:fedc:ba98:7654:3210'                  # string
+        )
+    ),
+]
+
+@pytest.fixture(params=EXPECTEDFORMATIPv6)
+def expectedformatipv6(request):
+    return request.param
+
 #============================ helpers =========================================
 
 #============================ tests ===========================================
 
-def test_sourceRoute(expectedBuf2int):
+def test_buf2int(expectedBuf2int):
     
     (expBuf,expInt) = json.loads(expectedBuf2int)
     
-    assert openLbr.OpenLbr._buf2int(expBuf)==expInt
+    assert u.buf2int(expBuf)==expInt
 
 def test_byteinverse():
     assert u.byteinverse(0x01)==0x80
     assert u.byteinverse(0x02)==0x40
     assert u.byteinverse(0x04)==0x20
     assert u.byteinverse(0x81)==0x81
+
+def test_formatIPv6Addr(expectedformatipv6):
+    
+    (ipv6_list,ipv6_string) = json.loads(expectedformatipv6)
+    
+    print ipv6_string
+    
+    assert u.formatIPv6Addr(ipv6_list)==ipv6_string

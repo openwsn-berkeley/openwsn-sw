@@ -1,4 +1,17 @@
 
+def buf2int(buf):
+    '''
+    \brief Converts some consecutive bytes of a buffer into an integer.
+    
+    \note Big-endianness is assumed.
+    
+    \param[in] buf      Byte array.
+    '''
+    returnVal = 0
+    for i in range(len(buf)):
+        returnVal += buf[i]<<(8*(len(buf)-i-1))
+    return returnVal
+
 #===== formatting
 
 def formatStringBuf(buf):
@@ -11,7 +24,9 @@ def formatBuf(buf):
     )
 
 def formatIPv6Addr(addr):
-    return ':'.join(["%02x" % b for b in addr])
+    # group by 2 bytes
+    addr = [buf2int(addr[2*i:2*i+2]) for i in range(len(addr)/2)]
+    return ':'.join(["%x" % b for b in addr])
     
 def formatAddr(addr):
     return '-'.join(["%02x" % b for b in addr])
