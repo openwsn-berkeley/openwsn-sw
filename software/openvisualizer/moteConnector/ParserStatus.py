@@ -11,6 +11,7 @@ log.addHandler(NullHandler())
 
 from ParserException import ParserException
 import Parser
+import openvisualizer_utils as u
 
 class FieldParsingKey(object):
 
@@ -116,7 +117,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '<BHBBBBQQBBBBHHH',
+                                    '<BHBBBBQQBBBBHH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
@@ -132,7 +133,6 @@ class ParserStatus(Parser.Parser):
                                         'lastUsedAsn_4',             # B
                                         'lastUsedAsn_2_3',           # H
                                         'lastUsedAsn_0_1',           # H
-                                        'next',                      # H
                                     ],
                                 )
         self._addFieldsParser   (
@@ -236,11 +236,10 @@ class ParserStatus(Parser.Parser):
                 except struct.error as err:
                     raise ParserException(
                             ParserException.DESERIALIZE,
-                            "could not extract tuple {0} by applying {1} to {2} ({3} bytes); error: {4}".format(
+                            "could not extract tuple {0} by applying {1} to {2}; error: {3}".format(
                                 key.name,
                                 key.structure,
-                                input,
-                                len(input),
+                                u.formatBuf(input),
                                 str(err)
                             )
                         )
