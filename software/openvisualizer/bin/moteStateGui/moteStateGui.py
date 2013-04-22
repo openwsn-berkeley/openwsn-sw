@@ -17,6 +17,7 @@ from RPL           import RPL
 from openLbr       import openLbr
 from openTun       import openTun
 from RPL           import UDPLatency
+from RPL           import topology
 import OpenWindow
 import OpenFrameState
 import OpenFrameLbr
@@ -171,6 +172,7 @@ class MoteStateGui_app(object):
         self.openLbr         = None
         self.openTun         = None
         self.udpLatency      = None
+        self.topology        = None
         
         # create an eventBusMonitor
         self.eventBusMonitor = eventBusMonitor.eventBusMonitor()
@@ -188,6 +190,8 @@ class MoteStateGui_app(object):
         # create a moteState for each moteConnector
         for mc in self.moteConnectors:
            self.moteStates.append(moteState.moteState(mc))
+        
+        self.topology        = topology.topology()
         
         # create a rpl instance
         self.rpl             = RPL.RPL()

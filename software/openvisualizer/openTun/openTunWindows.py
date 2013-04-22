@@ -84,7 +84,11 @@ class TunReadThread(threading.Thread):
                 l, p = win32file.ReadFile(self.tunIf, rxbuffer, self.overlappedRx)
                 win32event.WaitForSingleObject(self.overlappedRx.hEvent, win32event.INFINITE)
                 self.overlappedRx.Offset = self.overlappedRx.Offset + len(p)
-                
+            except Exception as err:
+                print err
+                log.error(err)
+                raise ValueError('Error writing to TUN')
+            else:    
                 # convert input from a string to a byte list
                 p = [ord(b) for b in p]
                 #print "tun input"
@@ -100,9 +104,6 @@ class TunReadThread(threading.Thread):
                 
                 # call the callback
                 self.callback(p)
-            except Exception as err:
-                print err
-                log.error(err)
                 
     
     #======================== public ==========================================
@@ -179,6 +180,9 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         except Exception as err:
             print err
             log.error(err)
+            raise ValueError('Error writing to TUN')
+        
+            
                 
     
     def _v6ToMesh_notif(self,data):

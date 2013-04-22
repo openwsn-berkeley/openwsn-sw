@@ -134,3 +134,14 @@ class eventBusClient(object):
             
         return False
 
+
+    def _dispatchAndGetResult(self,signal,data):
+        temp = self.dispatch(
+            signal       = signal, 
+            data         = data,
+        )
+        for (function,returnVal) in temp:
+            if returnVal:
+                return returnVal
+        raise SystemError('No answer to signal _dispatchAndGetResult')
+    

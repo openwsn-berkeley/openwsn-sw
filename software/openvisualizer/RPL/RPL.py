@@ -22,8 +22,12 @@ from pydispatch import dispatcher
 from eventBus import eventBusClient
 import SourceRoute
 import openvisualizer_utils as u
+from   openType import typeUtils as tu
 
 class RPL(eventBusClient.eventBusClient):
+    
+    _TARGET_INFORMATION_TYPE  = 0x05
+    _TRANSIT_INFORMATION_TYPE = 0x06
     
     # Period between successive DIOs, in seconds.
     DIO_PERIOD                    = 10                          
@@ -118,13 +122,9 @@ class RPL(eventBusClient.eventBusClient):
     def _fromMoteDataLocal_notif(self,sender,signal,data):
         '''
         \brief Called when receiving fromMote.data.local, probably a DAO.
-        '''
-        
-        # log
-        #log.debug("received data local {0}".format(self._formatByteList(data)))
-               
-        # indicate data to sourceRoute
-        self.sourceRoute.indicateDAO(data)
+        '''      
+        # indicate data to topology
+        self._indicateDAO(data)
         return True
     
     def _getSourceRoute_notif(self,sender,signal,data):
@@ -213,3 +213,101 @@ class RPL(eventBusClient.eventBusClient):
         
         # schedule the next DIO transmission
         self._scheduleSendDIO(self.DIO_PERIOD)
+
+
+    def _indicateDAO(self,tup):    
+        '''
+        \brief Indicate a new DAO was received.
+        
+        This function parses the received packet, and if valid, updates the
+        information needed to compute source routes.
+        '''
+        
+        # retrieve source and destination
+        try:
+            source                = tup[0]
+            if len(source)>8: 
+                source=source[len(source)-8:]
+            #print source    
+            dao                   = tup[1]
+        except IndexError:
+            log.warning("DAO too short ({0} bytes), no space for destination and source".format(len(dao)))
+            return
+        
+        # log
+        output                    = []
+        output                   += ['received DAO:']
+        output                   += ['- source :      {0}'.format(tu.formatAddress(source))]
+        output                   += ['- dao :         {0}'.format(tu.formatBuf(dao))]
+        output                    = '\n'.join(output)
+        log.debug(output)
+        
+        # retrieve DAO header
+        dao_header                = {}
+        dao_transit_information   = {}
+        dao_target_information    = {}
+        
+        try:
+            # RPL header
+            dao_header['RPL_InstanceID']    = dao[0]
+            dao_header['RPL_flags']         = dao[1]
+            dao_header['RPL_Reserved']      = dao[2]
+            dao_header['RPL_DAO_Sequence']  = dao[3]
+            # DODAGID
+            dao_header['DODAGID']           = dao[4:20]
+           
+            dao                             = dao[20:]
+            # retrieve transit information header and parents
+            parents                         = []
+            children                        = []
+                          
+            while (len(dao)>0):  
+                if   dao[0]==self._TRANSIT_INFORMATION_TYPE: 
+                    # transit information option
+                    dao_transit_information['Transit_information_type']             = dao[0]
+                    dao_transit_information['Transit_information_length']           = dao[1]
+                    dao_transit_information['Transit_information_flags']            = dao[2]
+                    dao_transit_information['Transit_information_path_control']     = dao[3]
+                    dao_transit_information['Transit_information_path_sequence']    = dao[4]
+                    dao_transit_information['Transit_information_path_lifetime']    = dao[5]
+                    # address of the parent
+                    parents      += [dao[6:14]]
+                    dao           = dao[14:]
+                elif dao[0]==self._TARGET_INFORMATION_TYPE:
+                    dao_target_information['Target_information_type']               = dao[0]
+                    dao_target_information['Target_information_length']             = dao[1]
+                    dao_target_information['Target_information_flags']              = dao[2]
+                    dao_target_information['Target_information_prefix_length']      = dao[3]
+                    # address of the child
+                    children     += [dao[4:12]]
+                    dao           = dao[12:]
+                else:
+                    log.warning("DAO with wrong Option {0}. Neither Transit nor Target.".format(dao[0]))
+                    return
+        except IndexError:
+            log.warning("DAO too short ({0} bytes), no space for DAO header".format(len(dao)))
+            return
+        
+        # log
+        output               = []
+        output              += ['parents:']
+        for p in parents:
+            output          += ['- {0}'.format(tu.formatAddress(p))]
+        output              += ['children:']
+        for p in children:
+            output          += ['- {0}'.format(tu.formatAddress(p))]
+        output               = '\n'.join(output)
+        log.debug(output)
+        print output
+        
+        # if you get here, the DAO was parsed correctly
+        
+        # update parents information with parents collected -- calls topology module.
+        self.dispatch(          
+            signal          = 'updateParents',
+            data            =  (tuple(source),parents)  
+        )
+        
+        #with self.dataLock:
+        #    self.parents.update({tuple(source):parents})
+   
