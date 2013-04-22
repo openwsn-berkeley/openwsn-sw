@@ -39,63 +39,65 @@ class SourceRoute(object):
         
         # retrieve source and destination
         try:
-            source           = tup[0]
+            source                = tup[0]
             if len(source)>8: 
                 source=source[len(source)-8:]
             #print source    
-            dao              = tup[1]
+            dao                   = tup[1]
         except IndexError:
             log.warning("DAO too short ({0} bytes), no space for destination and source".format(len(dao)))
             return
         
         # log
-        output               = []
-        output              += ['received DAO:']
-        output              += ['- source :      {0}'.format(u.formatAddress(source))]
-        output              += ['- dao :         {0}'.format(u.formatBuf(dao))]
-        output               = '\n'.join(output)
+        output                    = []
+        output                   += ['received DAO:']
+        output                   += ['- source :      {0}'.format(u.formatAddress(source))]
+        output                   += ['- dao :         {0}'.format(u.formatBuf(dao))]
+        output                    = '\n'.join(output)
         log.debug(output)
         
         # retrieve DAO header
-        dao_header              = {}
-        dao_transit_information = {}
-        dao_target_information = {}
+        dao_header                = {}
+        dao_transit_information   = {}
+        dao_target_information    = {}
         
         try:
             # RPL header
-            dao_header['RPL_InstanceID']                        = dao[0]
-            dao_header['RPL_flags']                             = dao[1]
-            dao_header['RPL_Reserved']                          = dao[2]
-            dao_header['RPL_DAO_Sequence']                      = dao[3]
+            dao_header['RPL_InstanceID']    = dao[0]
+            dao_header['RPL_flags']         = dao[1]
+            dao_header['RPL_Reserved']      = dao[2]
+            dao_header['RPL_DAO_Sequence']  = dao[3]
             # DODAGID
-            dao_header['DODAGID']                               = dao[4:20]
+            dao_header['DODAGID']           = dao[4:20]
            
-            dao              = dao[20:]
+            dao                             = dao[20:]
             # retrieve transit information header and parents
-            parents              = []
-            children             = []
+            parents                         = []
+            children                        = []
                           
             while (len(dao)>0):  
-               if (dao[0]==self._TRANSIT_INFORMATION_TYPE): 
-               # transit information option
-                   dao_transit_information['Transit_information_type']              = dao[0]
-                   dao_transit_information['Transit_information_length']            = dao[1]
-                   dao_transit_information['Transit_information_flags']             = dao[2]
-                   dao_transit_information['Transit_information_path_control']      = dao[3]
-                   dao_transit_information['Transit_information_path_sequence']     = dao[4]
-                   dao_transit_information['Transit_information_path_lifetime']     = dao[5]
-                   parents += [dao[6:14]]#address of the parent.
-                   dao=dao[14:]
-               elif  (dao[0]==self._TARGET_INFORMATION_TYPE):
-                   dao_target_information['Target_information_type']                = dao[0]
-                   dao_target_information['Target_information_length']              = dao[1]
-                   dao_target_information['Target_information_flags']               = dao[2]
-                   dao_target_information['Target_information_prefix_length']       = dao[3]
-                   children += [dao[4:12]]#address of the parent.
-                   dao=dao[12:]
-               else:
-                   log.warning("DAO with wrong Option. Neither Transit nor Target. Option is ({0})".format(dao[0]))
-                   return
+                if   dao[0]==self._TRANSIT_INFORMATION_TYPE: 
+                    # transit information option
+                    dao_transit_information['Transit_information_type']             = dao[0]
+                    dao_transit_information['Transit_information_length']           = dao[1]
+                    dao_transit_information['Transit_information_flags']            = dao[2]
+                    dao_transit_information['Transit_information_path_control']     = dao[3]
+                    dao_transit_information['Transit_information_path_sequence']    = dao[4]
+                    dao_transit_information['Transit_information_path_lifetime']    = dao[5]
+                    # address of the parent
+                    parents      += [dao[6:14]]
+                    dao           = dao[14:]
+                elif dao[0]==self._TARGET_INFORMATION_TYPE:
+                    dao_target_information['Target_information_type']               = dao[0]
+                    dao_target_information['Target_information_length']             = dao[1]
+                    dao_target_information['Target_information_flags']              = dao[2]
+                    dao_target_information['Target_information_prefix_length']      = dao[3]
+                    # address of the child
+                    children     += [dao[4:12]]
+                    dao           = dao[12:]
+                else:
+                    log.warning("DAO with wrong Option {0}. Neither Transit nor Target.".format(dao[0]))
+                    return
         except IndexError:
             log.warning("DAO too short ({0} bytes), no space for DAO header".format(len(dao)))
             return
@@ -105,18 +107,12 @@ class SourceRoute(object):
         output              += ['parents:']
         for p in parents:
             output          += ['- {0}'.format(u.formatAddress(p))]
-        output               = '\n'.join(output)
-        log.debug(output)
-        print output
-        
-        output               = []
         output              += ['children:']
         for p in children:
             output          += ['- {0}'.format(u.formatAddress(p))]
         output               = '\n'.join(output)
         log.debug(output)
-        
-        
+        print output
         
         # if you get here, the DAO was parsed correctly
         
@@ -141,8 +137,6 @@ class SourceRoute(object):
             except Exception as err:
                 log.error(err)
                 raise
-        
-        #return [[0xaa]*8,[0xbb]*8,[0xcc]*8,] # poipoipoipoi
         
         return sourceRoute
     
