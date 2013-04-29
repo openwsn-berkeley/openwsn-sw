@@ -11,7 +11,7 @@ import socket
 import threading
 
 from pydispatch import dispatcher
-from moteConnector import MoteConnectorConsumer
+from eventBus import eventBusClient
 
 class lbrClient(threading.Thread):
     
@@ -33,8 +33,9 @@ class lbrClient(threading.Thread):
         self.statsLock            = threading.Lock()
         self.stats                = {}
         self.connectSem           = threading.Lock()
-        self.connectorConsumer    = MoteConnectorConsumer.MoteConnectorConsumer(
-            signal        = 'inputFromMoteProbe.data.internet',
+        self.eventBusClient       = eventBusClient.eventBusClient(
+            name          = 'lbrClient',
+            signal        = 'fromMote.data.internet',
             sender        = dispatcher.Any,
             notifCallback = self.send,
         )
@@ -56,8 +57,8 @@ class lbrClient(threading.Thread):
         # log
         log.debug("starting to run")
         
-        #start the moteConnectorConsumer
-        self.connectorConsumer.start()
+        #start the eventBusClient
+        self.eventBusClient.start()
         
         while True:
             # reset the statistics
@@ -94,17 +95,10 @@ class lbrClient(threading.Thread):
                         log.error("received packet from LBR which is too short ({0} bytes)".format(len(input)))
                         continue
                     
-                    # dispatch the prefix
-                    # dispatcher.send(
-                    #     signal        = 'dataForDagRoot',
-                    #     sender        = 'lbrClient',
-                    #     data          = input,
-                    # )
-                    
                     # dispatch the packet to network state to figure out source route.
                     dispatcher.send(
-                        signal        = 'dataFromInternet',
                         sender        = 'lbrClient',
+                        signal        = 'lowpanToMesh',
                         data          = input,
                     )
             
@@ -230,10 +224,10 @@ class lbrClient(threading.Thread):
             pkt.append(i)
             
         dispatcher.send(
-             signal        = 'dataFromInternet',
-             sender        = 'lbrClient',
-             data          = pkt,
-             )
+            sender      = 'lbrClient',
+            signal      = 'lowpanToMesh',
+            data        = pkt,
+        )
         #start the timer again
         #self.timer = threading.Timer(20,self._testSourceRouting)
         #self.timer.start()
@@ -254,7 +248,7 @@ class lbrClient(threading.Thread):
         self.socket.shutdown(socket.SHUT_RDWR)
         self.socket.close()
     
-    # this is the callback executed by moteConnectorConsumer
+    # this is the callback executed by eventBusClient
     def send(self,lowpan):
         try:
             if self._isConnected():
@@ -374,7 +368,7 @@ class lbrClient(threading.Thread):
         
         # dispatch
         dispatcher.send(
-            signal      = 'networkPrefix',
             sender      = 'lbrClient',
+            signal      = 'networkPrefix',
             data        = prefix,
         )

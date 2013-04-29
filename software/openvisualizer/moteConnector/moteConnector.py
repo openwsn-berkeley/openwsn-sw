@@ -9,16 +9,12 @@ log.addHandler(NullHandler())
 import threading
 import socket
 
-from pydispatch import dispatcher
+from eventBus import eventBusClient
 
 import OpenParser
 import ParserException
 
-class moteConnector(threading.Thread):
-    
-    SERFRAME_MOTE2PC_STATUS  = OpenParser.OpenParser.SERFRAME_MOTE2PC_STATUS
-    SERFRAME_MOTE2PC_ERROR   = OpenParser.OpenParser.SERFRAME_MOTE2PC_ERROR
-    SERFRAME_MOTE2PC_DATA    = OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA
+class moteConnector(threading.Thread,eventBusClient.eventBusClient):
     
     def __init__(self,moteProbeIp,moteProbeTcpPort):
         
@@ -34,18 +30,25 @@ class moteConnector(threading.Thread):
         self.parser                    = OpenParser.OpenParser()
         self.goOn                      = True
         self._subcribedDataForDagRoot  = False
-        
+          
         # initialize parent class
+      
         threading.Thread.__init__(self)
         
         # give this thread a name
         self.name = 'moteConnector@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
-        
-        # connect to dispatcher
-        dispatcher.connect(
-            self._updateConnectedToDagRoot,
-            signal='infoDagRoot',
-        )
+       
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name             = self.name,
+            registrations =  [
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'infoDagRoot', #signal once a dagroot id is received
+                    'callback' : self._updateConnectedToDagRoot, 
+                },
+            ]
+        )    
         
     def run(self):
         # log
@@ -77,12 +80,9 @@ class moteConnector(threading.Thread):
                         log.error(str(err))
                         pass
                     else:
-                        # dispatch                            
-                        dispatcher.send(
-                            signal        = 'inputFromMoteProbe.'+eventSubType,
-                            sender        = self.name,
-                            data          = parsedNotif,
-                        )
+                        # dispatch
+                        self.dispatch('fromMote.'+eventSubType,parsedNotif)                           
+                        
                 
             except socket.error as err:
                 log.error(err)
@@ -90,7 +90,7 @@ class moteConnector(threading.Thread):
     
     #======================== public ==========================================
     
-    def _updateConnectedToDagRoot(self,data):
+    def _updateConnectedToDagRoot(self,sender,signal,data):
         if  (
                (self.moteProbeIp==data['ip'])
                and
@@ -101,32 +101,30 @@ class moteConnector(threading.Thread):
             if not self._subcribedDataForDagRoot:
                 
                 # connect to dispatcher
-                dispatcher.connect(
-                    self.write,
-                    signal='dataForDagRoot',
-                )
-                
-                self._subcribedDataForDagRoot = True
+              self.register(self.WILDCARD,'bytesToMesh',self.write)
+        
+              self._subcribedDataForDagRoot = True
             
         else:
             # this moteConnector is *not* connected to a DAGroot
             
             if self._subcribedDataForDagRoot:
                 # disconnect from dispatcher
-                dispatcher.connect(
-                    self.write,
-                    signal='dataForDagRoot',
-                )
-                
-                self._subcribedDataForDagRoot = False
+              self.unregister(self.WILDCARD,'bytesToMesh',self.write)
+              self._subcribedDataForDagRoot = False
     
-    def write(self,data,headerByte=chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
+    def write(self,sender,signal,data,headerByte=OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
+        # convert to string
+        #pass
+        dataToSend = []
+        dataToSend = [headerByte]+data[0]+data[1]
+        
         try:
-            self.socket.send(headerByte+data)
+            self.socket.send("".join(chr(c) for c in dataToSend))
         except socket.error:
             log.error(err)
             pass
-    
+            
     def quit(self):
         raise NotImplementedError()
     

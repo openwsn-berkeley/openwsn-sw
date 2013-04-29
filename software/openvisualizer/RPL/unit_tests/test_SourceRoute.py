@@ -12,7 +12,7 @@ import json
 
 import pytest
 
-import RPL
+import SourceRoute
 from   openType import typeUtils as u
 
 #============================ logging =========================================
@@ -32,7 +32,7 @@ logHandler = logging.handlers.RotatingFileHandler(LOGFILE_NAME,
                                                   mode='w')
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in ['test_sourceRoute',
-                   'RPL',]:
+                   'SourceRoute',]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
     temp.addHandler(logHandler)
@@ -58,7 +58,6 @@ def expectedSourceRoute(request):
 
 #============================ helpers =========================================
 
-
 #============================ tests ===========================================
 
 def test_sourceRoute(expectedSourceRoute):
@@ -68,9 +67,9 @@ def test_sourceRoute(expectedSourceRoute):
     MOTE_A <- MOTE_B <- MOTE_C <- MOTE_D
     '''
     
-    rpl = RPL.RPL()
+    sourceRoute = SourceRoute.SourceRoute()
     
-    rpl.parents = {
+    sourceRoute.parents = {
         tuple(MOTE_B): [MOTE_A],
         tuple(MOTE_C): [MOTE_B],
         tuple(MOTE_D): [MOTE_C],
@@ -78,7 +77,7 @@ def test_sourceRoute(expectedSourceRoute):
     
     expectedDestination = json.loads(expectedSourceRoute)[0]
     expectedRoute       = json.loads(expectedSourceRoute)[1]
-    calculatedRoute     = rpl.getRouteTo(expectedDestination)
+    calculatedRoute     = sourceRoute.getSourceRoute(expectedDestination)
     
     # log
     output              = []

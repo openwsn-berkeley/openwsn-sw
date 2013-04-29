@@ -1,61 +1,70 @@
 import json
 
-from EventBus import EventBus
-
 import OpenFrame
 import OpenTable
+import openvisualizer_utils as u
 
 class OpenFrameEventBus(OpenFrame.OpenFrame):
     
-    def __init__(self,guiParent,width=None,height=None,frameName="eventBus",row=0,column=0,columnspan=1):
+    GUIUPDATEPERIOD = 1000
+    
+    def __init__(self,guiParent,eventBusMonitor,width=None,height=None,frameName="eventBus",row=0,column=0,columnspan=1):
         
         # store params
         self.guiParent       = guiParent
+        self.eventBusMonitor = eventBusMonitor
         self.frameName       = frameName
         self.row             = row
         self.column          = column
         
         # initialize the parent class
-        OpenFrame.OpenFrame.__init__(self,guiParent,
-                                          width=width,
-                                          height=height,
-                                          frameName=frameName,
-                                          row=row,
-                                          column=column,
-                                          columnspan=columnspan,)
+        OpenFrame.OpenFrame.__init__(self,
+            guiParent,
+            width=width,
+            height=height,
+            frameName=frameName,
+            row=row,
+            column=column,
+            columnspan=columnspan,
+        )
         
         # local variables
-        self.updatePeriod    = None
-        
         self.dataTable = OpenTable.OpenTable(self.container)
         self.dataTable.grid(row=1,column=0)
         
-    #======================== public ==========================================
-    
-    def startAutoUpdate(self,updatePeriod):
-        self.updatePeriod    = updatePeriod
+        # trigger the update of the stats
+        self.after(self.GUIUPDATEPERIOD,self._updateStats)
         
-        self.after(self.updatePeriod,self._cb_autoUpdate)
-    
-    def stopAutoUpdate(self):
-        self.updatePeriod    = None
-    
-    def update(self,newData):
-        self.dataTable.update(newData,
-                              columnOrder = [
-                                  'uri',
-                                  'numIn',
-                                  'numOut',
-                              ])
+    #======================== public ==========================================
     
     #======================== private =========================================
     
-    def _cb_autoUpdate(self):
+    def _updateStats(self):
         
-        self.update(json.loads(EventBus.EventBus().getStats()))
+        # load stats
+        newStats = json.loads(self.eventBusMonitor.getStats())
         
-        if self.updatePeriod:
-            self.after(self.updatePeriod,self._cb_autoUpdate)
+        for i in range(len(newStats)):
+            if type(newStats[i]['signal'])==list and len(newStats[i]['signal'])==3:
+                [ip,tran,port] = newStats[i]['signal']
+                signal  = []
+                signal += [u.formatIPv6Addr(ip)]
+                signal += [tran]
+                signal += [str(port)]
+                newStats[i]['signal'] = ','.join(signal)
+        
+        # update table
+        self.dataTable.update(
+            newStats,
+            columnOrder = [
+                'sender',
+                'signal',
+                'num',
+            ]
+        )
+        
+        # schedule next update
+        self.after(self.GUIUPDATEPERIOD,self._updateStats)
     
 ###############################################################################
 

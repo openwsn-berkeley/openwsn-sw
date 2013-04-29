@@ -9,13 +9,10 @@ log.addHandler(NullHandler())
 import copy
 import time
 import threading
-import pprint
 import json
 
-from pydispatch import dispatcher
-
 from moteConnector import ParserStatus
-from moteConnector import MoteConnectorConsumer
+from eventBus      import eventBusClient
 from openType      import openType,         \
                           typeAsn,          \
                           typeAddr,         \
@@ -116,6 +113,7 @@ class StateMacStats(StateElem):
         self.data[0]['minCorrection']       = notif.minCorrection
         self.data[0]['maxCorrection']       = notif.maxCorrection
         self.data[0]['numDeSync']           = notif.numDeSync
+        self.data[0]['dutyCycle']           = notif.dutyCycle
 
 class StateScheduleRow(StateElem):
 
@@ -226,9 +224,10 @@ class StateIsSync(StateElem):
 
 class StateIdManager(StateElem):
     
-    def __init__(self,moteConnector):
+    def __init__(self,eventBusClient,moteConnector):
         StateElem.__init__(self)
-        self.moteConnector = moteConnector
+        self.eventBusClient  = eventBusClient
+        self.moteConnector   = moteConnector
     
     def get16bAddr(self):
         try:
@@ -269,9 +268,8 @@ class StateIdManager(StateElem):
         if self.data[0]['isDAGroot']==1:
         
             # dispatch
-            dispatcher.send(
+            self.eventBusClient.dispatch(
                 signal        = 'infoDagRoot',
-                sender        = 'StateIdManager',
                 data          = {
                                     'ip':      self.moteConnector.moteProbeIp,
                                     'tcpPort': self.moteConnector.moteProbeTcpPort,
@@ -302,7 +300,7 @@ class StateTable(StateElem):
             self.data.append(self.meta[0]['rowClass']())
         self.data[notif.row].update(notif)
 
-class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
+class moteState(eventBusClient.eventBusClient):
     
     ST_OUPUTBUFFER      = 'OutputBuffer'
     ST_ASN              = 'Asn'
@@ -334,17 +332,25 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
         log.debug("create instance")
         
         # store params
-        self.moteConnector                  = moteConnector
+        self.moteConnector   = moteConnector
         
         # initialize parent class
-        MoteConnectorConsumer.MoteConnectorConsumer.__init__(
+        eventBusClient.eventBusClient.__init__(
             self,
-            signal        = 'inputFromMoteProbe.status',
-            sender        = 'moteConnector@{0}:{1}'.format(
-                                self.moteConnector.moteProbeIp,
-                                self.moteConnector.moteProbeTcpPort,
-                            ),
-            notifCallback = self._receivedData_notif,
+            name             = 'moteState@{0}:{1}'.format(
+                                    self.moteConnector.moteProbeIp,
+                                    self.moteConnector.moteProbeTcpPort,
+                                ),
+            registrations    = [
+                {
+                    'sender'      : 'moteConnector@{0}:{1}'.format(
+                                        self.moteConnector.moteProbeIp,
+                                        self.moteConnector.moteProbeTcpPort,
+                                    ),
+                    'signal'      : 'fromMote.status',
+                    'callback'    : self._receivedStatus_notif,
+                },
+            ]
         )
         
         # local variables
@@ -392,7 +398,10 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
                                                     ]
                                                 ))
         self.state[self.ST_ISSYNC]          = StateIsSync()
-        self.state[self.ST_IDMANAGER]       = StateIdManager(self.moteConnector)
+        self.state[self.ST_IDMANAGER]       = StateIdManager(
+                                                self,
+                                                self.moteConnector
+                                              )
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
         
         self.notifHandlers = {
@@ -441,10 +450,10 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
     
     #======================== private =========================================
     
-    def _receivedData_notif(self,notif):
+    def _receivedStatus_notif(self,sender,signal,data):
         
         # log
-        log.debug("received {0}".format(notif))
+        log.debug("received {0}".format(data))
         
         # lock the state data
         self.stateLock.acquire()
@@ -452,16 +461,16 @@ class moteState(MoteConnectorConsumer.MoteConnectorConsumer):
         # call handler
         found = False
         for k,v in self.notifHandlers.items():
-            if self._isnamedtupleinstance(notif,k):
+            if self._isnamedtupleinstance(data,k):
                 found = True
-                v(notif)
+                v(data)
                 break
         
         # unlock the state data
         self.stateLock.release()
         
         if found==False:
-            raise SystemError("No handler for notif {0}".format(notif))
+            raise SystemError("No handler for data {0}".format(data))
     
     def _isnamedtupleinstance(self,var,tupleInstance):
         return var._fields==tupleInstance._fields
