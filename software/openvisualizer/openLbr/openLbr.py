@@ -593,6 +593,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         '''
         with self.stateLock:
             self.networkPrefix    = data  
+            log.info('Set network prefix  {0}'.format(u.formatIPv6Addr(data)))
             
             
     def _infoDagRoot_notif(self,sender,signal,data):

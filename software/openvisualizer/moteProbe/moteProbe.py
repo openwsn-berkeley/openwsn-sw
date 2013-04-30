@@ -22,7 +22,7 @@ class moteProbe(object):
         self.tcpport            = tcpport
         
         # log
-        log.info("creating moteProbe attaching to {0}@{1}, listening to TCP port {1}".format(
+        log.info("creating moteProbe attaching to {0}@{1}, listening to TCP port {2}".format(
                     self.serialportName,
                     self.serialportBaudrate,
                     self.tcpport)
