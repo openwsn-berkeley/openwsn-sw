@@ -25,6 +25,8 @@ TUN_IPv4_NETWORK   = [ 10,  2,0,0] ##< The IPv4 address of the TUN interface's n
 TUN_IPv4_NETMASK   = [255,255,0,0] ##< The IPv4 netmask of the TUN interface.
 
 IPV6PREFIX         = [0xBB,0xBB,0x0,0x0,0x0,0x0,0x0,0x0]
+IPV6PREFIX_STR     = "BBBB:0000:0000:0000"
+
 IFF_TUN            = 0x0001
 TUNSETIFF          = 0x400454ca
 
@@ -179,7 +181,7 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         
         #=====
         log.info("configuring IPv6 address...")
-        v = os.system('ifconfig ' + ifname + ' inet6 add ' + IPV6PREFIX + '::1/64')
+        v = os.system('ifconfig ' + ifname + ' inet6 add ' + IPV6PREFIX_STR + '::1/64')
         v = os.system('ifconfig ' + ifname + ' inet6 add fe80::1/64')
         v = os.system('ifconfig ' + ifname + ' up')
                 
