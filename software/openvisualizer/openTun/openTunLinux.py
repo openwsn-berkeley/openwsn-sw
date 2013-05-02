@@ -181,9 +181,10 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         
         #=====
         log.info("configuring IPv6 address...")
-        v = os.system('ifconfig ' + ifname + ' inet6 add ' + IPV6PREFIX_STR + '::1/64')
-        v = os.system('ifconfig ' + ifname + ' inet6 add fe80::1/64')
-        v = os.system('ifconfig ' + ifname + ' up')
+        v = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
+        v = os.system('ip link set ' + ifname + ' up')
+        v = os.system('ip addr add ' + IPV6PREFIX_STR + '::1/64 dev ' + ifname)
+        v = os.system('ip addr add fe80::1/64 dev ' + ifname)
                 
         #=====
         log.info("adding static route route...")
