@@ -141,7 +141,7 @@ class eventBusClient(object):
             data         = data,
         )
         for (function,returnVal) in temp:
-            if returnVal:
+            if returnVal!=None:
                 return returnVal
         raise SystemError('No answer to signal _dispatchAndGetResult')
     
