@@ -14,7 +14,7 @@ import sys
 import struct
 
 from fcntl import ioctl
-
+import openvisualizer_utils as u
 from eventBus import eventBusClient
 
 #============================ defines =========================================
@@ -24,9 +24,8 @@ TUN_IPv4_ADDRESS   = [ 10,  2,0,1] ##< The IPv4 address of the TUN interface.
 TUN_IPv4_NETWORK   = [ 10,  2,0,0] ##< The IPv4 address of the TUN interface's network.
 TUN_IPv4_NETMASK   = [255,255,0,0] ##< The IPv4 netmask of the TUN interface.
 
-IPV6PREFIX         = [0xBB,0xBB,0x0,0x0,0x0,0x0,0x0,0x0]
-IPV6PREFIX_STR     = "BBBB:0000:0000:0000"
-
+IPv6Prefix         = "BBBB:0000:0000:0000"
+IPV6PREFIX         = [0xBB,0xBB,0x0,0x0,0x0,0x0,0x0,0x0] #mi stavo rompendo a cercare il modo per convertirlo in stringa
 IFF_TUN            = 0x0001
 TUNSETIFF          = 0x400454ca
 
@@ -69,19 +68,20 @@ class TunReadThread(threading.Thread):
             
             # wait for data
             p =  os.read(self.tunIf,self.ETHERNET_MTU)
-          
-            
+       
             # convert input from a string to a byte list
             p = [ord(b) for b in p]
             
+            print 'packet captured : {0}'.format(u.formatBuf(p)) # debugging mode
+            
             # make sure it's an IPv6 packet (starts with 0x6x)
-            if (p[0]&0xf0)!=0x60:
-               # this is not an IPv6 packet
-               continue
+            if (p[4]&0xf0) != 0x60: # insert p[4] because there are 32-bit unknown in the packet
+                print 'this is not an IPv6 packet'
+                continue
             
             # because of the nature of tun for Windows, p contains ETHERNET_MTU
             # bytes. Cut at length of IPv6 packet.
-            p = p[:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
+            p = p[4:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
             
             # call the callback
             self.callback(p)
@@ -147,6 +147,8 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         
         This function forwards the data to the the TUN interface.
         '''
+        VIRTUALTUNID = [0x00,0x00,0x86,0xdd]
+        data = VIRTUALTUNID + data
         
         # convert data to string
         data  = ''.join([chr(b) for b in data])
@@ -183,16 +185,24 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         log.info("configuring IPv6 address...")
         v = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
         v = os.system('ip link set ' + ifname + ' up')
-        v = os.system('ip addr add ' + IPV6PREFIX_STR + '::1/64 dev ' + ifname)
-        v = os.system('ip addr add fe80::1/64 dev ' + ifname)
-                
+        v = os.system('ip -6 addr add ' + IPv6Prefix + '::1/64 dev ' + ifname)
+        v = os.system('ip -6 addr add fe80::1/64 dev ' + ifname)
+        
         #=====
         log.info("adding static route route...")
-        os.system('route -A inet6 add ' + IPV6PREFIX_STR + '::/64 dev ' + ifname)
+        os.system('ip -6 route add ' + IPv6Prefix + ':1415:9200::/96 dev ' + ifname + ' metric 1') #added 'metric 1' for router-compatibility constraint (show ping packet on wireshark but don't send to mote at all)
+        #os.system('ip -6 route add ' + IPv6Prefix + '::/64 via ' + IPv6Prefix + '::1/64')
         
         #=====
         log.info("enabling IPv6 forwarding...")
-        os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')       
+        os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')
+        
+        #=====
+        print('\ncreated following virtual interface:')
+        os.system('ip addr show ' + ifname)
+        
+        #=====start radvd
+        #os.system('radvd start')
         
         return f
     
