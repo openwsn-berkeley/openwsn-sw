@@ -188,7 +188,7 @@ class OpenTunLinux(eventBusClient.eventBusClient):
                 
         #=====
         log.info("adding static route route...")
-        os.system('route -A inet6 add ' + IPV6PREFIX + '::/64 dev ' + ifname)
+        os.system('route -A inet6 add ' + IPV6PREFIX_STR + '::/64 dev ' + ifname)
         
         #=====
         log.info("enabling IPv6 forwarding...")
