@@ -315,16 +315,23 @@ class moteState(eventBusClient.eventBusClient):
     ST_ISSYNC           = 'IsSync'
     ST_IDMANAGER        = 'IdManager'
     ST_MYDAGRANK        = 'MyDagRank'
-    ALL_STATES          = [ST_OUPUTBUFFER,
-                           ST_ASN,
-                           ST_MACSTATS,
-                           ST_SCHEDULE,
-                           ST_BACKOFF,
-                           ST_QUEUE,
-                           ST_NEIGHBORS,
-                           ST_ISSYNC,
-                           ST_IDMANAGER, 
-                           ST_MYDAGRANK]
+    ST_ALL              = [
+        ST_OUPUTBUFFER,
+        ST_ASN,
+        ST_MACSTATS,
+        ST_SCHEDULE,
+        ST_BACKOFF,
+        ST_QUEUE,
+        ST_NEIGHBORS,
+        ST_ISSYNC,
+        ST_IDMANAGER, 
+        ST_MYDAGRANK,
+    ]
+    
+    TRIGGER_DAGROOT     = 'DAGroot'
+    TRIGGER_ALL         = [
+        TRIGGER_DAGROOT,
+    ]
     
     def __init__(self,moteConnector):
         
@@ -447,6 +454,18 @@ class moteState(eventBusClient.eventBusClient):
         self.stateLock.release()
         
         return returnVal
+    
+    def triggerAction(self,action):
+        
+        # dispatch
+        self.dispatch(
+            signal        = 'cmdToMote',
+            data          = {
+                                'ip':      self.moteConnector.moteProbeIp,
+                                'tcpPort': self.moteConnector.moteProbeTcpPort,
+                                'action':  action,
+                            },
+        )
     
     #======================== private =========================================
     

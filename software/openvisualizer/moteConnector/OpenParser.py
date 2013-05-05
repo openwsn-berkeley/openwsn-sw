@@ -32,6 +32,10 @@ class OpenParser(Parser.Parser):
     SERFRAME_PC2MOTE_TRIGGERICMPv6ECHO = ord('E')
     SERFRAME_PC2MOTE_TRIGGERSERIALECHO = ord('S')
     
+    SERFRAME_ACTION_YES                = ord('Y')
+    SERFRAME_ACTION_NO                 = ord('N')
+    SERFRAME_ACTION_TOGGLE             = ord('T')
+    
     def __init__(self):
         
         # log

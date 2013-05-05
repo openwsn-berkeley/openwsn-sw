@@ -45,7 +45,7 @@ class moteProbeSerialThread(threading.Thread):
         
         # connect to dispatcher
         dispatcher.connect(
-            self.send,
+            self._bufferDataToSend,
             signal = 'fromProbeSocket@'+self.serialportName,
         )
     
@@ -65,7 +65,6 @@ class moteProbeSerialThread(threading.Thread):
                     time.sleep(1)
                     break
                 else:
-                    #log.debug("received {0} ({1})".format(rxByte,hex(ord(rxByte))))
                     if      (
                                 (not self.busyReceiving)             and 
                                 self.lastRxByte==self.hdlc.HDLC_FLAG and
@@ -102,11 +101,6 @@ class moteProbeSerialThread(threading.Thread):
                                     if self.outputBuf:
                                         outputToWrite = self.outputBuf.pop(0)
                                         self.serial.write(outputToWrite)
-                                        #log.debug('sent {0} bytes over serial:   {1}'.format(
-                                        #        len(outputToWrite),
-                                        #        u.formatBuf(outputToWrite),
-                                        #    )
-                                        #)
                             else:
                                 # dispatch
                                 dispatcher.send(
@@ -119,19 +113,13 @@ class moteProbeSerialThread(threading.Thread):
     
     #======================== public ==========================================
     
-    def send(self,data):
+    #======================== private =========================================
+    
+    def _bufferDataToSend(self,data):
+        
         # frame with HDLC
         hdlcData = self.hdlc.hdlcify(data)
         
         # add to outputBuf
         with self.outputBufLock:
             self.outputBuf += [hdlcData]
-        
-        # log
-#        log.debug('added {0} bytes to outputBuf: {1}'.format(
-#                len(hdlcData),
-#                u.formatBuf(hdlcData),
-#            )
-#        )
-    
-    #======================== private =========================================

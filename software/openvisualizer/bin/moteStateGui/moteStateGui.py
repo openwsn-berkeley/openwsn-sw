@@ -20,6 +20,7 @@ from RPL           import UDPLatency
 from RPL           import topology
 import OpenWindow
 import OpenFrameState
+import OpenFrameButton
 import OpenFrameLbr
 import OpenFrameEventBus
 
@@ -84,6 +85,7 @@ class MoteStateGui(object):
                     moteState.moteState.ST_BACKOFF,
                 ],
                 [
+                    moteState.moteState.TRIGGER_DAGROOT,
                     moteState.moteState.ST_IDMANAGER,
                 ],
                 [
@@ -101,19 +103,33 @@ class MoteStateGui(object):
                 tempRowFrame = Tkinter.Frame(thisFrame)
                 tempRowFrame.grid(row=row)
                 for column in range(len(frameOrganization[row])):
-                    stateType = frameOrganization[row][column]
-                    tempFrameState = OpenFrameState.OpenFrameState(
-                                guiParent=tempRowFrame,
-                                frameName=stateType,
-                                row=0,
-                                column=column
-                            )
-                    tempFrameState.startAutoUpdate(
-                                self.GUI_UPDATE_PERIOD,
-                                ms.getStateElem,
-                                (stateType,)
-                            )
-                    tempFrameState.show()
+                    stateOrTrigger = frameOrganization[row][column]
+                    if   stateOrTrigger in moteState.moteState.ST_ALL:
+                        tempFrameState = OpenFrameState.OpenFrameState(
+                            guiParent       = tempRowFrame,
+                            frameName       = stateOrTrigger,
+                            row             = 0,
+                            column          = column,
+                        )
+                        tempFrameState.startAutoUpdate(
+                            updatePeriod    = self.GUI_UPDATE_PERIOD,
+                            updateFunc      = ms.getStateElem,
+                            updateParams    = (stateOrTrigger,),
+                        )
+                        tempFrameState.show()
+                    elif stateOrTrigger in moteState.moteState.TRIGGER_ALL:
+                        tempFrameButton = OpenFrameButton.OpenFrameButton(
+                            callfunction    = ms.triggerAction,
+                            callparams      = (stateOrTrigger,),
+                            guiParent       = tempRowFrame,
+                            frameName       = stateOrTrigger,
+                            buttonText      = 'toggle',
+                            row             = 0,
+                            column          = column,
+                        )
+                        tempFrameButton.show()
+                    else:
+                        raise SystemError('unexpected stateOrTrigger={0}'.format(stateOrTrigger))
             
             menuNames       += ['{0}:{1}'.format(ms.moteConnector.moteProbeIp,ms.moteConnector.moteProbeTcpPort)]
             self.menuFrames += [thisFrame]

@@ -9,7 +9,8 @@ log.addHandler(NullHandler())
 import threading
 import socket
 
-from eventBus import eventBusClient
+from eventBus      import eventBusClient
+from moteState     import moteState
 
 import OpenParser
 import ParserException
@@ -44,11 +45,16 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
             registrations =  [
                 {
                     'sender'   : self.WILDCARD,
-                    'signal'   : 'infoDagRoot', #signal once a dagroot id is received
-                    'callback' : self._updateConnectedToDagRoot, 
+                    'signal'   : 'infoDagRoot',
+                    'callback' : self._infoDagRoot_handler,
+                },
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'cmdToMote',
+                    'callback' : self._cmdToMote_handler,
                 },
             ]
-        )    
+        )
         
     def run(self):
         # log
@@ -90,7 +96,32 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
     
     #======================== public ==========================================
     
-    def _updateConnectedToDagRoot(self,sender,signal,data):
+    def _cmdToMote_handler(self,sender,signal,data):
+        if  (
+               (self.moteProbeIp==data['ip'])
+               and
+               (self.moteProbeTcpPort==data['tcpPort'])
+            ):
+            
+            if data['action']==moteState.moteState.TRIGGER_DAGROOT:
+                # toggle the DAGroot status
+                self._sendToMoteProbe(
+                    dataToSend = [
+                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETROOT,
+                        OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
+                    ],
+                )
+                # toggle the bridge status
+                self._sendToMoteProbe(
+                    dataToSend = [
+                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETBRIDGE,
+                        OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
+                    ],
+                )
+            else:
+                raise SystemError('unexpected action={0}'.format(data['action']))
+    
+    def _infoDagRoot_handler(self,sender,signal,data):
         if  (
                (self.moteProbeIp==data['ip'])
                and
@@ -101,31 +132,49 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
             if not self._subcribedDataForDagRoot:
                 
                 # connect to dispatcher
-              self.register(self.WILDCARD,'bytesToMesh',self.write)
-        
-              self._subcribedDataForDagRoot = True
+                self.register(
+                    sender   = self.WILDCARD,
+                    signal   = 'bytesToMesh',
+                    callback = self._bytesToMesh_handler,
+                )
+                
+                # remember I'm subscribed
+                self._subcribedDataForDagRoot = True
             
         else:
             # this moteConnector is *not* connected to a DAGroot
             
             if self._subcribedDataForDagRoot:
+                
                 # disconnect from dispatcher
-              self.unregister(self.WILDCARD,'bytesToMesh',self.write)
-              self._subcribedDataForDagRoot = False
+                self.unregister(
+                    sender   = self.WILDCARD,
+                    signal   = 'bytesToMesh',
+                    callback = self._bytesToMesh_handler,
+                )
+                
+                # remember I'm not subscribed
+                self._subcribedDataForDagRoot = False
     
-    def write(self,sender,signal,data,headerByte=OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
-        # convert to string
-        #pass
-        dataToSend = []
-        dataToSend = [headerByte]+data[0]+data[1]
+    def _bytesToMesh_handler(self,sender,signal,data):
+        assert type(data)==tuple
+        assert len(data)==2
         
-        try:
-            self.socket.send("".join(chr(c) for c in dataToSend))
-        except socket.error:
-            log.error(err)
-            pass
-            
+        (nextHop,lowpan) = data
+        
+        self._sendToMoteProbe(
+            dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_DATA]+nextHop+lowpan,
+        )
+    
     def quit(self):
         raise NotImplementedError()
     
     #======================== private =========================================
+    
+    def _sendToMoteProbe(self,dataToSend):
+        
+        try:
+            self.socket.send(''.join([chr(c) for c in dataToSend]))
+        except socket.error:
+            log.error(err)
+            pass

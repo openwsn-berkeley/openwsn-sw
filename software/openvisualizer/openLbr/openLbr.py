@@ -160,13 +160,13 @@ class OpenLbr(eventBusClient.eventBusClient):
                     
             lowpan['route'] = self._getSourceRoute(dst_addr)
             
-            lowpan['route'].pop() #remove last as this is me.
-            
-            if not lowpan['route']:
+            if len(lowpan['route'])<2:
                 # no source route could be found
                 log.warning('no source route to {0}'.format(lowpan['dst_addr']))
                 # TODO: return ICMPv6 message
                 return
+            
+            lowpan['route'].pop() #remove last as this is me.
             
             lowpan['nextHop'] = lowpan['route'][len(lowpan['route'])-1] #get next hop as this has to be the destination address, this is the last element on the list
             # turn dictionnary of fields into raw bytes
@@ -576,16 +576,11 @@ class OpenLbr(eventBusClient.eventBusClient):
     #===== source route
     
     def _getSourceRoute(self,destination):
-        temp = self.dispatch(
+        returnVal = self._dispatchAndGetResult(
             signal       = 'getSourceRoute', 
             data         = destination,
         )
-        for (function,returnVal) in temp:
-            if returnVal:
-                return returnVal
-        raise SystemError('No answer to signal getSourceRoute')
-    
-    
+        return returnVal
     
     def _setPrefix_notif(self,sender,signal, data):
         '''
