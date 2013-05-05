@@ -48,7 +48,7 @@ class MenuUpdateFrame(Tkinter.Frame):
 class MoteStateGui(object):
     
     GUI_UPDATE_PERIOD      = 500
-    MENUENTRY_STATE        = 'mote state'
+    MENUENTRY_STATE        = 'motes'
     MENUENTRY_LBR          = 'lbr'
     MENUENTRY_EVENTBUS     = 'eventBus'
     
@@ -81,18 +81,20 @@ class MoteStateGui(object):
                     moteState.moteState.ST_ASN,
                     moteState.moteState.ST_MYDAGRANK,
                     moteState.moteState.ST_OUPUTBUFFER,
+                    moteState.moteState.ST_BACKOFF,
                 ],
                 [
                     moteState.moteState.ST_IDMANAGER,
+                ],
+                [
                     moteState.moteState.ST_MACSTATS,
                 ],
                 [
                     moteState.moteState.ST_SCHEDULE,
-                    moteState.moteState.ST_BACKOFF,
+                    moteState.moteState.ST_QUEUE,
                 ],
                 [
                     moteState.moteState.ST_NEIGHBORS,
-                    moteState.moteState.ST_QUEUE,
                 ],
             ]
             for row in range(len(frameOrganization)):
