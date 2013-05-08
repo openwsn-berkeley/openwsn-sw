@@ -92,7 +92,7 @@ class eventBusClient(object):
     
     def _eventBusNotification(self,signal,sender,data):
         
-        with self.dataLock:
+        #with self.dataLock:
             for r in self.registrations:
                 if (
                         self._signalsEquivalent(r['signal'],signal) and
