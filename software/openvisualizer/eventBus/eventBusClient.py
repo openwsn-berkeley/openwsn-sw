@@ -78,33 +78,44 @@ class eventBusClient(object):
             self.registrations += [newRegistration]
     
     def unregister(self,sender,signal,callback):
-        rem = None
-        for s in self.registrations:
-            if self._signalsEquivalent(s, signal):
-                rem=s
-                break
-        if (rem!=None):
-            self.registrations.remove(remove) 
-                   
-    
+        with self.dataLock:
+            rem = None
+            for s in self.registrations:
+                if self._signalsEquivalent(s, signal):
+                    rem=s
+                    break
+            if (rem!=None):
+                self.registrations.remove(remove) 
     
     #======================== private =========================================
     
     def _eventBusNotification(self,signal,sender,data):
         
-        #with self.dataLock:
+        callback = None
+        
+        # find the callback
+        with self.dataLock:
             for r in self.registrations:
                 if (
                         self._signalsEquivalent(r['signal'],signal) and
                         (r['sender']==sender or r['sender']==self.WILDCARD)
                     ):
-                    
-                    # call the callback
-                    return r['callback'](
-                        sender = sender,
-                        signal = signal,
-                        data   = data,
-                    )
+                    callback = r['callback']
+        
+        if not callback:
+            return None
+        
+        # call the callback
+        try:
+            return callback(
+                sender = sender,
+                signal = signal,
+                data   = data,
+            )
+        except TypeError as err:
+            output = "ERROR could not call {0}, err={1}".format(callback,err)
+            log.critical(output)
+            print output
     
     def _signalsEquivalent(self,s1,s2):
         if type(s1)==type(s2)==str:
