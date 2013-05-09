@@ -507,7 +507,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         # sam
         sam = ((pkt_lowpan[1]) >> 4) & 0x03
         if (sam == self.IPHC_SAM_ELIDED):
-            log.error("unsupported sam==IPHC_SAM_ELIDED")
+            #pkt from the previous hop
             pkt_ipv6['src_addr'] = self.networkPrefix + mac_prev_hop
             
         elif (sam == self.IPHC_SAM_16B):
