@@ -81,8 +81,8 @@ class TunReadThread(threading.Thread):
             # remove tun ID octets
             p = p[4:]
             
-            # make sure it's an IPv6 packet (starts with 0x6x)
-            if (p[0]&0xf0) != 0x60: # insert p[4] because there are 4 octets ID Tun
+            # make sure it's an IPv6 packet (i.e., starts with 0x6x)
+            if (p[0]&0xf0) != 0x60:
                 log.debug('this is not an IPv6 packet')
                 continue
             
