@@ -8,6 +8,8 @@ log.addHandler(NullHandler())
 
 import threading
 import time
+import traceback
+import sys
 
 # TODO: import only when Windows
 
@@ -17,7 +19,7 @@ import win32event
 import pywintypes
 
 from eventBus import eventBusClient
-
+import openvisualizer_utils as u
 #============================ defines =========================================
 
 ## IPv4 configuration of your TUN interface (represented as a list of integers)
@@ -74,37 +76,42 @@ class TunReadThread(threading.Thread):
         self.start()
     
     def run(self):
-        
-        rxbuffer = win32file.AllocateReadBuffer(self.ETHERNET_MTU)
-        
-        while self.goOn:
+        try:
+            rxbuffer = win32file.AllocateReadBuffer(self.ETHERNET_MTU)
             
-            # wait for data
-            try:
-                l, p = win32file.ReadFile(self.tunIf, rxbuffer, self.overlappedRx)
-                win32event.WaitForSingleObject(self.overlappedRx.hEvent, win32event.INFINITE)
-                self.overlappedRx.Offset = self.overlappedRx.Offset + len(p)
-            except Exception as err:
-                print err
-                log.error(err)
-                raise ValueError('Error writing to TUN')
-            else:    
-                # convert input from a string to a byte list
-                p = [ord(b) for b in p]
-                #print "tun input"
-                #print p
-                # make sure it's an IPv6 packet (starts with 0x6x)
-                if (p[0]&0xf0)!=0x60:
-                   # this is not an IPv6 packet
-                   continue
+            while self.goOn:
                 
-                # because of the nature of tun for Windows, p contains ETHERNET_MTU
-                # bytes. Cut at length of IPv6 packet.
-                p = p[:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
-                
-                # call the callback
-                self.callback(p)
-                
+                # wait for data
+                try:
+                    l, p = win32file.ReadFile(self.tunIf, rxbuffer, self.overlappedRx)
+                    win32event.WaitForSingleObject(self.overlappedRx.hEvent, win32event.INFINITE)
+                    self.overlappedRx.Offset = self.overlappedRx.Offset + len(p)
+                except Exception as err:
+                    print err
+                    log.error(err)
+                    raise ValueError('Error writing to TUN')
+                else:    
+                    # convert input from a string to a byte list
+                    p = [ord(b) for b in p]
+                    #print "tun input"
+                    #print p
+                    # make sure it's an IPv6 packet (starts with 0x6x)
+                    if (p[0]&0xf0)!=0x60:
+                       # this is not an IPv6 packet
+                       continue
+                    
+                    # because of the nature of tun for Windows, p contains ETHERNET_MTU
+                    # bytes. Cut at length of IPv6 packet.
+                    p = p[:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
+                    
+                    # call the callback
+                    self.callback(p)
+        except Exception as err:
+            errMsg=u.formatCrashMessage(self.name,err)
+            print errMsg
+            log.critical(errMsg)
+            sys.exit(1)
+                 
     
     #======================== public ==========================================
     

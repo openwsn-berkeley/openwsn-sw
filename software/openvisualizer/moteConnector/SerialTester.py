@@ -9,6 +9,10 @@ log.addHandler(NullHandler())
 import threading
 import socket
 import random
+import traceback
+import sys
+import openvisualizer_utils as u
+
 
 from moteConnector import OpenParser
 
@@ -48,40 +52,46 @@ class SerialTester(threading.Thread):
         self.name = 'SerialTester@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
         
     def run(self):
-        # log
-        log.debug("starting to run")
-        
-        while self.goOn:
-            try:
-                # connect
-                self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
-                log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
-                
-                while True:
+        try:
+            # log
+            log.debug("starting to run")
+            
+            while self.goOn:
+                try:
+                    # connect
+                    self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
+                    log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
                     
-                    # retrieve the string of bytes from the socket
-                    inputString        = self.socket.recv(1024)
-                    input              = [ord(c) for c in inputString]
-                    
-                    # handle input
-                    if (chr(input[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
+                    while True:
                         
-                        # don't handle if I'm not testing
-                        with self.dataLock:
-                            if not self.busyTesting:
-                                continue
+                        # retrieve the string of bytes from the socket
+                        inputString        = self.socket.recv(1024)
+                        input              = [ord(c) for c in inputString]
                         
-                        with self.dataLock:
-                            # record what I just received
-                            self.lastReceived = input[1+2+5:] # type (1B), moteId (2B), ASN (5B)
+                        # handle input
+                        if (chr(input[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
                             
-                            # wake up other thread
-                            self.waitForReply.set()
-                    
-            except socket.error as err:
-                log.error(err)
-                pass
-    
+                            # don't handle if I'm not testing
+                            with self.dataLock:
+                                if not self.busyTesting:
+                                    continue
+                            
+                            with self.dataLock:
+                                # record what I just received
+                                self.lastReceived = input[1+2+5:] # type (1B), moteId (2B), ASN (5B)
+                                
+                                # wake up other thread
+                                self.waitForReply.set()
+                        
+                except socket.error as err:
+                    log.error(err)
+                    pass
+        except Exception as err:
+            errMsg=u.formatCrashMessage(self.name,err)
+            print errMsg
+            log.critical(errMsg)
+            sys.exit(1)
+        
     def quit(self):
         self.goOn = False
         self.socket.close()

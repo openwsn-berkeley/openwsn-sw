@@ -12,6 +12,8 @@ import os
 import socket
 import sys
 import struct
+import traceback
+
 
 from fcntl import ioctl
 import openvisualizer_utils as u
@@ -64,35 +66,40 @@ class TunReadThread(threading.Thread):
         self.start()
     
     def run(self):
-        
-        p =[]
-        
-        while self.goOn:
+        try:
+            p =[]
             
-            # wait for data
-            p =  os.read(self.tunIf,self.ETHERNET_MTU)
-       
-            # convert input from a string to a byte list
-            p = [ord(b) for b in p]
-            
-            # debug info
-            log.debug('packet captured on tun interface: {0}'.format(u.formatBuf(p)))
-
-            # remove tun ID octets
-            p = p[4:]
-            
-            # make sure it's an IPv6 packet (i.e., starts with 0x6x)
-            if (p[0]&0xf0) != 0x60:
-                log.debug('this is not an IPv6 packet')
-                continue
-            
-            # because of the nature of tun for Windows, p contains ETHERNET_MTU
-            # bytes. Cut at length of IPv6 packet.
-            p = p[:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
-            
-            # call the callback
-            self.callback(p)
+            while self.goOn:
+                
+                # wait for data
+                p =  os.read(self.tunIf,self.ETHERNET_MTU)
+           
+                # convert input from a string to a byte list
+                p = [ord(b) for b in p]
+                
+                # debug info
+                log.debug('packet captured on tun interface: {0}'.format(u.formatBuf(p)))
     
+                # remove tun ID octets
+                p = p[4:]
+                
+                # make sure it's an IPv6 packet (i.e., starts with 0x6x)
+                if (p[0]&0xf0) != 0x60:
+                    log.debug('this is not an IPv6 packet')
+                    continue
+                
+                # because of the nature of tun for Windows, p contains ETHERNET_MTU
+                # bytes. Cut at length of IPv6 packet.
+                p = p[:self.IPv6_HEADER_LENGTH+256*p[4]+p[5]]
+                
+                # call the callback
+                self.callback(p)
+        except Exception as err:
+            errMsg=u.formatCrashMessage(self.name,err)
+            print errMsg
+            log.critical(errMsg)
+            sys.exit(1)
+            
     #======================== public ==========================================
     
     def close(self):

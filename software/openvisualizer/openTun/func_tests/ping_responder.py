@@ -1,5 +1,5 @@
 '''
-This is a functional test which verify the correct bahavior of the OpenTun.
+This is a functional test which verify the correct behavior of the OpenTun.
 The test involves 3 components:
 - the openTun element under test, which sits on the EvenBus
 - the ReadThread, implemented in this test module, which listens for ICMPv6
@@ -21,6 +21,9 @@ if __name__=='__main__':
 
 import threading
 import time
+import traceback
+import openvisualizer_utils as u
+
 
 from eventBus import eventBusClient
 from openTun  import openTun
@@ -169,23 +172,28 @@ class WriteThread(threading.Thread):
         self.start()
     
     def run(self):
+        try:
+            while True:
+                
+                # sleep a bit
+                time.sleep(self.SLEEP_PERIOD)
+                
+                # create an echo request
+                echoRequest = self._createIPv6echoRequest()
+                
+                #
+                
+                # transmit
+                self.dispatch(
+                    signal    = 'v6ToInternet',
+                    data      = echoRequest
+                )
+        except Exception as err:
+            errMsg=u.formatCrashMessage(self.name,err)
+            print errMsg
+            log.critical(errMsg)
+            sys.exit(1)
         
-        while True:
-            
-            # sleep a bit
-            time.sleep(self.SLEEP_PERIOD)
-            
-            # create an echo request
-            echoRequest = self._createIPv6echoRequest()
-            
-            #
-            
-            # transmit
-            self.dispatch(
-                signal    = 'v6ToInternet',
-                data      = echoRequest
-            )
-    
     #======================== public ==========================================
     
     #======================== private =========================================

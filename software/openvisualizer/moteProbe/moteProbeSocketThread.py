@@ -8,8 +8,11 @@ log.addHandler(NullHandler())
 
 import threading
 import socket
+import traceback
+import sys
 
 from pydispatch import dispatcher
+import openvisualizer_utils as u
 
 class moteProbeSocketThread(threading.Thread):
     
@@ -39,44 +42,49 @@ class moteProbeSocketThread(threading.Thread):
         )
     
     def run(self):
-        
-        # log
-        log.debug("start running")
-        
-        # attach to a socket on all interfaces of the computer
-        self.socket.bind(('',self.socketport))
-        
-        # listen for incoming connection requests
-        self.socket.listen(1)
-        
-        while True:
-            # wait for OpenVisualizer to connect
-            self.conn,self.addr = self.socket.accept()
-            
+        try: 
             # log
-            log.info("openVisualizer connection from {0}".format(self.addr))
+            log.debug("start running")
             
-            # read data sent from OpenVisualizer
+            # attach to a socket on all interfaces of the computer
+            self.socket.bind(('',self.socketport))
+            
+            # listen for incoming connection requests
+            self.socket.listen(1)
+            
             while True:
+                # wait for OpenVisualizer to connect
+                self.conn,self.addr = self.socket.accept()
                 
-                try:
-                    bytesReceived = self.conn.recv(4096)
-                    
-                    # dispatch
-                    dispatcher.send(
-                        sender        = self.name,
-                        signal        = 'fromProbeSocket@'+self.serialportName,
-                        data          = bytesReceived
-                    )
-                    
-                except socket.error as err:
+                # log
+                log.info("openVisualizer connection from {0}".format(self.addr))
                 
-                    # log
-                    log.info("openVisualizer disconnected")
+                # read data sent from OpenVisualizer
+                while True:
                     
-                    self.conn = None
-                    break
-    
+                    try:
+                        bytesReceived = self.conn.recv(4096)
+                        
+                        # dispatch
+                        dispatcher.send(
+                            sender        = self.name,
+                            signal        = 'fromProbeSocket@'+self.serialportName,
+                            data          = bytesReceived
+                        )
+                        
+                    except socket.error as err:
+                    
+                        # log
+                        log.info("openVisualizer disconnected")
+                        
+                        self.conn = None
+                        break
+        except Exception as err:
+            errMsg=u.formatCrashMessage(self.name,err)
+            print errMsg
+            log.critical(errMsg)
+            sys.exit(1)
+        
     #======================== public ==========================================
     
     def send(self,data):

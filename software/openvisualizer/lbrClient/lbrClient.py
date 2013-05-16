@@ -9,9 +9,13 @@ log.addHandler(NullHandler())
 import copy
 import socket
 import threading
+import traceback
+import sys
+import openvisualizer_utils as u
 
 from pydispatch import dispatcher
 from eventBus import eventBusClient
+
 
 class lbrClient(threading.Thread):
     
@@ -53,60 +57,68 @@ class lbrClient(threading.Thread):
         self.name            = 'lbrClient'
     
     def run(self):
-        
-        # log
-        log.debug("starting to run")
-        
-        #start the eventBusClient
-        self.eventBusClient.start()
-        
-        while True:
-            # reset the statistics
-            self._resetStats()
-            
-            # wait to be connected
-            self.connectSem.acquire()
-            self.connectSem.release()
-            
+        try:
             # log
-            log.debug("starting to listen for data")
+            log.debug("starting to run")
             
-            try:
-                while True:
-                    
-                    # wait for some data
-                    input = self.socket.recv(4096)
-                    
-                    # disconnect if needed
-                    if not input:
-                        if self._isConnected():
-                            self.disconnect("No input.")
-                        break
-                    
-                    # increment statistics
-                    self._incrementStats('receivedPackets')
-                    self._incrementStats('receivedBytes', step=len(input))
-                    
-                    # handle received data
-                    # the data received from the LBR should be:
-                    # - first 8 bytes: EUI64 of the final destination
-                    # - remainder: 6LoWPAN packet and above
-                    if len(input)<8:
-                        log.error("received packet from LBR which is too short ({0} bytes)".format(len(input)))
-                        continue
-                    
-                    # dispatch the packet to network state to figure out source route.
-                    dispatcher.send(
-                        sender        = 'lbrClient',
-                        signal        = 'lowpanToMesh',
-                        data          = input,
-                    )
+            #start the eventBusClient
+            self.eventBusClient.start()
             
-            except socket.error as err:
-               
-               # disconnect
-               self.disconnect("socket error while listening: {0}".format(err))
-    
+            while True:
+                # reset the statistics
+                self._resetStats()
+                
+                # wait to be connected
+                self.connectSem.acquire()
+                self.connectSem.release()
+                
+                # log
+                log.debug("starting to listen for data")
+                
+                try:
+                    while True:
+                        
+                        # wait for some data
+                        input = self.socket.recv(4096)
+                        
+                        # disconnect if needed
+                        if not input:
+                            if self._isConnected():
+                                self.disconnect("No input.")
+                            break
+                        
+                        # increment statistics
+                        self._incrementStats('receivedPackets')
+                        self._incrementStats('receivedBytes', step=len(input))
+                        
+                        # handle received data
+                        # the data received from the LBR should be:
+                        # - first 8 bytes: EUI64 of the final destination
+                        # - remainder: 6LoWPAN packet and above
+                        if len(input)<8:
+                            log.error("received packet from LBR which is too short ({0} bytes)".format(len(input)))
+                            continue
+                        
+                        # dispatch the packet to network state to figure out source route.
+                        dispatcher.send(
+                            sender        = 'lbrClient',
+                            signal        = 'lowpanToMesh',
+                            data          = input,
+                        )
+                
+                except socket.error as err:
+                   
+                   # disconnect
+                   self.disconnect("socket error while listening: {0}".format(err))
+        except Exception as err:
+            errMsg=u.formatCrashMessage(self.name,err)
+            print errMsg
+            log.critical(errMsg)
+            sys.exit(1)
+            
+                    
+            
+            
     #======================== public ==========================================
     
     def connect(self,lbrAddr,lbrPort,netname):

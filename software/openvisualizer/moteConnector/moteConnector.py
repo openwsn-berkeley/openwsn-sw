@@ -8,6 +8,9 @@ log.addHandler(NullHandler())
 
 import threading
 import socket
+import traceback
+import sys
+import openvisualizer_utils as u
 
 from eventBus      import eventBusClient
 from moteState     import moteState
@@ -57,43 +60,49 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
         )
         
     def run(self):
-        # log
-        log.debug("starting to run")
-    
-        while self.goOn:
-            try:
-                # log
-                log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
-                
-                # connect
-                self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
-                while True:
-                    # retrieve the string of bytes from the socket
-                    inputString                  = self.socket.recv(1024)
-                    
-                    # convert to a byte array
-                    input                        = [ord(c) for c in inputString]
-                    
+        try:
+            # log
+            log.debug("starting to run")
+        
+            while self.goOn:
+                try:
                     # log
-                    log.debug("received input={0}".format(input))
+                    log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
                     
-                    # parse input
-                    try:
-                        (eventSubType,parsedNotif)  = self.parser.parseInput(input)
-                        assert isinstance(eventSubType,str)
-                    except ParserException.ParserException as err:
-                        # log
-                        log.error(str(err))
-                        pass
-                    else:
-                        # dispatch
-                        self.dispatch('fromMote.'+eventSubType,parsedNotif)                           
+                    # connect
+                    self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
+                    while True:
+                        # retrieve the string of bytes from the socket
+                        inputString                  = self.socket.recv(1024)
                         
-                
-            except socket.error as err:
-                log.error(err)
-                pass
-    
+                        # convert to a byte array
+                        input                        = [ord(c) for c in inputString]
+                        
+                        # log
+                        log.debug("received input={0}".format(input))
+                        
+                        # parse input
+                        try:
+                            (eventSubType,parsedNotif)  = self.parser.parseInput(input)
+                            assert isinstance(eventSubType,str)
+                        except ParserException.ParserException as err:
+                            # log
+                            log.error(str(err))
+                            pass
+                        else:
+                            # dispatch
+                            self.dispatch('fromMote.'+eventSubType,parsedNotif)                           
+                            
+                    
+                except socket.error as err:
+                    log.error(err)
+                    pass
+        except Exception as err:
+            errMsg=u.formatCrashMessage(self.name,err)
+            print errMsg
+            log.critical(errMsg)
+            sys.exit(1)
+        
     #======================== public ==========================================
     
     def _cmdToMote_handler(self,sender,signal,data):
