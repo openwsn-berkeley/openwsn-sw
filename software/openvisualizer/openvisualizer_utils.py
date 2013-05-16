@@ -1,4 +1,7 @@
 
+import traceback
+
+
 def buf2int(buf):
     '''
     \brief Converts some consecutive bytes of a buffer into an integer.
