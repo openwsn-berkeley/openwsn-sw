@@ -341,25 +341,7 @@ class moteState(eventBusClient.eventBusClient):
         # store params
         self.moteConnector   = moteConnector
         
-        # initialize parent class
-        eventBusClient.eventBusClient.__init__(
-            self,
-            name             = 'moteState@{0}:{1}'.format(
-                                    self.moteConnector.moteProbeIp,
-                                    self.moteConnector.moteProbeTcpPort,
-                                ),
-            registrations    = [
-                {
-                    'sender'      : 'moteConnector@{0}:{1}'.format(
-                                        self.moteConnector.moteProbeIp,
-                                        self.moteConnector.moteProbeTcpPort,
-                                    ),
-                    'signal'      : 'fromMote.status',
-                    'callback'    : self._receivedStatus_notif,
-                },
-            ]
-        )
-        
+      
         # local variables
         self.parserStatus                   = ParserStatus.ParserStatus()
         self.stateLock                      = threading.Lock()
@@ -432,8 +414,26 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_IDMANAGER].update,
             self.parserStatus.named_tuple[self.ST_MYDAGRANK]:
                 self.state[self.ST_MYDAGRANK].update,
+        
         }
-    
+              # initialize parent class
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name             = 'moteState@{0}:{1}'.format(
+                                    self.moteConnector.moteProbeIp,
+                                    self.moteConnector.moteProbeTcpPort,
+                                ),
+            registrations    = [
+                {
+                    'sender'      : 'moteConnector@{0}:{1}'.format(
+                                        self.moteConnector.moteProbeIp,
+                                        self.moteConnector.moteProbeTcpPort,
+                                    ),
+                    'signal'      : 'fromMote.status',
+                    'callback'    : self._receivedStatus_notif,
+                },
+            ]
+        )
     #======================== public ==========================================
     
     def getStateElemNames(self):
