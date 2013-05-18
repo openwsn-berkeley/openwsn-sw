@@ -73,7 +73,7 @@ class moteProbeSerialThread(threading.Thread):
                                     rxByte!=self.hdlc.HDLC_FLAG
                                 ):
                             # start of frame
-                            log.debug("{0}: start of hdlc frame {1} {2}".format(self.name,self.hdlc.HDLC_FLAG,rxByte))
+                            log.debug("{0}: start of hdlc frame {1} {2}".format(self.name, u.formatStringBuf(self.hdlc.HDLC_FLAG), u.formatStringBuf(rxByte)))
                             self.busyReceiving       = True
                             self.inputBuf            = self.hdlc.HDLC_FLAG
                             self.inputBuf           += rxByte
@@ -89,7 +89,7 @@ class moteProbeSerialThread(threading.Thread):
                                     rxByte==self.hdlc.HDLC_FLAG
                                 ):
                             # end of frame
-                            log.debug("{0}: end of hdlc frame {1} ".format(self.name,rxByte))
+                            log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.formatStringBuf(rxByte)))
                             self.busyReceiving       = False
                             self.inputBuf           += rxByte
                             
