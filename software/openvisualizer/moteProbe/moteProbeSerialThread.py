@@ -44,11 +44,11 @@ class moteProbeSerialThread(threading.Thread):
         
         # give this thread a name
         self.name                 = 'moteProbeSerialThread@'+self.serialportName
-        
+       
         # connect to dispatcher
         dispatcher.connect(
             self._bufferDataToSend,
-            signal = 'fromProbeSocket@'+self.serialportName,
+            signal = 'fromMoteConnector@'+self.serialportName,
         )
     
     def run(self):
@@ -73,7 +73,7 @@ class moteProbeSerialThread(threading.Thread):
                                     rxByte!=self.hdlc.HDLC_FLAG
                                 ):
                             # start of frame
-                            
+                            log.debug("{0}: start of hdlc frame {1} {2}".format(self.name,self.hdlc.HDLC_FLAG,rxByte))
                             self.busyReceiving       = True
                             self.inputBuf            = self.hdlc.HDLC_FLAG
                             self.inputBuf           += rxByte
@@ -89,17 +89,17 @@ class moteProbeSerialThread(threading.Thread):
                                     rxByte==self.hdlc.HDLC_FLAG
                                 ):
                             # end of frame
-                            
+                            log.debug("{0}: end of hdlc frame {1} ".format(self.name,rxByte))
                             self.busyReceiving       = False
                             self.inputBuf           += rxByte
                             
                             try:
                                 self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
                             except OpenHdlc.HdlcException as err:
-                                log.warning('invalid serial frame: {0}'.format(err))
+                                log.warning('{0}: invalid serial frame: {0}'.format(self.name,err))
                             else:
                                 if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
-                                    with self.outputBufLock:
+                                      with self.outputBufLock:
                                         if self.outputBuf:
                                             outputToWrite = self.outputBuf.pop(0)
                                             self.serial.write(outputToWrite)

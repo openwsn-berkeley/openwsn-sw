@@ -68,7 +68,7 @@ class ParserData(Parser.Parser):
         #this is a hack for latency measurements... TODO, move latency to an app listening on the corresponding port.
         #inject end_asn into the packet as well
         input = input[23:]
-       
+        log.debug("packet without source,dest and asn {0}".format(input))
         #when the packet goes to internet it comes with the asn at the beginning as timestamp.
          
         #cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.

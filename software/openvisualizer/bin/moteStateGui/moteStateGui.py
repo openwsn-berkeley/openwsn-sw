@@ -203,7 +203,7 @@ class MoteStateGui_app(object):
         
         # create a moteConnector for each moteProbe
         for mp in self.moteProbes:
-           self.moteConnectors.append(moteConnector.moteConnector(LOCAL_ADDRESS,mp.getTcpPort()))
+           self.moteConnectors.append(moteConnector.moteConnector(LOCAL_ADDRESS,mp.getTcpPort(),mp.getSerialPortName()))
         
         # create a moteState for each moteConnector
         for mc in self.moteConnectors:
@@ -230,9 +230,6 @@ class MoteStateGui_app(object):
             self.openLbr,
         )
         
-        # start threads
-        for mc in self.moteConnectors:
-           mc.start()
         gui.start()
     
     #======================== GUI callbacks ===================================

@@ -12,15 +12,18 @@ import traceback
 import sys
 import openvisualizer_utils as u
 
+from pydispatch import dispatcher
+
+
 from eventBus      import eventBusClient
 from moteState     import moteState
 
 import OpenParser
 import ParserException
 
-class moteConnector(threading.Thread,eventBusClient.eventBusClient):
+class moteConnector(eventBusClient.eventBusClient):
     
-    def __init__(self,moteProbeIp,moteProbeTcpPort):
+    def __init__(self,moteProbeIp,moteProbeTcpPort,serialportName):
         
         # log
         log.debug("creating instance")
@@ -28,17 +31,12 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
         # store params
         self.moteProbeIp               = moteProbeIp
         self.moteProbeTcpPort          = moteProbeTcpPort
+        self.serialportName            = serialportName
         
         # local variables
-        self.socket                    = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.parser                    = OpenParser.OpenParser()
-        self.goOn                      = True
         self._subcribedDataForDagRoot  = False
-          
-        # initialize parent class
-      
-        threading.Thread.__init__(self)
-        
+              
         # give this thread a name
         self.name = 'moteConnector@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
        
@@ -59,49 +57,30 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
             ]
         )
         
-    def run(self):
-        try:
-            # log
-            log.debug("starting to run")
+          # subscribe to dispatcher
+        dispatcher.connect(
+            self._sendToParser,
+            signal='fromProbeSerial@'+self.serialportName,
+        )
         
-            while self.goOn:
-                try:
-                    # log
-                    log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
-                    
-                    # connect
-                    self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
-                    while True:
-                        # retrieve the string of bytes from the socket
-                        inputString                  = self.socket.recv(1024)
+    def _sendToParser(self,data):
+         #convert data
+         input = [ord(c) for c in data]
+         # log
+         log.debug("received input={0}".format(input))
                         
-                        # convert to a byte array
-                        input                        = [ord(c) for c in inputString]
-                        
-                        # log
-                        log.debug("received input={0}".format(input))
-                        
-                        # parse input
-                        try:
-                            (eventSubType,parsedNotif)  = self.parser.parseInput(input)
-                            assert isinstance(eventSubType,str)
-                        except ParserException.ParserException as err:
-                            # log
-                            log.error(str(err))
-                            pass
-                        else:
-                            # dispatch
-                            self.dispatch('fromMote.'+eventSubType,parsedNotif)                           
-                            
-                    
-                except socket.error as err:
-                    log.error(err)
-                    pass
-        except Exception as err:
-            errMsg=u.formatCrashMessage(self.name,err)
-            print errMsg
-            log.critical(errMsg)
-            sys.exit(1)
+         # parse input
+         try:
+            (eventSubType,parsedNotif)  = self.parser.parseInput(input)
+            assert isinstance(eventSubType,str)
+         except ParserException.ParserException as err:
+            # log
+            log.error(str(err))
+            pass
+         else:
+            # dispatch
+            self.dispatch('fromMote.'+eventSubType,parsedNotif)                 
+            
         
     #======================== public ==========================================
     
@@ -181,9 +160,13 @@ class moteConnector(threading.Thread,eventBusClient.eventBusClient):
     #======================== private =========================================
     
     def _sendToMoteProbe(self,dataToSend):
-        
         try:
-            self.socket.send(''.join([chr(c) for c in dataToSend]))
+             dispatcher.send(
+                      sender        = self.name,
+                      signal        = 'fromMoteConnector@'+self.serialportName,
+                      data          = ''.join([chr(c) for c in dataToSend])
+                      )
+            
         except socket.error:
             log.error(err)
             pass
