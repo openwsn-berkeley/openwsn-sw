@@ -73,7 +73,7 @@ class moteProbeSerialThread(threading.Thread):
                                     rxByte!=self.hdlc.HDLC_FLAG
                                 ):
                             # start of frame
-                            log.debug("{0}: start of hdlc frame {1} {2}".format(self.name,self.hdlc.HDLC_FLAG,rxByte))
+                            log.debug("{0}: start of hdlc frame {1} {2}".format(self.name, u.formatStringBuf(self.hdlc.HDLC_FLAG), u.formatStringBuf(rxByte)))
                             self.busyReceiving       = True
                             self.inputBuf            = self.hdlc.HDLC_FLAG
                             self.inputBuf           += rxByte
@@ -89,14 +89,16 @@ class moteProbeSerialThread(threading.Thread):
                                     rxByte==self.hdlc.HDLC_FLAG
                                 ):
                             # end of frame
-                            log.debug("{0}: end of hdlc frame {1} ".format(self.name,rxByte))
+                            log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.formatStringBuf(rxByte)))
                             self.busyReceiving       = False
                             self.inputBuf           += rxByte
                             
                             try:
+                                tempBuf = self.inputBuf
                                 self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
+                                log.debug("{0}: {2} dehdlcized input: {1}".format(self.name, u.formatStringBuf(self.inputBuf), u.formatStringBuf(tempBuf)))
                             except OpenHdlc.HdlcException as err:
-                                log.warning('{0}: invalid serial frame: {0}'.format(self.name,err))
+                                log.warning('{0}: invalid serial frame: {2} {1}'.format(self.name, err, u.formatStringBuf(tempBuf)))
                             else:
                                 if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
                                       with self.outputBufLock:
