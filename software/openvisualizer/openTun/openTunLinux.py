@@ -14,10 +14,10 @@ import sys
 import struct
 import traceback
 
-
-from fcntl import ioctl
 import openvisualizer_utils as u
-from eventBus import eventBusClient
+import openTun
+from   fcntl     import ioctl
+from   eventBus  import eventBusClient
 
 #============================ defines =========================================
 
@@ -29,8 +29,6 @@ TUN_IPv4_NETMASK   = [255,255,0,0] ##< The IPv4 netmask of the TUN interface.
 ## insert 4 octedts ID tun for compatibility (it'll be discard) 
 VIRTUALTUNID = [0x00,0x00,0x86,0xdd]
 
-IPV6PREFIX_STR     = "BBBB:0000:0000:0000"
-IPV6PREFIX         = [0xBB,0xBB,0x0,0x0,0x0,0x0,0x0,0x0]
 IFF_TUN            = 0x0001
 TUNSETIFF          = 0x400454ca
 
@@ -151,7 +149,7 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         # announce network prefix
         self.dispatch(
             signal        = 'networkPrefix',
-            data          = IPV6PREFIX,
+            data          = openTun.IPV6PREFIX,
         )
     
     #======================== public ==========================================
@@ -202,15 +200,21 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         
         #=====
         log.info("configuring IPv6 address...")
+        prefixStr = u.formatIPv6Addr(openTun.IPV6PREFIX)
+        hostStr   = u.formatIPv6Addr(openTun.IPV6HOST)
+        
         v = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
         v = os.system('ip link set ' + ifname + ' up')
-        v = os.system('ip -6 addr add ' + IPV6PREFIX_STR + '::1/64 dev ' + ifname)
-        v = os.system('ip -6 addr add fe80::1/64 dev ' + ifname)
+        v = os.system('ip -6 addr add ' + prefixStr + ':' + hostStr + '/64 dev ' + ifname)
+        v = os.system('ip -6 addr add fe80::' + hostStr + '/64 dev ' + ifname)
         
         #=====
         log.info("adding static route route...")
-        os.system('ip -6 route add ' + IPV6PREFIX_STR + ':1415:9200::/96 dev ' + ifname + ' metric 1') #added 'metric 1' for router-compatibility constraint (show ping packet on wireshark but don't send to mote at all)
-        #os.system('ip -6 route add ' + IPV6PREFIX_STR + '::/64 via ' + IPv6Prefix + '::1/64') # trying to set a gateway for this route
+        # added 'metric 1' for router-compatibility constraint 
+        # (show ping packet on wireshark but don't send to mote at all)
+        os.system('ip -6 route add ' + prefixStr + ':1415:9200::/96 dev ' + ifname + ' metric 1') 
+        # trying to set a gateway for this route
+        #os.system('ip -6 route add ' + prefixStr + '::/64 via ' + IPv6Prefix + ':' + hostStr + '/64') 
         
         #=====
         log.info("enabling IPv6 forwarding...")

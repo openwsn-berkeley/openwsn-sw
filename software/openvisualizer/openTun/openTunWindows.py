@@ -18,8 +18,10 @@ import win32file
 import win32event
 import pywintypes
 
-from eventBus import eventBusClient
 import openvisualizer_utils as u
+from   eventBus import eventBusClient
+import openTun
+
 #============================ defines =========================================
 
 ## IPv4 configuration of your TUN interface (represented as a list of integers)
@@ -162,7 +164,7 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         # announce network prefix
         self.dispatch(
             signal        = 'networkPrefix',
-            data          = [0xBB,0xBB,0x0,0x0,0x0,0x0,0x0,0x0],#"BBBB:0000:0000:0000"
+            data          = openTun.IPV6PREFIX
         )
     
     #======================== public ==========================================
