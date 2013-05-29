@@ -167,7 +167,10 @@ class SimCli(threading.Thread):
         
         for rank in range(self.engine.getNumMotes()):
             moteHandler = self.engine.getMoteHandler(rank)
-            moteHandler.hwSupply.switchOn()
+            self.engine.timeline.scheduleEvent(self.engine.timeline.getCurrentTime(),
+                                               moteHandler.getId(),
+                                               moteHandler.hwSupply.switchOn,
+                                               moteHandler.hwSupply.INTR_SWITCHON)
         
         print 'OK'
     
