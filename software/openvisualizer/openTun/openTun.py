@@ -13,6 +13,10 @@ if os.name=='nt':
 elif os.name=='posix':
    import openTunLinux
 
+# IPv6 address for TUN interface
+IPV6PREFIX = [0xbb,0xbb,0x00,0x00,0x00,0x00,0x00,0x00]
+IPV6HOST   = [0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01]
+
 class OpenTun():
     '''
     \brief Class which interfaces between a TUN virtual interface and an

@@ -1,6 +1,4 @@
-
 import traceback
-
 
 def buf2int(buf):
     '''
@@ -18,7 +16,10 @@ def buf2int(buf):
 #===== formatting
 
 def formatStringBuf(buf):
-    return '-'.join(["%02x" % ord(b) for b in buf])
+    return '({0:>2}B) {1}'.format(
+        len(buf),
+        '-'.join(["%02x" % ord(b) for b in buf]),
+    )
 
 def formatBuf(buf):
     '''
