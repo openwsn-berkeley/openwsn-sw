@@ -13,16 +13,16 @@ import traceback
 import sys
 import openvisualizer_utils as u
 
-
+from eventBus      import eventBusClient
 from moteConnector import OpenParser
 
-class SerialTester(threading.Thread):
+class SerialTester(eventBusClient.eventBusClient):
     
     DFLT_TESTPKT_LENGTH = 10  ##< number of bytes in a test packet
     DFLT_NUM_TESTPKT    = 20  ##< number of test packets to send
     DFLT_TIMEOUT        = 5   ##< timeout in second for getting a reply
     
-    def __init__(self,moteProbeIp,moteProbeTcpPort):
+    def __init__(self,moteProbeIp,moteProbeTcpPort,moteProbeSerialPort):
         
         # log
         log.debug("creating instance")
@@ -30,11 +30,10 @@ class SerialTester(threading.Thread):
         # store params
         self.moteProbeIp          = moteProbeIp
         self.moteProbeTcpPort     = moteProbeTcpPort
+        self.moteProbeSerialPort  = moteProbeSerialPort
         
         # local variables
         self.dataLock             = threading.RLock()
-        self.socket               = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.goOn                 = True
         self.testPktLen           = self.DFLT_TESTPKT_LENGTH
         self.numTestPkt           = self.DFLT_NUM_TESTPKT
         self.timeout              = self.DFLT_TIMEOUT
@@ -45,11 +44,24 @@ class SerialTester(threading.Thread):
         self.waitForReply         = threading.Event()
         self._resetStats()
         
-        # initialize parent class
-        threading.Thread.__init__(self)
         
         # give this thread a name
         self.name = 'SerialTester@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
+        
+         
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name             = self.name,
+            registrations =  [
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'fromProbeSerial@'+self.moteProbeSerialPort,
+                    'callback' : self._receiveDataFromMoteSerial,
+                },
+            ]
+        )
+        
+        
         
     def run(self):
         try:
@@ -98,6 +110,20 @@ class SerialTester(threading.Thread):
     
     #======================== public ==========================================
     
+    
+    def _receiveDataFromMoteSerial(self,sender,signal,data):
+        input   = [ord(c) for c in data]
+        # handle input
+        if (chr(input[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
+            # don't handle if I'm not testing
+            with self.dataLock:
+               if not self.busyTesting:
+                  return
+            with self.dataLock:
+               self.lastReceived = input[1+2+5:] # type (1B), moteId (2B), ASN (5B)
+               # wake up other thread
+               self.waitForReply.set()
+                        
     #===== setup test
     
     def setTestPktLength(self,newLength):
@@ -167,7 +193,13 @@ class SerialTester(threading.Thread):
                 self.lastSent = packetToSend[:]
             
             # send
-            self.socket.send(''.join([chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend]))
+            #self.socket.send(''.join([chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend]))
+            self.dispatch(
+                      #sender        = self.name,
+                      signal        = 'fromMoteConnector@'+self.moteProbeSerialPort,
+                      data          = ''.join([chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend])
+                      )   
+            
             with self.dataLock:
                 self.stats['numSent']                 += 1
             
