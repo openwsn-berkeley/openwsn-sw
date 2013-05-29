@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import logging
+
 import BspModule
 
 class BspEui64(BspModule.BspModule):
@@ -27,7 +29,8 @@ class BspEui64(BspModule.BspModule):
            void eui64_get(uint8_t* addressToWrite)'''
         
         # log the activity
-        self.log.debug('cmd_get')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_get')
         
         # get my 16-bit ID
         myId    = self.motehandler.getId()
@@ -37,7 +40,8 @@ class BspEui64(BspModule.BspModule):
                                                  ((myId>>0) & 0xff)]
         
         # log the activity
-        self.log.debug('returning '+str(myEui64))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('returning '+str(myEui64))
         
         # respond
         return myEui64

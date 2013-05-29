@@ -63,10 +63,12 @@ class TimeLine(threading.Thread):
     
     def run(self):
         # log
-        self.log.debug('starting')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('starting')
         
         # log
-        self.log.debug('waiting for first event')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('waiting for first event')
         
         # wait for the first event to be scheduled
         self.firstEvent.acquire()
@@ -74,7 +76,8 @@ class TimeLine(threading.Thread):
         self.engine.indicateFirstEventPassed()
         
         # log
-        self.log.debug('first event scheduled')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('first event scheduled')
         
         while True:
             
@@ -96,9 +99,10 @@ class TimeLine(threading.Thread):
             self.currentTime = event.atTime
             
             # log
-            self.log.debug('\n\nnow {0:.6f}, executing {1}@{2}'.format(event.atTime,
-                                                                   event.desc,
-                                                                   event.moteId,))
+            if self.log.isEnabledFor(logging.DEBUG):
+                self.log.debug('\n\nnow {0:.6f}, executing {1}@{2}'.format(event.atTime,
+                                                                       event.desc,
+                                                                       event.moteId,))
             
             # call the event's callback
             self.engine.getMoteHandlerById(event.moteId).handleEvent(event.cb)
@@ -124,7 +128,8 @@ class TimeLine(threading.Thread):
         '''
         
         # log
-        self.log.debug('scheduling {0}@{1} at {2:.6f}'.format(desc,moteId,atTime))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('scheduling {0}@{1} at {2:.6f}'.format(desc,moteId,atTime))
         
         # make sure that I'm scheduling an event in the future
         try:
@@ -172,7 +177,8 @@ class TimeLine(threading.Thread):
         '''
         
         # log
-        self.log.debug('cancelEvent {0}@{1}'.format(desc,moteId))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cancelEvent {0}@{1}'.format(desc,moteId))
         
         # initialize return variable
         numEventsCanceled = 0

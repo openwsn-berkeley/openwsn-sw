@@ -33,7 +33,8 @@ class IdManager(object):
         self.currentId += 1
         
         # debug
-        self.log.debug('assigning ID='+str(self.currentId))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('assigning ID='+str(self.currentId))
         
         return self.currentId
     

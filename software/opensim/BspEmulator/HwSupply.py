@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import logging
+
 import HwModule
 
 class HwSupply(HwModule.HwModule):
@@ -26,7 +28,8 @@ class HwSupply(HwModule.HwModule):
     def switchOn(self):
         
         # log the activity
-        self.log.debug('switchOn')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('switchOn')
         
         # filter error
         if self.moteOn:
@@ -44,7 +47,8 @@ class HwSupply(HwModule.HwModule):
     def switchOff(self):
         
         # log the activity
-        self.log.debug('switchOff')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('switchOff')
         
         # filter error
         if not self.moteOn:

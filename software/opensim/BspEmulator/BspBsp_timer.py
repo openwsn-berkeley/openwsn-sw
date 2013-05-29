@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import struct
+import logging
+
 import BspModule
 
 class BspBsp_timer(BspModule.BspModule):
@@ -37,7 +38,8 @@ class BspBsp_timer(BspModule.BspModule):
            void bsp_timer_init()'''
         
         # log the activity
-        self.log.debug('cmd_init')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_init')
         
         # reset the timer
         self._cmd_reset_internal()
@@ -65,7 +67,8 @@ class BspBsp_timer(BspModule.BspModule):
            void bsp_timer_reset()'''
         
         # log the activity
-        self.log.debug('cmd_reset')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_reset')
         
         self._cmd_reset_internal()
     
@@ -74,7 +77,8 @@ class BspBsp_timer(BspModule.BspModule):
            void bsp_timer_scheduleIn(PORT_TIMER_WIDTH delayTicks)'''
         
         # log the activity
-        self.log.debug('cmd_scheduleIn delayTicks='+str(delayTicks))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_scheduleIn delayTicks='+str(delayTicks))
         
         # get current counter value
         counterVal                = self.hwCrystal.getTicksSince(self.timeLastReset)
@@ -102,7 +106,8 @@ class BspBsp_timer(BspModule.BspModule):
            void bsp_timer_cancel_schedule()'''
         
         # log the activity
-        self.log.debug('cmd_cancel_schedule')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_cancel_schedule')
         
         # cancel the compare event
         numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
@@ -114,7 +119,8 @@ class BspBsp_timer(BspModule.BspModule):
            uin16_t bsp_timer_get_currentValue()'''
         
         # log the activity
-        self.log.debug('cmd_get_currentValue')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_get_currentValue')
         
         # get current counter value
         counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
@@ -165,8 +171,9 @@ class BspBsp_timer(BspModule.BspModule):
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
         
         # log the activity
-        self.log.debug('timeLastReset='+str(self.timeLastReset))
-        self.log.debug('PERIOD='+str(self.PERIOD))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('timeLastReset='+str(self.timeLastReset))
+            self.log.debug('PERIOD='+str(self.PERIOD))
         
         # reschedule the next overflow event
         # Note: the intr_overflow will fire every self.PERIOD

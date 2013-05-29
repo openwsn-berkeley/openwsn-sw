@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import struct
+import logging
+
 import BspModule
 
 class BspRadiotimer(BspModule.BspModule):
@@ -38,7 +39,8 @@ class BspRadiotimer(BspModule.BspModule):
            void radiotimer_init()'''
         
         # log the activity
-        self.log.debug('cmd_init')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_init')
         
         # remember that module has been intialized
         self.isInitialized = True
@@ -51,7 +53,8 @@ class BspRadiotimer(BspModule.BspModule):
         self.period          = period
         
         # log the activity
-        self.log.debug('cmd_start period='+str(self.period))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_start period='+str(self.period))
         
         # remember the time of last reset
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
@@ -73,7 +76,8 @@ class BspRadiotimer(BspModule.BspModule):
            uint16_t radiotimer_getValue()'''
         
         # log the activity
-        self.log.debug('cmd_getValue')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_getValue')
         
         # get current counter value
         counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
@@ -89,7 +93,8 @@ class BspRadiotimer(BspModule.BspModule):
         self.period          = period
         
         # log the activity
-        self.log.debug('cmd_setPeriod period='+str(self.period))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_setPeriod period='+str(self.period))
         
         # how many ticks since last reset
         ticksSinceReset      = self.hwCrystal.getTicksSince(self.timeLastReset)
@@ -114,7 +119,8 @@ class BspRadiotimer(BspModule.BspModule):
            uint16_t radiotimer_getPeriod()'''
         
         # log the activity
-        self.log.debug('cmd_getPeriod')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_getPeriod')
         
         # respond
         return self.period
@@ -124,7 +130,8 @@ class BspRadiotimer(BspModule.BspModule):
            void radiotimer_schedule(uint16_t offset)'''
         
         # log the activity
-        self.log.debug('cmd_schedule offset='+str(offset))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_schedule offset='+str(offset))
         
         # get current counter value
         counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
@@ -152,7 +159,8 @@ class BspRadiotimer(BspModule.BspModule):
            void radiotimer_cancel()'''
         
         # log the activity
-        self.log.debug('cmd_cancel')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_cancel')
         
         # cancel the compare event
         numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
@@ -164,7 +172,8 @@ class BspRadiotimer(BspModule.BspModule):
            uint16_t radiotimer_getCapturedTime()'''
         
         # log the activity
-        self.log.debug('cmd_getCapturedTime')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_getCapturedTime')
         
         raise NotImplementedError()
     

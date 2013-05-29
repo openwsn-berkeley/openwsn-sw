@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
-import struct
+import logging
+
 import BspModule
 
 class RadioState:
@@ -62,7 +63,8 @@ class BspRadio(BspModule.BspModule):
            void radio_init()'''
         
         # log the activity
-        self.log.debug('cmd_init')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_init')
         
         # change state
         self._changeState(RadioState.STOPPED)
@@ -78,7 +80,8 @@ class BspRadio(BspModule.BspModule):
            void radio_reset()'''
         
         # log the activity
-        self.log.debug('cmd_reset')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_reset')
         
         # change state
         self._changeState(RadioState.STOPPED)
@@ -88,7 +91,8 @@ class BspRadio(BspModule.BspModule):
            void radio_startTimer(PORT_TIMER_WIDTH period)'''
         
         # log the activity
-        self.log.debug('cmd_startTimer')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_startTimer')
         
         # defer to radiotimer
         self.motehandler.bspRadiotimer.cmd_start(period)
@@ -98,7 +102,8 @@ class BspRadio(BspModule.BspModule):
            PORT_TIMER_WIDTH radio_getTimerValue()'''
         
         # log the activity
-        self.log.debug('cmd_getTimerValue')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_getTimerValue')
         
         # defer to radiotimer
         return self.motehandler.bspRadiotimer.cmd_getValue()
@@ -108,7 +113,8 @@ class BspRadio(BspModule.BspModule):
            void radio_setTimerPeriod(PORT_TIMER_WIDTH period)'''
         
         # log the activity
-        self.log.debug('cmd_setTimerPeriod')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_setTimerPeriod')
         
         # defer to radiotimer
         return self.motehandler.bspRadiotimer.cmd_setPeriod(period)
@@ -118,7 +124,8 @@ class BspRadio(BspModule.BspModule):
            PORT_TIMER_WIDTH radio_getTimerPeriod()'''
         
         # log the activity
-        self.log.debug('cmd_getTimerPeriod')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_getTimerPeriod')
         
         # defer to radiotimer
         return self.motehandler.bspRadiotimer.cmd_getPeriod()
@@ -131,7 +138,8 @@ class BspRadio(BspModule.BspModule):
         self.frequency   = frequency
         
         # log the activity
-        self.log.debug('cmd_setFrequency frequency='+str(self.frequency))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_setFrequency frequency='+str(self.frequency))
         
         # change state
         self._changeState(RadioState.SETTING_FREQUENCY)
@@ -144,7 +152,8 @@ class BspRadio(BspModule.BspModule):
            void radio_rfOn()'''
         
         # log the activity
-        self.log.debug('cmd_rfOn')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_rfOn')
         
         # update local variable
         self.isRfOn = True
@@ -154,7 +163,8 @@ class BspRadio(BspModule.BspModule):
            void radio_rfOff()'''
         
         # log the activity
-        self.log.debug('cmd_rfOff')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_rfOff')
         
         # change state
         self._changeState(RadioState.TURNING_OFF)
@@ -173,7 +183,8 @@ class BspRadio(BspModule.BspModule):
         assert(len(packetToLoad)<=127)
         
         # log the activity
-        self.log.debug('cmd_loadPacket len={0}'.format(len(packetToLoad)))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_loadPacket len={0}'.format(len(packetToLoad)))
         
         # change state
         self._changeState(RadioState.LOADING_PACKET)
@@ -182,7 +193,8 @@ class BspRadio(BspModule.BspModule):
         self.txBuf = [len(packetToLoad)]+packetToLoad
         
         # log
-        self.log.debug('txBuf={0}'.format(self.txBuf))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('txBuf={0}'.format(self.txBuf))
         
         # change state
         self._changeState(RadioState.PACKET_LOADED)
@@ -192,7 +204,8 @@ class BspRadio(BspModule.BspModule):
            void radio_txEnable()'''
         
         # log the activity
-        self.log.debug('cmd_txEnable')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_txEnable')
         
         # change state
         self._changeState(RadioState.ENABLING_TX)
@@ -205,7 +218,8 @@ class BspRadio(BspModule.BspModule):
            void radio_txNow()'''
         
         # log the activity
-        self.log.debug('cmd_txNow')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_txNow')
         
         # change state
         self._changeState(RadioState.TRANSMITTING)
@@ -227,7 +241,8 @@ class BspRadio(BspModule.BspModule):
            void radio_rxEnable()'''
         
         # log the activity
-        self.log.debug('cmd_rxEnable')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_rxEnable')
         
         # change state
         self._changeState(RadioState.ENABLING_RX)
@@ -240,7 +255,8 @@ class BspRadio(BspModule.BspModule):
            void radio_rxNow()'''
         
         # log the activity
-        self.log.debug('cmd_rxNow')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_rxNow')
         
         # change state
         self._changeState(RadioState.LISTENING)
@@ -255,7 +271,8 @@ class BspRadio(BspModule.BspModule):
                                        uint8_t* pCrc)'''
         
         # log the activity
-        self.log.debug('cmd_getReceivedFrame')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_getReceivedFrame')
         
         #==== prepare response
         rxBuffer   = self.rxBuf[1:]
@@ -331,8 +348,8 @@ class BspRadio(BspModule.BspModule):
     
     def indicateTxStart(self,moteId,packet,channel):
     
-        self.log.debug('indicateTxStart from moteId={0} channel={1} len={2}'.format(
-            moteId,channel,len(packet)))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('indicateTxStart from moteId={0} channel={1} len={2}'.format(moteId,channel,len(packet)))
     
         if (self.isInitialized==True         and
             self.state==RadioState.LISTENING and
@@ -344,7 +361,8 @@ class BspRadio(BspModule.BspModule):
             self.crcPasses   = True
             
             # log
-            self.log.debug('rxBuf={0}'.format(self.rxBuf))
+            if self.log.isEnabledFor(logging.DEBUG):
+                self.log.debug('rxBuf={0}'.format(self.rxBuf))
             
             # schedule start of frame
             self.timeline.scheduleEvent(self.timeline.getCurrentTime(),
@@ -354,7 +372,8 @@ class BspRadio(BspModule.BspModule):
     
     def indicateTxEnd(self,moteId):
         
-        self.log.debug('indicateTxEnd from moteId={0}'.format(moteId))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('indicateTxEnd from moteId={0}'.format(moteId))
         
         if (self.isInitialized==True and
             self.state==RadioState.RECEIVING):
@@ -373,4 +392,5 @@ class BspRadio(BspModule.BspModule):
         
     def _changeState(self,newState):
         self.state = newState
-        self.log.debug('state={0}'.format(self.state))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('state={0}'.format(self.state))

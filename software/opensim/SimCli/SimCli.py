@@ -3,8 +3,6 @@
 import sys
 import threading
 import logging
-import binascii
-import time
 
 class NullLogHandler(logging.Handler):
     def emit(self, record):
@@ -111,7 +109,8 @@ class SimCli(threading.Thread):
             
             params = raw_input('> ')
             
-            self.log.debug('Following command entered:'+params)
+            if self.log.isEnabledFor(logging.DEBUG):
+                self.log.debug('Following command entered:'+params)
             
             params = params.split()
             if len(params)<1:

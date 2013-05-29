@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-import struct
+import logging
+
 import BspModule
-import serial
 
 class BspUart(BspModule.BspModule):
     '''
@@ -16,7 +16,6 @@ class BspUart(BspModule.BspModule):
         self.motehandler          = motehandler
         
         # local variables
-        #self.serialHandler        = serial.Serial('\\\\.\\CNCA0',baudrate=115200)
         self.interruptsEnabled    = False
         self.txInterruptFlag      = False
         self.rxInterruptFlag      = False
@@ -36,7 +35,8 @@ class BspUart(BspModule.BspModule):
         assert(len(params)==0)
         
         # log the activity
-        self.log.debug('cmd_init')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_init')
         
         # remember that module has been intialized
         self.isInitialized = True
@@ -52,7 +52,8 @@ class BspUart(BspModule.BspModule):
         assert(len(params)==0)
         
         # log the activity
-        self.log.debug('cmd_enableInterrupts')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_enableInterrupts')
         
         # update variables
         self.interruptsEnabled    = True
@@ -68,7 +69,8 @@ class BspUart(BspModule.BspModule):
         assert(len(params)==0)
         
         # log the activity
-        self.log.debug('cmd_disableInterrupts')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_disableInterrupts')
         
         # update variables
         self.interruptsEnabled    = False
@@ -84,7 +86,8 @@ class BspUart(BspModule.BspModule):
         assert(len(params)==0)
         
         # log the activity
-        self.log.debug('cmd_clearRxInterrupts')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_clearRxInterrupts')
         
         # update variables
         self.rxInterruptFlag      = False
@@ -100,7 +103,8 @@ class BspUart(BspModule.BspModule):
         assert(len(params)==0)
         
         # log the activity
-        self.log.debug('cmd_clearTxInterrupts')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_clearTxInterrupts')
         
         # update variables
         self.txInterruptFlag      = False
@@ -116,10 +120,8 @@ class BspUart(BspModule.BspModule):
         (self.lastTxChar,)        = struct.unpack('<c', params)
         
         # log the activity
-        self.log.debug('cmd_writeByte lastTxChar='+str(self.lastTxChar))
-        
-        # write to serial port
-        #self.serialHandler.write(self.lastTxChar)
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_writeByte lastTxChar='+str(self.lastTxChar))
         
         # set tx interrupt flag
         self.txInterruptFlag      = True
@@ -132,7 +134,8 @@ class BspUart(BspModule.BspModule):
            uint8_t uart_readByte()'''
         
         # log the activity
-        self.log.debug('cmd_readByte')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_readByte')
         
         raise NotImplementedError()
     

@@ -34,7 +34,8 @@ class LocationManager(object):
         z = 0
         
         # debug
-        self.log.debug('assigning location ('+str(x)+','+str(y)+','+str(z)+')')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('assigning location ('+str(x)+','+str(y)+','+str(z)+')')
         
         return (x,y,z)
     

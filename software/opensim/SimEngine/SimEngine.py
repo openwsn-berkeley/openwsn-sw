@@ -2,16 +2,12 @@
 
 import threading
 import logging
-import random
 import time
-import os
-import subprocess
 
 import TimeLine
 import Propagation
 import IdManager
 import LocationManager
-import DaemonThread
 
 class NullLogHandler(logging.Handler):
     def emit(self, record):
@@ -62,7 +58,7 @@ class SimEngine(object):
         
         # logging this module
         self.log                  = logging.getLogger('SimEngine')
-        self.log.setLevel(logging.DEBUG)
+        self.log.setLevel(logging.INFO)
         self.log.addHandler(NullLogHandler())
         
         # logging core modules
@@ -73,10 +69,9 @@ class SimEngine(object):
                    'IdManager',
                    'LocationManager',
                    'SimCli',
-                   'DaemonThread',
                    ]:
             temp = logging.getLogger(loggerName)
-            temp.setLevel(logging.DEBUG)
+            temp.setLevel(logging.INFO)
             temp.addHandler(loghandler)
     
     def start(self):
@@ -115,7 +110,8 @@ class SimEngine(object):
     
     def pauseOrDelay(self):
         if self.isPaused:
-            self.log.debug('pause')
+            if self.log.isEnabledFor(logging.DEBUG):
+                self.log.debug('pause')
             self.pauseSem.acquire()
             self.pauseSem.release()
         else:
@@ -129,7 +125,7 @@ class SimEngine(object):
         
         assert(self.stopAfterSteps==None or self.stopAfterSteps>=0)
     
-    #=== called from the DaemonThread
+    #=== called from the main script
     
     def indicateNewMote(self,moteHandler):
         

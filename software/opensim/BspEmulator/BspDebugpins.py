@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import logging
+
 import BspModule
 
 class BspDebugpins(BspModule.BspModule):
@@ -33,7 +35,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_init()'''
         
         # log the activity
-        self.log.debug('cmd_init')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_init')
         
         # remember that module has been intialized
         self.isInitialized = True
@@ -43,7 +46,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_frame_toggle()'''
         
         # log the activity
-        self.log.debug('cmd_frame_toggle')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_frame_toggle')
         
         # change the internal state
         self.framePinHigh = not self.framePinHigh
@@ -53,7 +57,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_frame_clr()'''
         
         # log the activity
-        self.log.debug('cmd_frame_clr')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_frame_clr')
         
         # change the internal state
         self.framePinHigh = False
@@ -63,7 +68,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_frame_set()'''
         
         # log the activity
-        self.log.debug('cmd_frame_set')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_frame_set')
         
         # change the internal state
         self.framePinHigh = True
@@ -73,7 +79,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_slot_toggle()'''
         
         # log the activity
-        self.log.debug('cmd_slot_toggle')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_slot_toggle')
         
         # change the internal state
         self.slotPinHigh = not self.slotPinHigh
@@ -83,7 +90,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_slot_clr()'''
         
         # log the activity
-        self.log.debug('cmd_slot_clr')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_slot_clr')
         
         # change the internal state
         self.slotPinHigh = False
@@ -93,7 +101,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_slot_set()'''
         
         # log the activity
-        self.log.debug('cmd_slot_set')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_slot_set')
         
         # change the internal state
         self.slotPinHigh = True
@@ -103,7 +112,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_fsm_toggle()'''
         
         # log the activity
-        self.log.debug('cmd_fsm_toggle')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_fsm_toggle')
         
         # change the internal state
         self.fsmPinHigh = not self.fsmPinHigh
@@ -113,7 +123,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_fsm_clr()'''
         
         # log the activity
-        self.log.debug('cmd_fsm_clr')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_fsm_clr')
         
         # change the internal state
         self.fsmPinHigh = False
@@ -123,7 +134,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_fsm_set()'''
         
         # log the activity
-        self.log.debug('cmd_fsm_set')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_fsm_set')
         
         # change the internal state
         self.fsmPinHigh = True
@@ -133,7 +145,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_task_toggle()'''
         
         # log the activity
-        self.log.debug('cmd_task_toggle')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_task_toggle')
         
         # change the internal state
         self.taskPinHigh = not self.taskPinHigh
@@ -143,7 +156,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_task_clr()'''
         
         # log the activity
-        self.log.debug('cmd_task_clr')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_task_clr')
         
         # change the internal state
         self.taskPinHigh = False
@@ -153,7 +167,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_task_set()'''
         
         # log the activity
-        self.log.debug('cmd_task_set')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_task_set')
         
         # change the internal state
         self.taskPinHigh = True
@@ -163,7 +178,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_isr_toggle()'''
         
         # log the activity
-        self.log.debug('cmd_isr_toggle')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_isr_toggle')
         
         # change the internal state
         self.isrPinHigh = not self.isrPinHigh
@@ -173,7 +189,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_isr_clr()'''
         
         # log the activity
-        self.log.debug('cmd_isr_clr')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_isr_clr')
         
         # change the internal state
         self.isrPinHigh = False
@@ -183,7 +200,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_isr_set()'''
         
         # log the activity
-        self.log.debug('cmd_isr_set')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_isr_set')
         
         # change the internal state
         self.isrPinHigh = True
@@ -193,7 +211,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_radio_toggle()'''
         
         # log the activity
-        self.log.debug('cmd_radio_toggle')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_radio_toggle')
         
         # change the internal state
         self.radioPinHigh = not self.radioPinHigh
@@ -203,7 +222,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_radio_clr()'''
         
         # log the activity
-        self.log.debug('cmd_radio_clr')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_radio_clr')
         
         # change the internal state
         self.radioPinHigh = False
@@ -213,7 +233,8 @@ class BspDebugpins(BspModule.BspModule):
            void debugpins_radio_set()'''
         
         # log the activity
-        self.log.debug('cmd_radio_set')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_radio_set')
         
         # change the internal state
         self.radioPinHigh = True

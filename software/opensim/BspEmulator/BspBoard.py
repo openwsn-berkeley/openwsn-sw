@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+import logging
+
 import BspModule
 
 class BspBoard(BspModule.BspModule):
@@ -28,7 +30,8 @@ class BspBoard(BspModule.BspModule):
            void board_init()'''
         
         # log the activity
-        self.log.debug('cmd_init')
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_init')
         
         # remember that module has been initialized
         self.isInitialized = True
@@ -39,7 +42,8 @@ class BspBoard(BspModule.BspModule):
         
         try:
             # log the activity
-            self.log.debug('cmd_sleep')
+            if self.log.isEnabledFor(logging.DEBUG):
+                self.log.debug('cmd_sleep')
             
             self.motehandler.cpuDone.release()
             

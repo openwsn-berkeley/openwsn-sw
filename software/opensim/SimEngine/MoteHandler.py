@@ -170,7 +170,7 @@ class MoteHandler(threading.Thread):
         
         # logging this module
         self.log             = logging.getLogger('MoteHandler_'+str(self.id))
-        self.log.setLevel(logging.DEBUG)
+        self.log.setLevel(logging.INFO)
         self.log.addHandler(NullLogHandler())
         
         # logging this mote's modules
@@ -190,7 +190,7 @@ class MoteHandler(threading.Thread):
                 'BspUart_'+str(self.id),
             ]:
             temp = logging.getLogger(loggerName)
-            temp.setLevel(logging.DEBUG)
+            temp.setLevel(logging.INFO)
             temp.addHandler(self.loghandler)
         
         # initialize parent class

@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
+import logging
 import random
 import math
+
 import HwModule
 
 class HwCrystal(HwModule.HwModule):
@@ -41,7 +43,8 @@ class HwCrystal(HwModule.HwModule):
         self.tsTick          = self.timeline.getCurrentTime()
         
         # log
-        self.log.debug('crystal starts at '+str(self.tsTick))
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('crystal starts at '+str(self.tsTick))
     
     def getTimeLastTick(self):
         '''
