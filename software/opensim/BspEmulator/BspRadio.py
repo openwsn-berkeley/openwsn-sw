@@ -285,15 +285,20 @@ class BspRadio(BspModule.BspModule):
         
         # signal start of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_startFrame'],
-                                     [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+        
+        # indicate to the mote
+        self.motehandler.mote.radio_isr_startFrame(counterVal)
+        
+        # kick the scheduler
+        return True
     
     def intr_startOfFrame_fromPropagation(self):
         
         # signal start of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_startFrame'],
-                                     [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+        
+        # indicate to the mote
+        self.motehandler.mote.radio_isr_startFrame(counterVal)
     
     def intr_endOfFrame_fromMote(self):
         # indicate transmission end to propagation model
@@ -301,15 +306,20 @@ class BspRadio(BspModule.BspModule):
         
         # signal end of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_endFrame'],
-                                     [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+        
+        # indicate to the mote
+        self.motehandler.mote.radio_isr_endFrame(counterVal)
+        
+        # kick the scheduler
+        return True
     
     def intr_endOfFrame_fromPropagation(self):
         
         # signal end of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_isr_endFrame'],
-                                     [(counterVal>>0)%0xff,(counterVal>>8)%0xff])
+        
+        # indicate to the mote
+        self.motehandler.mote.radio_isr_endFrame(counterVal)
     
     #======================== indication from propagation =====================
     
