@@ -72,6 +72,12 @@ class MoteHandler(threading.Thread):
         self.bspRadiotimer   = BspRadiotimer.BspRadiotimer(self.engine,self)
         self.bspRadio        = BspRadio.BspRadio(self.engine,self)
         self.bspUart         = BspUart.BspUart(self.engine,self)
+        # status
+        self.booted          = False
+        self.cpuRunning      = threading.Lock()
+        self.cpuRunning.acquire()
+        self.cpuDone         = threading.Lock()
+        self.cpuDone.acquire()
         
         #=== install callbacks
         # board
@@ -195,17 +201,20 @@ class MoteHandler(threading.Thread):
         
         # thread daemon mode
         self.setDaemon(True)
+        
+        # log
+        self.log.info('thread initialized')
     
     def run(self):
     
         # log
-        self.log.info('starting')
+        self.log.info('thread starting')
         
-        while(1):
-            # wait for a command
+        # switch on the mote
+        self.hwSupply.switchOn()
+        
+        while True:
             time.sleep(1)
-            
-            # log
             self.log.info('poipoi')
         
     #======================== public ==========================================
@@ -215,6 +224,33 @@ class MoteHandler(threading.Thread):
     
     def getLocation(self):
         return self.location
+    
+    def handleEvent(self,functionToCall):
+        
+        if not self.booted:
+            
+            assert functionToCall==self.hwSupply.switchOn
+            
+            # I'm not booted
+            self.booted = True
+            
+            # start the thread's execution
+            self.start()
+            
+            # wait for CPU to be done
+            self.cpuDone.acquire()
+        
+        else:
+            # call the funcion (mote runs in ISR)
+            kickScheduler = functionToCall()
+            assert kickScheduler in [True,False]
+            
+            if kickScheduler:
+                # release the mote's CPU (mote runs in task mode)
+                self.cpuRunning.release()
+                
+                # wait for CPU to be done
+                self.cpuDone.acquire()
     
     #======================== private =========================================
     

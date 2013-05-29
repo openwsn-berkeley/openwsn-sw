@@ -166,8 +166,8 @@ class SimCli(threading.Thread):
             self._printUsageFromName('bootall')
             return
         
-        for moteId in range(self.engine.getNumMotes()):
-            moteHandler = self.engine.getMoteHandler(moteId)
+        for rank in range(self.engine.getNumMotes()):
+            moteHandler = self.engine.getMoteHandler(rank)
             moteHandler.hwSupply.switchOn()
         
         print 'OK'

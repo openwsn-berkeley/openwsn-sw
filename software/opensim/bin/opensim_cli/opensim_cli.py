@@ -46,7 +46,7 @@ def main():
     cliHandler.start()
     
     # add motes
-    for _ in range(2):
+    for _ in range(1):
         # create a mote
         moteHandler = MoteHandler.MoteHandler(simengine,oos_openwsn.OpenMote())
         

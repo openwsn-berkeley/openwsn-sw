@@ -45,8 +45,6 @@ class TimeLine(threading.Thread):
         self.firstEventPassed     = False
         self.firstEvent           = threading.Lock()
         self.firstEvent.acquire()
-        self.moteBusy             = threading.Lock()
-        self.moteBusy.acquire()
         self.stats                = TimeLineStats()
         
         # logging
@@ -97,19 +95,13 @@ class TimeLine(threading.Thread):
             # record the current time
             self.currentTime = event.atTime
             
-            # record the mote'd ID
-            self.moteBusyId = event.moteId
-            
             # log
             self.log.debug('\n\nnow {0:.6f}, executing {1}@{2}'.format(event.atTime,
                                                                    event.desc,
                                                                    event.moteId,))
             
             # call the event's callback
-            event.cb()
-            
-            # wait for the mote to be done
-            self.moteBusy.acquire()
+            self.engine.getMoteHandlerById(event.moteId).handleEvent(event.cb)
             
             # update statistics
             self.stats.incrementEvents()
@@ -202,14 +194,6 @@ class TimeLine(threading.Thread):
         
     def getEvents(self):
         return [[ev.atTime,ev.moteId,ev.desc] for ev in self.timeline]
-    
-    def moteDone(self,moteId):
-        
-        # make sure that the mote which is done is one expected
-        assert(moteId==self.moteBusyId)
-        
-        # post the semaphore to timeline thread can go on
-        self.moteBusy.release()
     
     def getStats(self):
         return self.stats

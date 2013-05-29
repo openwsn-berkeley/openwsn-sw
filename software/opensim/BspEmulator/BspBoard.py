@@ -23,33 +23,30 @@ class BspBoard(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_init(self,params):
+    def cmd_init(self):
         '''emulates:
            void board_init()'''
         
         # log the activity
         self.log.debug('cmd_init')
         
-        # make sure length of params is expected
-        assert(len(params)==0)
-        
-        # remember that module has been intialized
+        # remember that module has been initialized
         self.isInitialized = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_board_init'])
     
-    def cmd_sleep(self,params):
+    def cmd_sleep(self):
         '''emulates
            void board_init()'''
         
-        # log the activity
-        self.log.debug('cmd_sleep')
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
-        
-        # have the timeline advance to the next event
-        self.timeline.moteDone(self.motehandler.getId())
+        try:
+            # log the activity
+            self.log.debug('cmd_sleep')
+            
+            self.motehandler.cpuDone.release()
+            
+            # block the mote until CPU is released by ISR
+            self.motehandler.cpuRunning.acquire()
+            
+        except Exception as err:
+            self.log.critical(err)
     
     #======================== private =========================================

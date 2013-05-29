@@ -22,7 +22,7 @@ class BspEui64(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_get(self,params):
+    def cmd_get(self):
         '''emulates
            void eui64_get(uint8_t* addressToWrite)'''
         
@@ -33,14 +33,13 @@ class BspEui64(BspModule.BspModule):
         myId    = self.motehandler.getId()
         
         # format my EUI64
-        myEui64 = [0x14,015,0x92,0xcc,0x00,0x00,((myId>>8) & 0xff),
-                                                ((myId>>0) & 0xff)]
+        myEui64 = [0x14,0x15,0x92,0xcc,0x00,0x00,((myId>>8) & 0xff),
+                                                 ((myId>>0) & 0xff)]
         
         # log the activity
         self.log.debug('returning '+str(myEui64))
         
         # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_eui64_get'],
-                                     myEui64)
+        return myEui64
     
     #======================== private =========================================

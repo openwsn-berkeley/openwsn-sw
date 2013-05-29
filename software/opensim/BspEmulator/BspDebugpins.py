@@ -28,7 +28,7 @@ class BspDebugpins(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_init(self,params):
+    def cmd_init(self):
         '''emulates
            void debugpins_init()'''
         
@@ -37,11 +37,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # remember that module has been intialized
         self.isInitialized = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_init'])
     
-    def cmd_frame_toggle(self,params):
+    def cmd_frame_toggle(self):
         '''emulates
            void debugpins_frame_toggle()'''
         
@@ -50,11 +47,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.framePinHigh = not self.framePinHigh
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_frame_toggle'])
     
-    def cmd_frame_clr(self,params):
+    def cmd_frame_clr(self):
         '''emulates
            void debugpins_frame_clr()'''
         
@@ -63,11 +57,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.framePinHigh = False
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_frame_clr'])
     
-    def cmd_frame_set(self,params):
+    def cmd_frame_set(self):
         '''emulates
            void debugpins_frame_set()'''
         
@@ -76,11 +67,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.framePinHigh = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_frame_set'])
     
-    def cmd_slot_toggle(self,params):
+    def cmd_slot_toggle(self):
         '''emulates
            void debugpins_slot_toggle()'''
         
@@ -89,11 +77,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.slotPinHigh = not self.slotPinHigh
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_slot_toggle'])
     
-    def cmd_slot_clr(self,params):
+    def cmd_slot_clr(self):
         '''emulates
            void debugpins_slot_clr()'''
         
@@ -102,11 +87,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.slotPinHigh = False
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_slot_clr'])
     
-    def cmd_slot_set(self,params):
+    def cmd_slot_set(self):
         '''emulates
            void debugpins_slot_set()'''
         
@@ -115,11 +97,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.slotPinHigh = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_slot_set'])
     
-    def cmd_fsm_toggle(self,params):
+    def cmd_fsm_toggle(self):
         '''emulates
            void debugpins_fsm_toggle()'''
         
@@ -128,11 +107,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.fsmPinHigh = not self.fsmPinHigh
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_fsm_toggle'])
     
-    def cmd_fsm_clr(self,params):
+    def cmd_fsm_clr(self):
         '''emulates
            void debugpins_fsm_clr()'''
         
@@ -141,11 +117,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.fsmPinHigh = False
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_fsm_clr'])
     
-    def cmd_fsm_set(self,params):
+    def cmd_fsm_set(self):
         '''emulates
            void debugpins_fsm_set()'''
         
@@ -154,11 +127,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.fsmPinHigh = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_fsm_set'])
     
-    def cmd_task_toggle(self,params):
+    def cmd_task_toggle(self):
         '''emulates
            void debugpins_task_toggle()'''
         
@@ -167,11 +137,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.taskPinHigh = not self.taskPinHigh
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_task_toggle'])
     
-    def cmd_task_clr(self,params):
+    def cmd_task_clr(self):
         '''emulates
            void debugpins_task_clr()'''
         
@@ -180,11 +147,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.taskPinHigh = False
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_task_clr'])
     
-    def cmd_task_set(self,params):
+    def cmd_task_set(self):
         '''emulates
            void debugpins_task_set()'''
         
@@ -193,11 +157,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.taskPinHigh = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_task_set'])
     
-    def cmd_isr_toggle(self,params):
+    def cmd_isr_toggle(self):
         '''emulates
            void debugpins_isr_toggle()'''
         
@@ -206,11 +167,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.isrPinHigh = not self.isrPinHigh
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_isr_toggle'])
     
-    def cmd_isr_clr(self,params):
+    def cmd_isr_clr(self):
         '''emulates
            void debugpins_isr_clr()'''
         
@@ -219,11 +177,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.isrPinHigh = False
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_isr_clr'])
     
-    def cmd_isr_set(self,params):
+    def cmd_isr_set(self):
         '''emulates
            void debugpins_isr_set()'''
         
@@ -232,11 +187,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.isrPinHigh = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_isr_set'])
     
-    def cmd_radio_toggle(self,params):
+    def cmd_radio_toggle(self):
         '''emulates
            void debugpins_radio_toggle()'''
         
@@ -245,11 +197,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.radioPinHigh = not self.radioPinHigh
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_radio_toggle'])
     
-    def cmd_radio_clr(self,params):
+    def cmd_radio_clr(self):
         '''emulates
            void debugpins_radio_clr()'''
         
@@ -258,11 +207,8 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.radioPinHigh = False
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_radio_clr'])
     
-    def cmd_radio_set(self,params):
+    def cmd_radio_set(self):
         '''emulates
            void debugpins_radio_set()'''
         
@@ -271,9 +217,6 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.radioPinHigh = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_debugpins_radio_set'])
     
     #=== getters
     

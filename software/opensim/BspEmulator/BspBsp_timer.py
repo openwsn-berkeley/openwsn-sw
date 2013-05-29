@@ -32,7 +32,7 @@ class BspBsp_timer(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_init(self,params):
+    def cmd_init(self):
         '''emulates
            void bsp_timer_init()'''
         
@@ -59,11 +59,8 @@ class BspBsp_timer(BspModule.BspModule):
         
         # remember that module has been intialized
         self.isInitialized   = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_init'])
     
-    def cmd_reset(self,params):
+    def cmd_reset(self):
         '''emulates
            void bsp_timer_reset()'''
         
@@ -71,10 +68,62 @@ class BspBsp_timer(BspModule.BspModule):
         self.log.debug('cmd_reset')
         
         self._cmd_reset_internal()
+    
+    def cmd_scheduleIn(self,delayTicks):
+        '''emulates
+           void bsp_timer_scheduleIn(PORT_TIMER_WIDTH delayTicks)'''
+        
+        # log the activity
+        self.log.debug('cmd_scheduleIn delayTicks='+str(self.delayTicks))
+        
+        # get current counter value
+        counterVal                = self.hwCrystal.getTicksSince(self.timeLastReset)
+        
+        # how many ticks until compare event
+        if counterVal<self.delayTicks:
+            ticksBeforeEvent = self.delayTicks-counterVal
+        else:
+            ticksBeforeEvent = self.PERIOD-counterVal+self.delayTicks
+        
+        # calculate time at overflow event (in 'period' ticks)
+        compareTime               = self.hwCrystal.getTimeIn(ticksBeforeEvent)
+        
+        # schedule compare event
+        self.timeline.scheduleEvent(compareTime,
+                                    self.motehandler.getId(),
+                                    self.intr_compare,
+                                    self.INTR_COMPARE)
+        
+        # the compare is now scheduled
+        self.compareArmed         = True
+    
+    def cmd_cancel_schedule(self):
+        '''emulates
+           void bsp_timer_cancel_schedule()'''
+        
+        # log the activity
+        self.log.debug('cmd_cancel_schedule')
+        
+        # cancel the compare event
+        numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
+                                                self.INTR_COMPARE)
+        assert(numCanceled<=1)
+    
+    def cmd_get_currentValue(self):
+        '''emulates
+           uin16_t bsp_timer_get_currentValue()'''
+        
+        # log the activity
+        self.log.debug('cmd_get_currentValue')
+        
+        # get current counter value
+        counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
         
         # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_reset'])
-        
+        return counterVal
+    
+    #======================== private =========================================
+    
     def _cmd_reset_internal(self):
         
         # cancel the compare event
@@ -105,72 +154,6 @@ class BspBsp_timer(BspModule.BspModule):
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
     
-    def cmd_scheduleIn(self,params):
-        '''emulates
-           void bsp_timer_scheduleIn(PORT_TIMER_WIDTH delayTicks)'''
-        
-        # unpack the parameters
-        (self.delayTicks,)        = struct.unpack('<H', params)
-        
-        # log the activity
-        self.log.debug('cmd_scheduleIn delayTicks='+str(self.delayTicks))
-        
-        # get current counter value
-        counterVal                = self.hwCrystal.getTicksSince(self.timeLastReset)
-        
-        # how many ticks until compare event
-        if counterVal<self.delayTicks:
-            ticksBeforeEvent = self.delayTicks-counterVal
-        else:
-            ticksBeforeEvent = self.PERIOD-counterVal+self.delayTicks
-        
-        # calculate time at overflow event (in 'period' ticks)
-        compareTime               = self.hwCrystal.getTimeIn(ticksBeforeEvent)
-        
-        # schedule compare event
-        self.timeline.scheduleEvent(compareTime,
-                                    self.motehandler.getId(),
-                                    self.intr_compare,
-                                    self.INTR_COMPARE)
-        
-        # the compare is now scheduled
-        self.compareArmed         = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_scheduleIn'])
-    
-    def cmd_cancel_schedule(self,params):
-        '''emulates
-           void bsp_timer_cancel_schedule()'''
-        
-        # log the activity
-        self.log.debug('cmd_cancel_schedule')
-        
-        # cancel the compare event
-        numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
-                                                self.INTR_COMPARE)
-        assert(numCanceled<=1)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_cancel_schedule'])
-    
-    def cmd_get_currentValue(self,params):
-        '''emulates
-           uin16_t bsp_timer_get_currentValue()'''
-        
-        # log the activity
-        self.log.debug('cmd_get_currentValue')
-        
-        # get current counter value
-        counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
-        
-        # respond
-        params = []
-        for i in struct.pack('<H',counterVal):
-            params.append(ord(i))
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_cancel_schedule'],
-                                     params)
-    
     #======================== interrupts ======================================
     
     def intr_overflow(self):
@@ -194,9 +177,9 @@ class BspBsp_timer(BspModule.BspModule):
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
         
-        # have the timeline advance to the next event
-        self.timeline.moteDone(self.motehandler.getId())
-    
+        # kick the scheduler (TODO poipoi: don't?)
+        return True
+        
     def intr_compare(self):
         '''
         \brief A compare event happened.
@@ -204,5 +187,8 @@ class BspBsp_timer(BspModule.BspModule):
         
         # send interrupt to mote
         self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_isr'])
+        
+        # kick the scheduler
+        return True
     
     #======================== private =========================================

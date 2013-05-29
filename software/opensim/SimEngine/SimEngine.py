@@ -149,6 +149,15 @@ class SimEngine(object):
     def getMoteHandler(self,rank):
         return self.moteHandlers[rank]
     
+    def getMoteHandlerById(self,moteId):
+        returnVal = None
+        for h in self.moteHandlers:
+            if h.getId()==moteId:
+                returnVal = h
+                break
+        assert returnVal
+        return returnVal
+    
     def getStats(self):
         return self.stats
     
