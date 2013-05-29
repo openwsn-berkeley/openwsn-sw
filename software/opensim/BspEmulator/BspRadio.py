@@ -299,6 +299,9 @@ class BspRadio(BspModule.BspModule):
         
         # indicate to the mote
         self.motehandler.mote.radio_isr_startFrame(counterVal)
+        
+        # do NOT kick the scheduler
+        return True
     
     def intr_endOfFrame_fromMote(self):
         # indicate transmission end to propagation model
@@ -320,6 +323,9 @@ class BspRadio(BspModule.BspModule):
         
         # indicate to the mote
         self.motehandler.mote.radio_isr_endFrame(counterVal)
+        
+        # do NOT kick the scheduler
+        return True
     
     #======================== indication from propagation =====================
     
