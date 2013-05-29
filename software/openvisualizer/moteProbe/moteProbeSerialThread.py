@@ -94,9 +94,11 @@ class moteProbeSerialThread(threading.Thread):
                             self.inputBuf           += rxByte
                             
                             try:
+                                tempBuf = self.inputBuf
                                 self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
+                                log.debug("{0}: {2} dehdlcized input: {1}".format(self.name, u.formatStringBuf(self.inputBuf), u.formatStringBuf(tempBuf)))
                             except OpenHdlc.HdlcException as err:
-                                log.warning('{0}: invalid serial frame: {0}'.format(self.name,err))
+                                log.warning('{0}: invalid serial frame: {2} {1}'.format(self.name, err, u.formatStringBuf(tempBuf)))
                             else:
                                 if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
                                       with self.outputBufLock:
