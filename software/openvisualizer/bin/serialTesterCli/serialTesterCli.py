@@ -130,9 +130,6 @@ def main():
     
     # create an open CLI
     cli = serialTesterCli(moteProbe_handler,moteConnector_handler)
-    
-    # start threads
-    #moteConnector_handler.start()
     cli.start()
     
 #============================ application logging =============================

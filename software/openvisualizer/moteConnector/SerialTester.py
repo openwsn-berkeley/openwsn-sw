@@ -61,55 +61,11 @@ class SerialTester(eventBusClient.eventBusClient):
             ]
         )
         
-        
-        
-    def run(self):
-        try:
-            # log
-            log.debug("starting to run")
-            
-            while self.goOn:
-                try:
-                    # connect
-                    self.socket.connect((self.moteProbeIp,self.moteProbeTcpPort))
-                    log.debug("connecting to moteProbe@{0}:{1}".format(self.moteProbeIp,self.moteProbeTcpPort))
-                    
-                    while True:
-                        
-                        # retrieve the string of bytes from the socket
-                        inputString        = self.socket.recv(1024)
-                        input              = [ord(c) for c in inputString]
-                        
-                        # handle input
-                        if (chr(input[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
-                            
-                            # don't handle if I'm not testing
-                            with self.dataLock:
-                                if not self.busyTesting:
-                                    continue
-                            
-                            with self.dataLock:
-                                # record what I just received
-                                self.lastReceived = input[1+2+5:] # type (1B), moteId (2B), ASN (5B)
-                                
-                                # wake up other thread
-                                self.waitForReply.set()
-                        
-                except socket.error as err:
-                    log.error(err)
-                    pass
-        except Exception as err:
-            errMsg=u.formatCrashMessage(self.name,err)
-            print errMsg
-            log.critical(errMsg)
-            sys.exit(1)
-        
     def quit(self):
         self.goOn = False
         self.socket.close()
     
     #======================== public ==========================================
-    
     
     def _receiveDataFromMoteSerial(self,sender,signal,data):
         input   = [ord(c) for c in data]
@@ -193,7 +149,6 @@ class SerialTester(eventBusClient.eventBusClient):
                 self.lastSent = packetToSend[:]
             
             # send
-            #self.socket.send(''.join([chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend]))
             self.dispatch(
                       #sender        = self.name,
                       signal        = 'fromMoteConnector@'+self.moteProbeSerialPort,
