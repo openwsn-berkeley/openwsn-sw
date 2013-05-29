@@ -45,6 +45,7 @@ class TimeLine(threading.Thread):
         self.firstEventPassed     = False
         self.firstEvent           = threading.Lock()
         self.firstEvent.acquire()
+        self.firstEventLock       = threading.Lock()
         self.stats                = TimeLineStats()
         
         # logging
@@ -72,7 +73,6 @@ class TimeLine(threading.Thread):
         
         # wait for the first event to be scheduled
         self.firstEvent.acquire()
-        self.firstEventPassed = True
         self.engine.indicateFirstEventPassed()
         
         # log
@@ -164,8 +164,10 @@ class TimeLine(threading.Thread):
         self.timeline.insert(i,newEvent)
         
         # start the timeline, if applicable
-        if not self.firstEventPassed:
-            self.firstEvent.release()
+        with self.firstEventLock:
+            if not self.firstEventPassed:
+                self.firstEventPassed = True
+                self.firstEvent.release()
         
     def cancelEvent(self,moteId,desc):
         '''
