@@ -127,7 +127,7 @@ class TimeLine(threading.Thread):
         \brief Add an event into the timeline
         
         \param atTime The time at which this event should be called.
-        \param cd     The function to call when this event happens.
+        \param cb     The function to call when this event happens.
         \param desc   A unique description (a string) of this event.
         '''
         

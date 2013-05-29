@@ -3,15 +3,21 @@
 import os
 import sys
 
-temp_path = sys.path[0]
-if temp_path:
-    sys.path.insert(0, os.path.join(temp_path, '..', '..'))
+if __name__=='__main__':
+    here = sys.path[0]
+    # opensim/
+    sys.path.insert(0, os.path.join(here, '..', '..'))
+    # location of openwsn module
+    sys.path.insert(0, os.path.join(here, '..', '..', '..', '..', '..', 'openwsn-fw', 'firmware','openos','projects','common'))
 
 import logging
 import logging.handlers
 import binascii
+
 from SimEngine import SimEngine
 from SimCli    import SimCli
+
+import oos_openwsn
 
 LOG_FORMAT  = "%(asctime)s [%(name)s:%(levelname)s] %(message)s"
 
@@ -30,11 +36,21 @@ def main():
     
     # instantiate a SimEngine object
     simengine        = SimEngine.SimEngine(loghandler)
-    simengine.start()
     
     # instantiate the CLI interface
     cliHandler       = SimCli.SimCli(simengine)
+    
+    # start threads
+    simengine.start()
     cliHandler.start()
+    
+    # add motes
+    for _ in range(2):
+        # create a mote
+        moteHandler = MoteHandler(self.engine,oos_openwsn.OpenMote())
+        
+        # indicate to the engine that there is a new mote
+        self.engine.indicateNewMote(moteHandler)
             
 if __name__ == "__main__":
     main()
