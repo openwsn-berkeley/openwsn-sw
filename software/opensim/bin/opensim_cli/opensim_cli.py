@@ -14,7 +14,8 @@ import logging
 import logging.handlers
 import binascii
 
-from SimEngine import SimEngine
+from SimEngine import SimEngine, \
+                      MoteHandler
 from SimCli    import SimCli
 
 import oos_openwsn
@@ -47,10 +48,10 @@ def main():
     # add motes
     for _ in range(2):
         # create a mote
-        moteHandler = MoteHandler(self.engine,oos_openwsn.OpenMote())
+        moteHandler = MoteHandler.MoteHandler(simengine,oos_openwsn.OpenMote())
         
         # indicate to the engine that there is a new mote
-        self.engine.indicateNewMote(moteHandler)
-            
+        simengine.indicateNewMote(moteHandler)
+
 if __name__ == "__main__":
     main()

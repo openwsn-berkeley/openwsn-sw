@@ -60,9 +60,6 @@ class SimEngine(object):
         self.delay                = 0
         self.stats                = SimEngineStats()
         
-        # create daemon thread to handle connection of newly created motes
-        self.daemonThreadHandler  = DaemonThread.DaemonThread(self)
-        
         # logging this module
         self.log                  = logging.getLogger('SimEngine')
         self.log.setLevel(logging.DEBUG)
@@ -86,9 +83,6 @@ class SimEngine(object):
         
         # log
         self.log.info('starting')
-        
-        # start daemon thread (ready to accept connections)
-        self.daemonThreadHandler.start()
         
         # start timeline
         self.timeline.start()

@@ -18,129 +18,32 @@ from BspEmulator import BspUart
 from BspEmulator import HwSupply
 from BspEmulator import HwCrystal
 
-TCPRXBUFSIZE       = 4096    # size of the TCP reception buffer
+#============================ get notification IDs ============================
+import re
+
+f = open(os.path.join('..','..','..','..','..','openwsn-fw','firmware','openos','bsp','boards','python','openwsnmodule_obj.h'))
+lines = f.readlines()
+f.close()
+
+notifString = []
+
+for line in lines:
+    m = re.search('MOTE_NOTIF_(\w+)',line)
+    if m:
+        if m.group(1) not in notifString:
+            notifString += [m.group(1)]
+
+def notifId(s):
+    assert s in notifString
+    return notifString.index(s)
+
+#============================ classes =========================================
 
 class NullLogHandler(logging.Handler):
     def emit(self, record):
         pass
 
 class MoteHandler(threading.Thread):
-    '''
-    \brief Handle the connection of a mote.
-    '''
-    
-    commandIds = {
-        #===== from client to server
-        # board
-        'OPENSIM_CMD_board_init'                      : 0,
-        'OPENSIM_CMD_board_sleep'                     : 1,
-        'OPENSIM_CMD_board_reset'                     : 2,
-        # bsp_timer
-        'OPENSIM_CMD_bsp_timer_init'                  : 3,
-        'OPENSIM_CMD_bsp_timer_reset'                 : 4,
-        'OPENSIM_CMD_bsp_timer_scheduleIn'            : 5,
-        'OPENSIM_CMD_bsp_timer_cancel_schedule'       : 6,
-        'OPENSIM_CMD_bsp_timer_get_currentValue'      : 7,
-        # debugpins
-        'OPENSIM_CMD_debugpins_init'                  : 8,
-        'OPENSIM_CMD_debugpins_frame_toggle'          : 9,
-        'OPENSIM_CMD_debugpins_frame_clr'             : 10,
-        'OPENSIM_CMD_debugpins_frame_set'             : 11,
-        'OPENSIM_CMD_debugpins_slot_toggle'           : 12,
-        'OPENSIM_CMD_debugpins_slot_clr'              : 13,
-        'OPENSIM_CMD_debugpins_slot_set'              : 14,
-        'OPENSIM_CMD_debugpins_fsm_toggle'            : 15,
-        'OPENSIM_CMD_debugpins_fsm_clr'               : 16,
-        'OPENSIM_CMD_debugpins_fsm_set'               : 17,
-        'OPENSIM_CMD_debugpins_task_toggle'           : 18,
-        'OPENSIM_CMD_debugpins_task_clr'              : 19,
-        'OPENSIM_CMD_debugpins_task_set'              : 20,
-        'OPENSIM_CMD_debugpins_isr_toggle'            : 21,
-        'OPENSIM_CMD_debugpins_isr_clr'               : 22,
-        'OPENSIM_CMD_debugpins_isr_set'               : 23,
-        'OPENSIM_CMD_debugpins_radio_toggle'          : 24,
-        'OPENSIM_CMD_debugpins_radio_clr'             : 25,
-        'OPENSIM_CMD_debugpins_radio_set'             : 26,
-        # eui64
-        'OPENSIM_CMD_eui64_get'                       : 27,
-        # leds
-        'OPENSIM_CMD_leds_init'                       : 28,
-        'OPENSIM_CMD_leds_error_on'                   : 29,
-        'OPENSIM_CMD_leds_error_off'                  : 30,
-        'OPENSIM_CMD_leds_error_toggle'               : 31,
-        'OPENSIM_CMD_leds_error_isOn'                 : 32,
-        'OPENSIM_CMD_leds_error_blink'                : 33,
-        'OPENSIM_CMD_leds_radio_on'                   : 34,
-        'OPENSIM_CMD_leds_radio_off'                  : 35,
-        'OPENSIM_CMD_leds_radio_toggle'               : 36,
-        'OPENSIM_CMD_leds_radio_isOn'                 : 37,
-        'OPENSIM_CMD_leds_sync_on'                    : 38,
-        'OPENSIM_CMD_leds_sync_off'                   : 39,
-        'OPENSIM_CMD_leds_sync_toggle'                : 40,
-        'OPENSIM_CMD_leds_sync_isOn'                  : 41,
-        'OPENSIM_CMD_leds_debug_on'                   : 42,
-        'OPENSIM_CMD_leds_debug_off'                  : 43,
-        'OPENSIM_CMD_leds_debug_toggle'               : 44,
-        'OPENSIM_CMD_leds_debug_isOn'                 : 45,
-        'OPENSIM_CMD_leds_all_on'                     : 46,
-        'OPENSIM_CMD_leds_all_off'                    : 47,
-        'OPENSIM_CMD_leds_all_toggle'                 : 48,
-        'OPENSIM_CMD_leds_circular_shift'             : 49,
-        'OPENSIM_CMD_leds_increment'                  : 50,
-        # radio
-        'OPENSIM_CMD_radio_init'                      : 51,
-        'OPENSIM_CMD_radio_reset'                     : 52,
-        'OPENSIM_CMD_radio_startTimer'                : 53,
-        'OPENSIM_CMD_radio_getTimerValue'             : 54,
-        'OPENSIM_CMD_radio_setTimerPeriod'            : 55,
-        'OPENSIM_CMD_radio_getTimerPeriod'            : 56,
-        'OPENSIM_CMD_radio_setFrequency'              : 57,
-        'OPENSIM_CMD_radio_rfOn'                      : 58,
-        'OPENSIM_CMD_radio_rfOff'                     : 59,
-        'OPENSIM_CMD_radio_loadPacket'                : 60,
-        'OPENSIM_CMD_radio_txEnable'                  : 61,
-        'OPENSIM_CMD_radio_txNow'                     : 62,
-        'OPENSIM_CMD_radio_rxEnable'                  : 63,
-        'OPENSIM_CMD_radio_rxNow'                     : 64,
-        'OPENSIM_CMD_radio_getReceivedFrame'          : 65,
-        # radiotimer
-        'OPENSIM_CMD_radiotimer_init'                 : 66,
-        'OPENSIM_CMD_radiotimer_start'                : 67,
-        'OPENSIM_CMD_radiotimer_getValue'             : 68,
-        'OPENSIM_CMD_radiotimer_setPeriod'            : 69,
-        'OPENSIM_CMD_radiotimer_getPeriod'            : 70,
-        'OPENSIM_CMD_radiotimer_schedule'             : 71,
-        'OPENSIM_CMD_radiotimer_cancel'               : 72,
-        'OPENSIM_CMD_radiotimer_getCapturedTime'      : 73,
-        # uart
-        'OPENSIM_CMD_uart_init'                       : 74,
-        'OPENSIM_CMD_uart_enableInterrupts'           : 75,
-        'OPENSIM_CMD_uart_disableInterrupts'          : 76,
-        'OPENSIM_CMD_uart_clearRxInterrupts'          : 77,
-        'OPENSIM_CMD_uart_clearTxInterrupts'          : 78,
-        'OPENSIM_CMD_uart_writeByte'                  : 79,
-        'OPENSIM_CMD_uart_readByte'                   : 80,
-        # supply
-        #===== from server to client
-        # board
-        # bsp_timer
-        'OPENSIM_CMD_bsp_timer_isr'                   : 100,
-        # debugpins
-        # eui64
-        # leds
-        # radio
-        'OPENSIM_CMD_radio_isr_startFrame'            : 101,
-        'OPENSIM_CMD_radio_isr_endFrame'              : 102,
-        # radiotimer
-        'OPENSIM_CMD_radiotimer_isr_compare'          : 103,
-        'OPENSIM_CMD_radiotimer_isr_overflow'         : 104,
-        # uart
-        'OPENSIM_CMD_uart_isr_tx'                     : 105,
-        'OPENSIM_CMD_uart_isr_rx'                     : 106,
-        # supply
-        'OPENSIM_CMD_supply_on'                       : 107,
-        'OPENSIM_CMD_supply_off'                      : 108,
-    }
     
     def __init__(self,engine,mote):
         
@@ -175,7 +78,7 @@ class MoteHandler(threading.Thread):
         mote.set_callback(notifId('board_init'),                self.bspBoard.cmd_init)
         mote.set_callback(notifId('board_sleep'),               self.bspBoard.cmd_sleep)
         # bsp_timer
-        mote.set_callback(notifId('timer_init'),                self.bspBsp_timer.cmd_init)
+        mote.set_callback(notifId('bsp_timer_init'),            self.bspBsp_timer.cmd_init)
         mote.set_callback(notifId('bsp_timer_reset'),           self.bspBsp_timer.cmd_reset)
         mote.set_callback(notifId('bsp_timer_scheduleIn'),      self.bspBsp_timer.cmd_scheduleIn)
         mote.set_callback(notifId('bsp_timer_cancel_schedule'), self.bspBsp_timer.cmd_cancel_schedule)
@@ -300,18 +203,11 @@ class MoteHandler(threading.Thread):
         
         while(1):
             # wait for a command
-            try:
-                input = self.conn.recv(TCPRXBUFSIZE)
-            except socket.error as err:
-                self.log.critical('connection error (err='+str(err)+')')
-                break
+            time.sleep(1)
             
-            # make sure I received something
-            assert(len(input)>0)
-            
-            # handle the received packet
-            self._handleReceivedCommand(input)
-            
+            # log
+            self.log.info('poipoi')
+        
     #======================== public ==========================================
     
     def getId(self):
@@ -320,50 +216,5 @@ class MoteHandler(threading.Thread):
     def getLocation(self):
         return self.location
     
-    def sendCommand(self,commandId,params=[]):
-        
-        # log
-        self.log.debug('sending command='+self._cmdIdToName(commandId))
-        
-        # update statistics
-        self.numTxCommands += 1
-        
-        # send command over connection
-        dataToSend  = ''
-        dataToSend += chr(commandId)
-        for c in params:
-            dataToSend += chr(c)
-        self.conn.sendall(dataToSend)
-    
     #======================== private =========================================
     
-    def _handleReceivedCommand(self,input):
-        
-        # get the command id and params from the received command
-        cmdId  = ord(input[0])
-        params = input[1:]
-        
-        # log
-        self.log.debug('received command='+self._cmdIdToName(cmdId))
-        
-        # update statistics
-        self.numRxCommands += 1
-        
-        # make sure I know what callback to call
-        assert(cmdId in self.commandCallbacks)
-        
-        # call the callback
-        try:
-            returnVal = self.commandCallbacks[cmdId](params)
-        except Exception as err:
-            self.log.critical(str(err))
-            self.engine.pause()
-            raise
-    
-    def _cmdIdToName(self,cmdId):
-        cmdName = 'unknow'
-        for k,v in self.commandIds.items():
-            if cmdId==v:
-                cmdName = k
-                break
-        return cmdName
