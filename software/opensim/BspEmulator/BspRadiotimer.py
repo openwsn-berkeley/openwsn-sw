@@ -33,28 +33,22 @@ class BspRadiotimer(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_init(self,params):
+    def cmd_init(self):
         '''emulates
            void radiotimer_init()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_init')
         
         # remember that module has been intialized
         self.isInitialized = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_init'])
     
-    def cmd_start(self,params,internal=False):
+    def cmd_start(self,period):
         '''emulates
            void radiotimer_start(uint16_t period)'''
         
-        # unpack the parameters
-        (self.period,)            = struct.unpack('<H', params)
+        # store params
+        self.period          = period
         
         # log the activity
         self.log.debug('cmd_start period='+str(self.period))
@@ -73,19 +67,10 @@ class BspRadiotimer(BspModule.BspModule):
 
         # the counter is now running
         self.running         = True
-        
-        # respond
-        if internal:
-            return []
-        else:
-            self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_start'])
     
-    def cmd_getValue(self,params,internal=False):
+    def cmd_getValue(self):
         '''emulates
            uint16_t radiotimer_getValue()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_getValue')
@@ -94,22 +79,14 @@ class BspRadiotimer(BspModule.BspModule):
         counterVal           = self.hwCrystal.getTicksSince(self.timeLastReset)
         
         # respond
-        params = []
-        for i in struct.pack('<H',counterVal):
-            params.append(ord(i))
-        # respond
-        if internal:
-            return params
-        else:
-            self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_getValue'],
-                                     params)
+        return counterVal
     
-    def cmd_setPeriod(self,params,internal=False):
+    def cmd_setPeriod(self,period):
         '''emulates
            void radiotimer_setPeriod(uint16_t period)'''
         
-        # unpack the parameters
-        (self.period,)       = struct.unpack('<H', params)
+        # store params
+        self.period          = period
         
         # log the activity
         self.log.debug('cmd_setPeriod period='+str(self.period))
@@ -131,14 +108,8 @@ class BspRadiotimer(BspModule.BspModule):
                                     self.motehandler.getId(),
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
-        
-        # respond
-        if internal:
-            return []
-        else:
-            self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_setPeriod'])
     
-    def cmd_getPeriod(self,params,internal=False):
+    def cmd_getPeriod(self):
         '''emulates
            uint16_t radiotimer_getPeriod()'''
         
@@ -146,22 +117,11 @@ class BspRadiotimer(BspModule.BspModule):
         self.log.debug('cmd_getPeriod')
         
         # respond
-        params = []
-        for i in struct.pack('<H',self.period):
-            params.append(ord(i))
-        # respond
-        if internal:
-            return params
-        else:
-            self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_getPeriod'],
-                                     params)
+        return self.period
     
-    def cmd_schedule(self,params):
+    def cmd_schedule(self,offset):
         '''emulates
            void radiotimer_schedule(uint16_t offset)'''
-        
-        # unpack the parameters
-        (offset,)            = struct.unpack('<H', params)
         
         # log the activity
         self.log.debug('cmd_schedule offset='+str(offset))
@@ -186,11 +146,8 @@ class BspRadiotimer(BspModule.BspModule):
                                     
         # the compare is now scheduled
         self.compareArmed    = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_schedule'])
     
-    def cmd_cancel(self,params):
+    def cmd_cancel(self):
         '''emulates
            void radiotimer_cancel()'''
         
@@ -201,11 +158,8 @@ class BspRadiotimer(BspModule.BspModule):
         numCanceled = self.timeline.cancelEvent(self.motehandler.getId(),
                                                 self.INTR_COMPARE)
         assert(numCanceled<=1)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_cancel'])
     
-    def cmd_getCapturedTime(self,params):
+    def cmd_getCapturedTime(self):
         '''emulates
            uint16_t radiotimer_getCapturedTime()'''
         
@@ -234,7 +188,10 @@ class BspRadiotimer(BspModule.BspModule):
                                     self.INTR_COMPARE)
         
         # send interrupt to mote
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_isr_compare'])
+        self.motehandler.mote.radiotimer_isr_compare()
+        
+        # kick the scheduler
+        return True
     
     def intr_overflow(self):
         '''
@@ -253,7 +210,10 @@ class BspRadiotimer(BspModule.BspModule):
                                     self.INTR_OVERFLOW)
     
         # send interrupt to mote
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radiotimer_isr_overflow'])
+        self.motehandler.mote.radiotimer_isr_overflow()
+        
+        # kick the scheduler
+        return True
     
     #======================== private =========================================
     

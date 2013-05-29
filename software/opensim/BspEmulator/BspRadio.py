@@ -57,12 +57,9 @@ class BspRadio(BspModule.BspModule):
     
     #=== commands
     
-    def cmd_init(self,params):
+    def cmd_init(self):
         '''emulates
            void radio_init()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_init')
@@ -75,27 +72,18 @@ class BspRadio(BspModule.BspModule):
         
         # change state
         self._changeState(RadioState.RFOFF)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_init'])
     
-    def cmd_reset(self,params):
+    def cmd_reset(self):
         '''emulates
            void radio_reset()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_reset')
         
         # change state
         self._changeState(RadioState.STOPPED)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_reset'])
     
-    def cmd_startTimer(self,params):
+    def cmd_startTimer(self,period):
         '''emulates
            void radio_startTimer(PORT_TIMER_WIDTH period)'''
         
@@ -103,13 +91,9 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_startTimer')
         
         # defer to radiotimer
-        params = self.motehandler.bspRadiotimer.cmd_start(params,True)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_startTimer'],
-                                     params)
+        self.motehandler.bspRadiotimer.cmd_start(period)
     
-    def cmd_getTimerValue(self,params):
+    def cmd_getTimerValue(self):
         '''emulates
            PORT_TIMER_WIDTH radio_getTimerValue()'''
         
@@ -117,13 +101,9 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_getTimerValue')
         
         # defer to radiotimer
-        params = self.motehandler.bspRadiotimer.cmd_getValue(params,True)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_getTimerValue'],
-                                     params)
+        return self.motehandler.bspRadiotimer.cmd_getValue()
     
-    def cmd_setTimerPeriod(self,params):
+    def cmd_setTimerPeriod(self,period):
         '''emulates
            void radio_setTimerPeriod(PORT_TIMER_WIDTH period)'''
         
@@ -131,13 +111,9 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_setTimerPeriod')
         
         # defer to radiotimer
-        params = self.motehandler.bspRadiotimer.cmd_setPeriod(params,True)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_setTimerPeriod'],
-                                     params)
+        return self.motehandler.bspRadiotimer.cmd_setPeriod(period)
     
-    def cmd_getTimerPeriod(self,params):
+    def cmd_getTimerPeriod(self):
         '''emulates
            PORT_TIMER_WIDTH radio_getTimerPeriod()'''
         
@@ -145,18 +121,14 @@ class BspRadio(BspModule.BspModule):
         self.log.debug('cmd_getTimerPeriod')
         
         # defer to radiotimer
-        params = self.motehandler.bspRadiotimer.cmd_getPeriod(params,True)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_getTimerPeriod'],
-                                     params)
+        return self.motehandler.bspRadiotimer.cmd_getPeriod()
     
-    def cmd_setFrequency(self,params):
+    def cmd_setFrequency(self,frequency):
         '''emulates
            void radio_setFrequency(uint8_t frequency)'''
         
-        # unpack the parameters
-        (self.frequency,)            = struct.unpack('B', params)
+        # store params
+        self.frequency   = frequency
         
         # log the activity
         self.log.debug('cmd_setFrequency frequency='+str(self.frequency))
@@ -166,32 +138,20 @@ class BspRadio(BspModule.BspModule):
         
         # change state
         self._changeState(RadioState.FREQUENCY_SET)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_setFrequency'])
     
-    def cmd_rfOn(self,params):
+    def cmd_rfOn(self):
         '''emulates
            void radio_rfOn()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_rfOn')
         
         # update local variable
         self.isRfOn = True
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rfOn'])
     
-    def cmd_rfOff(self,params):
+    def cmd_rfOff(self):
         '''emulates
            void radio_rfOff()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_rfOff')
@@ -204,51 +164,32 @@ class BspRadio(BspModule.BspModule):
         
         # change state
         self._changeState(RadioState.RFOFF)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rfOff'])
     
-    def cmd_loadPacket(self,params):
+    def cmd_loadPacket(self,packetToLoad):
         '''emulates
            void radio_loadPacket(uint8_t* packet, uint8_t len)'''
         
         # make sure length of params is expected
-        assert(len(params)==127+1)
+        assert(len(packetToLoad)<=127)
         
         # log the activity
-        self.log.debug('cmd_loadPacket len={0}'.format(len(params)))
+        self.log.debug('cmd_loadPacket len={0}'.format(len(packetToLoad)))
         
         # change state
         self._changeState(RadioState.LOADING_PACKET)
         
         # update local variable
-        length = ord(params[0])
-        print length
-        
-        self.txBuf = []
-        self.txBuf.append(length)
-        for i in range(1,length+1):
-            self.txBuf.append(ord(params[i]))
-        output = ''
-        for c in self.txBuf:
-            output += ' %.2x'%c
-        print output
+        self.txBuf = [len(packetToLoad)]+packetToLoad
         
         # log
         self.log.debug('txBuf={0}'.format(self.txBuf))
         
         # change state
         self._changeState(RadioState.PACKET_LOADED)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_loadPacket'])
     
-    def cmd_txEnable(self,params):
+    def cmd_txEnable(self):
         '''emulates
            void radio_txEnable()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_txEnable')
@@ -258,16 +199,10 @@ class BspRadio(BspModule.BspModule):
         
         # change state
         self._changeState(RadioState.TX_ENABLED)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_txEnable'])
     
-    def cmd_txNow(self,params):
+    def cmd_txNow(self):
         '''emulates
            void radio_txNow()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_txNow')
@@ -286,16 +221,10 @@ class BspRadio(BspModule.BspModule):
                                     self.motehandler.getId(),
                                     self.intr_startOfFrame_fromMote,
                                     self.INTR_STARTOFFRAME_MOTE)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_txNow'])
     
-    def cmd_rxEnable(self,params):
+    def cmd_rxEnable(self):
         '''emulates
            void radio_rxEnable()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_rxEnable')
@@ -305,27 +234,18 @@ class BspRadio(BspModule.BspModule):
         
         # change state
         self._changeState(RadioState.LISTENING)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rxEnable'])
     
-    def cmd_rxNow(self,params):
+    def cmd_rxNow(self):
         '''emulates
            void radio_rxNow()'''
-        
-        # make sure length of params is expected
-        assert(len(params)==0)
         
         # log the activity
         self.log.debug('cmd_rxNow')
         
         # change state
         self._changeState(RadioState.LISTENING)
-        
-        # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_rxNow'])
     
-    def cmd_getReceivedFrame(self,params):
+    def cmd_getReceivedFrame(self):
         '''emulates
            void radio_getReceivedFrame(uint8_t* pBufRead,
                                        uint8_t* pLenRead,
@@ -334,35 +254,17 @@ class BspRadio(BspModule.BspModule):
                                        uint8_t* pLqi,
                                        uint8_t* pCrc)'''
         
-        # make sure length of params is expected
-        assert(len(params)==0)
-        
         # log the activity
         self.log.debug('cmd_getReceivedFrame')
         
         #==== prepare response
-        # uint8_t rxBuffer[128];
-        params  = self.rxBuf[1:]
-        while len(params)<128:
-            params.append(0)
-        # uint8_t len;
-        params.append(len(self.rxBuf)-1)
-        # int8_t rssi;
-        for i in struct.pack('<b',self.rssi):
-            params.append(ord(i))
-        # uint8_t lqi;
-        for i in struct.pack('<b',self.lqi):
-            params.append(ord(i))
-        # uint8_t crc;
-        if self.crcPasses:
-            params.append(1)
-        else:
-            params.append(0)
-        assert(len(params)==128+1+1+1+1)
+        rxBuffer   = self.rxBuf[1:]
+        rssi       = self.rssi
+        lqi        = self.lqi
+        crc        = self.crcPasses
         
         # respond
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_radio_getReceivedFrame'],
-                                     params)
+        return (rxBuffer,rssi,lqi,crc)
     
     #======================== interrupts ======================================
     

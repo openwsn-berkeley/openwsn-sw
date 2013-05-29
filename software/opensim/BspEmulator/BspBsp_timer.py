@@ -74,16 +74,16 @@ class BspBsp_timer(BspModule.BspModule):
            void bsp_timer_scheduleIn(PORT_TIMER_WIDTH delayTicks)'''
         
         # log the activity
-        self.log.debug('cmd_scheduleIn delayTicks='+str(self.delayTicks))
+        self.log.debug('cmd_scheduleIn delayTicks='+str(delayTicks))
         
         # get current counter value
         counterVal                = self.hwCrystal.getTicksSince(self.timeLastReset)
         
         # how many ticks until compare event
-        if counterVal<self.delayTicks:
-            ticksBeforeEvent = self.delayTicks-counterVal
+        if counterVal<delayTicks:
+            ticksBeforeEvent = delayTicks-counterVal
         else:
-            ticksBeforeEvent = self.PERIOD-counterVal+self.delayTicks
+            ticksBeforeEvent = self.PERIOD-counterVal+delayTicks
         
         # calculate time at overflow event (in 'period' ticks)
         compareTime               = self.hwCrystal.getTimeIn(ticksBeforeEvent)
@@ -177,8 +177,8 @@ class BspBsp_timer(BspModule.BspModule):
                                     self.intr_overflow,
                                     self.INTR_OVERFLOW)
         
-        # kick the scheduler (TODO poipoi: don't?)
-        return True
+        # do NOT kick the scheduler
+        return False
         
     def intr_compare(self):
         '''
@@ -186,7 +186,7 @@ class BspBsp_timer(BspModule.BspModule):
         '''
         
         # send interrupt to mote
-        self.motehandler.sendCommand(self.motehandler.commandIds['OPENSIM_CMD_bsp_timer_isr'])
+        self.motehandler.mote.bsp_timer_isr()
         
         # kick the scheduler
         return True
