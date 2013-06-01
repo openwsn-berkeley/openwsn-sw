@@ -27,12 +27,13 @@ class eventBusMonitor(object):
         # store params
         
         # local variables
-        self.statsLock  = threading.Lock()
+        self.dataLock  = threading.Lock()
         self.stats      = {}
         self.socket     = socket.socket(
             socket.AF_INET6,
             socket.SOCK_DGRAM
         )
+        self.meshDebugEnabled = False
         
         # give this instance a name
         self.name       = 'eventBusMonitor'
@@ -47,7 +48,7 @@ class eventBusMonitor(object):
     def getStats(self):
         
         # get a copy of stats
-        with self.statsLock:
+        with self.dataLock:
             tempStats = copy.deepcopy(self.stats)
         
         # format as a dictionnary
@@ -61,39 +62,49 @@ class eventBusMonitor(object):
         
         # send back JSON string
         return json.dumps(returnVal)
+        
+    def setMeshDebugExport(self,isEnabled):
+        '''
+        Turns on/off the export of a copy of mesh-bound messages to the
+        Internet interface, in the form of ZEP packets. Well-suited to
+        viewing the packets in Wireshark.
+        See http://wiki.wireshark.org/IEEE_802.15.4 for ZEP details.
+        '''
+        with self.dataLock:
+            self.meshDebugEnabled = (True and isEnabled)
+        log.info('%s export of ZEP mesh debug packets to Internet',
+                'Enabled' if self.meshDebugEnabled else 'Disabled')
     
     #======================== private =========================================
     
     def _eventBusNotification(self,signal,sender,data):
         'Adds the signal to stats log and performs signal-specific handling'
         
-        with self.statsLock:
+        with self.dataLock:
             key = (sender,signal)
             if key not in self.stats:
                 self.stats[key] = 0
             self.stats[key] += 1
 
-        if signal=='bytesToMesh':
-            # Forward lowpan packet to backbone for Wireshark debugging.
-            
+        if signal=='bytesToMesh' and self.meshDebugEnabled:
+            # Forwards a copy of the 6LoWPAN packet destined for the mesh 
+            # to the Internet interface for debugging.
             (nextHop,lowpan) = data
             
-            zep = self._wrapZepDebugHeaders(lowpan)
-            self._dispatchZepDebugPacket(zep)
+            zep = self._wrapZepHeaders(lowpan)
+            self._dispatchMeshDebugPacket(zep)
             
-    def _wrapZepDebugHeaders(self, lowpan):
+    def _wrapZepHeaders(self, lowpan):
         '''
         Returns Exegin ZEP protocol header and dummy 802.15.4 header 
         wrapped around outgoing 6LoWPAN layer packet.
-        See http://wiki.wireshark.org/IEEE_802.15.4 for ZEP details.
         '''
-        # IEEE802.15.4
-        mac    = [0x41]
-        mac   += [0xcc]
-        mac   += [0x66]
-        mac   += [0xff,0xff]
-        mac   += [0x01]*8
-        mac   += [0x02]*8
+        # IEEE802.15.4                   (data frame with dummy values)
+        mac    = [0x41,0xcc]             # frame control
+        mac   += [0x66]                  # sequence number
+        mac   += [0xff,0xff]             # destination PAN ID
+        mac   += [0x01]*8                # destination address
+        mac   += [0x02]*8                # source address
         mac   += lowpan
         # CRC
         mac   += u.calculateFCS(mac)
@@ -113,10 +124,11 @@ class eventBusMonitor(object):
         
         return zep+mac
         
-    def _dispatchZepDebugPacket(self, zep):
+    def _dispatchMeshDebugPacket(self, zep):
         '''
-        Wraps ZEP packet with UDP and IPv6 headers, and then forwards as
-        an event to Internet backbone.
+        Wraps ZEP-based debug packet, for outgoing mesh 6LoWPAN message, 
+        with UDP and IPv6 headers. Then forwards as an event to the 
+        Internet interface.
         '''
         # UDP
         udplen  = len(zep)+8
@@ -155,4 +167,3 @@ class eventBusMonitor(object):
                     sender=self.name,
                     signal='v6ToInternet',
                     data  =ip)
-        log.debug('Dispatched ZEP lowpan debug packet to Internet')
