@@ -37,6 +37,36 @@ class OpenButton(Tkinter.Button):
                                  columnspan=columnspan,
                                  sticky=Tkinter.W)
     
+class OpenCheckbox(Tkinter.Checkbutton):
+    '''
+    Provides a checkbox control, initially turned off. Use setState() 
+    for programmatic control.
+    '''
+    def __init__(self,guiParent,text='',variable=None,cb=None):
+        '''
+        cb is a callback that must accept a single boolean argument for
+        the state of the checkbox, where True means the checkbox is checked.
+        '''
+        self.checkVar = Tkinter.IntVar()
+        self.cb       = cb
+        Tkinter.Checkbutton.__init__(self,guiParent,
+                                    text=text,
+                                    variable=self.checkVar,
+                                    command=self._guiChanged,
+                                    font=Style.FONT_NORMAL,)
+                                    
+    def grid(self,row=0,column=0):
+        Tkinter.Checkbutton.grid(self,row=row,
+                               column=column,
+                               sticky=Tkinter.W)
+                               
+    def setState(self,isOn):
+        self.checkVar.set(1 if isOn else 0)
+        
+    def _guiChanged(self):
+        if self.cb:
+            self.cb(self.checkVar.get() == 1)
+    
 class HeaderLabel(Tkinter.Label):
     def __init__(self,guiParent,text=''):
         Tkinter.Label.__init__(self,guiParent,

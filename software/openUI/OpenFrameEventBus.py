@@ -1,6 +1,7 @@
 import json
 
 import OpenFrame
+import OpenGuiLib
 import OpenTable
 import openvisualizer_utils as u
 
@@ -31,6 +32,13 @@ class OpenFrameEventBus(OpenFrame.OpenFrame):
         # local variables
         self.dataTable = OpenTable.OpenTable(self.container)
         self.dataTable.grid(row=1,column=0)
+        
+        self.zepToggle = OpenGuiLib.OpenCheckbox(self.container,
+                                text='Export bytesToMesh packets as ZEP on TUN interface',
+                                cb=eventBusMonitor.setMeshDebugExport)
+                                
+        self.zepToggle.setState(eventBusMonitor.meshDebugEnabled)
+        self.zepToggle.grid(row=2,column=0)
         
         # trigger the update of the stats
         self.after(self.GUIUPDATEPERIOD,self._updateStats)
