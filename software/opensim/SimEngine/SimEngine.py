@@ -90,6 +90,8 @@ class SimEngine(object):
         self.delay = delay
     
     def pause(self):
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('pause')
         if not self.isPaused:
             self.pauseSem.acquire()
             self.isPaused = True
@@ -102,6 +104,8 @@ class SimEngine(object):
             self.isPaused = False
     
     def resume(self):
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('resume')
         self.stopAfterSteps = None
         if self.isPaused:
             self.pauseSem.release()
@@ -111,10 +115,12 @@ class SimEngine(object):
     def pauseOrDelay(self):
         if self.isPaused:
             if self.log.isEnabledFor(logging.DEBUG):
-                self.log.debug('pause')
+                self.log.debug('pauseOrDelay: pause')
             self.pauseSem.acquire()
             self.pauseSem.release()
         else:
+            if self.log.isEnabledFor(logging.DEBUG):
+                self.log.debug('pauseOrDelay: delay {0}'.format(self.delay))
             time.sleep(self.delay)
             
         if self.stopAfterSteps!=None:
@@ -124,6 +130,9 @@ class SimEngine(object):
                 self.pause()
         
         assert(self.stopAfterSteps==None or self.stopAfterSteps>=0)
+    
+    def isRunning(self):
+        return not self.isPaused
     
     #=== called from the main script
     
