@@ -335,6 +335,9 @@ class SimCli(threading.Thread):
             self._printUsageFromName('quit')
             return
         
+        # pause the engine
+        self.engine.pause()
+        
         # this thread quits
         sys.exit(0)
     
