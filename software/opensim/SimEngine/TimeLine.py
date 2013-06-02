@@ -79,6 +79,9 @@ class TimeLine(threading.Thread):
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('first event scheduled')
         
+        # apply the delay
+        self.engine.pauseOrDelay()
+        
         while True:
             
             # detect the end of the simulation
@@ -145,7 +148,7 @@ class TimeLine(threading.Thread):
         # create a new event
         newEvent = TimeLineEvent(moteId,atTime,cb,desc)
         
-        # remove any event already the queue with same description
+        # remove any event already in the queue with same description
         for i in range(len(self.timeline)):
             if (self.timeline[i].moteId==moteId and
                 self.timeline[i].desc==desc):
