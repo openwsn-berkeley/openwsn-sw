@@ -265,8 +265,10 @@ class OpenLbr(eventBusClient.eventBusClient):
            # assemble the packet and dispatch it again as nobody answer 
            ipv6pkt=self.reassemble_ipv6_packet(ipv6dic)       
            
-           success = self._dispatchProtocol('v6ToInternet',ipv6pkt)    
-           #TODO if fails throw exception
+           if not self._dispatchProtocol('v6ToInternet',ipv6pkt):
+
+               log.error('meshToV6 packet not dispatched: Dst %s, Proto %s, Port %u',
+                          u.formatIPv6Addr(dispatchSignal[0]), dispatchSignal[1], dispatchSignal[2])
             
         except (ValueError,NotImplementedError) as err:
             log.error(err)

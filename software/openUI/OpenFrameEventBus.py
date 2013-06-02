@@ -37,7 +37,7 @@ class OpenFrameEventBus(OpenFrame.OpenFrame):
                                 text='Export bytesToMesh packets as ZEP on TUN interface',
                                 cb=eventBusMonitor.setMeshDebugExport)
                                 
-        self.zepToggle.setState(eventBusMonitor.meshDebugEnabled)
+        self.zepToggle.setState(self.eventBusMonitor.meshDebugEnabled)
         self.zepToggle.grid(row=2,column=0)
         
         # trigger the update of the stats
@@ -70,6 +70,8 @@ class OpenFrameEventBus(OpenFrame.OpenFrame):
                 'num',
             ]
         )
+        # update in case changed by something besides GUI
+        self.zepToggle.setState(self.eventBusMonitor.meshDebugEnabled)
         
         # schedule next update
         self.after(self.GUIUPDATEPERIOD,self._updateStats)
