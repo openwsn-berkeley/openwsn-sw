@@ -213,9 +213,7 @@ class MoteHandler(threading.Thread):
         # switch on the mote
         self.hwSupply.switchOn()
         
-        while True:
-            time.sleep(1)
-            self.log.info('poipoi')
+        assert(0)
         
     #======================== public ==========================================
     
