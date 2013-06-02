@@ -187,6 +187,10 @@ class BspRadiotimer(BspModule.BspModule):
         \brief A compare event happened.
         '''
         
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('intr_compare')
+        
         # reschedule the next compare event
         # Note: as long as radiotimer_cancel() is not called, the intr_compare
         #       will fire every self.period
@@ -207,17 +211,23 @@ class BspRadiotimer(BspModule.BspModule):
         \brief An overflow event happened.
         '''
         
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('intr_overflow')
+        
         # remember the time of this reset; needed internally to schedule further events
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
         
         # reschedule the next overflow event
-        # Note: the intr_overflow will fire every self.period
+        # Note: the intr_overflow fires every self.period
         nextOverflowTime     = self.hwCrystal.getTimeIn(self.period)
-        self.timeline.scheduleEvent(nextOverflowTime,
-                                    self.motehandler.getId(),
-                                    self.intr_overflow,
-                                    self.INTR_OVERFLOW)
-    
+        self.timeline.scheduleEvent(
+            nextOverflowTime,
+            self.motehandler.getId(),
+            self.intr_overflow,
+            self.INTR_OVERFLOW
+        )
+        
         # send interrupt to mote
         self.motehandler.mote.radiotimer_isr_overflow()
         
