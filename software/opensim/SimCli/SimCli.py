@@ -165,12 +165,27 @@ class SimCli(threading.Thread):
             self._printUsageFromName('bootall')
             return
         
+        # pause the simulation engine
+        if self.engine.isRunning():
+            resumeAfterBooting = True
+            self.engine.pause()
+        else:
+            resumeAfterBooting = False
+        
+        # boot all motes
+        now = self.engine.timeline.getCurrentTime()
         for rank in range(self.engine.getNumMotes()):
             moteHandler = self.engine.getMoteHandler(rank)
-            self.engine.timeline.scheduleEvent(self.engine.timeline.getCurrentTime(),
-                                               moteHandler.getId(),
-                                               moteHandler.hwSupply.switchOn,
-                                               moteHandler.hwSupply.INTR_SWITCHON)
+            self.engine.timeline.scheduleEvent(
+                now,
+                moteHandler.getId(),
+                moteHandler.hwSupply.switchOn,
+                moteHandler.hwSupply.INTR_SWITCHON
+            )
+        
+        # resume the simulation engine
+        if resumeAfterBooting:
+            self.engine.resume()
         
         print 'OK'
     
