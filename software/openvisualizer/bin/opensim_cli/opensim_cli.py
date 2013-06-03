@@ -5,7 +5,9 @@ import sys
 
 if __name__=='__main__':
     here = sys.path[0]
-    # opensim/
+    # software/
+    sys.path.insert(0, os.path.join(here, '..', '..', '..'))
+    # openvisualizer/
     sys.path.insert(0, os.path.join(here, '..', '..'))
     # location of openwsn module
     sys.path.insert(0, os.path.join(here, '..', '..', '..', '..', '..', 'openwsn-fw', 'firmware','openos','projects','common'))
@@ -16,7 +18,7 @@ import binascii
 
 from SimEngine import SimEngine, \
                       MoteHandler
-from SimCli    import SimCli
+from openCli   import SimCli
 
 import oos_openwsn
 
