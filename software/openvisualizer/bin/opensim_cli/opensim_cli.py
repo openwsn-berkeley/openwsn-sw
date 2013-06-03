@@ -5,6 +5,8 @@ import sys
 
 if __name__=='__main__':
     here = sys.path[0]
+    # PyDispatcher-2.0.3/
+    sys.path.insert(0, os.path.join(here, '..', '..','eventBus','PyDispatcher-2.0.3'))
     # software/
     sys.path.insert(0, os.path.join(here, '..', '..', '..'))
     # openvisualizer/

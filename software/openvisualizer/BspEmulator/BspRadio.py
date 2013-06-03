@@ -2,6 +2,7 @@
 
 import logging
 
+from eventBus import eventBusClient
 import BspModule
 
 class RadioState:
@@ -20,7 +21,7 @@ class RadioState:
     TXRX_DONE           = 'TXRX_DONE',           # Frame has been sent/received completely.
     TURNING_OFF         = 'TURNING_OFF',         # Turning the RF chain off.
 
-class BspRadio(BspModule.BspModule):
+class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
     '''
     \brief Emulates the 'radio' BSP module
     '''
@@ -29,6 +30,9 @@ class BspRadio(BspModule.BspModule):
     INTR_ENDOFFRAME_MOTE          = 'radio.endofframe_fromMote'
     INTR_STARTOFFRAME_PROPAGATION = 'radio.startofframe_fromPropagation'
     INTR_ENDOFFRAME_PROPAGATION   = 'radio.endofframe_fromPropagation'
+    
+    SIGNAL_WIRELESSTXSTART        = 'wirelessTxStart'
+    SIGNAL_WIRELESSTXEND          = 'wirelessTxEnd'
     
     def __init__(self,engine,motehandler):
         
@@ -48,8 +52,24 @@ class BspRadio(BspModule.BspModule):
         self.rxBuf       = []
         self.delayTx     = 0.000214
         
-        # initialize the parent
+        # initialize the parents
         BspModule.BspModule.__init__(self,'BspRadio')
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name                  = 'BspRadio_{0}'.format(self.motehandler.getId()),
+            registrations         =  [
+                {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : self.SIGNAL_WIRELESSTXSTART,
+                    'callback'    : self._indicateTxStart,
+                },
+                {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : self.SIGNAL_WIRELESSTXEND,
+                    'callback'    : self._indicateTxEnd,
+                },
+            ]
+        )
         
         # set initial state
         self._changeState(RadioState.STOPPED)
@@ -287,18 +307,21 @@ class BspRadio(BspModule.BspModule):
     
     def intr_startOfFrame_fromMote(self):
         
-        # indicate transmission starts to propagation model
-        self.propagation.txStart(self.motehandler.getId(),
-                                 self.txBuf,
-                                 self.frequency)
+        # indicate transmission starts on eventBus
+        self.dispatch(          
+            signal           = self.SIGNAL_WIRELESSTXSTART,
+            data             = (self.motehandler.getId(),self.txBuf,self.frequency)
+        )
         
         # schedule the "end of frame" event
         currentTime          = self.timeline.getCurrentTime()
         endOfFrameTime       = currentTime+self._packetLengthToDuration(len(self.txBuf))
-        self.timeline.scheduleEvent(endOfFrameTime,
-                                    self.motehandler.getId(),
-                                    self.intr_endOfFrame_fromMote,
-                                    self.INTR_ENDOFFRAME_MOTE)
+        self.timeline.scheduleEvent(
+            endOfFrameTime,
+            self.motehandler.getId(),
+            self.intr_endOfFrame_fromMote,
+            self.INTR_ENDOFFRAME_MOTE,
+        )
         
         # signal start of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
@@ -321,8 +344,12 @@ class BspRadio(BspModule.BspModule):
         return True
     
     def intr_endOfFrame_fromMote(self):
-        # indicate transmission end to propagation model
-        self.propagation.txEnd(self.motehandler.getId())
+        
+        # indicate transmission ends on eventBus
+        self.dispatch(          
+            signal           = self.SIGNAL_WIRELESSTXEND,
+            data             = self.motehandler.getId(),
+        )
         
         # signal end of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
@@ -344,12 +371,14 @@ class BspRadio(BspModule.BspModule):
         # do NOT kick the scheduler
         return True
     
-    #======================== indication from propagation =====================
+    #======================== indication from eventBus ========================
     
-    def indicateTxStart(self,moteId,packet,channel):
-    
+    def _indicateTxStart(self,sender,signal,data):
+        
+        (moteId,packet,channel) = data
+        
         if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('indicateTxStart from moteId={0} channel={1} len={2}'.format(moteId,channel,len(packet)))
+            self.log.debug('_indicateTxStart from moteId={0} channel={1} len={2}'.format(moteId,channel,len(packet)))
     
         if (self.isInitialized==True         and
             self.state==RadioState.LISTENING and
@@ -365,25 +394,31 @@ class BspRadio(BspModule.BspModule):
                 self.log.debug('rxBuf={0}'.format(self.rxBuf))
             
             # schedule start of frame
-            self.timeline.scheduleEvent(self.timeline.getCurrentTime(),
-                                        self.motehandler.getId(),
-                                        self.intr_startOfFrame_fromPropagation,
-                                        self.INTR_STARTOFFRAME_PROPAGATION)
+            self.timeline.scheduleEvent(
+                self.timeline.getCurrentTime(),
+                self.motehandler.getId(),
+                self.intr_startOfFrame_fromPropagation,
+                self.INTR_STARTOFFRAME_PROPAGATION,
+            )
     
-    def indicateTxEnd(self,moteId):
+    def _indicateTxEnd(self,sender,signal,data):
+        
+        moteId = data
         
         if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('indicateTxEnd from moteId={0}'.format(moteId))
+            self.log.debug('_indicateTxEnd from moteId={0}'.format(moteId))
         
         if (self.isInitialized==True and
             self.state==RadioState.RECEIVING):
             self._changeState(RadioState.TXRX_DONE)
             
             # schedule end of frame
-            self.timeline.scheduleEvent(self.timeline.getCurrentTime(),
-                                        self.motehandler.getId(),
-                                        self.intr_endOfFrame_fromPropagation,
-                                        self.INTR_ENDOFFRAME_PROPAGATION)
+            self.timeline.scheduleEvent(
+                self.timeline.getCurrentTime(),
+                self.motehandler.getId(),
+                self.intr_endOfFrame_fromPropagation,
+                self.INTR_ENDOFFRAME_PROPAGATION,
+            )
     
     #======================== private =========================================
     
