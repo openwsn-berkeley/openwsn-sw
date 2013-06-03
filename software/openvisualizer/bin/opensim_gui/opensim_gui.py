@@ -3,17 +3,18 @@
 import os
 import sys
 
-temp_path = sys.path[0]
-if temp_path:
-    sys.path.insert(0, os.path.join(temp_path, '..', '..'))
+if __name__=='__main__':
+    here = sys.path[0]
+    sys.path.insert(0, os.path.join(here, '..', '..'))
+    sys.path.insert(0, os.path.join(here, '..', '..','..'))
 
 import logging
 import logging.handlers
 import binascii
 from SimEngine import SimEngine
 
-from SimGui    import SimGui
-from SimGui    import SimWindow
+from openUI    import SimGui
+from openUI    import SimWindow
 
 LOG_FORMAT  = "%(asctime)s [%(name)s:%(levelname)s] %(message)s"
 
