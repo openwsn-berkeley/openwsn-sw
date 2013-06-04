@@ -39,7 +39,7 @@ class SimEngine(object):
     \brief The main simulation engine.
     '''
     
-    def __init__(self,loghandler=NullLogHandler):
+    def __init__(self,loghandler=NullLogHandler()):
         
         # store params
         self.loghandler           = loghandler

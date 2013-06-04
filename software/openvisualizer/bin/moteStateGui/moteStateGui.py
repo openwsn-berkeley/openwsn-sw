@@ -5,6 +5,8 @@ if __name__=='__main__':
     sys.path.insert(0, os.path.join(here, '..', '..','eventBus','PyDispatcher-2.0.3'))# PyDispatcher-2.0.3/
     sys.path.insert(0, os.path.join(here, '..', '..'))                                # openvisualizer/
     sys.path.insert(0, os.path.join(here, '..', '..', '..', 'openUI'))                # openUI/
+    sys.path.insert(0, os.path.join(here, '..', '..', '..'))                          # software/
+    sys.path.insert(0, os.path.join(here, '..', '..', '..', '..', '..', 'openwsn-fw', 'firmware','openos','projects','common'))
 
 import logging
 import logging.config
@@ -25,6 +27,9 @@ import OpenFrameState
 import OpenFrameButton
 import OpenFrameLbr
 import OpenFrameEventBus
+from SimEngine import SimEngine, \
+                      MoteHandler
+from openCli   import SimCli
 
 import Tkinter
 
@@ -180,10 +185,11 @@ class MoteStateGui(object):
     
 class MoteStateGui_app(object):
     
-    def __init__(self,simulatorMode):
+    def __init__(self,simulatorMode,numMotes):
         
         # store params
         self.simulatorMode        = simulatorMode
+        self.numMotes             = numMotes
         
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -192,16 +198,26 @@ class MoteStateGui_app(object):
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
         self.openTun              = openTun.OpenTun() # call last since indicates prefix
+        if self.simulatorMode:
+            self.simengine        = SimEngine.SimEngine()
+            self.simengine.start()
         
         # create a moteProbe for each mote
         if not self.simulatorMode:
             # in "hardware" mode, motes are connected to the serial port
+            
             self.moteProbes       = [
-                moteProbe.moteProbe(sp) for sp in moteProbe.findSerialPorts()
+                moteProbe.moteProbe(serialport=sp) for sp in moteProbe.findSerialPorts()
             ]
         else:
             # in "simulator" mode, motes are emulated
-            raise NotImplementedError()
+            
+            import oos_openwsn
+            self.moteProbes       = []
+            for _ in range(self.numMotes):
+                moteHandler       = MoteHandler.MoteHandler(self.simengine,oos_openwsn.OpenMote())
+                self.simengine.indicateNewMote(moteHandler)
+                self.moteProbes  += [moteProbe.moteProbe(emulatedMote=moteHandler)]
         
         # create a moteConnector for each moteProbe
         self.moteConnectors       = [
@@ -222,6 +238,21 @@ class MoteStateGui_app(object):
             self.openLbr,
         )
         
+        # boot all emulated motes, if applicable
+        if self.simulatorMode:
+            self.simengine.pause()
+            now = self.simengine.timeline.getCurrentTime()
+            for rank in range(self.simengine.getNumMotes()):
+                moteHandler = self.simengine.getMoteHandler(rank)
+                self.simengine.timeline.scheduleEvent(
+                    now,
+                    moteHandler.getId(),
+                    moteHandler.hwSupply.switchOn,
+                    moteHandler.hwSupply.INTR_SWITCHON
+                )
+            self.simengine.resume()
+        
+        # start the GUI
         gui.start()
     
     #======================== GUI callbacks ===================================
@@ -238,17 +269,26 @@ def parseCliOptions():
         action     = 'store_true',
     )
     
+    parser.add_option( '-n',
+        dest       = 'numMotes',
+        default    = 3,
+    )
+    
     (opts, args)  = parser.parse_args()
     
     return opts
 
-def main(simulatorMode):
+def main(simulatorMode,numMotes):
     appDir = '.'
     logging.config.fileConfig(os.path.join(appDir,'logging.conf'), {'logDir': appDir})
-    app = MoteStateGui_app(simulatorMode)
+    app = MoteStateGui_app(simulatorMode,numMotes)
 
 if __name__=="__main__":
     
     opts = parseCliOptions()
+    args = opts.__dict__
     
-    main(simulatorMode=opts.__dict__['simulatorMode'])
+    main(
+        simulatorMode   = args['simulatorMode'],
+        numMotes        = args['numMotes'],
+    )

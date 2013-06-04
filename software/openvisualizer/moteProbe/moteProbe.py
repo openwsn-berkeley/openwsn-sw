@@ -62,18 +62,41 @@ def findSerialPorts():
 
 class moteProbe(threading.Thread):
     
-    def __init__(self,serialport):
+    def __init__(self,serialport=None,emulatedMote=None):
+        assert bool(serialport) != bool(emulatedMote)
+        
+        if serialport:
+            assert not emulatedMote
+            self.realserial       = True
+        else:
+            assert not serialport
+            self.realserial       = False
         
         # store params
-        self.serialport           = serialport[0]
-        self.baudrate             = serialport[1]
-        
-        # log
-        log.info("creating moteProbe attaching to {0}@{1}".format(
-                self.serialport,
-                self.baudrate,
+        if self.realserial:
+            # import pyserial module (needs to be installed)
+            import serial
+            
+            # store params
+            self.serialport       = serialport[0]
+            self.baudrate         = serialport[1]
+            
+            # log
+            log.info("creating moteProbe attaching to serialport {0}@{1}".format(
+                    self.serialport,
+                    self.baudrate,
+                )
             )
-        )
+        else:
+            # store params
+            self.emulatedMote     = emulatedMote
+            self.serialport       = 'emulated{0}'.format(self.emulatedMote.getId())
+            
+            # log
+            log.info("creating moteProbe attaching to emulated mote {0}".format(
+                    self.serialport,
+                )
+            )
         
         # local variables
         self.hdlc                 = OpenHdlc.OpenHdlc()
@@ -107,12 +130,17 @@ class moteProbe(threading.Thread):
             log.debug("start running")
         
             while True:     # open serial port
-                log.debug("open serial port {0}@{1}".format(self.serialport,self.baudrate))
-                self.serial = serial.Serial(self.serialport,self.baudrate)
+                if self.realserial:
+                    log.debug("open serial port {0}@{1}".format(self.serialport,self.baudrate))
+                    self.serial = serial.Serial(self.serialport,self.baudrate)
+                else:
+                    log.debug("use emulated serial port {0}".format(self.serialport))
+                    self.serial = self.emulatedMote.bspUart
                 while True: # read bytes from serial port
                     try:
                         rxByte = self.serial.read(1)
                     except Exception as err:
+                        print err
                         log.warning(err)
                         time.sleep(1)
                         break
