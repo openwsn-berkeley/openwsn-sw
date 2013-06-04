@@ -68,7 +68,7 @@ class sixtusCli(OpenCli):
 
         
     
-    #example query from terminal: c BBBB::1415:920b:0301:00f1  BBBB::1415:920b:0301:00e8  7 2 0 11     
+    #example query from terminal: c BBBB::1415:920b:0301:00f2  BBBB::1415:920b:0301:00e9  7 2 0 11     
     def _handlerCreateLink(self,params):
         print 'CREATE_LINK: ' + ' '.join(params)
         log.debug('CREATE_LINK: ' + ' '.join(params))
