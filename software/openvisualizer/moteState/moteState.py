@@ -271,7 +271,7 @@ class StateIdManager(StateElem):
             self.eventBusClient.dispatch(
                 signal        = 'infoDagRoot',
                 data          = {
-                                    'serialPort':   self.moteConnector.serialportName,
+                                    'serialPort':   self.moteConnector.serialport,
                                     'eui64':        self.data[0]['my64bID'].addr,
                                 },
             )
@@ -418,10 +418,10 @@ class moteState(eventBusClient.eventBusClient):
               # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
-            name             = 'moteState@{0}'.format(self.moteConnector.serialportName),
+            name             = 'moteState@{0}'.format(self.moteConnector.serialport),
             registrations    = [
                 {
-                    'sender'      : 'moteConnector@{0}'.format(self.moteConnector.serialportName),
+                    'sender'      : 'moteConnector@{0}'.format(self.moteConnector.serialport),
                     'signal'      : 'fromMote.status',
                     'callback'    : self._receivedStatus_notif,
                 },
@@ -454,7 +454,7 @@ class moteState(eventBusClient.eventBusClient):
         self.dispatch(
             signal        = 'cmdToMote',
             data          = {
-                                'serialPort':    self.moteConnector.serialportName,
+                                'serialPort':    self.moteConnector.serialport,
                                 'action':        action,
                             },
         )

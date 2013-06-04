@@ -55,7 +55,7 @@ class SerialTester(eventBusClient.eventBusClient):
             registrations =  [
                 {
                     'sender'   : self.WILDCARD,
-                    'signal'   : 'fromProbeSerial@'+self.moteProbeSerialPort,
+                    'signal'   : 'fromMoteProbe@'+self.moteProbeSerialPort,
                     'callback' : self._receiveDataFromMoteSerial,
                 },
             ]

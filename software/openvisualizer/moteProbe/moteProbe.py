@@ -65,13 +65,13 @@ class moteProbe(threading.Thread):
     def __init__(self,serialport):
         
         # store params
-        self.serialportName       = serialport[0]
-        self.serialportBaudrate   = serialport[1]
+        self.serialport           = serialport[0]
+        self.baudrate             = serialport[1]
         
         # log
         log.info("creating moteProbe attaching to {0}@{1}".format(
-                self.serialportName,
-                self.serialportBaudrate,
+                self.serialport,
+                self.baudrate,
             )
         )
         
@@ -88,12 +88,12 @@ class moteProbe(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name                 = 'moteProbe@'+self.serialportName
+        self.name                 = 'moteProbe@'+self.serialport
        
         # connect to dispatcher
         dispatcher.connect(
             self._bufferDataToSend,
-            signal = 'fromMoteConnector@'+self.serialportName,
+            signal = 'fromMoteConnector@'+self.serialport,
         )
         
         # start myself
@@ -107,8 +107,8 @@ class moteProbe(threading.Thread):
             log.debug("start running")
         
             while True:     # open serial port
-                log.debug("open serial port {0}@{1}".format(self.serialportName,self.serialportBaudrate))
-                self.serial = serial.Serial(self.serialportName,self.serialportBaudrate)
+                log.debug("open serial port {0}@{1}".format(self.serialport,self.baudrate))
+                self.serial = serial.Serial(self.serialport,self.baudrate)
                 while True: # read bytes from serial port
                     try:
                         rxByte = self.serial.read(1)
@@ -159,7 +159,7 @@ class moteProbe(threading.Thread):
                                     # dispatch
                                     dispatcher.send(
                                         sender        = self.name,
-                                        signal        = 'fromProbeSerial@'+self.serialportName,
+                                        signal        = 'fromMoteProbe@'+self.serialport,
                                         data          = self.inputBuf[:],
                                     )
                         
@@ -174,11 +174,11 @@ class moteProbe(threading.Thread):
     
     def getSerialPortName(self):
         with self.dataLock:
-            return self.serialportName
+            return self.serialport
     
     def getSerialPortBaudrate(self):
         with self.dataLock:
-            return self.serialportBaudrate
+            return self.baudrate
     
     def quit(self):
         raise NotImplementedError()

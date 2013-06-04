@@ -22,20 +22,20 @@ import ParserException
 
 class moteConnector(eventBusClient.eventBusClient):
     
-    def __init__(self,serialportName):
+    def __init__(self,serialport):
         
         # log
         log.debug("creating instance")
         
         # store params
-        self.serialportName            = serialportName
+        self.serialport                = serialport
         
         # local variables
         self.parser                    = OpenParser.OpenParser()
         self._subcribedDataForDagRoot  = False
               
         # give this thread a name
-        self.name = 'moteConnector@{0}'.format(self.serialportName)
+        self.name = 'moteConnector@{0}'.format(self.serialport)
        
         eventBusClient.eventBusClient.__init__(
             self,
@@ -57,7 +57,7 @@ class moteConnector(eventBusClient.eventBusClient):
           # subscribe to dispatcher
         dispatcher.connect(
             self._sendToParser,
-            signal = 'fromProbeSerial@'+self.serialportName,
+            signal = 'fromMoteProbe@'+self.serialport,
         )
         
     def _sendToParser(self,data):
@@ -82,7 +82,7 @@ class moteConnector(eventBusClient.eventBusClient):
     #======================== public ==========================================
     
     def _cmdToMote_handler(self,sender,signal,data):
-        if  data['serialPort']==self.serialportName:
+        if  data['serialPort']==self.serialport:
             if data['action']==moteState.moteState.TRIGGER_DAGROOT:
                 # toggle the DAGroot status
                 self._sendToMoteProbe(
@@ -102,7 +102,7 @@ class moteConnector(eventBusClient.eventBusClient):
                 raise SystemError('unexpected action={0}'.format(data['action']))
     
     def _infoDagRoot_handler(self,sender,signal,data):
-        if  data['serialPort']==self.serialportName:
+        if  data['serialPort']==self.serialport:
             # this moteConnector is connected to a DAGroot
             
             if not self._subcribedDataForDagRoot:
@@ -151,7 +151,7 @@ class moteConnector(eventBusClient.eventBusClient):
         try:
              dispatcher.send(
                       sender        = self.name,
-                      signal        = 'fromMoteConnector@'+self.serialportName,
+                      signal        = 'fromMoteConnector@'+self.serialport,
                       data          = ''.join([chr(c) for c in dataToSend])
                       )
             

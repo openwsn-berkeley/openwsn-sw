@@ -130,7 +130,7 @@ class MoteStateGui(object):
                     else:
                         raise SystemError('unexpected stateOrTrigger={0}'.format(stateOrTrigger))
             
-            menuNames       += ['{0}'.format(ms.moteConnector.serialportName)]
+            menuNames       += ['{0}'.format(ms.moteConnector.serialport)]
             self.menuFrames += [thisFrame]
         
         # add to menu
