@@ -142,7 +142,7 @@ logHandler = logging.handlers.RotatingFileHandler('serialTesterCli.log',
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in [
                    'SerialTester',
-                   'moteProbeSerialThread',
+                   'moteProbe',
                    'OpenHdlc',
                    ]:
     temp = logging.getLogger(loggerName)

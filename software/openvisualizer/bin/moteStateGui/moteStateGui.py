@@ -28,9 +28,6 @@ import OpenFrameEventBus
 
 import Tkinter
 
-LOCAL_ADDRESS  = '127.0.0.1'
-TCP_PORT_START = 8090
-
 class MenuUpdateFrame(Tkinter.Frame):
     
     def setMoteStateHandler(self,ms):
@@ -47,7 +44,7 @@ class MenuUpdateFrame(Tkinter.Frame):
                 indexToUpdate,
                 label=menuLabel,
             )
-    
+
 class MoteStateGui(object):
     
     GUI_UPDATE_PERIOD      = 500
@@ -133,7 +130,7 @@ class MoteStateGui(object):
                     else:
                         raise SystemError('unexpected stateOrTrigger={0}'.format(stateOrTrigger))
             
-            menuNames       += ['{0}:{1}'.format(ms.moteConnector.moteProbeIp,ms.moteConnector.moteProbeTcpPort)]
+            menuNames       += ['{0}'.format(ms.moteConnector.serialportName)]
             self.menuFrames += [thisFrame]
         
         # add to menu
@@ -186,48 +183,36 @@ class MoteStateGui_app(object):
     def __init__(self,simulatorMode):
         
         # store params
-        self.simulatorMode   = simulatorMode
-        print self.simulatorMode
+        self.simulatorMode        = simulatorMode
+        
         # local variables
-        self.eventBusMonitor = None
-        self.moteProbes      = []
-        self.moteConnectors  = []
-        self.moteStates      = []
-        self.rpl             = None
-        self.openLbr         = None
-        self.openTun         = None
-        self.udpLatency      = None
-        self.topology        = None
+        self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
+        self.openLbr              = openLbr.OpenLbr()
+        self.rpl                  = RPL.RPL()
+        self.topology             = topology.topology()
+        self.udpLatency           = UDPLatency.UDPLatency()
+        self.openTun              = openTun.OpenTun() # call last since indicates prefix
         
-        # create an eventBusMonitor
-        self.eventBusMonitor = eventBusMonitor.eventBusMonitor()
-        
-        # create a moteProbe for each mote connected to this computer
-        serialPorts          = moteProbe.utils.findSerialPorts()
-        tcpPorts             = [TCP_PORT_START+i for i in range(len(serialPorts))]
-        for (serialPort,tcpPort) in zip(serialPorts,tcpPorts):
-            self.moteProbes.append(moteProbe.moteProbe(serialPort,tcpPort))
+        # create a moteProbe for each mote
+        if not self.simulatorMode:
+            # in "hardware" mode, motes are connected to the serial port
+            self.moteProbes       = [
+                moteProbe.moteProbe(sp) for sp in moteProbe.findSerialPorts()
+            ]
+        else:
+            # in "simulator" mode, motes are emulated
+            raise NotImplementedError()
         
         # create a moteConnector for each moteProbe
-        for mp in self.moteProbes:
-           self.moteConnectors.append(moteConnector.moteConnector(LOCAL_ADDRESS,mp.getTcpPort(),mp.getSerialPortName()))
+        self.moteConnectors       = [
+            moteConnector.moteConnector(mp.getSerialPortName()) for mp in self.moteProbes
+        ]
         
         # create a moteState for each moteConnector
-        for mc in self.moteConnectors:
-           self.moteStates.append(moteState.moteState(mc))
+        self.moteStates           = [
+            moteState.moteState(mc) for mc in self.moteConnectors
+        ]
         
-        self.topology        = topology.topology()
-        
-        # create a rpl instance
-        self.rpl             = RPL.RPL()
-        
-        # create an openLbr instance
-        self.openLbr         = openLbr.OpenLbr()
-        
-        # create an openTun instance
-        self.openTun         = openTun.OpenTun()
-        
-        self.udpLatency      = UDPLatency.UDPLatency()
         # create an open GUI
         gui = MoteStateGui(
             self.eventBusMonitor,

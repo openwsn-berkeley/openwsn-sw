@@ -14,7 +14,6 @@ import openvisualizer_utils as u
 
 from pydispatch import dispatcher
 
-
 from eventBus      import eventBusClient
 from moteState     import moteState
 
@@ -23,14 +22,12 @@ import ParserException
 
 class moteConnector(eventBusClient.eventBusClient):
     
-    def __init__(self,moteProbeIp,moteProbeTcpPort,serialportName):
+    def __init__(self,serialportName):
         
         # log
         log.debug("creating instance")
         
         # store params
-        self.moteProbeIp               = moteProbeIp
-        self.moteProbeTcpPort          = moteProbeTcpPort
         self.serialportName            = serialportName
         
         # local variables
@@ -38,7 +35,7 @@ class moteConnector(eventBusClient.eventBusClient):
         self._subcribedDataForDagRoot  = False
               
         # give this thread a name
-        self.name = 'moteConnector@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
+        self.name = 'moteConnector@{0}'.format(self.serialportName)
        
         eventBusClient.eventBusClient.__init__(
             self,
@@ -60,37 +57,32 @@ class moteConnector(eventBusClient.eventBusClient):
           # subscribe to dispatcher
         dispatcher.connect(
             self._sendToParser,
-            signal='fromProbeSerial@'+self.serialportName,
+            signal = 'fromProbeSerial@'+self.serialportName,
         )
         
     def _sendToParser(self,data):
-         #convert data
-         input = [ord(c) for c in data]
-         # log
-         log.debug("received input={0}".format(input))
-                        
-         # parse input
-         try:
+        #convert data
+        input = [ord(c) for c in data]
+        
+        # log
+        log.debug("received input={0}".format(input))
+        
+        # parse input
+        try:
             (eventSubType,parsedNotif)  = self.parser.parseInput(input)
             assert isinstance(eventSubType,str)
-         except ParserException.ParserException as err:
+        except ParserException.ParserException as err:
             # log
             log.error(str(err))
             pass
-         else:
+        else:
             # dispatch
-            self.dispatch('fromMote.'+eventSubType,parsedNotif)                 
-            
+            self.dispatch('fromMote.'+eventSubType,parsedNotif)
         
     #======================== public ==========================================
     
     def _cmdToMote_handler(self,sender,signal,data):
-        if  (
-               (self.moteProbeIp==data['ip'])
-               and
-               (self.moteProbeTcpPort==data['tcpPort'])
-            ):
-            
+        if  data['serialPort']==self.serialportName:
             if data['action']==moteState.moteState.TRIGGER_DAGROOT:
                 # toggle the DAGroot status
                 self._sendToMoteProbe(
@@ -110,11 +102,7 @@ class moteConnector(eventBusClient.eventBusClient):
                 raise SystemError('unexpected action={0}'.format(data['action']))
     
     def _infoDagRoot_handler(self,sender,signal,data):
-        if  (
-               (self.moteProbeIp==data['ip'])
-               and
-               (self.moteProbeTcpPort==data['tcpPort'])
-            ):
+        if  data['serialPort']==self.serialportName:
             # this moteConnector is connected to a DAGroot
             
             if not self._subcribedDataForDagRoot:

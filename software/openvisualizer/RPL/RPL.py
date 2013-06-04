@@ -110,13 +110,13 @@ class RPL(eventBusClient.eventBusClient):
         # register to RPL traffic
         if self.networkPrefix and self.dagRootEui64:
             self.register(
-                sender       = self.WILDCARD,
-                signal       = (
+                sender            = self.WILDCARD,
+                signal            = (
                     tuple(self.networkPrefix + self.dagRootEui64),
                     self.PROTO_ICMPv6,
                     self.IANA_ICMPv6_RPL_TYPE
                 ),
-                callback     = self._fromMoteDataLocal_notif,
+                callback          = self._fromMoteDataLocal_notif,
             )
     
     def _fromMoteDataLocal_notif(self,sender,signal,data):

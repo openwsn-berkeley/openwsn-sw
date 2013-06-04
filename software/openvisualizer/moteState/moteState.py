@@ -271,9 +271,8 @@ class StateIdManager(StateElem):
             self.eventBusClient.dispatch(
                 signal        = 'infoDagRoot',
                 data          = {
-                                    'ip':      self.moteConnector.moteProbeIp,
-                                    'tcpPort': self.moteConnector.moteProbeTcpPort,
-                                    'eui64':   self.data[0]['my64bID'].addr,
+                                    'serialPort':   self.moteConnector.serialportName,
+                                    'eui64':        self.data[0]['my64bID'].addr,
                                 },
             )
 
@@ -419,16 +418,10 @@ class moteState(eventBusClient.eventBusClient):
               # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
-            name             = 'moteState@{0}:{1}'.format(
-                                    self.moteConnector.moteProbeIp,
-                                    self.moteConnector.moteProbeTcpPort,
-                                ),
+            name             = 'moteState@{0}'.format(self.moteConnector.serialportName),
             registrations    = [
                 {
-                    'sender'      : 'moteConnector@{0}:{1}'.format(
-                                        self.moteConnector.moteProbeIp,
-                                        self.moteConnector.moteProbeTcpPort,
-                                    ),
+                    'sender'      : 'moteConnector@{0}'.format(self.moteConnector.serialportName),
                     'signal'      : 'fromMote.status',
                     'callback'    : self._receivedStatus_notif,
                 },
@@ -461,9 +454,8 @@ class moteState(eventBusClient.eventBusClient):
         self.dispatch(
             signal        = 'cmdToMote',
             data          = {
-                                'ip':      self.moteConnector.moteProbeIp,
-                                'tcpPort': self.moteConnector.moteProbeTcpPort,
-                                'action':  action,
+                                'serialPort':    self.moteConnector.serialportName,
+                                'action':        action,
                             },
         )
     

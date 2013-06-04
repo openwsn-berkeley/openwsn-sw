@@ -73,11 +73,7 @@ logHandler = logging.handlers.RotatingFileHandler('moteProbe.log',
                                                   backupCount=5,
                                                   mode='w')
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
-for loggerName in ['moteProbe',
-                   'moteProbeSerialThread',
-                   'moteProbeSocketThread',
-                   'moteProbeUtils',
-                   ]:
+for loggerName in ['moteProbe']:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
     temp.addHandler(logHandler)
