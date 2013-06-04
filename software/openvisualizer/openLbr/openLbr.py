@@ -196,79 +196,82 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         '''
         try:
-           ipv6dic={}
-           #build lowpan dictionary from the data
-           ipv6dic = self.lowpan_to_ipv6(data)
-           success = True
-           dispatchSignal = None
-           
-           #read next header
-           if (ipv6dic['next_header']==self.IANA_ICMPv6):
-               #icmp header
-               ipv6dic['icmpv6_type']=ipv6dic['payload'][0]
-               ipv6dic['icmpv6_code']=ipv6dic['payload'][1]
-               ipv6dic['icmpv6_checksum']=ipv6dic['payload'][2:4]
-               ipv6dic['app_payload']=ipv6dic['payload'][4:]
-             
-               #this function does the job
-               dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
-               
-           elif(ipv6dic['next_header']==self.IANA_UDP):
-               #udp header -- can be compressed.. assume first it is not compressed.
-               if (ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID):
-                  
-                  oldUdp=ipv6dic['payload'][:5]
-                  #re-arrange fields and inflate
-                  newUdp = []
-                  newUdp += oldUdp[1:3] # Source Port
-                  newUdp += oldUdp[3:5] # Destination Port
-                  length = 8+len(pkt[5:])
-                  newUdp += [(length & 0xFF00) >> 8] # Length
-                  newUdp += [(length & 0x00FF) >> 0]
-                  idxCS = len(newUdp) # remember index of checksum
-                  newUdp += [0x00,0x00] # Checksum (placeholder)
-                  #append payload to compute crc again
-                  newUdp += ipv6dic['payload'][5:] # data octets
-                  
-                  checksum = u.calculateCRC(newUdp)
-                  #fill crc with the right value.
-                  newUdp[idxCS] = checksum[0]
-                  newUdp[idxCS+1] = checksum[1]
-                  #keep fields for later processing if needed
-                  ipv6dic['udp_src_port']=newUdp[:2]
-                  ipv6dic['udp_dest_port']=newUdp[2:4]
-                  ipv6dic['udp_length']=newUdp[4:6]
-                  ipv6dic['udp_checksum']=newUdp[6:8]
-                  ipv6dic['app_payload']=newUdp[8:]
+            ipv6dic={}
+            #build lowpan dictionary from the data
+            ipv6dic = self.lowpan_to_ipv6(data)
+            success = True
+            dispatchSignal = None
+            
+            #read next header
+            if (ipv6dic['next_header']==self.IANA_ICMPv6):
+                #icmp header
+                ipv6dic['icmpv6_type']=ipv6dic['payload'][0]
+                ipv6dic['icmpv6_code']=ipv6dic['payload'][1]
+                ipv6dic['icmpv6_checksum']=ipv6dic['payload'][2:4]
+                ipv6dic['app_payload']=ipv6dic['payload'][4:]
+                
+                #this function does the job
+                dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
                  
-                  #substitute udp header by the uncompressed header.               
-                  ipv6dic['payload'] =newUdp[:8] + ipv6dic['payload'][5:]
-               else:
-                  #No UDP header compressed    
-                  ipv6dic['udp_src_port']=ipv6dic['payload'][:2]
-                  ipv6dic['udp_dest_port']=ipv6dic['payload'][2:4]
-                  ipv6dic['udp_length']=ipv6dic['payload'][4:6]
-                  ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
-                  ipv6dic['app_payload']=ipv6dic['payload'][8:]
-               
-               dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,tuple(ipv6dic['udp_dest_port']))
-                  
-           #keep payload and app_payload in case we want to assemble the message later. 
-           #ass source address is being retrieved from the IPHC header, the signal includes it in case
-           #receiver such as RPL DAO processing needs to know the source.               
-                   
-           success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
-           
-           if success == True:
-               return
+            elif(ipv6dic['next_header']==self.IANA_UDP):
+                #udp header -- can be compressed.. assume first it is not compressed.
+                if (ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID):
                     
-           # assemble the packet and dispatch it again as nobody answer 
-           ipv6pkt=self.reassemble_ipv6_packet(ipv6dic)       
-           
-           if not self._dispatchProtocol('v6ToInternet',ipv6pkt):
-
-               log.error('meshToV6 packet not dispatched: Dst %s, Proto %s, Port %u',
-                          u.formatIPv6Addr(dispatchSignal[0]), dispatchSignal[1], dispatchSignal[2])
+                    oldUdp=ipv6dic['payload'][:5]
+                    #re-arrange fields and inflate
+                    newUdp = []
+                    newUdp += oldUdp[1:3] # Source Port
+                    newUdp += oldUdp[3:5] # Destination Port
+                    length = 8+len(pkt[5:])
+                    newUdp += [(length & 0xFF00) >> 8] # Length
+                    newUdp += [(length & 0x00FF) >> 0]
+                    idxCS = len(newUdp) # remember index of checksum
+                    newUdp += [0x00,0x00] # Checksum (placeholder)
+                    #append payload to compute crc again
+                    newUdp += ipv6dic['payload'][5:] # data octets
+                    
+                    checksum = u.calculateCRC(newUdp)
+                    #fill crc with the right value.
+                    newUdp[idxCS] = checksum[0]
+                    newUdp[idxCS+1] = checksum[1]
+                    #keep fields for later processing if needed
+                    ipv6dic['udp_src_port']=newUdp[:2]
+                    ipv6dic['udp_dest_port']=newUdp[2:4]
+                    ipv6dic['udp_length']=newUdp[4:6]
+                    ipv6dic['udp_checksum']=newUdp[6:8]
+                    ipv6dic['app_payload']=newUdp[8:]
+                    
+                    #substitute udp header by the uncompressed header.               
+                    ipv6dic['payload'] =newUdp[:8] + ipv6dic['payload'][5:]
+                else:
+                    #No UDP header compressed    
+                    ipv6dic['udp_src_port']=ipv6dic['payload'][:2]
+                    ipv6dic['udp_dest_port']=ipv6dic['payload'][2:4]
+                    ipv6dic['udp_length']=ipv6dic['payload'][4:6]
+                    ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
+                    ipv6dic['app_payload']=ipv6dic['payload'][8:]
+                dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,tuple(ipv6dic['udp_dest_port']))
+            
+            #keep payload and app_payload in case we want to assemble the message later. 
+            #ass source address is being retrieved from the IPHC header, the signal includes it in case
+            #receiver such as RPL DAO processing needs to know the source.               
+            
+            success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
+            
+            if success == True:
+                return
+            
+            # assemble the packet and dispatch it again as nobody answer 
+            ipv6pkt=self.reassemble_ipv6_packet(ipv6dic)       
+            
+            if not self._dispatchProtocol('v6ToInternet',ipv6pkt):
+                output  = []
+                output += ['meshToV6 packet not dispatched:']
+                output += ['- destination : {0}'.format(dispatchSignal[0])]
+                output += ['- protocol :    {1}'.format(dispatchSignal[1])]
+                output += ['- port :        {0}'.format(dispatchSignal[2])]
+                output  = '\n'.join(output)
+                log.error(output)
             
         except (ValueError,NotImplementedError) as err:
             log.error(err)
