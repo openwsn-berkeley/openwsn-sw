@@ -6,6 +6,7 @@
 '''
 
 import logging
+
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
@@ -14,7 +15,8 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
-from   openType import typeUtils as u
+import openvisualizer_utils as u
+from   datetime import datetime
 
 from eventBus import eventBusClient
 
@@ -37,7 +39,8 @@ class UDPLatency(eventBusClient.eventBusClient):
         )
 
         # local variables
-        self.dataLock        = threading.Lock()
+        self.stateLock       = threading.Lock()
+        self.latencyStats    = {}
         
     
     #======================== public ==========================================
@@ -86,11 +89,13 @@ class UDPLatency(eventBusClient.eventBusClient):
         stats.update({'prefParent':parent})
         stats.update({'lastMsg':datetime.now()})
         
+        #add to dictionary and compute stats...
         self.stateLock.acquire()  
         self.latencyStats.update({str(address):stats}) 
-        self.stateLock.release()               
-        #add to dictionary and compute stats...
-        log.debug("Latency stats in mS {0}".format(self.latencyStats))
+        self.stateLock.release()
+        
+        #log stats 
+        log.debug(self._formatUDPLatencyStat(self.latencyStats.get(str(address)), str(address)))
     
     
     
@@ -115,3 +120,23 @@ class UDPLatency(eventBusClient.eventBusClient):
         '''
         with self.stateLock:
             self.networkPrefix    = data
+
+
+
+    #===== formatting
+    def _formatUDPLatencyStat(self,stats, str):
+        
+        output  = []
+        output += ['']
+        output += ['']
+        output += ['============================= UDPLatency statistics =============================']
+        output += ['Mote address:          {0}'.format(str)]
+        output += ['Min latency:           {0}'.format(stats.get('min'))]
+        output += ['Max latency:           {0}'.format(stats.get('max'))]
+        output += ['Num packets:           {0}'.format(stats.get('num'))]
+        output += ['Avg latency:           {0}'.format(stats.get('avg'))]
+        output += ['Latest latency:        {0}'.format(stats.get('lastVal'))]
+        output += ['Preferred parent:      {0}'.format(stats.get('prefParent'))]
+        output += ['Received:              {0}'.format(stats.get('lastMsg'))]
+        output += ['']
+        return '\n'.join(output)
