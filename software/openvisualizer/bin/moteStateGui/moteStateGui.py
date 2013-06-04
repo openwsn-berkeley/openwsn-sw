@@ -9,6 +9,8 @@ if __name__=='__main__':
 import logging
 import logging.config
 
+from optparse import OptionParser
+
 from eventBus      import eventBusMonitor
 from moteProbe     import moteProbe
 from moteConnector import moteConnector
@@ -181,7 +183,12 @@ class MoteStateGui(object):
     
 class MoteStateGui_app(object):
     
-    def __init__(self):
+    def __init__(self,simulatorMode):
+        
+        # store params
+        self.simulatorMode   = simulatorMode
+        print self.simulatorMode
+        # local variables
         self.eventBusMonitor = None
         self.moteProbes      = []
         self.moteConnectors  = []
@@ -236,10 +243,27 @@ class MoteStateGui_app(object):
 
 #============================ main ============================================
 
-def main():
+def parseCliOptions():
+    
+    parser = OptionParser()
+    
+    parser.add_option( '--sim', '-s',
+        dest       = 'simulatorMode',
+        default    = False,
+        action     = 'store_true',
+    )
+    
+    (opts, args)  = parser.parse_args()
+    
+    return opts
+
+def main(simulatorMode):
     appDir = '.'
     logging.config.fileConfig(os.path.join(appDir,'logging.conf'), {'logDir': appDir})
-    app = MoteStateGui_app()
+    app = MoteStateGui_app(simulatorMode)
 
 if __name__=="__main__":
-    main()
+    
+    opts = parseCliOptions()
+    
+    main(simulatorMode=opts.__dict__['simulatorMode'])
