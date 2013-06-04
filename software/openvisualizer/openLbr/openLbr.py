@@ -268,7 +268,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 output  = []
                 output += ['meshToV6 packet not dispatched:']
                 output += ['- destination : {0}'.format(dispatchSignal[0])]
-                output += ['- protocol :    {1}'.format(dispatchSignal[1])]
+                output += ['- protocol :    {0}'.format(dispatchSignal[1])]
                 output += ['- port :        {0}'.format(dispatchSignal[2])]
                 output  = '\n'.join(output)
                 log.error(output)
