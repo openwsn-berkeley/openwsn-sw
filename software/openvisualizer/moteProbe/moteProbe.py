@@ -179,7 +179,7 @@ class moteProbe(threading.Thread):
                                 log.warning('{0}: invalid serial frame: {2} {1}'.format(self.name, err, u.formatStringBuf(tempBuf)))
                             else:
                                 if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
-                                      with self.outputBufLock:
+                                    with self.outputBufLock:
                                         if self.outputBuf:
                                             outputToWrite = self.outputBuf.pop(0)
                                             self.serial.write(outputToWrite)
@@ -192,6 +192,8 @@ class moteProbe(threading.Thread):
                                     )
                         
                         self.lastRxByte = rxByte
+                    if not self.realserial:
+                        rxByte = self.serial.doneReading()
         except Exception as err:
             errMsg=u.formatCrashMessage(self.name,err)
             print errMsg
