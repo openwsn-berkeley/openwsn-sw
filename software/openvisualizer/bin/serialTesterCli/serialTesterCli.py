@@ -112,25 +112,35 @@ def main():
     
     # find serial port
     if len(sys.argv)>1:
-        serialPort = sys.argv[1]
+        portToConnect = sys.argv[1]
     else:
-        serialPort = moteProbe.utils.findSerialPorts()[0]
-    serialPort     = ('COM136', 115200)
+        serialPorts = moteProbe.findSerialPorts()
+        print serialPorts
+        portToConnect = _selectPort(serialPorts)
     tcpPort        = TCP_PORT_START
     
     # create a moteProbe
-    moteProbe_handler = moteProbe.moteProbe(serialPort,tcpPort)
+    moteProbe_handler = moteProbe.moteProbe(portToConnect,tcpPort)
     
     # create a SerialTester to attached to the moteProbe
     moteConnector_handler = SerialTester(
                                 LOCAL_ADDRESS,
                                 moteProbe_handler.getTcpPort(),
-                                serialPort[0]
+                                portToConnect[0]
                             )
     
     # create an open CLI
     cli = serialTesterCli(moteProbe_handler,moteConnector_handler)
     cli.start()
+    
+def _selectPort(serialPorts):
+    while 1:
+        print 'Select serial port to connect'
+        port = (raw_input(), moteProbe.BAUDRATE_GINA)
+        for serialPort in serialPorts:
+            if port == serialPort:
+                return port
+        print 'Port not allowed, try again'
     
 #============================ application logging =============================
 import logging
