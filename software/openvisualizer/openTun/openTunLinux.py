@@ -171,7 +171,6 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         
         # write over tuntap interface
         os.write(self.tunIf, data)
-        return True
     
     def _v6ToMesh_notif(self,data):
         '''

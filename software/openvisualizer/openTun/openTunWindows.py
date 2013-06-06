@@ -186,11 +186,10 @@ class OpenTunWindows(eventBusClient.eventBusClient):
             win32event.WaitForSingleObject(self.overlappedTx.hEvent, win32event.INFINITE)
             self.overlappedTx.Offset = self.overlappedTx.Offset + len(data)
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal,sender))
-            return True    
         except Exception as err:
             print err
             log.error(err)
-            raise ValueError('Error writing to TUN')
+            raise ValueError('Error writing to TUN, cannot send data from {0}'.format(sender))
         
             
                 
