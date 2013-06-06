@@ -205,6 +205,12 @@ class OpenLbr(eventBusClient.eventBusClient):
             #read next header
             if (ipv6dic['next_header']==self.IANA_ICMPv6):
                 #icmp header
+                if (len(ipv6dic['payload'])<5):
+                    log.critical("wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data)))
+                    print "wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data))
+                    return
+                
+                
                 ipv6dic['icmpv6_type']=ipv6dic['payload'][0]
                 ipv6dic['icmpv6_code']=ipv6dic['payload'][1]
                 ipv6dic['icmpv6_checksum']=ipv6dic['payload'][2:4]
@@ -215,6 +221,11 @@ class OpenLbr(eventBusClient.eventBusClient):
                  
             elif(ipv6dic['next_header']==self.IANA_UDP):
                 #udp header -- can be compressed.. assume first it is not compressed.
+                if (len(ipv6dic['payload'])<5):
+                    log.critical("wrong payload lenght on UDP packet {0}".format(",".join(str(c) for c in data)))
+                    print "wrong payload lenght on UDP packet {0}".format(",".join(str(c) for c in data))
+                    return
+                
                 if (ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID):
                     
                     oldUdp=ipv6dic['payload'][:5]
