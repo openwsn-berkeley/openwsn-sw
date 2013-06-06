@@ -281,6 +281,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 output += ['- destination : {0}'.format(dispatchSignal[0])]
                 output += ['- protocol :    {0}'.format(dispatchSignal[1])]
                 output += ['- port :        {0}'.format(dispatchSignal[2])]
+                output += ['- raw data :    {0}'.format(",".join(str(c) for c in data))]
                 output  = '\n'.join(output)
                 log.error(output)
             

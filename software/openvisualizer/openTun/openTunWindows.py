@@ -2,7 +2,7 @@ import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('OpenTun')
+log = logging.getLogger('openTunWindows')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
@@ -180,12 +180,13 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         
         # convert data to string
         data  = ''.join([chr(b) for b in data])
-        
         # write over tuntap interface
         try:
             win32file.WriteFile(self.tunIf, data, self.overlappedTx)
             win32event.WaitForSingleObject(self.overlappedTx.hEvent, win32event.INFINITE)
             self.overlappedTx.Offset = self.overlappedTx.Offset + len(data)
+            log.debug("data dispatched to tun correctly {0}, {1}".format(signal,sender))
+            return True    
         except Exception as err:
             print err
             log.error(err)
