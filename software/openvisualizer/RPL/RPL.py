@@ -236,8 +236,8 @@ class RPL(eventBusClient.eventBusClient):
         # log
         output                    = []
         output                   += ['received DAO:']
-        output                   += ['- source :      {0}'.format(tu.formatAddress(source))]
-        output                   += ['- dao :         {0}'.format(tu.formatBuf(dao))]
+        output                   += ['- source :      {0}'.format(u.formatAddress(source))]
+        output                   += ['- dao :         {0}'.format(u.formatBuf(dao))]
         output                    = '\n'.join(output)
         log.debug(output)
         
@@ -291,10 +291,10 @@ class RPL(eventBusClient.eventBusClient):
         output               = []
         output              += ['parents:']
         for p in parents:
-            output          += ['- {0}'.format(tu.formatAddress(p))]
+            output          += ['- {0}'.format(u.formatAddress(p))]
         output              += ['children:']
         for p in children:
-            output          += ['- {0}'.format(tu.formatAddress(p))]
+            output          += ['- {0}'.format(u.formatAddress(p))]
         output               = '\n'.join(output)
         log.debug(output)
         print output
