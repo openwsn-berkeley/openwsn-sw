@@ -22,7 +22,6 @@ from pydispatch import dispatcher
 from eventBus import eventBusClient
 import SourceRoute
 import openvisualizer_utils as u
-from   openType import typeUtils as tu
 
 class RPL(eventBusClient.eventBusClient):
     

@@ -14,7 +14,8 @@ log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
 import threading
-from   openType import typeUtils as u
+
+import openvisualizer_utils as u
 from eventBus import eventBusClient
 
 

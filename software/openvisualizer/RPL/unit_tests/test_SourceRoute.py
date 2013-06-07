@@ -13,7 +13,7 @@ import json
 import pytest
 
 import SourceRoute
-from   openType import typeUtils as u
+import openvisualizer_utils as u
 
 #============================ logging =========================================
 
