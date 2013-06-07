@@ -82,13 +82,13 @@ def test_sourceRoute(expectedSourceRoute):
     # log
     output              = []
     output             += ['\n']
-    output             += ['expectedDestination: {0}'.format(u.formatAddress(expectedDestination))]
+    output             += ['expectedDestination: {0}'.format(u.formatAddr(expectedDestination))]
     output             += ['expectedRoute:']
     for m in expectedRoute:
-            output     += ['- {0}'.format(u.formatAddress(m))]
+            output     += ['- {0}'.format(u.formatAddr(m))]
     output             += ['calculatedRoute:']
     for m in calculatedRoute:
-            output     += ['- {0}'.format(u.formatAddress(m))]
+            output     += ['- {0}'.format(u.formatAddr(m))]
     output               = '\n'.join(output)
     log.debug(output)
     
