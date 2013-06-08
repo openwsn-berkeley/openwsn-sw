@@ -28,8 +28,6 @@ class SerialTester(eventBusClient.eventBusClient):
         log.debug("creating instance")
         
         # store params
-        self.moteProbeIp          = moteProbeIp
-        self.moteProbeTcpPort     = moteProbeTcpPort
         self.moteProbeSerialPort  = moteProbeSerialPort
         
         # local variables
@@ -46,7 +44,7 @@ class SerialTester(eventBusClient.eventBusClient):
         
         
         # give this thread a name
-        self.name = 'SerialTester@{0}:{1}'.format(self.moteProbeIp,self.moteProbeTcpPort)
+        self.name = 'SerialTester@{0}'.format(self)
         
          
         eventBusClient.eventBusClient.__init__(
@@ -63,7 +61,6 @@ class SerialTester(eventBusClient.eventBusClient):
         
     def quit(self):
         self.goOn = False
-        self.socket.close()
     
     #======================== public ==========================================
     

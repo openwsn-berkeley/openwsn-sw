@@ -12,7 +12,6 @@ from moteConnector.SerialTester import SerialTester
 from OpenCli       import OpenCli
 
 LOCAL_ADDRESS     = '127.0.0.1'
-TCP_PORT_START    = 8090
 MAX_BYTES_TO_SEND = 50
 
 class serialTesterCli(OpenCli):
@@ -117,15 +116,14 @@ def main():
         serialPorts = moteProbe.findSerialPorts()
         print serialPorts
         portToConnect = _selectPort(serialPorts)
-    tcpPort        = TCP_PORT_START
     
     # create a moteProbe
-    moteProbe_handler = moteProbe.moteProbe(portToConnect,tcpPort)
+    moteProbe_handler = moteProbe.moteProbe(portToConnect)
     
     # create a SerialTester to attached to the moteProbe
     moteConnector_handler = SerialTester(
                                 LOCAL_ADDRESS,
-                                moteProbe_handler.getTcpPort(),
+                                moteProbe_handler,
                                 portToConnect[0]
                             )
     
