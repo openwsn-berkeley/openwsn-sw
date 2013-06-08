@@ -20,7 +20,7 @@ LOG_FORMAT  = "%(asctime)s [%(name)s:%(levelname)s] %(message)s"
 
 #============================ logging =========================================
 
-logFileName = 'logs/opensim.log'
+logFileName = 'opensim.log'
 loghandler  = logging.handlers.RotatingFileHandler(logFileName,
                                                    maxBytes=2000000,
                                                    backupCount=5,
