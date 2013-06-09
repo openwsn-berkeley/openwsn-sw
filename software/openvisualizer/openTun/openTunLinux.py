@@ -169,8 +169,14 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         # convert data to string
         data  = ''.join([chr(b) for b in data])
         
-        # write over tuntap interface
-        os.write(self.tunIf, data)
+        try:
+            # write over tuntap interface
+            os.write(self.tunIf, data)
+            log.debug("data dispatched to tun correctly {0}, {1}".format(signal,sender))
+        except Exception as err:
+            print err
+            log.error(err)
+            raise ValueError('Error writing to TUN, cannot send data from {0}'.format(sender))
     
     def _v6ToMesh_notif(self,data):
         '''

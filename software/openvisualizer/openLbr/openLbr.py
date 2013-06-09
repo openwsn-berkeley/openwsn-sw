@@ -275,7 +275,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             # assemble the packet and dispatch it again as nobody answer 
             ipv6pkt=self.reassemble_ipv6_packet(ipv6dic)       
             
-            self._dispatchProtocol('v6ToInternet',ipv6pkt)
+            self.dispatch('v6ToInternet',ipv6pkt)
             
         except (ValueError,NotImplementedError) as err:
             log.error(err)
