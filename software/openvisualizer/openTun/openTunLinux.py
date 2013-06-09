@@ -2,7 +2,7 @@ import logging
 class NullHandler(logging.Handler):
     def emit(self, record):
         pass
-log = logging.getLogger('OpenTunLinux')
+log = logging.getLogger('openTunLinux')
 log.setLevel(logging.ERROR)
 log.addHandler(NullHandler())
 
