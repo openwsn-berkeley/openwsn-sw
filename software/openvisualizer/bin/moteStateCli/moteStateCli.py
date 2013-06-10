@@ -74,7 +74,7 @@ def main():
     moteState_handlers     = []
     
     # create a moteProbe for each mote connected to this computer
-    serialPorts    = moteProbe.utils.findSerialPorts()
+    serialPorts    = moteProbe.findSerialPorts()
     tcpPorts       = [TCP_PORT_START+i for i in range(len(serialPorts))]
     for (serialPort,tcpPort) in zip(serialPorts,tcpPorts):
         moteProbe_handlers.append(moteProbe.moteProbe(serialPort,tcpPort))
