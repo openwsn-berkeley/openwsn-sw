@@ -118,13 +118,7 @@ class moteProbe(threading.Thread):
             self._bufferDataToSend,
             signal = 'fromMoteConnector@'+self.serialport,
         )
-        
-        #timming stats
-        
-        self.avg     = 0.0
-        self.count   = 0
-        self.minByte = 100000000
-        self.maxByte = 0
+    
         # start myself
         self.start()
     
@@ -144,11 +138,7 @@ class moteProbe(threading.Thread):
                     self.serial = self.emulatedMote.bspUart
                 while True: # read bytes from serial port
                     try:
-                        rxByte = self.serial.read(1)
-                        #get start time
-                        self.count=self.count+1
-                        start=time.clock()
-                        
+                        rxByte = self.serial.read(1)                        
                     except Exception as err:
                         print err
                         log.warning(err)
@@ -202,20 +192,6 @@ class moteProbe(threading.Thread):
                                     )
                         
                         self.lastRxByte = rxByte
-                        
-                        end =time.clock()-start;
-                        if (end<self.minByte):
-                            self.minByte=end
-                        if (end>self.maxByte):
-                            self.maxByte=end
-                                
-                        self.avg=self.avg+end;
-                        if (self.count ==10000):
-                            total=self.avg/10000
-                            self.count=0;
-                            self.avg=0.0;
-                            log.error("avg time in 10000 bytes is {0}, min {1}, max {2}".format(str(total),str(self.minByte),str(self.maxByte)))
-                            print "avg time in 10000 bytes is {0}, min {1}, max {2}".format(str(total),str(self.minByte),str(self.maxByte))
                                           
                     if not self.realserial:
                         rxByte = self.serial.doneReading()
