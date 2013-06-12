@@ -11,6 +11,14 @@ from moteConnector import moteConnector
 from moteState     import moteState
 from OpenCli       import OpenCli
 
+from eventBus      import eventBusMonitor
+from moteState     import moteState
+from RPL           import RPL
+from openLbr       import openLbr
+from openTun       import openTun
+from RPL           import UDPLatency
+from RPL           import topology
+
 LOCAL_ADDRESS  = '127.0.0.1'
 TCP_PORT_START = 8090
 
@@ -22,6 +30,13 @@ class MoteStateCli(OpenCli):
         self.moteProbe_handlers     = moteProbe_handlers
         self.moteConnector_handlers = moteConnector_handlers
         self.moteState_handlers     = moteState_handlers
+        
+        self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
+        self.openLbr              = openLbr.OpenLbr()
+        self.rpl                  = RPL.RPL()
+        self.topology             = topology.topology()
+        self.udpLatency           = UDPLatency.UDPLatency()
+        self.openTun              = openTun.OpenTun() # call last since indicates prefix
     
         # initialize parent class
         OpenCli.__init__(self,"mote State CLI",self._quit_cb)
@@ -74,14 +89,13 @@ def main():
     moteState_handlers     = []
     
     # create a moteProbe for each mote connected to this computer
-    serialPorts    = moteProbe.utils.findSerialPorts()
-    tcpPorts       = [TCP_PORT_START+i for i in range(len(serialPorts))]
-    for (serialPort,tcpPort) in zip(serialPorts,tcpPorts):
-        moteProbe_handlers.append(moteProbe.moteProbe(serialPort,tcpPort))
+    serialPorts    = moteProbe.findSerialPorts()
+    for (serialPort) in serialPorts:
+        moteProbe_handlers.append(moteProbe.moteProbe(serialPort))
     
     # create a moteConnector for each moteProbe
     for mp in moteProbe_handlers:
-       moteConnector_handlers.append(moteConnector.moteConnector(LOCAL_ADDRESS,mp.getTcpPort()))
+       moteConnector_handlers.append(moteConnector.moteConnector(mp.getSerialPortName()))
     
     # create a moteState for each moteConnector
     for mc in moteConnector_handlers:
@@ -92,11 +106,6 @@ def main():
                        moteConnector_handlers,
                        moteState_handlers)
     
-    # start threads
-    for ms in moteState_handlers:
-       ms.start()
-    for mc in moteConnector_handlers:
-       mc.start()
     cli.start()
     
 #============================ application logging =============================
