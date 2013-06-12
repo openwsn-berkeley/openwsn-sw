@@ -139,8 +139,22 @@ class RPL(eventBusClient.eventBusClient):
         \param[in] interval In how many seconds the DIO is scheduled to be
             sent.
         '''
-        self.timer = threading.Timer(interval,self._sendDIO)
+        self.timer = threading.Timer(interval,self._cycleDIO)
         self.timer.start()
+        
+    def _cycleDIO(self):
+        '''
+        \brief Send DIO and schedule next send.
+        '''
+        try:
+            self._sendDIO()
+        except Exception as err:
+            errMsg=u.formatCrashMessage(self.name,err)
+            print errMsg
+            log.error(errMsg)
+        finally:
+            # Must ensure next send is scheduled
+            self._scheduleSendDIO(self.DIO_PERIOD)
     
     def _sendDIO(self):
         '''
@@ -148,11 +162,6 @@ class RPL(eventBusClient.eventBusClient):
         '''
         # don't send DIO if I didn't discover the DAGroot EUI64.
         if not self.dagRootEui64:
-            
-            # reschule to try again later
-            self._scheduleSendDIO(self.DIO_PERIOD)
-            
-            # stop here
             return
         
         # the list of bytes to be sent to the DAGroot.
@@ -209,9 +218,6 @@ class RPL(eventBusClient.eventBusClient):
             signal          = 'bytesToMesh',
             data            = (nextHop,dio)
         )
-        
-        # schedule the next DIO transmission
-        self._scheduleSendDIO(self.DIO_PERIOD)
 
 
     def _indicateDAO(self,tup):    
