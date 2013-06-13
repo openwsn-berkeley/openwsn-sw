@@ -149,9 +149,9 @@ class RPL(eventBusClient.eventBusClient):
         try:
             self._sendDIO()
         except Exception as err:
-            errMsg=u.formatCrashMessage(self.name,err)
+            errMsg=u.formatCriticalMessage(err)
             print errMsg
-            log.error(errMsg)
+            log.critical(errMsg)
         finally:
             # Must ensure next send is scheduled
             self._scheduleSendDIO(self.DIO_PERIOD)

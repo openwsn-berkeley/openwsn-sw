@@ -174,9 +174,9 @@ class OpenTunLinux(eventBusClient.eventBusClient):
             os.write(self.tunIf, data)
             log.debug("data dispatched to tun correctly {0}, {1}".format(signal,sender))
         except Exception as err:
-            print err
-            log.error(err)
-            raise ValueError('Error writing to TUN, cannot send data from {0}'.format(sender))
+            errMsg=u.formatCriticalMessage(err)
+            print errMsg
+            log.critical(errMsg)
     
     def _v6ToMesh_notif(self,data):
         '''

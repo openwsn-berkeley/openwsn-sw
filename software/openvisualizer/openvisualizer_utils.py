@@ -151,14 +151,20 @@ def calculateFCS(rpayload):
     ]
     return returnVal
 
-def formatCrashMessage(threadName,error):
+def formatCriticalMessage(error):
     returnVal  = []
-    returnVal += ['\n']
-    returnVal += ['======= crash in {0} ======='.format(threadName)]
     returnVal += ['Error:']
     returnVal += [str(error)]
     returnVal += ['\ncall stack:\n']
     returnVal += [traceback.format_exc()]
     returnVal += ['\n']
+    returnVal  = '\n'.join(returnVal)
+    return returnVal
+
+def formatCrashMessage(threadName,error):
+    returnVal  = []
+    returnVal += ['\n']
+    returnVal += ['======= crash in {0} ======='.format(threadName)]
+    returnVal += [formatCriticalMessage(error)]
     returnVal  = '\n'.join(returnVal)
     return returnVal
