@@ -50,7 +50,7 @@ class MenuUpdateFrame(Tkinter.Frame):
                 label=menuLabel,
             )
 
-class MoteStateGui(object):
+class OpenVisualizerGui(object):
     
     GUI_UPDATE_PERIOD      = 500
     MENUENTRY_STATE        = 'motes'
@@ -72,7 +72,7 @@ class MoteStateGui(object):
         self.menuFrames             = []
         
         # local variables
-        self.window                 = OpenWindow.OpenWindow("mote state GUI")
+        self.window                 = OpenWindow.OpenWindow("OpenVisualizer")
         
         #===== mote states frame
         menuNames                   = []
@@ -183,7 +183,7 @@ class MoteStateGui(object):
         for i in range(len(self.menuFrames)):
             self.menuFrames[i].updateMenuLabel(i)
     
-class MoteStateGui_app(object):
+class OpenVisualizerGui_app(object):
     
     def __init__(self,simulatorMode,numMotes):
         
@@ -230,7 +230,7 @@ class MoteStateGui_app(object):
         ]
         
         # create an open GUI
-        gui = MoteStateGui(
+        gui = OpenVisualizerGui(
             self.eventBusMonitor,
             self.moteProbes,
             self.moteConnectors,
@@ -281,7 +281,7 @@ def parseCliOptions():
 def main(simulatorMode,numMotes):
     appDir = '.'
     logging.config.fileConfig(os.path.join(appDir,'logging.conf'), {'logDir': appDir})
-    app = MoteStateGui_app(simulatorMode,numMotes)
+    app = OpenVisualizerGui_app(simulatorMode,numMotes)
 
 if __name__=="__main__":
     
