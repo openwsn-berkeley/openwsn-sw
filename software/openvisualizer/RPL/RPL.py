@@ -29,7 +29,9 @@ class RPL(eventBusClient.eventBusClient):
     _TRANSIT_INFORMATION_TYPE = 0x06
     
     # Period between successive DIOs, in seconds.
-    DIO_PERIOD                    = 10                          
+    DIO_PERIOD                    = 10    
+    
+    ALL_RPL_NODES_MULTICAST       = [0xff,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x1a]                      
     
     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
     IANA_ICMPv6_RPL_TYPE          = 155              
@@ -175,6 +177,7 @@ class RPL(eventBusClient.eventBusClient):
         # IPHC header
         dio                 += [0x78]        # dispatch byte
         dio                 += [0x33]        # dam sam
+        idxNH                = len(dio)
         dio                 += [0x3A]        # next header (0x3A=ICMPv6)
         dio                 += [0x00]        # HLIM
         
@@ -201,18 +204,21 @@ class RPL(eventBusClient.eventBusClient):
         
         # DODAGID
         with self.stateLock:
+            idxSrc           = len(dio) #this is a little hack as the source is the dodag..
             dio             += self.networkPrefix
             dio             += self.dagRootEui64
         
+        idxPayload           = len(dio)
         # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
-        checksum             = u.calculateCRC(dio[idxICMPv6:])
-                               
+        
+        checksum             = u.calculatePseudoHeaderCRC(dio[idxSrc:idxSrc+16],self.ALL_RPL_NODES_MULTICAST,[0x00,0x00],[0x00]+dio[idxNH:idxNH+1],dio[idxPayload:])
+                                  
         dio[idxICMPv6CS  ]   = checksum[0]
         dio[idxICMPv6CS+1]   = checksum[1]
         
         # log
         log.debug('sending DIO {0}'.format(u.formatBuf(dio)))
-        
+
         # dispatch
         self.dispatch(
             signal          = 'bytesToMesh',

@@ -90,6 +90,47 @@ def calculateCRC(payload):
     
     return checksum
 
+
+#//see http://www-net.cs.umass.edu/kurose/transport/UDP.html, or http://tools.ietf.org/html/rfc1071
+#//see http://en.wikipedia.org/wiki/User_Datagram_Protocol#IPv6_PSEUDO-HEADER
+def calculatePseudoHeaderCRC(src,dst,ulen,nh,payload):   
+    checksum       = [0x00]*2
+         
+    #compute pseudo header crc
+    checksum = _oneComplementSum(src,checksum)
+    checksum = _oneComplementSum(dst,checksum)
+    checksum = _oneComplementSum(ulen,checksum)
+    checksum = _oneComplementSum(nh,checksum)
+    checksum = _oneComplementSum(payload,checksum)
+    
+    checksum[0]   ^= 0xFF;
+    checksum[1]   ^= 0xFF;
+    
+    checksum[0]   = int(checksum[0]);
+    checksum[1]   = int(checksum[1]);
+    
+    return checksum
+
+
+    
+def _oneComplementSum(field,checksum):
+        
+    sum            = 0xFFFF & (checksum[0] << 8 | checksum[1])
+    i              = len(field)
+    while (i > 1):
+        sum       += 0xFFFF & (field[-i] << 8 | (field[-i+1]))
+        i         -= 2
+    if i:
+        sum       += (0xFF & field[-1]) << 8
+    while (sum >> 16):
+        sum        = (sum & 0xFFFF) + (sum >> 16)
+    
+    checksum[0]    = (sum >> 8) & 0xFF
+    checksum[1]    = sum & 0xFF
+    
+    return checksum
+    
+
 def byteinverse(b):
     # TODO: speed up through lookup table
     rb = 0

@@ -145,13 +145,10 @@ class eventBusMonitor(object):
         addr   += openTun.IPV6HOST
         
         # CRC  See https://tools.ietf.org/html/rfc2460.
-        pseudo  = []
-        pseudo += addr                          # source
-        pseudo += addr                          # destination
-        pseudo += [0x00,0x00]                   # upper layer length
-        pseudo += udp[4:6]                      # upper layer length
-        pseudo += [0x00,0x00,0x00,17]           # next header (protocol)
-        udp[6:8] = u.calculateCRC(pseudo+udp)
+      
+        #not sure if the payload contains the udp header in this case.
+        udp[6:8] = u.calculatePseudoHeaderCRC(addr,addr,[0x00,0x00]+udp[4:6],[0x00,0x00,0x00,17],zep)
+        
         
         # IPv6
         ip     = [6<<4]                  # v6 + traffic class (upper nybble)
