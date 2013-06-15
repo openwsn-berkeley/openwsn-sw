@@ -22,7 +22,7 @@ from RPL           import topology
 LOCAL_ADDRESS  = '127.0.0.1'
 TCP_PORT_START = 8090
 
-class MoteStateCli(OpenCli):
+class OpenVisualizerCli(OpenCli):
     
     def __init__(self,moteProbe_handlers,moteConnector_handlers,moteState_handlers):
         
@@ -39,7 +39,7 @@ class MoteStateCli(OpenCli):
         self.openTun              = openTun.OpenTun() # call last since indicates prefix
     
         # initialize parent class
-        OpenCli.__init__(self,"mote State CLI",self._quit_cb)
+        OpenCli.__init__(self,"OpenVisualizer CLI",self._quit_cb)
         
         # add commands
         self.registerCommand('list',
@@ -102,16 +102,16 @@ def main():
        moteState_handlers.append(moteState.moteState(mc))
     
     # create an open CLI
-    cli = MoteStateCli(moteProbe_handlers,
-                       moteConnector_handlers,
-                       moteState_handlers)
+    cli = OpenVisualizerCli(moteProbe_handlers,
+                           moteConnector_handlers,
+                           moteState_handlers)
     
     cli.start()
     
 #============================ application logging =============================
 import logging
 import logging.handlers
-logHandler = logging.handlers.RotatingFileHandler('moteStateCli.log',
+logHandler = logging.handlers.RotatingFileHandler('motesCli.log',
                                                   maxBytes=2000000,
                                                   backupCount=5,
                                                   mode='w')
