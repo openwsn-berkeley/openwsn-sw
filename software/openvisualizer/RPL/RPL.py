@@ -211,8 +211,14 @@ class RPL(eventBusClient.eventBusClient):
         idxPayload           = len(dio)
         # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
         
-        checksum             = u.calculatePseudoHeaderCRC(dio[idxSrc:idxSrc+16],self.ALL_RPL_NODES_MULTICAST,[0x00,0x00],[0x00]+dio[idxNH:idxNH+1],dio[idxPayload:])
-                                  
+        checksum             = u.calculatePseudoHeaderCRC(
+            dio[idxSrc:idxSrc+16],
+            self.ALL_RPL_NODES_MULTICAST,
+            [0x00,0x00],
+            [0x00]+dio[idxNH:idxNH+1],
+            dio[idxPayload:]
+        )
+        
         dio[idxICMPv6CS  ]   = checksum[0]
         dio[idxICMPv6CS+1]   = checksum[1]
         
