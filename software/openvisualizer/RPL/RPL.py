@@ -288,8 +288,9 @@ class RPL(eventBusClient.eventBusClient):
                     dao_transit_information['Transit_information_path_sequence']    = dao[4]
                     dao_transit_information['Transit_information_path_lifetime']    = dao[5]
                     # address of the parent
-                    parents      += [dao[6:14]]
-                    dao           = dao[14:]
+                    prefix        =  dao[6:14]
+                    parents      += [dao[14:22]]
+                    dao           = dao[22:]
                 elif dao[0]==self._TARGET_INFORMATION_TYPE:
                     dao_target_information['Target_information_type']               = dao[0]
                     dao_target_information['Target_information_length']             = dao[1]
