@@ -297,8 +297,9 @@ class RPL(eventBusClient.eventBusClient):
                     dao_target_information['Target_information_flags']              = dao[2]
                     dao_target_information['Target_information_prefix_length']      = dao[3]
                     # address of the child
-                    children     += [dao[4:12]]
-                    dao           = dao[12:]
+                    prefix        =  dao[4:12]
+                    children     += [dao[12:20]]
+                    dao           = dao[20:]
                 else:
                     log.warning("DAO with wrong Option {0}. Neither Transit nor Target.".format(dao[0]))
                     return
