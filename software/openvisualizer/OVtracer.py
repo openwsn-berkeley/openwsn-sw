@@ -12,7 +12,7 @@ import threading
 import yappi
 
 class OVtracer(object):
-    TRACING_INTERVAL = 4
+    TRACING_INTERVAL = 30
     
     def __init__(self):
             yappi.start()
@@ -22,6 +22,8 @@ class OVtracer(object):
     def _logTracingStats(self):
          yappi.enum_thread_stats(self._logThreadStat)
          #yappi.enum_stats(self._logFunctionStat)
+         self.timer = threading.Timer(self.TRACING_INTERVAL,self._logTracingStats)
+         self.timer.start()
          
     def _logThreadStat(self,stat_entry):
          log.info("Thread Trace: {0}".format(stat_entry))
