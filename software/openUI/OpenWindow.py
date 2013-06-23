@@ -3,13 +3,16 @@ import Tkinter
 
 class OpenWindow(Tkinter.Tk):
     
-    def __init__(self,appName):
+    def __init__(self,appName,app):
         
         # initialize the parent class
         Tkinter.Tk.__init__(self)
         
         # assign a title to this window
         self.title("{0} - OpenWSN project".format(appName))
+        
+        # retain a reference to the calling application so we can close
+        self.app = app
         
         # set a function to call when "x" close button is pressed
         self.protocol('WM_DELETE_WINDOW',self._closeWindow)
@@ -86,13 +89,8 @@ class OpenWindow(Tkinter.Tk):
         self.update_idletasks()
     
     def _closeWindow(self):
-        # stop the mainloop and close this window
+        self.app.close()
         self.quit()
-        
-        # TODO: call teardown functions?
-        
-        # quit
-        sys.exit()
     
 ###############################################################################
 

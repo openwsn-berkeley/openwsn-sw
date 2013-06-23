@@ -88,6 +88,9 @@ class RPL(eventBusClient.eventBusClient):
     
     #======================== public ==========================================
     
+    def close(self):
+        self.timer.cancel()
+    
     #======================== private =========================================
     
     #==== handle EventBus notifications
@@ -141,7 +144,8 @@ class RPL(eventBusClient.eventBusClient):
         \param[in] interval In how many seconds the DIO is scheduled to be
             sent.
         '''
-        self.timer = threading.Timer(interval,self._cycleDIO)
+        self.timer      = threading.Timer(interval,self._cycleDIO)
+        self.timer.name = 'DIO Timer'
         self.timer.start()
         
     def _cycleDIO(self):

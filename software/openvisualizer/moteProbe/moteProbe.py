@@ -106,12 +106,19 @@ class moteProbe(threading.Thread):
         self.outputBuf            = []
         self.outputBufLock        = threading.RLock()
         self.dataLock             = threading.Lock()
+        # flag to permit exit from read loop
+        self.goOn                 = True
         
         # initialize the parent class
         threading.Thread.__init__(self)
         
         # give this thread a name
         self.name                 = 'moteProbe@'+self.serialport
+        
+        if not self.realserial:
+            # Non-daemonized moteProbe does not consistently die on close(),
+            # so ensure moteProbe does not persist.
+            self.daemon           = True
        
         # connect to dispatcher
         dispatcher.connect(
@@ -129,14 +136,14 @@ class moteProbe(threading.Thread):
             # log
             log.debug("start running")
         
-            while True:     # open serial port
+            while self.goOn:     # open serial port
                 if self.realserial:
                     log.debug("open serial port {0}@{1}".format(self.serialport,self.baudrate))
                     self.serial = serial.Serial(self.serialport,self.baudrate)
                 else:
                     log.debug("use emulated serial port {0}".format(self.serialport))
                     self.serial = self.emulatedMote.bspUart
-                while True: # read bytes from serial port
+                while self.goOn: # read bytes from serial port
                     try:
                         rxByte = self.serial.read(1)                        
                     except Exception as err:
@@ -211,8 +218,8 @@ class moteProbe(threading.Thread):
         with self.dataLock:
             return self.baudrate
     
-    def quit(self):
-        raise NotImplementedError()
+    def close(self):
+        self.goOn = False
     
     #======================== private =========================================
     

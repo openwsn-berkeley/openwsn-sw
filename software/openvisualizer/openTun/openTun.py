@@ -39,4 +39,5 @@ class OpenTun():
     
     #======================== public ==========================================
     
-  
+    def close(self):
+        self.openTun.close()
