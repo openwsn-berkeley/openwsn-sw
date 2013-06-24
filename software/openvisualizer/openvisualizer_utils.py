@@ -1,4 +1,5 @@
 import traceback
+import threading
 
 def buf2int(buf):
     '''
@@ -39,6 +40,12 @@ def formatIPv6Addr(addr):
     
 def formatAddr(addr):
     return '-'.join(["%02x" % b for b in addr])
+    
+def formatThreadList():
+    return '\nActive threads ({0})\n   {1}'.format(
+        threading.activeCount(),
+        '\n   '.join([t.name for t in threading.enumerate()]),
+    )
 
 #===== parsing
 
