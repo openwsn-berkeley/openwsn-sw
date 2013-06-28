@@ -200,7 +200,7 @@ class OpenVisualizerGui_app(object):
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
-        self.openTun              = openTun.OpenTun() # call last since indicates prefix
+        self.openTun              = openTun.create() # call last since indicates prefix
         if self.simulatorMode:
             self.simengine        = SimEngine.SimEngine()
             self.simengine.start()

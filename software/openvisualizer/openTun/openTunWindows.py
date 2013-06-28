@@ -8,7 +8,6 @@ log.addHandler(NullHandler())
 
 import threading
 import time
-import socket
 import traceback
 import sys
 
@@ -125,72 +124,24 @@ class TunReadThread(threading.Thread):
     
 #============================ main class ======================================
 
-class OpenTunWindows(eventBusClient.eventBusClient):
+class OpenTunWindows(openTun.OpenTun):
     '''
     \brief Class which interfaces between a TUN virtual interface and an
         EventBus.
     '''
     
     def __init__(self):
-        
         # log
         log.debug("create instance")
         
-        # store params
-        
-        # initialize parent class
-        eventBusClient.eventBusClient.__init__(
-            self,
-            name                  = 'OpenTun',
-            registrations         = [
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'v6ToInternet',
-                    'callback' : self._v6ToInternet_notif
-                }
-            ]
-        )
-        
-        # local variables
-        self.tunIf                = self._createTunIf()
+        # Windows-specific local variables
         self.overlappedTx         = pywintypes.OVERLAPPED()
         self.overlappedTx.hEvent  = win32event.CreateEvent(None, 0, 0, None)
-        self.tunReadThread        = TunReadThread(
-            self.tunIf,
-            self._v6ToMesh_notif,
-        )
         
-        # TODO: retrieve network prefix from interface settings
-        
-        # announce network prefix
-        self.dispatch(
-            signal        = 'networkPrefix',
-            data          = openTun.IPV6PREFIX
-        )
+        # initialize parent class
+        openTun.OpenTun.__init__(self)
     
     #======================== public ==========================================
-    
-    def close(self):
-        
-        self.tunReadThread.close()
-        
-        # Send a packet to openTun interface to break out of blocking read.
-        attempts = 0
-        while self.tunReadThread.isAlive() and attempts < 3:
-            attempts += 1
-            try:
-                log.debug('Sending UDP packet to close openTun')
-                sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-                # Destination must route through the TUN host, but not be the host itself.
-                # OK if host does not really exist.
-                dst      = openTun.IPV6PREFIX + openTun.IPV6HOST
-                dst[15] += 1
-                # Payload and destination port are arbitrary
-                sock.sendto('stop', (u.formatIPv6Addr(dst),18004))
-                # Give thread some time to exit
-                time.sleep(0.05)
-            except Exception as err:
-                log.error('Unable to send UDP to close tunReadThread: {0}'.join(err))
     
     #======================== private =========================================
     
@@ -213,18 +164,6 @@ class OpenTunWindows(eventBusClient.eventBusClient):
             errMsg=u.formatCriticalMessage(err)
             print errMsg
             log.critical(errMsg)
-    
-    def _v6ToMesh_notif(self,data):
-        '''
-        \brief Called when receiving data from the TUN interface.
-        
-        This function forwards the data to the the EventBus.
-        '''
-        # dispatch to EventBus
-        self.dispatch(
-            signal        = 'v6ToMesh',
-            data          = data,
-        )
     
     def _createTunIf(self):
         '''
@@ -277,6 +216,16 @@ class OpenTunWindows(eventBusClient.eventBusClient):
         
         # return the handler of the TUN interface
         return tunIf
+         
+    def _createTunReadThread(self):
+        '''
+        \brief Creates and starts the thread to read messages arriving from 
+               the TUN interface
+        '''
+        return TunReadThread(
+            self.tunIf,
+            self._v6ToMesh_notif
+        )
     
     #======================== helpers =========================================
     
