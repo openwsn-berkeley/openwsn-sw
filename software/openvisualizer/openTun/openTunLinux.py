@@ -9,7 +9,6 @@ log.addHandler(NullHandler())
 import threading
 import time
 import os
-import socket
 import sys
 import struct
 import traceback
@@ -107,74 +106,20 @@ class TunReadThread(threading.Thread):
     
 #============================ main class ======================================
 
-class OpenTunLinux(eventBusClient.eventBusClient):
+class OpenTunLinux(openTun.OpenTun):
     '''
     \brief Class which interfaces between a TUN virtual interface and an
         EventBus.
     '''
     
     def __init__(self):
-        
         # log
         log.debug("create instance")
         
-        # store params
-        
         # initialize parent class
-        
-        #======================== 6lowPAN->Internet ===========================
-        eventBusClient.eventBusClient.__init__(
-            self,
-            name             = 'OpenTun',
-            registrations =  [
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'v6ToInternet',
-                    'callback' : self._v6ToInternet_notif
-                }
-            ]
-        )
-        
-        # local variables
-        self.tunIf           = self._createTunIf()
-        
-        #======================== Internet->6lowPAN ===========================
-        self.tunReadThread   = TunReadThread(
-            self.tunIf,
-            self._v6ToMesh_notif
-        )
-        
-        # TODO: retrieve network prefix from interface settings
-        
-        # announce network prefix
-        self.dispatch(
-            signal        = 'networkPrefix',
-            data          = openTun.IPV6PREFIX,
-        )
+        openTun.OpenTun.__init__(self)
     
     #======================== public ==========================================
-    
-    def close(self):
-        
-        self.tunReadThread.close()
-        
-        # Send a packet to openTun interface to break out of blocking read.
-        attempts = 0
-        while self.tunReadThread.isAlive() and attempts < 3:
-            attempts += 1
-            try:
-                log.debug('Sending UDP packet to close openTun')
-                sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-                # Destination must route through the TUN host, but not be the host itself.
-                # OK if host does not really exist.
-                dst      = openTun.IPV6PREFIX + openTun.IPV6HOST
-                dst[15] += 1
-                # Payload and destination port are arbitrary
-                sock.sendto('stop', (u.formatIPv6Addr(dst),18004))
-                # Give thread some time to exit
-                time.sleep(0.05)
-            except Exception as err:
-                log.error('Unable to send UDP to close tunReadThread: {0}'.join(err))
     
     #======================== private =========================================
     
@@ -199,20 +144,7 @@ class OpenTunLinux(eventBusClient.eventBusClient):
             errMsg=u.formatCriticalMessage(err)
             print errMsg
             log.critical(errMsg)
-    
-    def _v6ToMesh_notif(self,data):
-        '''
-        \brief Called when receiving data from the TUN interface.
-        
-        This function forwards the data to the the EventBus.
-        Read from 6lowPAN and forward to tun interface
-        '''
-        # dispatch to EventBus
-        self.dispatch(
-            signal        = 'v6ToMesh',
-            data          = data,
-        )
-    
+     
     def _createTunIf(self):
         '''
         \brief Open a TUN/TAP interface and switch it to TUN mode.
@@ -256,6 +188,16 @@ class OpenTunLinux(eventBusClient.eventBusClient):
         #os.system('radvd start')
         
         return f
-    
+         
+    def _createTunReadThread(self):
+        '''
+        \brief Creates and starts the thread to read messages arriving from 
+               the TUN interface
+        '''
+        return TunReadThread(
+            self.tunIf,
+            self._v6ToMesh_notif
+        )
+   
     #======================== helpers =========================================
     
