@@ -298,7 +298,7 @@ def parseCliOptions():
     
     (opts, args)  = parser.parse_args()
     
-    return opts
+    return opts.__dict__
 
 def main(simulatorMode,numMotes,trace):
     appDir = '.'
@@ -307,8 +307,7 @@ def main(simulatorMode,numMotes,trace):
 
 if __name__=="__main__":
     
-    opts = parseCliOptions()
-    args = opts.__dict__
+    args = parseCliOptions()
     
     main(
         simulatorMode   = args['simulatorMode'],
