@@ -75,11 +75,9 @@ class UDPLatency(eventBusClient.eventBusClient):
             stats.update({'min':latency})
             stats.update({'max':latency})
             stats.update({'avg':latency})
-            stats.update({'num':1})
+            stats.update({'pktRcvd':1})
+            stats.update({'pktSent':(SN + 1)})
             stats.update({'DUP':0})
-            
-            # calculate PLR
-            PLR = self._calculatePLR(stats.get('num'), SN + 1)
             
             # changes of parent
             stats.update({'parentSwitch':1})
@@ -93,35 +91,35 @@ class UDPLatency(eventBusClient.eventBusClient):
             if (stats.get('max') < latency):
                 stats.update({'max':latency})
            
-            stats.update({'avg':((stats.get('avg') * stats.get('num')) + latency) / (stats.get('num') + 1)})
-            stats.update({'num':(stats.get('num') + 1)})
+            stats.update({'avg':((stats.get('avg') * stats.get('pktRcvd')) + latency) / (stats.get('pktRcvd') + 1)})
+            stats.update({'pktRcvd':(stats.get('pktRcvd') + 1)})
            
             if (stats.get('prefParent') != parent):
                stats.update({'parentSwitch':(stats.get('parentSwitch')+1)})# record parent change since last message
             
-            oldSN  = stats.get('SN')
             # check if packet is a duplicate
-            if (oldSN == SN):
+            if (SN == stats.get('SN')):
                 # increment duplicated
                 stats.update({'DUP':(stats.get('DUP') + 1)})
             
-            # calculate PLR
-            numPkt = stats.get('num')
-            if (oldSN > SN):
-                PLR = self._calculatePLR(numPkt, oldSN + 1)
-            else:
-                PLR = self._calculatePLR(numPkt, SN + 1)
-            
-        # this fields are common
+            # update pktSent
+            if (SN > stats.get('pktSent')):
+                stats.update({'pktSent':SN + 1})
+        
+        # these fields are common
         stats.update({'SN':SN})
+        
+        # calculate PLR
+        PLR = self._calculatePLR(stats.get('pktRcvd'), stats.get('pktSent'))
         stats.update({'PLR':PLR})
+        
         stats.update({'lastVal':latency})
         stats.update({'prefParent':parent})
         stats.update({'lastMsg':datetime.now()})
         
         # add to dictionary and compute stats...
-        self.stateLock.acquire()  
-        self.latencyStats.update({str(address):stats}) 
+        self.stateLock.acquire()
+        self.latencyStats.update({str(address):stats})
         self.stateLock.release()
         
         #log stats 
@@ -172,12 +170,13 @@ class UDPLatency(eventBusClient.eventBusClient):
         output += ['Mote address:             {0}'.format(str)]
         output += ['Min latency:              {0}ms'.format(stats.get('min'))]
         output += ['Max latency:              {0}ms'.format(stats.get('max'))]
-        output += ['Num packets:              {0}'.format(stats.get('num'))]
+        output += ['Packets received:         {0}'.format(stats.get('pktRcvd'))]
+        output += ['Packets sent:             {0}'.format(stats.get('pktSent'))]
         output += ['Avg latency:              {0}ms'.format(stats.get('avg'))]
         output += ['Latest latency:           {0}ms'.format(stats.get('lastVal'))]
         output += ['Preferred parent:         {0}'.format(stats.get('prefParent'))]
         output += ['Sequence Number:          {0}'.format(stats.get('SN'))]
-        output += ['Duplicated Packets:       {0}'.format(stats.get('DUP'))]
+        output += ['Duplicated packets:       {0}'.format(stats.get('DUP'))]
         output += ['PLR:                      {0}%'.format(stats.get('PLR'))]
         output += ['Received:                 {0}'.format(stats.get('lastMsg'))]
         output += ['']
