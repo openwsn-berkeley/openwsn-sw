@@ -64,51 +64,52 @@ class ParserData(Parser.Parser):
         log.debug("source address (just previous hop) of the packet is {0} ".format(a))
         
         
-        #remove asn src and dest and mote id at the beginning.
-        #this is a hack for latency measurements... TODO, move latency to an app listening on the corresponding port.
-        #inject end_asn into the packet as well
+        # remove asn src and dest and mote id at the beginning.
+        # this is a hack for latency measurements... TODO, move latency to an app listening on the corresponding port.
+        # inject end_asn into the packet as well
         input = input[23:]
         log.debug("packet without source,dest and asn {0}".format(input))
-        #when the packet goes to internet it comes with the asn at the beginning as timestamp.
+        # when the packet goes to internet it comes with the asn at the beginning as timestamp.
          
-        #cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
-        #then notify a latency component that will plot that information.
+        # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
+        # then notify a latency component that will plot that information.
         # port 61001==0xee,0x49
         if (len(input) >37):
            if (input[36]==238 and input[37]==73):
-            #udp port 61001 for udplatency app.
-               aux=input[len(input)-5:]                 #last 5 bytes of the packet are the ASN in the UDP latency packet
-               diff=self._asndiference(aux,asnbytes)    #calculate difference 
-               timeinus=diff*self.MSPERSLOT             #compute time in ms 
-               parent=input[len(input)-21:len(input)-13]#the parent node is the first element (used to know topology)
-               node=input[len(input)-13:len(input)-5] #the node address
+            # udp port 61001 for udplatency app.
+               aux      = input[len(input)-5:]               # last 5 bytes of the packet are the ASN in the UDP latency packet
+               diff     = self._asndiference(aux,asnbytes)   # calculate difference 
+               timeinus = diff*self.MSPERSLOT                # compute time in ms
+               SN       = input[len(input)-23:len(input)-21] # SN sent by mote
+               parent   = input[len(input)-21:len(input)-13] # the parent node is the first element (used to know topology)
+               node     = input[len(input)-13:len(input)-5]  # the node address
                
                if (timeinus<0xFFFF):
-               #notify latency manager component. only if a valid value
+               # notify latency manager component. only if a valid value
                   dispatcher.send(
                      sender        = 'parserData',
                      signal        = 'latency',
-                     data          = (node,timeinus,parent),
+                     data          = (node,timeinus,parent,SN),
                   )
                else:
-                   #this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
+                   # this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
                    print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
                    print ",".join(hex(c) for c in input)
                    log.debug("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
                    pass
-               #in case we want to send the computed time to internet..
-               #computed=struct.pack('<H', timeinus)#to be appended to the pkt
-               #for x in computed:
+               # in case we want to send the computed time to internet..
+               # computed=struct.pack('<H', timeinus)#to be appended to the pkt
+               # for x in computed:
                    #input.append(x)
            else:
-               #no udplatency
-               #print input
+               # no udplatency
+               # print input
                pass     
         else:
            pass      
        
         eventType='data'
-        #notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header
+        # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header
         return (eventType,(source,input))
 
  #======================== private =========================================

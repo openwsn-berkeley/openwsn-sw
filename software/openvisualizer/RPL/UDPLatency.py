@@ -20,6 +20,8 @@ from   datetime import datetime
 
 from eventBus import eventBusClient
 
+#import math
+
 class UDPLatency(eventBusClient.eventBusClient):
    
     UDP_LATENCY_PORT  = 61001
@@ -58,40 +60,66 @@ class UDPLatency(eventBusClient.eventBusClient):
         to the serial port to be able to know what is the ASN at reception
         side.
         
-        Calculcate latency values are in us.
+        Calculate latency values are in ms[SUPERFRAMELENGTH].
         '''
         address    = ",".join(hex(c) for c in data[0])
         latency    = data[1]
         parent     = ",".join(hex(c) for c in data[2])
+        SN         = u.buf2int(data[3])
         
-        stats      = {} #dictionary of stats
+        stats      = {} # dictionary of stats
         
         if (self.latencyStats.get(str(address)) is None):
-           #none for this node.. create initial stats
-           stats.update({'min':latency})
-           stats.update({'max':latency})
-           stats.update({'num':1})
-           stats.update({'avg':latency})
-           stats.update({'parentSwitch':1})#changes of parent
+            
+            # none for this node... create initial stats
+            stats.update({'min':latency})
+            stats.update({'max':latency})
+            stats.update({'avg':latency})
+            stats.update({'pktRcvd':1})
+            stats.update({'pktSent':(SN + 1)})
+            stats.update({'DUP':0})
+            
+            # changes of parent
+            stats.update({'parentSwitch':1})
         else:
-            #get and update
-           stats=self.latencyStats.get(str(address))
-           if (stats.get('min')>latency):
-               stats.update({'min':latency})
-           if (stats.get('max')<latency):
-               stats.update({'max':latency})
-           stats.update({'avg':((stats.get('avg')*stats.get('num'))+latency)/(stats.get('num')+1)})
-           stats.update({'num':(stats.get('num')+1)})
-           if (stats.get('prefParent')!=parent):
-               stats.update({'parentSwitch':(stats.get('parentSwitch')+1)})#record parent change since last message
-        #this fields are common
+            # get and update
+            stats = self.latencyStats.get(str(address))
+           
+            if (stats.get('min') > latency):
+                stats.update({'min':latency})
+           
+            if (stats.get('max') < latency):
+                stats.update({'max':latency})
+           
+            stats.update({'avg':((stats.get('avg') * stats.get('pktRcvd')) + latency) / (stats.get('pktRcvd') + 1)})
+            stats.update({'pktRcvd':(stats.get('pktRcvd') + 1)})
+           
+            if (stats.get('prefParent') != parent):
+               stats.update({'parentSwitch':(stats.get('parentSwitch')+1)})# record parent change since last message
+            
+            # check if packet is a duplicate
+            if (SN == stats.get('SN')):
+                # increment duplicated
+                stats.update({'DUP':(stats.get('DUP') + 1)})
+            
+            # update pktSent
+            if (SN > stats.get('pktSent')):
+                stats.update({'pktSent':SN + 1})
+        
+        # these fields are common
+        stats.update({'SN':SN})
+        
+        # calculate PLR
+        PLR = self._calculatePLR(stats.get('pktRcvd'), stats.get('pktSent'))
+        stats.update({'PLR':PLR})
+        
         stats.update({'lastVal':latency})
         stats.update({'prefParent':parent})
         stats.update({'lastMsg':datetime.now()})
         
-        #add to dictionary and compute stats...
-        self.stateLock.acquire()  
-        self.latencyStats.update({str(address):stats}) 
+        # add to dictionary and compute stats...
+        self.stateLock.acquire()
+        self.latencyStats.update({str(address):stats})
         self.stateLock.release()
         
         #log stats 
@@ -99,7 +127,7 @@ class UDPLatency(eventBusClient.eventBusClient):
     
     
     
-    #this is not activated as this functiona are not bound to a signal
+    # this is not activated as this function are not bound to a signal
     def _infoDagRoot_notif(self,sender,signal,data):
         '''
         \brief Record the DAGroot's EUI64 address.
@@ -108,35 +136,49 @@ class UDPLatency(eventBusClient.eventBusClient):
             self.dagRootEui64     = []
             for c in data['eui64']:
                 self.dagRootEui64     +=[int(c)]
-        #signal to which this component is subscribed.
+        # signal to which this component is subscribed.
         signal=(self.networkPrefix + self.dagRootEui64,self.PROTO_UDP,self.UDP_LATENCY_PORT)
         
         #register as soon as I get an address
         self._register(self,self.WILDCARD,signal,self._latency_notif)    
-         
-    def _networkPrefix_notif(self,sender,signal,data):
+    
+    def _networkPrefix_notif(self, sender, signal, data):
         '''
         \brief Record the network prefix.
         '''
         with self.stateLock:
             self.networkPrefix    = data
-
-
-
+    
+    def _calculatePLR(self, rcvdPkt, sentPkt):
+        '''
+        \brief Calculate Packet Loss Ratio for the sender.
+        '''
+        return float(sentPkt-rcvdPkt)/sentPkt*100
+        
+        
+        
+    
     #===== formatting
-    def _formatUDPLatencyStat(self,stats, str):
+    
+    def _formatUDPLatencyStat(self, stats, str):
         
         output  = []
         output += ['']
         output += ['']
         output += ['============================= UDPLatency statistics =============================']
-        output += ['Mote address:          {0}'.format(str)]
-        output += ['Min latency:           {0}'.format(stats.get('min'))]
-        output += ['Max latency:           {0}'.format(stats.get('max'))]
-        output += ['Num packets:           {0}'.format(stats.get('num'))]
-        output += ['Avg latency:           {0}'.format(stats.get('avg'))]
-        output += ['Latest latency:        {0}'.format(stats.get('lastVal'))]
-        output += ['Preferred parent:      {0}'.format(stats.get('prefParent'))]
-        output += ['Received:              {0}'.format(stats.get('lastMsg'))]
+        output += ['']
+        output += ['Mote address:             {0}'.format(str)]
+        output += ['Min latency:              {0}ms'.format(stats.get('min'))]
+        output += ['Max latency:              {0}ms'.format(stats.get('max'))]
+        output += ['Packets received:         {0}'.format(stats.get('pktRcvd'))]
+        output += ['Packets sent:             {0}'.format(stats.get('pktSent'))]
+        output += ['Avg latency:              {0}ms'.format(stats.get('avg'))]
+        output += ['Latest latency:           {0}ms'.format(stats.get('lastVal'))]
+        output += ['Preferred parent:         {0}'.format(stats.get('prefParent'))]
+        output += ['Sequence Number:          {0}'.format(stats.get('SN'))]
+        output += ['Duplicated packets:       {0}'.format(stats.get('DUP'))]
+        output += ['PLR:                      {0}%'.format(stats.get('PLR'))]
+        output += ['Received:                 {0}'.format(stats.get('lastMsg'))]
+        output += ['']
         output += ['']
         return '\n'.join(output)
