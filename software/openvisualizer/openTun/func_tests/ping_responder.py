@@ -251,7 +251,7 @@ def main():
     
     #=== create eventBus client elements
     
-    tunIf          = openTun.OpenTun()
+    tunIf          = openTun.create()
     readThread     = ReadThread()
     writeThread    = WriteThread(readThread.dispatch)
     
