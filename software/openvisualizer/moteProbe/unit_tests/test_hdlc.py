@@ -1,9 +1,10 @@
+#!/usr/bin/env python
+
 import os
 import sys
-cur_path = sys.path[0]
-sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
-sys.path.insert(0, os.path.join(cur_path, '..'))                           # moteProbe/
-sys.path.insert(0, os.path.join(cur_path, '..', '..','PyDispatcher-2.0.3'))# PyDispatcher-2.0.3/
+here = sys.path[0]
+sys.path.insert(0, os.path.join(here, '..', '..'))                     # openvisualizer/
+sys.path.insert(0, os.path.join(here, '..'))                           # moteProbe/
 
 import random
 
@@ -67,7 +68,7 @@ def test_buildRequestFrame():
     
     # hdlcify
     frameHdlcified = hdlc.hdlcify('\x53')
-    log.debug("request frame: {0}".format(u.formatBuf(frameHdlcified)))
+    log.debug("request frame: {0}".format(u.formatStringBuf(frameHdlcified)))
 
 def test_dehdlcifyToZero():
     
@@ -78,15 +79,15 @@ def test_dehdlcifyToZero():
     # frame
     frame = [0x53,0x11,0x22,0x33,0x44,0x55,0x66,0x77,0x88,0x99,0xaa]
     frame = ''.join([chr(b) for b in frame])
-    log.debug("frame:      {0}".format(u.formatBuf(frame)))
+    log.debug("frame:      {0}".format(u.formatStringBuf(frame)))
     
     # hdlcify
     frame = hdlc.hdlcify(frame)
-    log.debug("hdlcify: {0}".format(u.formatBuf(frame)))
+    log.debug("hdlcify: {0}".format(u.formatStringBuf(frame)))
     
     # remove flags
     frame = frame[1:-1]
-    log.debug("no flags:   {0}".format(u.formatBuf(frame)))
+    log.debug("no flags:   {0}".format(u.formatStringBuf(frame)))
     
     # calculate CRC
     crcini     = 0xffff
@@ -102,14 +103,14 @@ def test_randdomBackAndForth(randomFrame):
     
     hdlc = OpenHdlc.OpenHdlc()
     
-    log.debug("randomFrame:    {0}".format(u.formatBuf(randomFrame)))
+    log.debug("randomFrame:    {0}".format(u.formatStringBuf(randomFrame)))
     
     # hdlcify
     frameHdlcified = hdlc.hdlcify(randomFrame)
-    log.debug("hdlcified:   {0}".format(u.formatBuf(frameHdlcified)))
+    log.debug("hdlcified:   {0}".format(u.formatStringBuf(frameHdlcified)))
     
     # dehdlcify
     frameDehdlcified = hdlc.dehdlcify(frameHdlcified)
-    log.debug("dehdlcified:    {0}".format(u.formatBuf(frameDehdlcified)))
+    log.debug("dehdlcified:    {0}".format(u.formatStringBuf(frameDehdlcified)))
     
     assert frameDehdlcified==randomFrame

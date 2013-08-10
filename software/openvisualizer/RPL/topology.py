@@ -19,7 +19,7 @@ import openvisualizer_utils as u
 from eventBus import eventBusClient
 
 class topology(eventBusClient.eventBusClient):
-   
+    
     def __init__(self):
         
         # local variables
@@ -42,20 +42,18 @@ class topology(eventBusClient.eventBusClient):
                 },
             ]
         )
-        
-        
     
     #======================== public ==========================================
     
     def getParents(self,sender,signal,data):
         return self.parents
     
-    
     def updateParents(self,sender,signal,data):
         ''' inserts parent information into the parents dictionary '''
         with self.dataLock:
             #data[0] == source address, data[1] == list of parents
             self.parents.update({data[0]:data[1]})
-    #======================== private =========================================
-    #======================== helpers =========================================
     
+    #======================== private =========================================
+    
+    #======================== helpers =========================================

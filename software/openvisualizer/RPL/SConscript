@@ -1,0 +1,12 @@
+Import('env')
+
+testenv = env.Clone()
+
+#===== unittests_RPL
+
+unittests_RPL = testenv.Command(
+    'test_report_RPL.xml', [],
+    'py.test unit_tests --junitxml $TARGET.file',
+    chdir='RPL')
+testenv.AlwaysBuild(unittests_RPL)
+testenv.Alias('unittests_RPL', unittests_RPL)

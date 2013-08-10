@@ -26,8 +26,8 @@ class SourceRoute(eventBusClient.eventBusClient):
         # local variables
         self.dataLock        = threading.Lock()
         self.parents         = {}
-          # initialize parent class
         
+        # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
             name             = 'SourceRoute',
@@ -35,7 +35,6 @@ class SourceRoute(eventBusClient.eventBusClient):
         )
     
     #======================== public ==========================================
-        
     
     def getSourceRoute(self,destAddr):
         '''

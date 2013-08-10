@@ -2,8 +2,10 @@
 
 import os
 import sys
-temp_path = sys.path[0]
-sys.path.insert(0, os.path.join(temp_path, '..', '..'))
+here = sys.path[0]
+sys.path.insert(0, os.path.join(here, '..', '..'))                             # openvisualizer/
+sys.path.insert(0, os.path.join(here, '..'))                                   # openLbr/
+sys.path.insert(0, os.path.join(here, '..', '..','eventBus','PyDispatcher-2.0.3'))   # PyDispatcher-2.0.3/
 
 import logging
 import logging.handlers
@@ -11,7 +13,7 @@ import json
 
 import pytest
 
-from openLbr import openLbr
+import openLbr
 import openvisualizer_utils as u
 
 #============================ logging =========================================

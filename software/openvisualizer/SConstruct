@@ -27,7 +27,7 @@ import os
 import subprocess
 import SCons
 
-#============================ banner =====================================
+#============================ banner ==========================================
 
 banner  = [""]
 banner += [" ___                 _ _ _  ___  _ _ "]
@@ -39,7 +39,50 @@ banner += [""]
 
 print '\n'.join(banner)
 
-#============================ goal definitions ===========================
+#============================ SCons environment ===============================
+
+Help('''
+Usage: scons [--sim|--simCount=n] <rungui|runcli>
+   
+Goals:
+   rungui: Run OpenVisualizer GUI in build/openVisualizer directory.
+   runcli: Run OpenVisualizer CLI in build/openVisualizer directory.
+           Must run as superuser/administrator.
+           
+           --sim         Run in simulator mode with default count of 
+                         motes.
+           --simCount=n  Run in simulator mode with 'n' motes.
+''')
+# Help for trace option on next line. Removed from help because trace 
+# implementation is not working.
+#           --trace       Run yappi-based memory trace
+
+AddOption('--sim',
+    dest      = 'simopt',
+    default   = False,
+    action    = 'store_true')
+AddOption('--simCount',
+    dest      = 'simCount',
+    default   = 0,
+    type      = 'int')
+AddOption('--trace',
+    dest      = 'traceOpt',
+    default   = False,
+    action    = 'store_true')
+
+env = Environment(
+    ENV       = {'PATH' : os.environ['PATH']},
+    APPDIR    = os.path.join('build', 'openVisualizer'),
+    SIMOPT    = GetOption('simopt'),
+    SIMCOUNT  = GetOption('simCount'),
+    TRACEOPT  = GetOption('traceOpt'),
+)
+
+Default(None)
+
+#============================ SCons targets ===================================
+
+#===== rungui, runcli
 
 def uiRunner(target, source, env):
     '''
@@ -79,10 +122,10 @@ def uiRunner(target, source, env):
         argList.append('-n {0}'.format(env['SIMCOUNT']))
     elif env['SIMOPT']:
         argList.append('-s')
-
+    
     if env['TRACEOPT']:
         argList.append('-t')
-
+    
     result = 0
     try:
         p = subprocess.Popen(argList, env=subEnv)
@@ -102,6 +145,7 @@ def setupUiRunner(env, uiFile):
     :param uiFile: Filename to run in openVisualizerApp direcotry
     :rtype: the targets reference for the Builder.
     '''
+    
     # Create Builder to run GUI    
     env.Append(BUILDERS = {'RunUi' : Builder(action = uiRunner)})
     
@@ -122,46 +166,29 @@ def setupUiRunner(env, uiFile):
         Depends(targets, appConf)
     
     return targets
-    
-#============================ run script =================================
-Help('''
-Usage: scons [--sim|--simCount=n] <rungui|runcli>
-   
-Goals:
-   rungui: Run OpenVisualizer GUI in build/openVisualizer directory.
-   runcli: Run OpenVisualizer CLI in build/openVisualizer directory.
-           Must run as superuser/administrator.
-           
-           --sim         Run in simulator mode with default count of 
-                         motes.
-           --simCount=n  Run in simulator mode with 'n' motes.
-''')
-# Help for trace option on next line. Removed from help because trace 
-# implementation is not working.
-#           --trace       Run yappi-based memory trace
-
-AddOption('--sim',
-    dest='simopt',
-    default=False,
-    action='store_true')
-AddOption('--simCount',
-    dest='simCount',
-    default=0,
-    type='int')
-AddOption('--trace',
-    dest='traceOpt',
-    default=False,
-    action='store_true')
-
-env = Environment(
-          ENV     ={'PATH' : os.environ['PATH']},
-          APPDIR  =os.path.join('build', 'openVisualizer'),
-          SIMOPT  =GetOption('simopt'),
-          SIMCOUNT=GetOption('simCount'),
-          TRACEOPT=GetOption('traceOpt'),
-      )
 
 Alias('rungui', setupUiRunner(env, 'openVisualizerGui.py'))
 Alias('runcli', setupUiRunner(env, 'openVisualizerCli.py'))
 
-Default(None)
+#===== unittest
+
+# scan for SConscript contains unit tests
+dirs = [
+    'moteProbe',
+    'openLbr',
+    'RPL',
+]
+for d in dirs:
+    SConscript(
+        os.path.join(d, 'SConscript'),
+        exports = {"env": env},
+    )
+
+Alias(
+    'unittests',
+    [
+        'unittests_moteProbe',
+        'unittests_openLbr',
+        'unittests_RPL',
+    ]
+)

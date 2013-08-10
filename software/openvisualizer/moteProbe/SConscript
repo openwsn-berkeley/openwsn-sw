@@ -1,0 +1,13 @@
+Import('env')
+
+testenv = env.Clone()
+
+#===== unittests_moteProbe
+
+unittests_moteProbe = testenv.Command(
+    'test_report_moteProbe.xml', [],
+    'py.test unit_tests --junitxml test_report_moteProbe.xml',
+    chdir='moteProbe'
+)
+testenv.AlwaysBuild(unittests_moteProbe)
+testenv.Alias('unittests_moteProbe', unittests_moteProbe)

@@ -2,9 +2,10 @@
 
 import os
 import sys
-temp_path = sys.path[0]
-sys.path.insert(0, os.path.join(temp_path, '..'))
-sys.path.insert(0, os.path.join(temp_path, '..', '..'))
+here = sys.path[0]
+sys.path.insert(0, os.path.join(here, '..', '..'))                             # openvisualizer/
+sys.path.insert(0, os.path.join(here, '..'))                                   # RPL/
+sys.path.insert(0, os.path.join(here, '..', '..','eventBus','PyDispatcher-2.0.3'))   # PyDispatcher-2.0.3/
 
 import logging
 import logging.handlers
@@ -13,6 +14,7 @@ import json
 import pytest
 
 import SourceRoute
+import topology
 import openvisualizer_utils as u
 
 #============================ logging =========================================
@@ -68,12 +70,20 @@ def test_sourceRoute(expectedSourceRoute):
     '''
     
     sourceRoute = SourceRoute.SourceRoute()
+    topo        = topology.topology()
     
-    sourceRoute.parents = {
-        tuple(MOTE_B): [MOTE_A],
-        tuple(MOTE_C): [MOTE_B],
-        tuple(MOTE_D): [MOTE_C],
-    }
+    sourceRoute.dispatch(          
+        signal          = 'updateParents',
+        data            =  (tuple(MOTE_B),[MOTE_A]),
+    )
+    sourceRoute.dispatch(          
+        signal          = 'updateParents',
+        data            =  (tuple(MOTE_C),[MOTE_B]),
+    )
+    sourceRoute.dispatch(          
+        signal          = 'updateParents',
+        data            =  (tuple(MOTE_D),[MOTE_C]),
+    )
     
     expectedDestination = json.loads(expectedSourceRoute)[0]
     expectedRoute       = json.loads(expectedSourceRoute)[1]

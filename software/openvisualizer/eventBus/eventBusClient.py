@@ -146,8 +146,7 @@ class eventBusClient(object):
         
         log.debug("returning false as nobody is subscribed to signal {0}, {1}".format(signal,temp))    
         return False
-
-
+    
     def _dispatchAndGetResult(self,signal,data):
         temp = self.dispatch(
             signal       = signal, 
