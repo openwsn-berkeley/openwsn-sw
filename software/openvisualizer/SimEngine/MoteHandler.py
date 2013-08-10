@@ -19,19 +19,29 @@ from BspEmulator import HwSupply
 from BspEmulator import HwCrystal
 
 #============================ get notification IDs ============================
-import re
-
-f = open(os.path.join('..','..','..','..','..','openwsn-fw','firmware','openos','bsp','boards','python','openwsnmodule_obj.h'))
-lines = f.readlines()
-f.close()
-
+# Contains the list of notifIds used in the following functions.
 notifString = []
 
-for line in lines:
-    m = re.search('MOTE_NOTIF_(\w+)',line)
-    if m:
-        if m.group(1) not in notifString:
-            notifString += [m.group(1)]
+def readNotifIds(headerPath):
+    '''
+    Contextual parent must call this method before other use of mote handler.
+    
+    ``headerPath`` Path to openwsnmodule_obj.h, containing notifIds
+    
+    Required since this module cannot know where to find the header file.
+    '''
+    import re
+
+    f     = open(headerPath)
+    lines = f.readlines()
+    f.close()
+
+    global notifString
+    for line in lines:
+        m = re.search('MOTE_NOTIF_(\w+)',line)
+        if m:
+            if m.group(1) not in notifString:
+                notifString += [m.group(1)]
 
 def notifId(s):
     assert s in notifString

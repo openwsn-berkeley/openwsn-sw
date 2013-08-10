@@ -6,3 +6,5 @@
 *.log.5
 *.pyc
 __pycache__
+.sconsign.dblite
+build
