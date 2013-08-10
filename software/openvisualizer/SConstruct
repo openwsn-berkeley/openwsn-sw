@@ -41,17 +41,21 @@ print '\n'.join(banner)
 
 #============================ SCons environment ===============================
 
+#===== help text
+
 Help('''
-Usage: scons [--sim|--simCount=n] <rungui|runcli>
+Usage:
+    scons [--sim|--simCount=n] <rungui|runcli>
+    scons unittests
    
-Goals:
-   rungui: Run OpenVisualizer GUI in build/openVisualizer directory.
-   runcli: Run OpenVisualizer CLI in build/openVisualizer directory.
-           Must run as superuser/administrator.
+Targets:
+    rungui: Run OpenVisualizer GUI in build/openVisualizer directory.
+    runcli: Run OpenVisualizer CLI in build/openVisualizer directory.
+            Must run as superuser/administrator.
            
-           --sim         Run in simulator mode with default count of 
-                         motes.
-           --simCount=n  Run in simulator mode with 'n' motes.
+            --sim         Run in simulator mode with default count of 
+                          motes.
+            --simCount=n  Run in simulator mode with 'n' motes.
 ''')
 # Help for trace option on next line. Removed from help because trace 
 # implementation is not working.
@@ -78,7 +82,8 @@ env = Environment(
     TRACEOPT  = GetOption('traceOpt'),
 )
 
-Default(None)
+def default(env,target,source): print SCons.Script.help_text
+Default(env.Command('default', None, default))
 
 #============================ SCons targets ===================================
 
