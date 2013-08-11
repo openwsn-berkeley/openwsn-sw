@@ -44,8 +44,8 @@ for loggerName in   [
 #============================ fixtures ========================================
 
 RANDOMFRAME = []
-for frameLen in range(1,100,5):
-    for run in range(100):
+for frameLen in range(1,100,25):
+    for run in range(50):
         frame = []
         for _ in range(frameLen):
             frame += [random.randint(0x00,0xff)]
