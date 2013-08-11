@@ -44,12 +44,14 @@ for loggerName in   [
 #============================ fixtures ========================================
 
 RANDOMFRAME = []
-for frameLen in range(1,100,25):
-    for run in range(50):
-        frame = []
-        for _ in range(frameLen):
-            frame += [random.randint(0x00,0xff)]
-        frame = ''.join([chr(b) for b in frame])
+for frameLen in range(1,100,5):
+    for run in range(100):
+        frame = None
+        while (not frame) or (frame in RANDOMFRAME):
+            frame = []
+            for _ in range(frameLen):
+                frame += [random.randint(0x00,0xff)]
+            frame = ''.join([chr(b) for b in frame])
         RANDOMFRAME.append(frame)
 
 @pytest.fixture(params=RANDOMFRAME)
