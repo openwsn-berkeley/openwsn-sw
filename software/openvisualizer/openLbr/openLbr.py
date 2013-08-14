@@ -14,13 +14,14 @@ import openvisualizer_utils as u
 
 class OpenLbr(eventBusClient.eventBusClient):
     '''
-    \brief Class which is responsible for translating between 6LoWPAN and IPv6
-        headers.
+    Class which is responsible for translating between 6LoWPAN and IPv6
+    headers.
     
     This class implements the following RFCs:
-    - http://tools.ietf.org/html/rfc6282
+    
+    * *http://tools.ietf.org/html/rfc6282*
       Compression Format for IPv6 Datagrams over IEEE 802.15.4-Based Networks.
-    - http://tools.ietf.org/html/rfc2460
+    * *http://tools.ietf.org/html/rfc2460* 
       Internet Protocol, Version 6 (IPv6) Specification
     '''
     
