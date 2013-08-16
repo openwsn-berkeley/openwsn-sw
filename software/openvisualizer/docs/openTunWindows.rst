@@ -18,7 +18,7 @@ openTun Package
 :mod:`openTunWindows` Module
 ----------------------------
 
-    .. automodule:: openTun.openTunWindows
-        :members:
-        :undoc-members:
-        :show-inheritance:
+.. automodule:: openTun.openTunWindows
+    :members:
+    :undoc-members:
+    :show-inheritance:
