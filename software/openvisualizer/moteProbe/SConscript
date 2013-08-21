@@ -6,7 +6,7 @@ testenv = env.Clone()
 
 unittests_moteProbe = testenv.Command(
     'test_report_moteProbe.xml', [],
-    'py.test unit_tests',
+    'py.test unit_tests --junitxml $TARGET.file',
     chdir='moteProbe'
 )
 testenv.AlwaysBuild(unittests_moteProbe)
