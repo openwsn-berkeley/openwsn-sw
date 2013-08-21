@@ -47,6 +47,7 @@ Help('''
 Usage:
     scons [--sim|--simCount=n] <rungui|runcli>
     scons unittests
+    scons srcdoc
    
 Targets:
     rungui: Run OpenVisualizer GUI in build/openVisualizer directory.
@@ -56,7 +57,9 @@ Targets:
             --sim         Run in simulator mode with default count of 
                           motes.
             --simCount=n  Run in simulator mode with 'n' motes.
-''')
+            
+      docs: Generates source documentation in build{0}html directory
+'''.format(os.sep))
 # Help for trace option on next line. Removed from help because trace 
 # implementation is not working.
 #           --trace       Run yappi-based memory trace
@@ -197,3 +200,30 @@ Alias(
         'unittests_RPL',
     ]
 )
+
+#===== docs
+    
+def setupDocs(env):
+    '''
+    Creates builder for Sphinx-based source documentation.
+    
+    Returns the targets reference for the Builder. Requires 
+    'sphinx-build' executable on OS search path.
+    '''
+    htmlDir    = os.path.join('build', 'html')
+    indexFile  = os.path.join('docs', 'index.rst')
+    
+    targets    = env.Command(
+        htmlDir,
+        indexFile,
+        'sphinx-build -b html docs {0}'.format(htmlDir)
+    )
+    Clean(targets, htmlDir)
+    AlwaysBuild(htmlDir)
+        
+    if 'docs' in BUILD_TARGETS:
+        print "HTML docs generated in build{0}html directory.\n".format(os.sep)
+        
+    return targets
+
+Alias('docs', setupDocs(env))
