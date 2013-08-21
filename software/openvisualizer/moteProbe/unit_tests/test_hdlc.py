@@ -7,6 +7,7 @@ sys.path.insert(0, os.path.join(here, '..', '..'))                     # openvis
 sys.path.insert(0, os.path.join(here, '..'))                           # moteProbe/
 
 import random
+import json
 
 import pytest
 
@@ -51,8 +52,8 @@ for frameLen in range(1,100,5):
             frame = []
             for _ in range(frameLen):
                 frame += [random.randint(0x00,0xff)]
-            frame = ''.join([chr(b) for b in frame])
         RANDOMFRAME.append(frame)
+RANDOMFRAME = [json.dumps(f) for f in RANDOMFRAME]
 
 @pytest.fixture(params=RANDOMFRAME)
 def randomFrame(request):
@@ -100,6 +101,9 @@ def test_dehdlcifyToZero():
         log.debug("after {0}, crc={1}".format(hex(ord(c)),hex(crc)))
 
 def test_randdomBackAndForth(randomFrame):
+    
+    randomFrame = json.loads(randomFrame)
+    randomFrame = ''.join([chr(b) for b in randomFrame])
     
     log.debug("\n---------- test_randdomBackAndForth")
     
