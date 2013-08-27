@@ -85,7 +85,7 @@ class eventBusClient(object):
                     rem=s
                     break
             if (rem!=None):
-                self.registrations.remove(remove) 
+                self.registrations.remove(rem) 
     
     #======================== private =========================================
     
