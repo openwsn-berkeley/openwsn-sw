@@ -18,7 +18,6 @@ Contents:
    moteProbe
    moteState
    openLbr
-   openTunLinux
    openTunWindows
    openType
    openvisualizer_utils
