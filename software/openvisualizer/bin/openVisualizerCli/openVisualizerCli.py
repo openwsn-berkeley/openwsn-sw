@@ -66,6 +66,8 @@ class OpenVisualizerCli(OpenCli):
         else:
             # in "simulator" mode, motes are emulated
             import oos_openwsn
+            MoteHandler.readNotifIds(
+                os.path.join('..','..','..','..','..','openwsn-fw','firmware','openos','bsp','boards','python','openwsnmodule_obj.h'))
             self.moteProbes       = []
             for _ in range(self.numMotes):
                 moteHandler       = MoteHandler.MoteHandler(self.simengine,oos_openwsn.OpenMote())
