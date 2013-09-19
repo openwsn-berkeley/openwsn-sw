@@ -47,7 +47,7 @@ Help('''
 Usage:
     scons [--sim|--simCount=n] <rungui|runcli>
     scons unittests
-    scons srcdoc
+    scons docs
    
 Targets:
     rungui: Run OpenVisualizer GUI in build/openVisualizer directory.
