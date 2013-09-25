@@ -1,8 +1,0 @@
-# the IPv4 address of the LBR you try to connect to
-LBRADDR = lbr.openwsn.org
-
-# the TCP port of the LBR
-LBRPORT = 8082
-
-# your user name
-USERNAME = guest
