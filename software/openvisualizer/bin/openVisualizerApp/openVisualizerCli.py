@@ -25,6 +25,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 import sys
 import os
+
+import pathHelper
+if __name__=="__main__":
+    pathHelper.updatePath()
+
 import logging
 log = logging.getLogger('openVisualizerCli')
 
