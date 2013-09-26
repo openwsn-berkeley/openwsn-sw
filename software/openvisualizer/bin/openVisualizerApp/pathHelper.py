@@ -1,9 +1,7 @@
 # Copyright (c) 2010-2013, Regents of the University of California. 
 # All rights reserved. 
 #  
-# Released under the BSD 3-Clause license as published at the link below, 
-# where both the copyright owner and organization are the Regents of the  
-# University of California. 
+# Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 '''
