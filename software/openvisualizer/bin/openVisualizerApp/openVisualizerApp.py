@@ -170,11 +170,9 @@ def _createCliParser():
         help       = 'working directory'
     )
     
-    # Don't have context to set a reasonable default, so just use the simplest 
-    # solution.
     parser.add_argument( '-f',
         dest       = 'fwDir',
-        default    = '.',
+        default    = os.path.join('..','..','..','..','..','openwsn-fw'),
         action     = 'store',
         help       = 'firmware directory'
     )
