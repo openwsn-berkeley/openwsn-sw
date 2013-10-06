@@ -73,9 +73,9 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     2,
                                     'MyDagRank',
-                                    '<B',
+                                    '<H',
                                     [
-                                        'myDAGrank',                 # B
+                                        'myDAGrank',                 # H
                                     ],
                                 )
         self._addFieldsParser   (

@@ -40,7 +40,7 @@ def updatePath():
     # update the path, if needed
     if updatePath:
         here = sys.path[0]
-        sys.path.insert(0,os.path.join('..','..','..','openwsn-fw','firmware','openos','projects','common')) # emulated mote
+        sys.path.insert(0,os.path.join('..','..','..','..','..','openwsn-fw','firmware','openos','projects','common')) # emulated mote
         sys.path.insert(0,os.path.join('..','..','..'))                            # openvisualizer/software/
         sys.path.insert(0,os.path.join('..','..','..', 'openUI')),                 # openvisualizer/software/openUI
         sys.path.insert(0,os.path.join('..','..')),                                # openvisualizer/
