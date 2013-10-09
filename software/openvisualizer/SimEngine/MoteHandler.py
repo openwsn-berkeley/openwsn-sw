@@ -176,6 +176,7 @@ class MoteHandler(threading.Thread):
         mote.set_callback(notifId('uart_clearRxInterrupts'),    self.bspUart.cmd_clearRxInterrupts)
         mote.set_callback(notifId('uart_clearTxInterrupts'),    self.bspUart.cmd_clearTxInterrupts)
         mote.set_callback(notifId('uart_writeByte'),            self.bspUart.cmd_writeByte)
+        mote.set_callback(notifId('uart_writeBuffer_FASTSIM'),  self.bspUart.cmd_writeBuffer_FASTSIM)
         mote.set_callback(notifId('uart_readByte'),             self.bspUart.cmd_readByte)
         
         # logging this module
