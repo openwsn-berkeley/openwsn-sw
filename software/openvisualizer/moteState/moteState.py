@@ -1,10 +1,15 @@
+# Copyright (c) 2010-2013, Regents of the University of California. 
+# All rights reserved. 
+#  
+# Released under the BSD 3-Clause license as published at the link below.
+# https://openwsn.atlassian.net/wiki/display/OW/License
+'''
+Contains the moteState container class, as well as contained classes that
+structure the mote data. Contained classes inherit from the abstract
+StateElem class.
+'''
 import logging
-class NullHandler(logging.Handler):
-    def emit(self, record):
-        pass
 log = logging.getLogger('moteState')
-log.setLevel(logging.ERROR)
-log.addHandler(NullHandler())
 
 import copy
 import time
@@ -28,6 +33,9 @@ class OpenEncoder(json.JSONEncoder):
             return super(OpenEncoder, self).default(obj)
                           
 class StateElem(object):
+    '''
+    Abstract superclass for internal mote state classes.
+    '''
     
     def __init__(self):
         self.meta                      = [{}]
@@ -42,11 +50,39 @@ class StateElem(object):
         self.meta[0]['lastUpdated']    = time.time()
         self.meta[0]['numUpdates']    += 1
     
-    def toJson(self):
-        return json.dumps(self._toDict(),sort_keys=True,indent=4)
+    def toJson(self, aspect='all', isPrettyPrint=False):
+        '''
+        Dumps state to JSON.
+        
+        :param aspect: 
+               The particular aspect of the state object to dump, or the 
+               default 'all' for all aspects. Aspect names:
+               'meta' -- Metadata collected about the state;
+               'data' -- State data itself
+        :param isPrettyPrint:
+               If evaluates true, provides more readable output by sorting 
+               keys and indenting members.
+        :rtype: JSON representing the object. If aspect is 'all', 
+                the JSON is a dictionary, with sub-dictionaries
+                for the meta and data aspects. Otherwise, the JSON
+                is a list of the selected aspect's content.
+        '''
+        content = None
+        if aspect   == 'all':
+            content = self._toDict()
+        elif aspect == 'data':
+            content = self._elemToDict(self.data)
+        elif aspect == 'meta':
+            content = self._elemToDict(self.meta)
+        else:
+            raise ValueError('No aspect named {0}'.format(aspect))
+            
+        return json.dumps(content,
+                          sort_keys = bool(isPrettyPrint),
+                          indent    = 4 if isPrettyPrint else None)
     
     def __str__(self):
-        return self.toJson()
+        return self.toJson(isPrettyPrint=True)
     
     #======================== private =========================================
     
@@ -184,6 +220,7 @@ class StateQueue(StateElem):
         self.data[7].update(notif.creator_7,notif.owner_7)
         self.data[8].update(notif.creator_8,notif.owner_8)
         self.data[9].update(notif.creator_9,notif.owner_9)
+
 
 class StateNeighborsRow(StateElem):
     

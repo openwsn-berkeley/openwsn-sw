@@ -4,10 +4,10 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
-"""
+'''
 Contains application model for OpenVisualizer. Expects to be called by 
 top-level UI module.  See main() for startup use.
-"""
+'''
 import sys
 import os
 import logging
@@ -26,10 +26,10 @@ from RPL           import topology
 import openvisualizer_utils as u
     
 class OpenVisualizerApp(object):
-    """
-    OpenVisualizer supports both a GUI and a CLI interface, and 
-    OpenVisualizerApp provides a single location for common functionality.
-    """
+    '''
+    Provides an application model for OpenVisualizer. Provides common,
+    top-level functionality for several UI clients.
+    '''
     
     def __init__(self,appDir,fwDir,simulatorMode,numMotes,trace):
         
@@ -105,13 +105,29 @@ class OpenVisualizerApp(object):
     #======================== public ==========================================
     
     def close(self):
-        """Closes all thread-based components"""
+        '''Closes all thread-based components'''
         
         log.info('Closing OpenVisualizer')
         self.openTun.close()
         self.rpl.close()
         for probe in self.moteProbes:
             probe.close()
+                
+    def getMoteState(self, moteid):
+        '''
+        Returns the moteState object for the provided connected mote.
+        
+        :param moteid: 16-bit ID of mote
+        :rtype:        moteState or None if not found
+        '''
+        for ms in self.moteStates:
+            idManager = ms.getStateElem(ms.ST_IDMANAGER)
+            if idManager and idManager.get16bAddr():
+                addr = ''.join(['%02x'%b for b in idManager.get16bAddr()])
+                if addr == moteid:
+                    return ms
+        else:
+            return None
     
        
     #======================== GUI callbacks ===================================
@@ -123,11 +139,11 @@ from argparse       import ArgumentParser
 DEFAULT_MOTE_COUNT = 3
 
 def main():
-    """
+    '''
     Entry point for application startup by UI. Parses common arguments.
     
     :rtype:         openVisualizerApp object
-    """
+    '''
     parser   = _createCliParser()
     argspace = parser.parse_args()
     
