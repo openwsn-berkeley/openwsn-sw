@@ -1,0 +1,34 @@
+    %# Displays page header section, including menu and background graphic.
+    <div class="block-group ov-page-width">
+        <div class="block title_box">
+            <div class="block-group">
+                <div class="block ov-page-width" style="height: 34px"></div>
+                <div class="block headercol1" style="height: 20px"></div>
+                <div class="block headercol2" id="menu_radio">
+                    <input type="radio" id="radio1" name="menu" checked="checked" />
+                        <a id="moteview_link" href="/moteview">Motes</a>
+                    <input type="radio" id="radio2" name="menu" />
+                        <a href="/eventBus">Event Bus</a>
+                    <input type="radio" id="radio3" name="menu" />
+                         <a id="help_link">Help</a>
+                </div>
+                <script>
+                // Use last mode ID for moteview if available
+                var moteid = decodeURIComponent(getCookies()["selected_mote"]);
+                console.log("Set link to moteid " + moteid);
+                if (moteid == null || moteid == undefined || moteid == 'none') {
+                    $("#moteview_link").attr("href", "/moteview");
+                } else {
+                    $("#moteview_link").attr("href", "/moteview/" + moteid);
+                }
+
+                $(function() {
+                    $( "#menu_radio" ).buttonset();
+                });
+                $( "#help_link" ).click(function() {
+                    $( "#help_dialog" ).dialog( {width: 600} );
+                });
+                </script>
+            </div>
+        </div>
+    </div>

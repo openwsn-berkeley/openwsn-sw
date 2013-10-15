@@ -1,9 +1,7 @@
 # Copyright (c) 2010-2013, Regents of the University of California. 
 # All rights reserved. 
 #  
-# Released under the BSD 3-Clause license as published at the link below, 
-# where both the copyright owner and organization are the Regents of the  
-# University of California. 
+# Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 import os
@@ -28,20 +26,21 @@ print '\n'.join(banner)
 
 Help('''
 Usage:
-    scons [--sim|--simCount=n] <rungui|runcli>
+    scons [--sim|--simCount=n] <rungui|runcli|runweb>
     scons unittests
-    scons srcdoc
+    scons docs
    
 Targets:
-    rungui: Run OpenVisualizer GUI in build/openVisualizer directory.
-    runcli: Run OpenVisualizer CLI in build/openVisualizer directory.
-            Must run as superuser/administrator.
+    rungui/runcli/runweb:
+          Run native GUI, command line interface, or web application,
+          respectively, in build/openVisualizer directory.
+          Must run as superuser/administrator.
            
-            --sim         Run in simulator mode with default count of 
-                          motes.
-            --simCount=n  Run in simulator mode with 'n' motes.
+          --sim         Run in simulator mode with default count of 
+                        motes.
+          --simCount=n  Run in simulator mode with 'n' motes.
             
-      docs: Generates source documentation in build{0}html directory
+    docs: Generate source documentation in build{0}html directory
 '''.format(os.sep))
 # Help for trace option on next line. Removed from help because trace 
 # implementation is not working.
@@ -62,7 +61,7 @@ AddOption('--trace',
 
 env = Environment(
     ENV       = {'PATH' : os.environ['PATH']},
-    APPDIR    = os.path.join('build', 'openVisualizer'),
+    WORKDIR   = os.path.join('build', 'openVisualizer'),
     SIMOPT    = GetOption('simopt'),
     SIMCOUNT  = GetOption('simCount'),
     TRACEOPT  = GetOption('traceOpt'),
@@ -73,7 +72,7 @@ Default(env.Command('default', None, default))
 
 #============================ SCons targets ===================================
 
-#===== rungui, runcli
+#===== rungui, runcli, runweb
 
 def uiRunner(target, source, env):
     '''
@@ -105,7 +104,7 @@ def uiRunner(target, source, env):
 
     argList = [
         'python', str(source[0]), 
-        '-d', env['APPDIR'],
+        '-d', env['WORKDIR'],
         '-f', fwdir
     ]
     if env['SIMCOUNT']:
@@ -120,46 +119,98 @@ def uiRunner(target, source, env):
     result = 0
     try:
         p = subprocess.Popen(argList, env=subEnv)
-        # Must wait for CLI program that uses raw_input(); otherwise
-        # SCons exits and standard input is sent to shell. So for
-        # simplicity, wait for all UI programs to exit.
-        result = p.wait()
+
+        if env['WAIT_ON_UI']:
+            # Must wait for CLI program that uses raw_input(); otherwise
+            # SCons exits and standard input is sent to shell.
+            result = p.wait()
+        else:
+            # Display PID to make it easier to kill if necessary.
+            print 'Child PID is {0}'.format(p.pid)
     except:
         result = 1
         
     return result
     
-def setupUiRunner(env, uiFile):
-    '''
-    Creates the working directory and builder to run OpenVisualizerGui.
+def setupWorkFiles(env, workFiles):
+    '''Copy application files to the working directory.'''
+    for node in workFiles:
+        appNode = os.path.join(env['WORKDIR'], node)
+        
+        Command(
+            appNode, 
+            os.path.join(env['SRC_APPDIR'], node),
+            [
+                Mkdir(env['WORKDIR']),
+                Copy('$TARGET', '$SOURCE')
+            ]
+        )
     
-    :param uiFile: Filename to run in openVisualizerApp direcotry
-    :rtype: the targets reference for the Builder.
+def setupWorkDirs(env, webDirs):
+    '''
+    Copy application directories to the working directory. Ensure each
+    directory is built with each execution, so directory contents are fresh.
+    This automatic rebuilding is a convenience as we expect directory
+    contents to change often.
+    '''
+    for node in webDirs:
+        appNode = os.path.join(env['WORKDIR'], node)
+        
+        Command(
+            appNode, 
+            os.path.join(env['SRC_APPDIR'], node),
+            [
+                Delete('$TARGET'),
+                Mkdir(env['WORKDIR']),
+                Copy('$TARGET', '$SOURCE')
+            ]
+        )
+        AlwaysBuild(appNode)
+    
+def setupUiRunner(env, uiFile, workDirs):
+    '''
+    Creates the builder to run an OpenVisualizer UI from the 
+    OpenVisualizerApp directory. 
+    
+    Sets up dependencies on the contents of the app working directory.
+    
+    :param uiFile:   Filename to run in openVisualizerApp directory
+    :param workDirs: Adds dependencies for the provided subdirs, too.
+    :rtype:          The targets reference for the Builder.
     '''
     
     # Create Builder to run GUI    
     env.Append(BUILDERS = {'RunUi' : Builder(action = uiRunner)})
     
-    srcDir  = os.path.join('bin', 'openVisualizerApp')
-    targets = env.RunUi(os.path.join(srcDir, uiFile))
+    targets = env.RunUi(os.path.join(env['SRC_APPDIR'], uiFile))
     
-    # Copy conf files to working directory.
-    for confFile in ['logging.conf', 'trace.conf']:
-        appConf  = os.path.join(env['APPDIR'], confFile)
-
-        env.Command(
-            appConf, 
-            os.path.join(srcDir, confFile),
-            [
-                Mkdir(env['APPDIR']),
-                Copy('$TARGET', '$SOURCE')
-            ])
-        Depends(targets, appConf)
+    for node in env['APPFILES']:
+        appNode = os.path.join(env['WORKDIR'], node)
+        Depends(targets, appNode)
+        
+    for node in workDirs:
+        appNode = os.path.join(env['WORKDIR'], node)
+        Depends(targets, appNode)
     
     return targets
 
-Alias('rungui', setupUiRunner(env, 'openVisualizerGui.py'))
-Alias('runcli', setupUiRunner(env, 'openVisualizerCli.py'))
+# Setup builders for files and directories in app working directory.
+# Do these steps once, then add dependencies for each type of UI in
+# setupUiRunner().
+env['SRC_APPDIR'] = os.path.join('bin', 'openVisualizerApp')
+env['WAIT_ON_UI'] = False
+env['APPFILES']   = ['logging.conf', 'trace.conf']
+setupWorkFiles(env, env['APPFILES'])
+
+Alias('rungui', setupUiRunner(env, 'openVisualizerGui.py', []))
+
+cliEnv = env.Clone()
+cliEnv['WAIT_ON_UI'] = True
+Alias('runcli', setupUiRunner(cliEnv, 'openVisualizerCli.py', []))
+
+webdirs = ['web_files']
+setupWorkDirs(env, webdirs)
+Alias('runweb', setupUiRunner(env, 'openVisualizerWeb.py', webdirs))
 
 #===== unittest
 

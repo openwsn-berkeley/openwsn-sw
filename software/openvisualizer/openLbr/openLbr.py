@@ -29,6 +29,12 @@ class OpenLbr(eventBusClient.eventBusClient):
     IANA_PROTOCOL_IPv6ROUTE  = 43
     IANA_UDP                 = 17
     IANA_ICMPv6              = 58
+    IANA_IPv6HOPHEADER       = 0
+    
+    #hop header flags
+    O_FLAG                   = 0x80
+    R_FLAG                   = 0x40
+    F_FLAG                   = 0x20
     
     # Number of bytes in an IPv6 header.
     IPv6_HEADER_LEN          = 40
@@ -203,7 +209,21 @@ class OpenLbr(eventBusClient.eventBusClient):
             success = True
             dispatchSignal = None
             
+            
             #read next header
+            if (ipv6dic['next_header']==self.IANA_IPv6HOPHEADER):
+                #hop by hop header present, check flags and parse    
+                if ((ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG):
+                    #error -- this packet has gone downstream somewhere.
+                    log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                if ((ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG):
+                    #error -- loop in the route
+                    log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                #skip the header and process the rest of the message.
+                ipv6dic['next_header'] = ipv6dic['hop_next_header']
+                
+                
+                
             if (ipv6dic['next_header']==self.IANA_ICMPv6):
                 #icmp header
                 if (len(ipv6dic['payload'])<5):
@@ -555,6 +575,29 @@ class OpenLbr(eventBusClient.eventBusClient):
             ptr = ptr + 16
         else:
             log.error("wrong dam=="+str(dam))
+        
+        #hop by hop header 
+        #composed of NHC, NextHeader,Len + Rpl Option
+        if  (pkt_ipv6['next_header'] == self.IANA_IPv6HOPHEADER) : 
+             pkt_ipv6['hop_nhc'] = pkt_lowpan[ptr]
+             ptr = ptr+1
+             pkt_ipv6['hop_next_header'] = pkt_lowpan[ptr]
+             ptr = ptr+1
+             pkt_ipv6['hop_hdr_len'] = pkt_lowpan[ptr]
+             ptr = ptr+1
+             #start of RPL Option
+             pkt_ipv6['hop_optionType'] = pkt_lowpan[ptr]
+             ptr = ptr+1
+             pkt_ipv6['hop_optionLen'] = pkt_lowpan[ptr]
+             ptr = ptr+1
+             pkt_ipv6['hop_flags'] = pkt_lowpan[ptr]
+             ptr = ptr+1
+             pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
+             ptr = ptr+1
+             pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
+             ptr = ptr+2
+             #end RPL option
+             
         # payload
         pkt_ipv6['version']        = 6
         pkt_ipv6['traffic_class']  = 0
@@ -562,7 +605,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         pkt_ipv6['payload_length'] = len(pkt_ipv6['payload'])
         return pkt_ipv6
     
-    def reassemble_ipv6_packet(self,pkt):
+    def reassemble_ipv6_packet(self, pkt):
         pktw = []
         pktw.append(((6 << 4) + (pkt['traffic_class'] >> 4)))
         pktw.append(( ((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16) ))

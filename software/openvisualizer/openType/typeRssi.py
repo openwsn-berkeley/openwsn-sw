@@ -19,7 +19,7 @@ class typeRssi(openType.openType):
         openType.openType.__init__(self)
     
     def __str__(self):
-        return '{0}dBm'.format(self.rssi)
+        return '{0} dBm'.format(self.rssi)
     
     #======================== public ==========================================
     

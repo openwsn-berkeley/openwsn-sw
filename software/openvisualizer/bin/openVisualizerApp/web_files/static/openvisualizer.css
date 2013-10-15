@@ -1,0 +1,98 @@
+/* Width classes */
+.ov-page-width { width: 850px; }
+
+.headercol1 { width: 20px; }
+.headercol2 { width: 300px; }
+
+.motecol1 { width: 350px; }
+.motecol2 { width: 300px; }
+
+.t1, .t2 { width: 350px; }
+
+.rootcol-sum { width: 300px; }
+.rootcol1 { width: 200px; }
+.rootcol2 { width: 100px; }
+
+.event_b1 { width: 800px; }
+
+body {
+	margin-left: 10px;
+	font-size: .9em;
+	font-family: Arial;
+	line-height: 1.5em;
+    background: #C0C0C0;
+}
+
+.title_box {
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	box-sizing: border-box;
+	height: 60px;
+	/*border-radius: 2px;*/
+    /* 850px wide */
+    background-image: url(/static/graph-slice-25pct.png);
+    font-size: .8em;
+}
+
+.grid-box {
+	height: 100%;
+	padding: 1em 0;
+}
+
+.event-box {
+	height: 100%;
+    width: 700px;
+	padding: 1em 0;
+}
+
+.block-group .box {
+	background-color: #CDF;
+	border: solid 1px #BCD;
+}
+
+.grid_num_col {
+    text-align: right;
+}
+
+form, form ul, form li, fieldset, textarea { 
+    margin: 0; padding: 0; 
+}
+
+label, input, select,textarea, form li span { 
+    display: block;
+}
+
+form ul, form li { 
+    list-style-type: none; 
+}
+
+form li { 
+    clear: both; height: 1%; overflow: auto;
+}
+              
+label, form li span { 
+    float: left; width: 5em; padding-left: 1em; 
+}
+
+input, select, textarea .rel_value_fld { 
+    float: left; 
+}
+
+fieldset { 
+    padding-top: 0.25em; padding-bottom: 0.5em; border: 0;
+}
+
+fieldset legend {
+    font-weight: bold;
+}
+
+fieldset label, fieldset input { 
+    float: left; 
+}
+
+fieldset label { 
+    clear: left; width: 8em; padding-right: .75em; }
+    
+fieldset input { 
+    margin-left: 5em; margin-right: 1.5em; 
+}

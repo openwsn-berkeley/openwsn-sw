@@ -1,0 +1,184 @@
+<!doctype html>
+<html>
+  %# Common HTML head tag for all pages
+  %include htmlHead.tmpl
+
+  <body>
+    <script>
+    var intervalId;
+    var event_grid;
+    var sort_fnctn;
+    // Specific variable for rows in event grid; for sorting use.
+    var event_rows;
+    var sort_field;
+    var sort_ascend;
+    
+    $(function() {
+        // Initialize events grid
+        var event_cols = [
+            {id: "sender", name: "Sender", field: "sender", sortable: true},
+            {id: "signal", name: "Event",  field: "signal", sortable: true},
+            {id: "count",  name: "Count",  field: "num",    sortable: true},
+        ];
+        event_cols[0].width    = 250;
+        event_cols[0].maxWidth = 250;
+        event_cols[1].width    = 325;
+        event_cols[1].maxWidth = 325;
+        event_cols[2].width    =  75;
+        event_cols[2].maxWidth = 125;
+        event_cols[2].cssClass = "grid_num_col";
+        
+        event_rows = [];
+        event_grid = new Slick.Grid("#event_grid", event_rows, event_cols, {});
+        
+        // Setup column sorting
+        event_grid.onSort.subscribe(function(e, args){
+            sort_field  = args.sortCol.field;
+            sort_ascend = args.sortAsc;
+            console.log("Sorting on field: " + sort_field);
+            
+            event_rows.sort(
+                    sort_field == 'num' 
+                        ? sort_rows_numeric 
+                        : sort_rows_alpha);
+            event_grid.invalidate();         
+        });
+        
+        // Update debug checkbox based on cookie
+        var isDebug = decodeURIComponent(getCookies()["selected_debugpkts"]);
+        if (isDebug != 'true') {
+            // Force use of only these two string values for simplicity.
+            isDebug = 'false';
+        }
+        if ($("#debug_select").is(':checked').toString() != isDebug) {
+            console.log('clicking #debug_select');
+            $("#debug_select").click();
+        }
+
+        // Get data
+        $.ajax({
+            dataType: "json",
+            url: "/eventdata",
+            success: updateForData,
+            error: errorOnAjax
+        });
+    });
+    </script>
+
+    %# Displays page header section, including menu and background graphic.
+    %include menuHeader.tmpl
+    <div class="block-group ui-widget ui-widget-content ui-corner-all ov-page-width">
+        <div class="block event-box" style="height: 1.5em">
+            <form>
+                <ul><li>
+                    <label for="debug_select" class="rel_label_fld" style="text-align: right; float:right; width: 11em; padding-left: 0em">Export debug packets?</label>
+                    <input style="float: right" id="debug_select" type="checkbox" value="false" />
+                </li></ul>
+                <script>
+                $("#debug_select").change(function() {
+                    is_selected = $(this).is(':checked');
+                    console.log('Update for debug selection: ' + is_selected);
+                    
+                    setCookie("selected_debugpkts", is_selected);
+                    
+                    $.ajax({
+                        dataType: "json",
+                        url: "/eventDebug/" + is_selected,
+                        success: updateForDebug,
+                        error: errorOnAjax
+                    });
+                });
+                </script>
+            </form>
+        </div>
+        <div class="event_b1 block event-box">
+            <div id="event_grid" style="height: 600px; margin-left: 1em"></div>
+        </div>
+    </div>
+    
+    <script>
+    // Callback for AJAX data retrieval.
+    function updateForData(json) {
+        console.log("Update for event data received");
+        
+        event_rows = json;
+        if (sort_field != null) {
+            event_rows.sort(
+                    sort_field == 'num' 
+                        ? sort_rows_numeric 
+                        : sort_rows_alpha);
+        }
+        event_grid.setData(event_rows);
+        event_grid.invalidate();
+        
+        timeoutId = setTimeout(function() {
+            $.ajax({
+                dataType: "json",
+                url: "/eventdata",
+                success: updateForData,
+                error: errorOnAjax
+            });
+        }, 5000);
+    }
+
+    // Callback for debug packet selection.
+    function updateForDebug(json) {
+        console.log("Event debug packet selection succeeded");
+    }
+    
+    function errorOnAjax(jqxhr, status, errorstr) {
+        var errText = (errorstr == null)
+                ? '' : ', error: ' + errorstr;
+        console.log('Ajax error: ' + status + errText);
+    }    
+    
+    function sort_rows_alpha(a, b){
+        // Create variables to reduce garbage generation
+        // Must use toString() since may be an array.
+        var aLow = a[sort_field].toString().toLowerCase();
+        var bLow = b[sort_field].toString().toLowerCase();
+        
+        var result = aLow > bLow 
+                            ? 1
+                            : aLow < bLow ? -1 : 0;
+
+        return sort_ascend ? result : -result;
+    }
+    
+    function sort_rows_numeric(a, b){
+        var result = a[sort_field] > b[sort_field] 
+                            ? 1
+                            : a[sort_field] < b[sort_field] ? -1 : 0;
+
+        return sort_ascend ? result : -result;
+    }
+    </script>
+
+    <div id="help_dialog" style="display: none;" title="Event Bus Help">
+        <h3>Event Bus Grid</h3>
+        <table style="color: #ffffff;">
+            <tbody>
+            <tr><td style="font-weight: bold;">Sender</td>
+                <td>Component that pushed the event onto the event bus</td>
+            </tr>
+            <tr><td style="font-weight: bold;">Signal</td>
+                <td>Type of event generated</td>
+            </tr>
+            <tr><td style="font-weight: bold;">Count</td>
+                <td>Accumulated count of event signals put on the event bus</td>
+            </tr>
+            </tbody>
+        </table>
+        <p>You may sort on any column by clicking on its title.</p>
+        <h3>Other</h3>
+        <table style="color: #ffffff;">
+            <tbody>
+            <tr><td style="font-weight: bold;">Export debug packets?</td>
+                <td>Writes 'bytesToMesh' and 'fromMote.data' packets to the TUN network interface, wrapped in a <a href="http://wiki.wireshark.org/IEEE_802.15.4">ZEP</a> header.</td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+
+  </body>
+</html>
