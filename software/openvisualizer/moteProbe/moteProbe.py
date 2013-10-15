@@ -145,7 +145,7 @@ class moteProbe(threading.Thread):
                     self.serial = self.emulatedMote.bspUart
                 while self.goOn: # read bytes from serial port
                     try:
-                        rxByte = self.serial.read(1)                        
+                        rxByte = self.serial.read(1)
                     except Exception as err:
                         print err
                         log.warning(err)
