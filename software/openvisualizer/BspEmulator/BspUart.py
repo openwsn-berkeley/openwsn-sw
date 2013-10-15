@@ -177,7 +177,39 @@ class BspUart(BspModule.BspModule):
         self.txInterruptFlag      = True
         
         # calculate the time at which the buffer will have been sent
-        doneSendingTime           = self.timeline.getCurrentTime()+float(1.0/float(self.BAUDRATE))
+        doneSendingTime           = self.timeline.getCurrentTime()+float(float(len(buffer))/float(self.BAUDRATE))
+        
+        # schedule uart TX interrupt in len(buffer)/BAUDRATE seconds
+        self.timeline.scheduleEvent(
+            doneSendingTime,
+            self.motehandler.getId(),
+            self.intr_tx,
+            self.INTR_TX
+        )
+        
+        # add to receive buffer
+        with self.uartRxBufferLock:
+            self.uartRxBuffer    += buffer
+        
+        # release the semaphore indicating there is something in RX buffer
+        self.uartRxBufferSem.release()
+        
+        # wait for the moteProbe to be done reading
+        self.waitForDoneReading.acquire()
+    
+    def uart_writeBufferByLen_FASTSIM(self,buffer):
+        '''emulates
+           void uart_writeBufferByLen_FASTSIM(uint8_t* buffer, uint8_t len)'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('uart_writeBufferByLen_FASTSIM buffer='+str(buffer))
+        
+        # set tx interrupt flag
+        self.txInterruptFlag      = True
+        
+        # calculate the time at which the buffer will have been sent
+        doneSendingTime           = self.timeline.getCurrentTime()+float(float(len(buffer))/float(self.BAUDRATE))
         
         # schedule uart TX interrupt in len(buffer)/BAUDRATE seconds
         self.timeline.scheduleEvent(
