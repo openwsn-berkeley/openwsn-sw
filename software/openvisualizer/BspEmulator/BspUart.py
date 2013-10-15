@@ -165,13 +165,13 @@ class BspUart(BspModule.BspModule):
         # wait for the moteProbe to be done reading
         self.waitForDoneReading.acquire()
     
-    def cmd_writeBuffer_FASTSIM(self,buffer):
+    def cmd_writeCircularBuffer_FASTSIM(self,buffer):
         '''emulates
-           void uart_writeBuffer_FASTSIM(uint8_t* buffer, uint8_t len)'''
+           void uart_writeCircularBuffer_FASTSIM(uint8_t* buffer, uint8_t len)'''
         
         # log the activity
         if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_writeBuffer_FASTSIM buffer='+str(buffer))
+            self.log.debug('cmd_writeCircularBuffer_FASTSIM buffer='+str(buffer))
         
         # set tx interrupt flag
         self.txInterruptFlag      = True
