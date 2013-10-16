@@ -47,7 +47,7 @@ class OpenTun(eventBusClient.eventBusClient):
     def __init__(self):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # store params
         
@@ -87,7 +87,7 @@ class OpenTun(eventBusClient.eventBusClient):
         while self.tunReadThread.isAlive() and attempts < 3:
             attempts += 1
             try:
-                log.debug('Sending UDP packet to close openTun')
+                log.info('Sending UDP packet to close openTun')
                 sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
                 # Destination must route through the TUN host, but not be the host itself.
                 # OK if host does not really exist.

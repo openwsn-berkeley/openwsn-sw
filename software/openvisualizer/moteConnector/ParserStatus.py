@@ -29,7 +29,7 @@ class ParserStatus(Parser.Parser):
     def __init__(self):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)
@@ -204,7 +204,8 @@ class ParserStatus(Parser.Parser):
     def parseInput(self,input):
         
         # log
-        log.debug("received input={0}".format(input))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("received input={0}".format(input))
         
         # ensure input not short longer than header
         self._checkLength(input)
@@ -218,7 +219,8 @@ class ParserStatus(Parser.Parser):
             raise ParserException(ParserException.DESERIALIZE,"could not extract moteId and statusElem from {0}".format(headerBytes))
         
         # log
-        log.debug("moteId={0} statusElem={1}".format(moteId,statusElem))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("moteId={0} statusElem={1}".format(moteId,statusElem))
         
         # jump the header bytes
         input = input[3:]
@@ -228,7 +230,8 @@ class ParserStatus(Parser.Parser):
             if statusElem==key.val:
             
                 # log
-                log.debug("parsing {0}, ({1} bytes) as {2}".format(input,len(input),key.name))
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug("parsing {0}, ({1} bytes) as {2}".format(input,len(input),key.name))
                 
                 # parse byte array
                 try:
@@ -248,7 +251,8 @@ class ParserStatus(Parser.Parser):
                 returnTuple = self.named_tuple[key.name](*fields)
                 
                 # log
-                log.debug("parsed into {0}".format(returnTuple))
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug("parsed into {0}".format(returnTuple))
                 
                 # map to name tuple
                 return ('status',returnTuple)

@@ -25,7 +25,7 @@ class SerialTester(eventBusClient.eventBusClient):
     def __init__(self,moteProbeIp,moteProbeTcpPort,moteProbeSerialPort):
         
         # log
-        log.debug("creating instance")
+        log.info("creating instance")
         
         # store params
         self.moteProbeSerialPort  = moteProbeSerialPort
@@ -183,7 +183,8 @@ class SerialTester(eventBusClient.eventBusClient):
             self.busyTesting = False
     
     def _log(self,msg):
-        log.debug(msg)
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug(msg)
         with self.dataLock:
             if self.traceCb:
                 self.traceCb(msg)

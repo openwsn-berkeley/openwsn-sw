@@ -26,7 +26,7 @@ class ParserData(Parser.Parser):
     def __init__(self):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)
@@ -41,7 +41,9 @@ class ParserData(Parser.Parser):
     
     def parseInput(self,input):
         # log
-        log.debug("received data {0}".format(input))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("received data {0}".format(input))
+        
         # ensure input not short longer than header
         self._checkLength(input)
    
@@ -57,18 +59,22 @@ class ParserData(Parser.Parser):
         #source is elided!!! so it is not there.. check that.
         source = input[15:23]
         
-        a="".join(hex(c) for c in dest)
-        log.debug("destination address of the packet is {0} ".format(a))
+        if log.isEnabledFor(logging.DEBUG):
+            a="".join(hex(c) for c in dest)
+            log.debug("destination address of the packet is {0} ".format(a))
         
-        a="".join(hex(c) for c in source)
-        log.debug("source address (just previous hop) of the packet is {0} ".format(a))
-        
+        if log.isEnabledFor(logging.DEBUG):
+            a="".join(hex(c) for c in source)
+            log.debug("source address (just previous hop) of the packet is {0} ".format(a))
         
         # remove asn src and dest and mote id at the beginning.
         # this is a hack for latency measurements... TODO, move latency to an app listening on the corresponding port.
         # inject end_asn into the packet as well
         input = input[23:]
-        log.debug("packet without source,dest and asn {0}".format(input))
+        
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("packet without source,dest and asn {0}".format(input))
+        
         # when the packet goes to internet it comes with the asn at the beginning as timestamp.
          
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
@@ -95,7 +101,7 @@ class ParserData(Parser.Parser):
                    # this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
                    print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
                    print ",".join(hex(c) for c in input)
-                   log.debug("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
+                   log.warning("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
                    pass
                # in case we want to send the computed time to internet..
                # computed=struct.pack('<H', timeinus)#to be appended to the pkt

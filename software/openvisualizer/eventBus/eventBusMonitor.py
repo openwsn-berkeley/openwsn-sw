@@ -21,7 +21,7 @@ class eventBusMonitor(object):
     def __init__(self):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # store params
         

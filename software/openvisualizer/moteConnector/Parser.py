@@ -34,7 +34,7 @@ class Parser(object):
     def __init__(self,headerLength):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # store params
         self.headerLength         = headerLength
@@ -49,8 +49,8 @@ class Parser(object):
     def parseInput(self,input):
         
         # log
-        log.debug("received input={0}".format(input))
-        #print "PARSER received input={0}".format(input)
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("received input={0}".format(input))
         
         # ensure input not short longer than header
         self._checkLength(input)

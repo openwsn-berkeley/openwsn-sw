@@ -39,7 +39,7 @@ class OpenParser(Parser.Parser):
     def __init__(self):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)

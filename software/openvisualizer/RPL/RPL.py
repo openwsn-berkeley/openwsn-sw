@@ -48,7 +48,7 @@ class RPL(eventBusClient.eventBusClient):
     def __init__(self):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # store params
         
@@ -227,7 +227,8 @@ class RPL(eventBusClient.eventBusClient):
         dio[idxICMPv6CS+1]   = checksum[1]
         
         # log
-        log.debug('sending DIO {0}'.format(u.formatBuf(dio)))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug('sending DIO {0}'.format(u.formatBuf(dio)))
 
         # dispatch
         self.dispatch(
@@ -256,12 +257,13 @@ class RPL(eventBusClient.eventBusClient):
             return
         
         # log
-        output                    = []
-        output                   += ['received DAO:']
-        output                   += ['- source :      {0}'.format(u.formatAddr(source))]
-        output                   += ['- dao :         {0}'.format(u.formatBuf(dao))]
-        output                    = '\n'.join(output)
-        log.debug(output)
+        if log.isEnabledFor(logging.DEBUG):
+            output                = []
+            output               += ['received DAO:']
+            output               += ['- source :      {0}'.format(u.formatAddr(source))]
+            output               += ['- dao :         {0}'.format(u.formatBuf(dao))]
+            output                = '\n'.join(output)
+            log.debug(output)
         
         # retrieve DAO header
         dao_header                = {}
@@ -320,7 +322,8 @@ class RPL(eventBusClient.eventBusClient):
         for p in children:
             output          += ['- {0}'.format(u.formatAddr(p))]
         output               = '\n'.join(output)
-        log.debug(output)
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug(output)
         print output
         
         # if you get here, the DAO was parsed correctly

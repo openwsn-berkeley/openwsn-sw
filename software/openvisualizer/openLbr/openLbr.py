@@ -87,7 +87,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     def __init__(self):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # store params
         self.stateLock            = threading.Lock()
@@ -152,7 +152,8 @@ class OpenLbr(eventBusClient.eventBusClient):
                 return
             
             # log
-            log.debug(self._format_IPv6(ipv6,ipv6_bytes))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug(self._format_IPv6(ipv6,ipv6_bytes))
             
             # convert IPv6 dictionnary into 6LoWPAN dictionnary
             lowpan           = self.ipv6_to_lowpan(ipv6)
@@ -180,7 +181,8 @@ class OpenLbr(eventBusClient.eventBusClient):
             lowpan_bytes     = self.reassemble_lowpan(lowpan)
             #print lowpan_bytes
             # log
-            log.debug(self._format_lowpan(lowpan,lowpan_bytes))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug(self._format_lowpan(lowpan,lowpan_bytes))
             
             #print "output:"
             #print lowpan_bytes
@@ -559,7 +561,8 @@ class OpenLbr(eventBusClient.eventBusClient):
         # dam
         dam = ((pkt_lowpan[1]) & 0x03)
         if (dam == self.IPHC_DAM_ELIDED):
-            log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
             pkt_ipv6['dst_addr'] = self.networkPrefix+self.dagRootEui64
         elif (dam == self.IPHC_DAM_16B):
             a1 = pkt_lowpan[ptr]
