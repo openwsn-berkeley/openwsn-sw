@@ -65,7 +65,7 @@ class SerialTester(eventBusClient.eventBusClient):
     #======================== public ==========================================
     
     def _receiveDataFromMoteSerial(self,sender,signal,data):
-        input   = [ord(c) for c in data]
+        
         # handle input
         if (chr(input[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
             # don't handle if I'm not testing

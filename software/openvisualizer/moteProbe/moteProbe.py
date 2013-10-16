@@ -202,7 +202,7 @@ class moteProbe(threading.Thread):
                                         dispatcher.send(
                                             sender        = self.name,
                                             signal        = 'fromMoteProbe@'+self.serialport,
-                                            data          = self.inputBuf[:],
+                                            data          = [ord(c) for c in self.inputBuf],
                                         )
                             
                             self.lastRxByte = rxByte

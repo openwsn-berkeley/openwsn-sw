@@ -61,8 +61,8 @@ class moteConnector(eventBusClient.eventBusClient):
         )
         
     def _sendToParser(self,data):
-        #convert data
-        input = [ord(c) for c in data]
+        
+        input = data
         
         # log
         if log.isEnabledFor(logging.DEBUG):
