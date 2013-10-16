@@ -5,6 +5,11 @@
 # http://opensource.org/licenses/BSD-2-Clause
 import sys
 import os
+
+import pathHelper
+if __name__=="__main__":
+    pathHelper.updatePath()
+
 import logging
 log = logging.getLogger('openVisualizerWeb')
 import json
