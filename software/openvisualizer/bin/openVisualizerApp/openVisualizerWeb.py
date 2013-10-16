@@ -16,9 +16,6 @@ from moteState     import moteState
 import openVisualizerApp
 import openvisualizer_utils as u
 
-WEB_SERVER_HOST = 'localhost'
-WEB_SERVER_PORT = 8080
-
 class OpenVisualizerWeb():
     '''
     Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web
@@ -49,9 +46,10 @@ class OpenVisualizerWeb():
         Matches web URL to impelementing method. Cannot use @route annotations
         on the methods due to the class-based implementation.
         '''
-        self.websrv.route(path='/motedata/:moteid',       callback=self._getMoteData)
+        self.websrv.route(path='/',                       callback=self._showMoteview)
         self.websrv.route(path='/moteview',               callback=self._showMoteview)
         self.websrv.route(path='/moteview/:moteid',       callback=self._showMoteview)
+        self.websrv.route(path='/motedata/:moteid',       callback=self._getMoteData)
         self.websrv.route(path='/toggle_root/:moteid',    callback=self._toggleRoot)
         self.websrv.route(path='/eventBus',               callback=self._showEventBus)
         self.websrv.route(path='/eventdata',              callback=self._getEventData)
@@ -151,15 +149,40 @@ class OpenVisualizerWeb():
         return self.app.eventBusMonitor.getStats()
 
 #============================ main ============================================
+from argparse       import ArgumentParser
+
+def _addParserArgs(parser):
+    '''Adds arguments specific to web UI.'''
+    
+    parser.add_argument('-H', '--host',
+        dest       = 'host',
+        default    = '0.0.0.0',
+        action     = 'store',
+        help       = 'host address'
+    )
+    
+    parser.add_argument('-p', '--port',
+        dest       = 'port',
+        default    = 8080,
+        action     = 'store',
+        help       = 'port number'
+    )
 
 webapp = None
 if __name__=="__main__":
-    app    = openVisualizerApp.main()
-    websrv = bottle.Bottle()
-    webapp = OpenVisualizerWeb(app, websrv)
+    parser   =  ArgumentParser()
+    _addParserArgs(parser)
+    argspace = parser.parse_known_args()[0]
+
+    app      = openVisualizerApp.main(parser)
+    websrv   = bottle.Bottle()
+    webapp   = OpenVisualizerWeb(app, websrv)
+
+    # Must first allow openVisualizerApp to initialize logging.
+    log.info('Initializing OpenVisualizerWeb with options: \n\t{0}'.format(
+            '\n\t'.join(['host = {0}'.format(argspace.host),
+                         'port = {0}'.format(argspace.port)]
+            )))
     
-    log.info('Starting web server on host {0} at port {1}'.format(
-                                                        WEB_SERVER_HOST, 
-                                                        WEB_SERVER_PORT))
-    websrv.run(host=WEB_SERVER_HOST, port=WEB_SERVER_PORT, quiet=True, debug=False)
+    websrv.run(host=argspace.host, port=argspace.port, quiet=True, debug=False)
     
