@@ -119,7 +119,7 @@ class moteProbe(threading.Thread):
             # Non-daemonized moteProbe does not consistently die on close(),
             # so ensure moteProbe does not persist.
             self.daemon           = True
-       
+        
         # connect to dispatcher
         dispatcher.connect(
             self._bufferDataToSend,
@@ -145,63 +145,67 @@ class moteProbe(threading.Thread):
                     self.serial = self.emulatedMote.bspUart
                 while self.goOn: # read bytes from serial port
                     try:
-                        rxByte = self.serial.read(1)
+                        if self.realserial:
+                            rxBytes = self.serial.read(1)
+                        else:
+                            rxBytes = self.serial.read()
                     except Exception as err:
                         print err
                         log.warning(err)
                         time.sleep(1)
                         break
                     else:
-                        if      (
-                                    (not self.busyReceiving)             and 
-                                    self.lastRxByte==self.hdlc.HDLC_FLAG and
-                                    rxByte!=self.hdlc.HDLC_FLAG
-                                ):
-                            # start of frame
-                            if log.isEnabledFor(logging.DEBUG):
-                                log.debug("{0}: start of hdlc frame {1} {2}".format(self.name, u.formatStringBuf(self.hdlc.HDLC_FLAG), u.formatStringBuf(rxByte)))
-                            self.busyReceiving       = True
-                            self.inputBuf            = self.hdlc.HDLC_FLAG
-                            self.inputBuf           += rxByte
-                        elif    (
-                                    self.busyReceiving                   and
-                                    rxByte!=self.hdlc.HDLC_FLAG
-                                ):
-                            # middle of frame
-                            
-                            self.inputBuf           += rxByte
-                        elif    (
-                                    self.busyReceiving                   and
-                                    rxByte==self.hdlc.HDLC_FLAG
-                                ):
-                            # end of frame
-                            if log.isEnabledFor(logging.DEBUG):
-                                log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.formatStringBuf(rxByte)))
-                            self.busyReceiving       = False
-                            self.inputBuf           += rxByte
-                            
-                            try:
-                                tempBuf = self.inputBuf
-                                self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
+                        for rxByte in rxBytes:
+                            if      (
+                                        (not self.busyReceiving)             and 
+                                        self.lastRxByte==self.hdlc.HDLC_FLAG and
+                                        rxByte!=self.hdlc.HDLC_FLAG
+                                    ):
+                                # start of frame
                                 if log.isEnabledFor(logging.DEBUG):
-                                    log.debug("{0}: {2} dehdlcized input: {1}".format(self.name, u.formatStringBuf(self.inputBuf), u.formatStringBuf(tempBuf)))
-                            except OpenHdlc.HdlcException as err:
-                                log.warning('{0}: invalid serial frame: {2} {1}'.format(self.name, err, u.formatStringBuf(tempBuf)))
-                            else:
-                                if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
-                                    with self.outputBufLock:
-                                        if self.outputBuf:
-                                            outputToWrite = self.outputBuf.pop(0)
-                                            self.serial.write(outputToWrite)
+                                    log.debug("{0}: start of hdlc frame {1} {2}".format(self.name, u.formatStringBuf(self.hdlc.HDLC_FLAG), u.formatStringBuf(rxByte)))
+                                self.busyReceiving       = True
+                                self.inputBuf            = self.hdlc.HDLC_FLAG
+                                self.inputBuf           += rxByte
+                            elif    (
+                                        self.busyReceiving                   and
+                                        rxByte!=self.hdlc.HDLC_FLAG
+                                    ):
+                                # middle of frame
+                                
+                                self.inputBuf           += rxByte
+                            elif    (
+                                        self.busyReceiving                   and
+                                        rxByte==self.hdlc.HDLC_FLAG
+                                    ):
+                                # end of frame
+                                if log.isEnabledFor(logging.DEBUG):
+                                    log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.formatStringBuf(rxByte)))
+                                self.busyReceiving       = False
+                                self.inputBuf           += rxByte
+                                
+                                try:
+                                    tempBuf = self.inputBuf
+                                    self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
+                                    if log.isEnabledFor(logging.DEBUG):
+                                        log.debug("{0}: {2} dehdlcized input: {1}".format(self.name, u.formatStringBuf(self.inputBuf), u.formatStringBuf(tempBuf)))
+                                except OpenHdlc.HdlcException as err:
+                                    log.warning('{0}: invalid serial frame: {2} {1}'.format(self.name, err, u.formatStringBuf(tempBuf)))
                                 else:
-                                    # dispatch
-                                    dispatcher.send(
-                                        sender        = self.name,
-                                        signal        = 'fromMoteProbe@'+self.serialport,
-                                        data          = self.inputBuf[:],
-                                    )
-                        
-                        self.lastRxByte = rxByte
+                                    if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
+                                        with self.outputBufLock:
+                                            if self.outputBuf:
+                                                outputToWrite = self.outputBuf.pop(0)
+                                                self.serial.write(outputToWrite)
+                                    else:
+                                        # dispatch
+                                        dispatcher.send(
+                                            sender        = self.name,
+                                            signal        = 'fromMoteProbe@'+self.serialport,
+                                            data          = self.inputBuf[:],
+                                        )
+                            
+                            self.lastRxByte = rxByte
                         
                     if not self.realserial:
                         rxByte = self.serial.doneReading()

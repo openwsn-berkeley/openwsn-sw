@@ -42,19 +42,19 @@ class BspUart(BspModule.BspModule):
     
     #=== interact with UART
     
-    def read(self,numBytesToRead):
+    def read(self):
         '''
         \brief Read a byte from the mote.
         '''
-        assert numBytesToRead==1
         
         # wait for something to appear in the RX buffer
         self.uartRxBufferSem.acquire()
         
-        # pop the first element
+        # copy uartRxBuffer
         with self.uartRxBufferLock:
             assert len(self.uartRxBuffer)>0
-            returnVal = chr(self.uartRxBuffer.pop(0))
+            returnVal             = [chr(b) for b in self.uartRxBuffer]
+            self.uartRxBuffer     = []
         
         # return that element
         return returnVal

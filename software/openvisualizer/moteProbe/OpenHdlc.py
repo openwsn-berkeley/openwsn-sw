@@ -103,7 +103,7 @@ class OpenHdlc(object):
         # make copy of input
         outBuf     = inBuf[:]
         if log.isEnabledFor(logging.DEBUG):
-            log.debug("got           {0}".format(u.formatStringBuf(outBuf)))
+            log.debug("got              {0}".format(u.formatStringBuf(outBuf)))
         
         # remove flags
         outBuf     = outBuf[1:-1]
