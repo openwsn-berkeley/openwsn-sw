@@ -61,6 +61,8 @@ AddOption('--simCount',
     dest      = 'simCount',
     default   = 0,
     type      = 'int')
+# Host and port options defined here for consistency, but used only in
+# web-specific Environment defined below.
 AddOption('--host',
     dest      = 'hostOpt',
     default   = '0.0.0.0',
@@ -80,8 +82,8 @@ env = Environment(
     SIMOPT    = GetOption('simOpt'),
     SIMCOUNT  = GetOption('simCount'),
     TRACEOPT  = GetOption('traceOpt'),
-    HOSTOPT   = GetOption('hostOpt'),
-    PORTOPT   = GetOption('portOpt'),
+    HOSTOPT   = None,
+    PORTOPT   = None,
 )
 
 def default(env,target,source): print SCons.Script.help_text
@@ -226,13 +228,17 @@ setupWorkFiles(env, env['APPFILES'])
 
 Alias('rungui', setupUiRunner(env, 'openVisualizerGui.py', []))
 
-cliEnv = env.Clone()
+cliEnv               = env.Clone()
 cliEnv['WAIT_ON_UI'] = True
 Alias('runcli', setupUiRunner(cliEnv, 'openVisualizerCli.py', []))
 
+webEnv            = env.Clone()
+webEnv['HOSTOPT'] = GetOption('hostOpt')
+webEnv['PORTOPT'] = GetOption('portOpt')
+
 webdirs = ['web_files']
-setupWorkDirs(env, webdirs)
-Alias('runweb', setupUiRunner(env, 'openVisualizerWeb.py', webdirs))
+setupWorkDirs(webEnv, webdirs)
+Alias('runweb', setupUiRunner(webEnv, 'openVisualizerWeb.py', webdirs))
 
 #===== unittest
 
