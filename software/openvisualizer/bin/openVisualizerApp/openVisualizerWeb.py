@@ -104,7 +104,7 @@ class OpenVisualizerWeb():
             return '{"result" : "success"}'
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
-            return 'xx-xx-xx-xx-xx-xx-xx-xx'
+            return '{"result" : "fail"}'
                                   
     def _getMoteData(self, moteid):
         '''
@@ -134,7 +134,7 @@ class OpenVisualizerWeb():
             return jsonstr
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
-            return '{"result" : "none"}'
+            return '{"result" : "fail"}'
             
     def _setEventDebug(self, enabled):
         '''
@@ -148,9 +148,10 @@ class OpenVisualizerWeb():
 
     @view('eventBus.tmpl')
     def _showEventBus(self):
-        return dict()
+        return dict(isDebugPkts=self.app.eventBusMonitor.meshDebugEnabled)
     
     def _getEventData(self):
+        # getStats() already in JSON format
         return self.app.eventBusMonitor.getStats()
 
 #============================ main ============================================

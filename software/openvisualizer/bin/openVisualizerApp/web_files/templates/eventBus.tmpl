@@ -43,15 +43,12 @@
                         : sort_rows_alpha);
             event_grid.invalidate();         
         });
-        
-        // Update debug checkbox based on cookie
-        var isDebug = decodeURIComponent(getCookies()["selected_debugpkts"]);
-        if (isDebug != 'true') {
-            // Force use of only these two string values for simplicity.
-            isDebug = 'false';
-        }
-        if ($("#debug_select").is(':checked').toString() != isDebug) {
-            console.log('clicking #debug_select');
+         
+        %# Update debug checkbox. To work reliably, the template must set
+        %# the initial value through a programmatic click, rather than setting
+        %# the checked attribute of the input tag.
+        // Update debug checkbox
+        if ($("#debug_select").is(':checked') != {{'true' if isDebugPkts else 'false'}}) {
             $("#debug_select").click();
         }
 
@@ -60,7 +57,7 @@
             dataType: "json",
             url: "/eventdata",
             success: updateForData,
-            error: errorOnAjax
+            error: errorOnEventdata
         });
     });
     </script>
@@ -72,20 +69,18 @@
             <form>
                 <ul><li>
                     <label for="debug_select" class="rel_label_fld" style="text-align: right; float:right; width: 11em; padding-left: 0em">Export debug packets?</label>
-                    <input style="float: right" id="debug_select" type="checkbox" value="false" />
+                    <input style="float: right" id="debug_select" type="checkbox" />
                 </li></ul>
                 <script>
                 $("#debug_select").change(function() {
                     is_selected = $(this).is(':checked');
                     console.log('Update for debug selection: ' + is_selected);
                     
-                    setCookie("selected_debugpkts", is_selected);
-                    
                     $.ajax({
                         dataType: "json",
                         url: "/eventDebug/" + is_selected,
                         success: updateForDebug,
-                        error: errorOnAjax
+                        error: errorOnEventDebug
                     });
                 });
                 </script>
@@ -116,7 +111,7 @@
                 dataType: "json",
                 url: "/eventdata",
                 success: updateForData,
-                error: errorOnAjax
+                error: errorOnEventdata
             });
         }, 5000);
     }
@@ -126,11 +121,19 @@
         console.log("Event debug packet selection succeeded");
     }
     
-    function errorOnAjax(jqxhr, status, errorstr) {
-        var errText = (errorstr == null)
-                ? '' : ', error: ' + errorstr;
-        console.log('Ajax error: ' + status + errText);
+    function errorOnAjax(event, jqxhr, status, errorThrown) {
+        var errText = (errorThrown == null || errorThrown.length == 0)
+                ? '' : ': ' + errorThrown;
+        console.log('Ajax (' + event + ') ' + status + errText);
     }    
+    
+    function errorOnEventDebug(jqxhr, status, errorThrown) {
+        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
+    }
+    
+    function errorOnEventdata(jqxhr, status, errorThrown) {
+        errorOnAjax('eventdata', jqxhr, status, errorThrown);
+    }
     
     function sort_rows_alpha(a, b){
         // Create variables to reduce garbage generation
