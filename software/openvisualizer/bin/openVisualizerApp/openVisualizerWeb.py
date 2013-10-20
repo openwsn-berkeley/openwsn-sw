@@ -66,7 +66,7 @@ class OpenVisualizerWeb():
         '''
         Collects the list of motes, and the requested mote to view.
         
-        :rtype: response data, transformed to JSON 
+        :param moteid: 16-bit ID of mote (optional)
         '''
         log.debug("moteview moteid parameter is {0}".format(moteid));
         
@@ -78,13 +78,11 @@ class OpenVisualizerWeb():
             else:
                 motelist.append(ms.moteConnector.serialport)
         
-        params = dict(motelist=motelist)
-        if moteid:
-            params['requested_mote'] = moteid
-        else:
-            params['requested_mote'] = 'none'
-            
-        return params
+        tmplData = {
+            'motelist'       : motelist,
+            'requested_mote' : moteid if moteid else 'none',
+        }
+        return tmplData
         
     def _serverStatic(self, filepath):
         return bottle.static_file(filepath, 
@@ -94,8 +92,9 @@ class OpenVisualizerWeb():
         '''
         Triggers toggle of DAGroot and bridge states, via moteState. No
         real response. Page is updated when next retrieve mote data.
-        '''
         
+        :param moteid: 16-bit ID of mote
+        '''
         log.info('Toggle root status for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:
@@ -108,10 +107,9 @@ class OpenVisualizerWeb():
                                   
     def _getMoteData(self, moteid):
         '''
-        Collects JSON data for the provided mote.
+        Collects data for the provided mote.
         
         :param moteid: 16-bit ID of mote
-        :rtype:        JSON dictionary containing data
         '''
         log.debug('Get JSON data for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
@@ -129,16 +127,14 @@ class OpenVisualizerWeb():
                 ms.ST_QUEUE       : ms.getStateElem(ms.ST_QUEUE).toJson('data'),
                 ms.ST_NEIGHBORS   : ms.getStateElem(ms.ST_NEIGHBORS).toJson('data'),
             }
-            jsonstr = json.dumps(states)
-            #log.debug('Dumped moteState to JSON: {0}'.format(jsonstr))
-            return jsonstr
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
-            return '{"result" : "fail"}'
+            states = {}
+        return states
             
     def _setEventDebug(self, enabled):
         '''
-        Adds debug packets to eventBus stream.
+        Selects whether eventBus must export debug packets.
         
         :param enabled: 'true' if enabled; any other value considered false
         '''
@@ -148,11 +144,18 @@ class OpenVisualizerWeb():
 
     @view('eventBus.tmpl')
     def _showEventBus(self):
-        return dict(isDebugPkts=self.app.eventBusMonitor.meshDebugEnabled)
+        '''
+        Simple page; data for the page template is identical to the data 
+        for periodic updates of event list.
+        '''
+        return self._getEventData()
     
     def _getEventData(self):
-        # getStats() already in JSON format
-        return self.app.eventBusMonitor.getStats()
+        response = {
+            'isDebugPkts' : 'true' if self.app.eventBusMonitor.meshDebugEnabled else 'false',
+            'stats'       : self.app.eventBusMonitor.getStats(),
+        }
+        return response
 
 #============================ main ============================================
 from argparse       import ArgumentParser

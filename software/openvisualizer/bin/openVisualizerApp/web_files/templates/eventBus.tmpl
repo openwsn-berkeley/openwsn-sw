@@ -43,22 +43,8 @@
                         : sort_rows_alpha);
             event_grid.invalidate();         
         });
-         
-        %# Update debug checkbox. To work reliably, the template must set
-        %# the initial value through a programmatic click, rather than setting
-        %# the checked attribute of the input tag.
-        // Update debug checkbox
-        if ($("#debug_select").is(':checked') != {{'true' if isDebugPkts else 'false'}}) {
-            $("#debug_select").click();
-        }
-
-        // Get data
-        $.ajax({
-            dataType: "json",
-            url: "/eventdata",
-            success: updateForData,
-            error: errorOnEventdata
-        });
+        %# Don't escape quotes in stats
+        updateForDataValues({{!stats}}, {{isDebugPkts}});
     });
     </script>
 
@@ -92,11 +78,7 @@
     </div>
     
     <script>
-    // Callback for AJAX data retrieval.
-    function updateForData(json) {
-        console.log("Update for event data received");
-        
-        event_rows = json;
+    function updateEventGrid(event_rows) {
         if (sort_field != null) {
             event_rows.sort(
                     sort_field == 'num' 
@@ -105,6 +87,23 @@
         }
         event_grid.setData(event_rows);
         event_grid.invalidate();
+    }
+    
+    // Update debug checkbox
+    // Param isDebugPkts: boolean true for checked, or any other value for unchecked
+    function updateDebugSelect(isDebugPkts) {
+        if ($("#debug_select").is(':checked') != isDebugPkts) {
+            $("#debug_select").click();
+        }
+    }
+    
+    // Common update function for original template or Ajax updates.
+    // Expects parameters as JSON.
+    // Param stats:       Array of JS objects (JSON already parsed)
+    // Param isDebugPkts: 'true' for checked, or 'false' for unchecked
+    function updateForDataValues(stats, isDebugPkts) {
+        updateEventGrid(stats);
+        updateDebugSelect($.parseJSON(isDebugPkts));
         
         timeoutId = setTimeout(function() {
             $.ajax({
@@ -114,6 +113,12 @@
                 error: errorOnEventdata
             });
         }, 5000);
+    }
+    
+    // Callback for AJAX data retrieval.
+    function updateForData(json) {
+        console.log("Update for event data received");
+        updateForDataValues($.parseJSON(json.stats), json.isDebugPkts);
     }
 
     // Callback for debug packet selection.
