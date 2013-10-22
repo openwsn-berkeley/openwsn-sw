@@ -132,7 +132,7 @@ class OpenTunWindows(openTun.OpenTun):
     
     def __init__(self):
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # Windows-specific local variables
         self.overlappedTx         = pywintypes.OVERLAPPED()
@@ -159,7 +159,8 @@ class OpenTunWindows(openTun.OpenTun):
             win32file.WriteFile(self.tunIf, data, self.overlappedTx)
             win32event.WaitForSingleObject(self.overlappedTx.hEvent, win32event.INFINITE)
             self.overlappedTx.Offset = self.overlappedTx.Offset + len(data)
-            log.debug("data dispatched to tun correctly {0}, {1}".format(signal,sender))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug("data dispatched to tun correctly {0}, {1}".format(signal,sender))
         except Exception as err:
             errMsg=u.formatCriticalMessage(err)
             print errMsg

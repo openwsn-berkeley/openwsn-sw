@@ -31,7 +31,7 @@ class lbrClient(threading.Thread):
         # store params
         
         # log
-        log.debug("creating instance")
+        log.info("creating instance")
         
         # local variables
         self.statsLock            = threading.Lock()
@@ -59,7 +59,7 @@ class lbrClient(threading.Thread):
     def run(self):
         try:
             # log
-            log.debug("starting to run")
+            log.info("starting to run")
             
             #start the eventBusClient
             self.eventBusClient.start()
@@ -73,7 +73,7 @@ class lbrClient(threading.Thread):
                 self.connectSem.release()
                 
                 # log
-                log.debug("starting to listen for data")
+                log.info("starting to listen for data")
                 
                 try:
                     while True:
@@ -124,7 +124,7 @@ class lbrClient(threading.Thread):
     def connect(self,lbrAddr,lbrPort,netname):
         
         # log
-        log.debug("connecting to {2}@{0}:{1}".format(lbrAddr,lbrPort,netname))
+        log.info("connecting to {2}@{0}:{1}".format(lbrAddr,lbrPort,netname))
         
         #test source routing:
         #self.timer = threading.Timer(20,self._testSourceRouting)
@@ -273,8 +273,10 @@ class lbrClient(threading.Thread):
                 printlowpan=''.join([str(b).encode("hex") for b in lowpan])
                 # send to LBR
                 self.socket.send(lowpan)
-                log.debug('packet sent to lbr: {}'.format(printlowpan))
-                #log.debug(lowpan)
+                
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug('packet sent to lbr: {}'.format(printlowpan))
+                
                 # increment statistics
                 self._incrementStats('packetsSentOk')
                 self._incrementStats('bytesSentOk', step=len(lowpan))
@@ -307,7 +309,8 @@ class lbrClient(threading.Thread):
     def _resetStats(self,disconnectReason=None):
         
         # log
-        log.debug("resetting stats")
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("resetting stats")
         
         self.statsLock.acquire()
         self.stats['disconnectReason']      = disconnectReason

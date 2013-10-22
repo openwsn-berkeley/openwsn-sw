@@ -372,7 +372,7 @@ class moteState(eventBusClient.eventBusClient):
     def __init__(self,moteConnector):
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # store params
         self.moteConnector   = moteConnector
@@ -501,7 +501,8 @@ class moteState(eventBusClient.eventBusClient):
     def _receivedStatus_notif(self,sender,signal,data):
         
         # log
-        log.debug("received {0}".format(data))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("received {0}".format(data))
         
         # lock the state data
         self.stateLock.acquire()

@@ -25,7 +25,7 @@ class moteConnector(eventBusClient.eventBusClient):
     def __init__(self,serialport):
         
         # log
-        log.debug("creating instance")
+        log.info("creating instance")
         
         # store params
         self.serialport                = serialport
@@ -61,11 +61,12 @@ class moteConnector(eventBusClient.eventBusClient):
         )
         
     def _sendToParser(self,data):
-        #convert data
-        input = [ord(c) for c in data]
+        
+        input = data
         
         # log
-        log.debug("received input={0}".format(input))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("received input={0}".format(input))
         
         # parse input
         try:

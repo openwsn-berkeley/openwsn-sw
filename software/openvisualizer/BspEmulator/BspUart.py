@@ -42,19 +42,19 @@ class BspUart(BspModule.BspModule):
     
     #=== interact with UART
     
-    def read(self,numBytesToRead):
+    def read(self):
         '''
         \brief Read a byte from the mote.
         '''
-        assert numBytesToRead==1
         
         # wait for something to appear in the RX buffer
         self.uartRxBufferSem.acquire()
         
-        # pop the first element
+        # copy uartRxBuffer
         with self.uartRxBufferLock:
             assert len(self.uartRxBuffer)>0
-            returnVal = chr(self.uartRxBuffer.pop(0))
+            returnVal             = [chr(b) for b in self.uartRxBuffer]
+            self.uartRxBuffer     = []
         
         # return that element
         return returnVal
@@ -158,6 +158,51 @@ class BspUart(BspModule.BspModule):
         # add to receive buffer
         with self.uartRxBufferLock:
             self.uartRxBuffer    += [byteToWrite]
+        
+        # release the semaphore indicating there is something in RX buffer
+        self.uartRxBufferSem.release()
+        
+        # wait for the moteProbe to be done reading
+        self.waitForDoneReading.acquire()
+    
+    def cmd_writeCircularBuffer_FASTSIM(self,buffer):
+        '''emulates
+           void uart_writeCircularBuffer_FASTSIM(uint8_t* buffer, uint8_t len)'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_writeCircularBuffer_FASTSIM buffer='+str(buffer))
+        
+        self._writeBuffer(buffer)
+    
+    def uart_writeBufferByLen_FASTSIM(self,buffer):
+        '''emulates
+           void uart_writeBufferByLen_FASTSIM(uint8_t* buffer, uint8_t len)'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('uart_writeBufferByLen_FASTSIM buffer='+str(buffer))
+        
+        self._writeBuffer(buffer)
+    
+    def _writeBuffer(self,buffer):
+        # set tx interrupt flag
+        self.txInterruptFlag      = True
+        
+        # calculate the time at which the buffer will have been sent
+        doneSendingTime           = self.timeline.getCurrentTime()+float(float(len(buffer))/float(self.BAUDRATE))
+        
+        # schedule uart TX interrupt in len(buffer)/BAUDRATE seconds
+        self.timeline.scheduleEvent(
+            doneSendingTime,
+            self.motehandler.getId(),
+            self.intr_tx,
+            self.INTR_TX
+        )
+        
+        # add to receive buffer
+        with self.uartRxBufferLock:
+            self.uartRxBuffer    += buffer
         
         # release the semaphore indicating there is something in RX buffer
         self.uartRxBufferSem.release()

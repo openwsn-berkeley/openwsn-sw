@@ -21,7 +21,7 @@ class typeCellType(openType.openType):
     
     def __init__(self):
         # log
-        log.debug("creating object")
+        log.info("creating object")
         
         # initialize parent class
         openType.openType.__init__(self)

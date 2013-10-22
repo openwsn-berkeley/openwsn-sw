@@ -32,7 +32,7 @@ class eventBusClient(object):
                 assert k in ['signal','sender','callback']
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # store params
         self.dataLock        = threading.RLock()
@@ -141,10 +141,13 @@ class eventBusClient(object):
         )
         for (function,returnVal) in temp:
             if returnVal!=None:
-                log.debug("returning true is subscribed to signal {0}, {1}".format(signal,returnVal))    
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug("returning true is subscribed to signal {0}, {1}".format(signal,returnVal))
                 return True
         
-        log.debug("returning false as nobody is subscribed to signal {0}, {1}".format(signal,temp))    
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("returning false as nobody is subscribed to signal {0}, {1}".format(signal,temp))
+        
         return False
     
     def _dispatchAndGetResult(self,signal,data):

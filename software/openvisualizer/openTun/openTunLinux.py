@@ -75,14 +75,15 @@ class TunReadThread(threading.Thread):
                 p = [ord(b) for b in p]
                 
                 # debug info
-                log.debug('packet captured on tun interface: {0}'.format(u.formatBuf(p)))
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug('packet captured on tun interface: {0}'.format(u.formatBuf(p)))
     
                 # remove tun ID octets
                 p = p[4:]
                 
                 # make sure it's an IPv6 packet (i.e., starts with 0x6x)
                 if (p[0]&0xf0) != 0x60:
-                    log.debug('this is not an IPv6 packet')
+                    log.info('this is not an IPv6 packet')
                     continue
                 
                 # because of the nature of tun for Windows, p contains ETHERNET_MTU
@@ -114,7 +115,7 @@ class OpenTunLinux(openTun.OpenTun):
     
     def __init__(self):
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # initialize parent class
         openTun.OpenTun.__init__(self)
@@ -139,7 +140,8 @@ class OpenTunLinux(openTun.OpenTun):
         try:
             # write over tuntap interface
             os.write(self.tunIf, data)
-            log.debug("data dispatched to tun correctly {0}, {1}".format(signal,sender))
+            if log.isEnabledFor(logging.DEBUG):
+                log.debug("data dispatched to tun correctly {0}, {1}".format(signal,sender))
         except Exception as err:
             errMsg=u.formatCriticalMessage(err)
             print errMsg

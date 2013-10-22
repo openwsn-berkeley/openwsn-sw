@@ -29,7 +29,7 @@ class ParserInfoErrorCritical(Parser.Parser):
         assert severity in self.SEVERITY_ALL
         
         # log
-        log.debug("create instance")
+        log.info("create instance")
         
         # store params
         self.severity   = severity
@@ -42,7 +42,8 @@ class ParserInfoErrorCritical(Parser.Parser):
     def parseInput(self,input):
         
         # log
-        log.debug("received data {0}".format(input))
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug("received data {0}".format(input))
         
         # parse packet
         try:

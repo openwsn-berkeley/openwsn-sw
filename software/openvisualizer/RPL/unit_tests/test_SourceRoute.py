@@ -90,16 +90,17 @@ def test_sourceRoute(expectedSourceRoute):
     calculatedRoute     = sourceRoute.getSourceRoute(expectedDestination)
     
     # log
-    output              = []
-    output             += ['\n']
-    output             += ['expectedDestination: {0}'.format(u.formatAddr(expectedDestination))]
-    output             += ['expectedRoute:']
-    for m in expectedRoute:
+    if log.isEnabledFor(logging.DEBUG):
+        output          = []
+        output         += ['\n']
+        output         += ['expectedDestination: {0}'.format(u.formatAddr(expectedDestination))]
+        output         += ['expectedRoute:']
+        for m in expectedRoute:
             output     += ['- {0}'.format(u.formatAddr(m))]
-    output             += ['calculatedRoute:']
-    for m in calculatedRoute:
+        output         += ['calculatedRoute:']
+        for m in calculatedRoute:
             output     += ['- {0}'.format(u.formatAddr(m))]
-    output               = '\n'.join(output)
-    log.debug(output)
+        output          = '\n'.join(output)
+        log.debug(output)
     
     assert calculatedRoute==expectedRoute

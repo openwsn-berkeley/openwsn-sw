@@ -122,10 +122,9 @@ class UDPLatency(eventBusClient.eventBusClient):
         self.latencyStats.update({str(address):stats})
         self.stateLock.release()
         
-        #log stats 
-        log.debug(self._formatUDPLatencyStat(self.latencyStats.get(str(address)), str(address)))
-    
-    
+        # log stats
+        if log.isEnabledFor(logging.DEBUG):
+            log.debug(self._formatUDPLatencyStat(self.latencyStats.get(str(address)), str(address)))
     
     # this is not activated as this function are not bound to a signal
     def _infoDagRoot_notif(self,sender,signal,data):
