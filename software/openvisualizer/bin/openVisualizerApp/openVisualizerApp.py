@@ -138,13 +138,18 @@ from argparse       import ArgumentParser
 
 DEFAULT_MOTE_COUNT = 3
 
-def main():
+def main(parser=None):
     '''
     Entry point for application startup by UI. Parses common arguments.
     
+    :param parser:  Optional ArgumentParser passed in from enclosing UI module
+                    to allow that module to pre-parse specific arguments
     :rtype:         openVisualizerApp object
     '''
-    parser   = _createCliParser()
+    if (parser == None):
+        parser = ArgumentParser()
+        
+    _addParserArgs(parser)
     argspace = parser.parse_args()
     
     logging.config.fileConfig(
@@ -175,43 +180,38 @@ def main():
         argspace.trace
     )    
 
-def _createCliParser():
-    
-    parser = ArgumentParser()
-    
-    parser.add_argument( '-d',
+def _addParserArgs(parser):
+    parser.add_argument('-d', '--appDir', 
         dest       = 'appDir',
         default    = '.',
         action     = 'store',
         help       = 'working directory'
     )
     
-    parser.add_argument( '-f',
+    parser.add_argument('-f', '--fwDir',
         dest       = 'fwDir',
         default    = os.path.join('..','..','..','..','..','openwsn-fw'),
         action     = 'store',
         help       = 'firmware directory'
     )
     
-    parser.add_argument( '--sim', '-s',
+    parser.add_argument('-s', '--sim', 
         dest       = 'simulatorMode',
         default    = False,
         action     = 'store_true',
         help       = 'simulation mode, with default of {0} motes'.format(DEFAULT_MOTE_COUNT)
     )
     
-    parser.add_argument( '--simCount', '-n',
+    parser.add_argument('-n', '--simCount', 
         dest       = 'numMotes',
         type       = int,
         default    = 0,
         help       = 'simulation mode, with provided mote count'
     )
     
-    parser.add_argument( '--trace','-t',
+    parser.add_argument('-t', '--trace',
         dest       = 'trace',
         default    = False,
         action     = 'store_true',
         help       = 'enables memory debugging'
     )
-    
-    return parser
