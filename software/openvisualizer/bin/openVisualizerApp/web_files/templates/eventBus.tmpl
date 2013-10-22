@@ -43,25 +43,8 @@
                         : sort_rows_alpha);
             event_grid.invalidate();         
         });
-        
-        // Update debug checkbox based on cookie
-        var isDebug = decodeURIComponent(getCookies()["selected_debugpkts"]);
-        if (isDebug != 'true') {
-            // Force use of only these two string values for simplicity.
-            isDebug = 'false';
-        }
-        if ($("#debug_select").is(':checked').toString() != isDebug) {
-            console.log('clicking #debug_select');
-            $("#debug_select").click();
-        }
-
-        // Get data
-        $.ajax({
-            dataType: "json",
-            url: "/eventdata",
-            success: updateForData,
-            error: errorOnAjax
-        });
+        %# Don't escape quotes in stats
+        updateForDataValues({{!stats}}, {{isDebugPkts}});
     });
     </script>
 
@@ -72,20 +55,18 @@
             <form>
                 <ul><li>
                     <label for="debug_select" class="rel_label_fld" style="text-align: right; float:right; width: 11em; padding-left: 0em">Export debug packets?</label>
-                    <input style="float: right" id="debug_select" type="checkbox" value="false" />
+                    <input style="float: right" id="debug_select" type="checkbox" />
                 </li></ul>
                 <script>
                 $("#debug_select").change(function() {
                     is_selected = $(this).is(':checked');
                     console.log('Update for debug selection: ' + is_selected);
                     
-                    setCookie("selected_debugpkts", is_selected);
-                    
                     $.ajax({
                         dataType: "json",
                         url: "/eventDebug/" + is_selected,
                         success: updateForDebug,
-                        error: errorOnAjax
+                        error: errorOnEventDebug
                     });
                 });
                 </script>
@@ -97,11 +78,7 @@
     </div>
     
     <script>
-    // Callback for AJAX data retrieval.
-    function updateForData(json) {
-        console.log("Update for event data received");
-        
-        event_rows = json;
+    function updateEventGrid(event_rows) {
         if (sort_field != null) {
             event_rows.sort(
                     sort_field == 'num' 
@@ -110,15 +87,38 @@
         }
         event_grid.setData(event_rows);
         event_grid.invalidate();
+    }
+    
+    // Update debug checkbox
+    // Param isDebugPkts: boolean true for checked, or any other value for unchecked
+    function updateDebugSelect(isDebugPkts) {
+        if ($("#debug_select").is(':checked') != isDebugPkts) {
+            $("#debug_select").click();
+        }
+    }
+    
+    // Common update function for original template or Ajax updates.
+    // Expects parameters as JSON.
+    // Param stats:       Array of JS objects (JSON already parsed)
+    // Param isDebugPkts: 'true' for checked, or 'false' for unchecked
+    function updateForDataValues(stats, isDebugPkts) {
+        updateEventGrid(stats);
+        updateDebugSelect($.parseJSON(isDebugPkts));
         
         timeoutId = setTimeout(function() {
             $.ajax({
                 dataType: "json",
                 url: "/eventdata",
                 success: updateForData,
-                error: errorOnAjax
+                error: errorOnEventdata
             });
         }, 5000);
+    }
+    
+    // Callback for AJAX data retrieval.
+    function updateForData(json) {
+        console.log("Update for event data received");
+        updateForDataValues($.parseJSON(json.stats), json.isDebugPkts);
     }
 
     // Callback for debug packet selection.
@@ -126,11 +126,19 @@
         console.log("Event debug packet selection succeeded");
     }
     
-    function errorOnAjax(jqxhr, status, errorstr) {
-        var errText = (errorstr == null)
-                ? '' : ', error: ' + errorstr;
-        console.log('Ajax error: ' + status + errText);
+    function errorOnAjax(event, jqxhr, status, errorThrown) {
+        var errText = (errorThrown == null || errorThrown.length == 0)
+                ? '' : ': ' + errorThrown;
+        console.log('Ajax (' + event + ') ' + status + errText);
     }    
+    
+    function errorOnEventDebug(jqxhr, status, errorThrown) {
+        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
+    }
+    
+    function errorOnEventdata(jqxhr, status, errorThrown) {
+        errorOnAjax('eventdata', jqxhr, status, errorThrown);
+    }
     
     function sort_rows_alpha(a, b){
         // Create variables to reduce garbage generation
