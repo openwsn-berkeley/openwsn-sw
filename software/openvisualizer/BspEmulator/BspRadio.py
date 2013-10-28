@@ -6,20 +6,20 @@ from eventBus import eventBusClient
 import BspModule
 
 class RadioState:
-    STOPPED             = 'STOPPED',             # Completely stopped.
-    RFOFF               = 'RFOFF',               # Listening for commands by RF chain is off.
-    SETTING_FREQUENCY   = 'SETTING_FREQUENCY',   # Configuring the frequency.
-    FREQUENCY_SET       = 'FREQUENCY_SET',       # Done configuring the frequency.
-    LOADING_PACKET      = 'LOADING_PACKET',      # Loading packet to send over SPI.
-    PACKET_LOADED       = 'PACKET_LOADED',       # Packet is loaded in the TX buffer.
-    ENABLING_TX         = 'ENABLING_TX',         # The RF Tx chaing is being enabled (includes locked the PLL).
-    TX_ENABLED          = 'TX_ENABLED',          # Radio completely ready to transmit.
-    TRANSMITTING        = 'TRANSMITTING',        # Busy transmitting bytes.
-    ENABLING_RX         = 'ENABLING_RX',         # The RF Rx chaing is being enabled (includes locked the PLL).
-    LISTENING           = 'LISTENING',           # RF chain is on, listening, but no packet received yet.
-    RECEIVING           = 'RECEIVING',           # Busy receiving bytes.
-    TXRX_DONE           = 'TXRX_DONE',           # Frame has been sent/received completely.
-    TURNING_OFF         = 'TURNING_OFF',         # Turning the RF chain off.
+    STOPPED             = 'STOPPED'              # Completely stopped.
+    RFOFF               = 'RFOFF'                # Listening for commands by RF chain is off.
+    SETTING_FREQUENCY   = 'SETTING_FREQUENCY'    # Configuring the frequency.
+    FREQUENCY_SET       = 'FREQUENCY_SET'        # Done configuring the frequency.
+    LOADING_PACKET      = 'LOADING_PACKET'       # Loading packet to send over SPI.
+    PACKET_LOADED       = 'PACKET_LOADED'        # Packet is loaded in the TX buffer.
+    ENABLING_TX         = 'ENABLING_TX'          # The RF Tx chaing is being enabled (includes locked the PLL).
+    TX_ENABLED          = 'TX_ENABLED'           # Radio completely ready to transmit.
+    TRANSMITTING        = 'TRANSMITTING'         # Busy transmitting bytes.
+    ENABLING_RX         = 'ENABLING_RX'          # The RF Rx chaing is being enabled (includes locked the PLL).
+    LISTENING           = 'LISTENING'            # RF chain is on, listening, but no packet received yet.
+    RECEIVING           = 'RECEIVING'            # Busy receiving bytes.
+    TXRX_DONE           = 'TXRX_DONE'            # Frame has been sent/received completely.
+    TURNING_OFF         = 'TURNING_OFF'          # Turning the RF chain off.
 
 class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
     '''
@@ -366,6 +366,10 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         # signal end of frame to mote
         counterVal           = self.radiotimer.getCounterVal()
         
+        # log
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('intr_endOfFrame_fromPropagation counterVal={0}'.format(counterVal))
+        
         # indicate to the mote
         self.motehandler.mote.radio_isr_endFrame(counterVal)
         
@@ -411,7 +415,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         
         if (self.isInitialized==True and
             self.state==RadioState.RECEIVING):
-            self._changeState(RadioState.TXRX_DONE)
+            self._changeState(RadioState.LISTENING)
             
             # schedule end of frame
             self.timeline.scheduleEvent(
