@@ -232,6 +232,7 @@ class StateNeighborsRow(StateElem):
         self.data[0]['parentPreference']         = notif.parentPreference
         self.data[0]['stableNeighbor']           = notif.stableNeighbor
         self.data[0]['switchStabilityCounter']   = notif.switchStabilityCounter
+        self.data[0]['joinPrio']                 = notif.joinPrio
         if 'addr' not in self.data[0]:
             self.data[0]['addr']                 = typeAddr.typeAddr()
         self.data[0]['addr'].update(notif.addr_type,
@@ -251,6 +252,7 @@ class StateNeighborsRow(StateElem):
                                    notif.asn_2_3,
                                    notif.asn_4)
 
+		
 class StateIsSync(StateElem):
     
     def update(self,notif):
@@ -420,6 +422,7 @@ class moteState(eventBusClient.eventBusClient):
                                                         'numTxACK',
                                                         'numWraps',
                                                         'asn',
+                                                        'joinPrio'
                                                     ]
                                                 ))
         self.state[self.ST_ISSYNC]          = StateIsSync()
