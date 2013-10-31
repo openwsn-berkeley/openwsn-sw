@@ -46,6 +46,7 @@
             {id: "switchStabilityCounter", name: "Switch Stability Counter", field: "switchStabilityCounter"},
             {id: "addr",                   name: "Address",                  field: "addr"},
             {id: "DAGrank",                name: "DAG Rank",                 field: "DAGrank"},
+			{id: "JoinPrio",               name: "JP",                       field: "joinPrio"},	
             {id: "rssi",                   name: "RSS",                      field: "rssi"},
             {id: "numRx",                  name: "RX",                       field: "numRx"},
             {id: "numTx",                  name: "TX",                       field: "numTx"},
@@ -54,7 +55,7 @@
             {id: "asn",                    name: "ASN",                      field: "asn"}
         ];
         nbrs_cols[4].width = 250;   // Address must be wide
-        nbrs_cols[11].width = 150;  // ASN must be wide
+        nbrs_cols[12].width = 150;  // ASN must be wide
         nbrs_grid = new Slick.Grid("#tab_nbrs", [], nbrs_cols, {});
         
         // Works around a bug in display of this grid. The horizontal
