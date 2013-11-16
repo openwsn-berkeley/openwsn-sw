@@ -7,5 +7,4 @@
 *.pyc
 __pycache__
 .sconsign.dblite
-build
 test_report_*.xml

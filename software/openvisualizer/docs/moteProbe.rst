@@ -4,7 +4,7 @@ moteProbe Package
 :mod:`OpenHdlc` Module
 ----------------------
 
-.. automodule:: moteProbe.OpenHdlc
+.. automodule:: openvisualizer.moteProbe.OpenHdlc
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ moteProbe Package
 :mod:`moteProbe` Module
 -----------------------
 
-.. automodule:: moteProbe.moteProbe
+.. automodule:: openvisualizer.moteProbe.moteProbe
     :members:
     :undoc-members:
     :show-inheritance:

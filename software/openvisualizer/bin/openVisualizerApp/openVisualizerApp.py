@@ -13,17 +13,18 @@ import os
 import logging
 log = logging.getLogger('openVisualizerApp')
 
-from eventBus      import eventBusMonitor
-from moteProbe     import moteProbe
-from moteConnector import moteConnector
-from moteState     import moteState
-from RPL           import RPL
-from openLbr       import openLbr
-from openTun       import openTun
-from RPL           import UDPLatency
-from RPL           import topology
+from openvisualizer.eventBus      import eventBusMonitor
+from openvisualizer.moteProbe     import moteProbe
+from openvisualizer.moteConnector import moteConnector
+from openvisualizer.moteState     import moteState
+from openvisualizer.RPL           import RPL
+from openvisualizer.openLbr       import openLbr
+from openvisualizer.openTun       import openTun
+from openvisualizer.RPL           import UDPLatency
+from openvisualizer.RPL           import topology
+from openvisualizer               import appdirs
 
-import openvisualizer_utils as u
+import openvisualizer.openvisualizer_utils as u
     
 class OpenVisualizerApp(object):
     '''
@@ -31,14 +32,16 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,appDir,fwDir,simulatorMode,numMotes,trace):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug):
         
         # store params
-        self.appDir               = appDir
-        self.fwDir                = fwDir
+        self.confdir              = confdir
+        self.datadir              = datadir
+        self.logdir               = logdir
         self.simulatorMode        = simulatorMode
         self.numMotes             = numMotes
-        self.trace                = trace 
+        self.trace                = trace
+        self.debug                = debug
         
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -48,7 +51,7 @@ class OpenVisualizerApp(object):
         self.udpLatency           = UDPLatency.UDPLatency()
         self.openTun              = openTun.create() # call last since indicates prefix
         if self.simulatorMode:
-            from SimEngine import SimEngine, MoteHandler
+            from openvisualizer.SimEngine import SimEngine, MoteHandler
             
             self.simengine        = SimEngine.SimEngine()
             self.simengine.start()
@@ -62,10 +65,10 @@ class OpenVisualizerApp(object):
             ]
         else:
             # in "simulator" mode, motes are emulated
+            sys.path.append(os.path.join(self.datadir, 'sim_files'))
             import oos_openwsn
             
-            MoteHandler.readNotifIds(
-                os.path.join(self.fwDir,'firmware','openos','bsp','boards','python','openwsnmodule_obj.h'))
+            MoteHandler.readNotifIds(os.path.join(self.datadir, 'sim_files', 'openwsnmodule_obj.h'))
             self.moteProbes       = []
             for _ in range(self.numMotes):
                 moteHandler       = MoteHandler.MoteHandler(self.simengine,oos_openwsn.OpenMote())
@@ -98,8 +101,10 @@ class OpenVisualizerApp(object):
         
         # start tracing threads
         if self.trace:
-            import OVtracer
-            logging.config.fileConfig(os.path.join(appDir,'trace.conf'), {'logDir': appDir})
+            import openvisualizer.OVtracer
+            logging.config.fileConfig(
+                                os.path.join(self.confdir,'trace.conf'),
+                                {'logDir': _forceSlashSep(self.logdir, self.debug)})
             OVtracer.OVtracer()
         
     #======================== public ==========================================
@@ -128,9 +133,7 @@ class OpenVisualizerApp(object):
                     return ms
         else:
             return None
-    
-       
-    #======================== GUI callbacks ===================================
+        
 
 #============================ main ============================================
 import logging.config
@@ -152,9 +155,12 @@ def main(parser=None):
     _addParserArgs(parser)
     argspace = parser.parse_args()
     
+    confdir, datadir, logdir = _initExternalDirs(argspace.appdir, argspace.debug)
+    
+    # Must use a '/'-separated path for log dir, even on Windows.
     logging.config.fileConfig(
-        os.path.join(argspace.appDir,'logging.conf'), 
-        {'logDir': argspace.appDir}
+        os.path.join(confdir,'logging.conf'), 
+        {'logDir': _forceSlashSep(logdir, argspace.debug)}
     )
 
     if argspace.numMotes > 0:
@@ -164,54 +170,142 @@ def main(parser=None):
         # default count when --simCount not provided
         argspace.numMotes = DEFAULT_MOTE_COUNT
 
-    log.info('Initializing OpenVisualizerApp with options: \n\t{0}'.format(
-            '\n\t'.join(['appDir   = {0}'.format(argspace.appDir),
-                         'fwDir    = {0}'.format(argspace.fwDir),
+    log.info('Initializing OpenVisualizerApp with options:\n\t{0}'.format(
+            '\n\t'.join(['appdir   = {0}'.format(argspace.appdir),
                          'sim      = {0}'.format(argspace.simulatorMode),
                          'simCount = {0}'.format(argspace.numMotes),
-                         'trace    = {0}'.format(argspace.trace)],
+                         'trace    = {0}'.format(argspace.trace),
+                         'debug    = {0}'.format(argspace.debug)],
             )))
+    log.info('Using external dirs:\n\t{0}'.format(
+            '\n\t'.join(['conf     = {0}'.format(confdir),
+                         'data     = {0}'.format(datadir),
+                         'log      = {0}'.format(logdir)],
+            )))
+    log.info('sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path)))
         
     return OpenVisualizerApp(
-        argspace.appDir,
-        argspace.fwDir,
-        argspace.simulatorMode,
-        argspace.numMotes,
-        argspace.trace
+        confdir, datadir, logdir,
+        argspace.simulatorMode, argspace.numMotes, 
+        argspace.trace, argspace.debug
     )    
 
 def _addParserArgs(parser):
-    parser.add_argument('-d', '--appDir', 
-        dest       = 'appDir',
+    parser.add_argument('-a', '--appDir', 
+        dest       = 'appdir',
         default    = '.',
         action     = 'store',
         help       = 'working directory'
     )
-    
-    parser.add_argument('-f', '--fwDir',
-        dest       = 'fwDir',
-        default    = os.path.join('..','..','..','..','..','openwsn-fw'),
-        action     = 'store',
-        help       = 'firmware directory'
-    )
-    
     parser.add_argument('-s', '--sim', 
         dest       = 'simulatorMode',
         default    = False,
         action     = 'store_true',
         help       = 'simulation mode, with default of {0} motes'.format(DEFAULT_MOTE_COUNT)
     )
-    
     parser.add_argument('-n', '--simCount', 
         dest       = 'numMotes',
         type       = int,
         default    = 0,
         help       = 'simulation mode, with provided mote count'
     )
-    
     parser.add_argument('-t', '--trace',
         dest       = 'trace',
         default    = False,
         action     = 'store_true',
         help       = 'enables memory debugging'
     )
+    parser.add_argument('-d', '--debug',
+        dest       = 'debug',
+        default    = False,
+        action     = 'store_true',
+        help       = 'enables application debugging'
+    )
+    
+def _forceSlashSep(ospath, debug):
+    '''
+    Converts a Windows-based path to use '/' as the path element separator.
+    
+    :param ospath: A relative or absolute path for the OS on which this process
+                   is running
+    :param debug:  If true, print extra logging info
+    '''
+    if os.sep == '/':
+        return ospath
+        
+    head     = ospath
+    pathlist = []
+    while True:
+        head, tail = os.path.split(head)
+        if tail == '':
+            pathlist.insert(0, head.rstrip('\\'))
+            break
+        else:
+            pathlist.insert(0, tail)
+            
+    pathstr = '/'.join(pathlist)
+    if debug:
+        print pathstr
+    return pathstr
+    
+def _initExternalDirs(appdir, debug):    
+    '''
+    Find and define confdir for config files and datadir for static data. Also
+    return logdir for logs. There are several possiblities, searched in the order
+    described below.
+
+    1. Provided from command line, appdir parameter
+    2. In the directory containing openVisualizerApp.py
+    3. In native OS site-wide config and data directories
+    4. In the openvisualizer package directory
+
+    The directories differ only when using a native OS site-wide setup.
+    
+    :param debug: If true, print extra logging info
+    :returns: 3-Tuple with config dir, data dir, and log dir
+    :raises: RuntimeError if files/directories not found as expected
+    '''
+    if not appdir == '.':
+        if not _verifyConfpath(appdir):
+            raise RuntimeError('Config file not in expected directory: {0}'.format(appdir))
+        if debug:
+            print 'External dir from appdir'
+        return (appdir, appdir, appdir)
+    
+    filedir = os.path.dirname(__file__)
+    if _verifyConfpath(filedir):
+        if debug:
+            print 'External dir from openVisualizerApp.py'
+        return (filedir, filedir, filedir)
+        
+    confdir = appdirs.site_config_dir('openvisualizer', 'OpenWSN')
+    if _verifyConfpath(confdir):
+        if not sys.platform.startswith('linux'):
+            raise RuntimeError('Native OS external directories supported only on Linux')
+            
+        datadir = appdirs.site_data_dir('openvisualizer', 'OpenWSN')
+        if os.path.exists(datadir):
+            logdir = '/var/log/openvisualizer'
+            if not os.path.exists(logdir):
+                os.mkdir(logdir, 750)
+            if debug:
+                print 'External dir from OS'
+            return (confdir, datadir, logdir)
+        else:
+            raise RuntimeError('Cannot find expected data directory: {0}'.format(datadir))
+
+    datadir = os.path.join(os.path.dirname(u.__file__), 'data')
+    if _verifyConfpath(datadir):
+        if debug:
+            print 'External dir from openvisualizer package'
+        return (datadir, datadir, datadir)
+    else:
+        raise RuntimeError('Cannot find expected data directory: {0}'.format(pkgdir))
+                    
+def _verifyConfpath(confdir):
+    '''
+    Returns True if OpenVisualizer conf files exist in the provided 
+    directory.
+    '''
+    confpath = os.path.join(confdir, 'openvisualizer.conf')
+    return os.path.isfile(confpath)

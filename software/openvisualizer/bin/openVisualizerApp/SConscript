@@ -1,0 +1,149 @@
+# Copyright (c) 2010-2013, Regents of the University of California. 
+# All rights reserved. 
+#  
+# Released under the BSD 3-Clause license as published at the link below.
+# https://openwsn.atlassian.net/wiki/display/OW/License
+'''
+SCons script to run the application within the source repository. 
+Provides rungui, runcli, and runweb targets.
+'''
+
+import os
+import subprocess
+
+Import('env')
+
+def uiRunner(target, source, env):
+    '''
+    Builder to run OpenVisualizerApp as subprocess in current directory.
+    Note: Although this SCons task is constructed in the bin/openVisualizerApp 
+    directory, it is executed from the root openvisualizer directory (../..).
+    
+    Target is never created; always runs Python app. Does not check if
+    app is running already. Assumes current process already runs with the
+    required superuser/administrator privileges.
+    '''
+    # Include root directory
+    pypath = '.'   
+    try:
+        envpath = os.environ['PYTHONPATH']
+        if envpath:
+            pypath = pypath + os.pathsep + envpath
+    except KeyError:
+        pass
+
+    subEnv               = os.environ.copy()
+    subEnv['PYTHONPATH'] = pypath
+
+    argList = [
+        'python', str(source[0]), 
+        '-a',     env['BUILD_DIR'],
+    ]
+    if env['SIMCOUNT']:
+        # Must append to list in a single item, without embedded quotes.
+        argList.append('-n {0}'.format(env['SIMCOUNT']))
+    elif env['SIMOPT']:
+        argList.append('-s')
+    
+    if env['TRACEOPT']:
+        argList.append('-t')
+    if env['DEBUGOPT']:
+        argList.append('-d')
+        
+    if env['HOSTOPT']:
+        argList.append('-H {0}'.format(env['HOSTOPT']))
+    if env['PORTOPT']:
+        argList.append('-p {0}'.format(env['PORTOPT']))
+    
+    result = 0
+    try:
+        p = subprocess.Popen(argList, env=subEnv)
+
+        if env['WAIT_ON_UI']:
+            # Must wait for CLI program that uses raw_input(); otherwise
+            # SCons exits and standard input is sent to shell.
+            result = p.wait()
+        else:
+            # Display PID to make it easier to kill if necessary.
+            print 'Child PID is {0}'.format(p.pid)
+    except:
+        result = 1
+        
+    return result
+    
+def setupUiRunner(env, uiFile, dataDirs):
+    '''
+    Sets up dependencies for data files required to run an OpenVisualizer 
+    UI. The data files are copied to the environment's BUILD_DIR.
+    
+    * Creates commands to copy conf files unless they exist already. The 
+    user may have edited them.
+    * Creates commands to copy the provided static data directories 
+    unconditionally.
+    
+    :param uiFile:   Filename to run in openVisualizerApp directory
+    :param dataDirs: Dirs containing static data
+    :rtype:          The targets reference for the Builder.
+    '''
+    
+    # Create Builder to run GUI    
+    env.Append(BUILDERS = {'RunUi' : Builder(action = uiRunner)})
+    
+    targets = env.RunUi(uiFile)
+    
+    for node in (env['CONF_FILES'] + env['DATA_FILES']):
+        bldNode = os.path.join(env['BUILD_DIR'], node)
+        
+        Depends(targets, bldNode)
+        Command(
+            bldNode, 
+            node,
+            [
+                Mkdir(env['BUILD_DIR']),
+                Copy('$TARGET', '$SOURCE')
+            ]
+        )
+        
+    for node in env['DATA_DIRS']:
+        bldNode = os.path.join(env['BUILD_DIR'], node)
+        
+        Depends(targets, bldNode)
+        Command(
+            bldNode, 
+            node,
+            [
+                Delete('$TARGET'),
+                Mkdir(env['BUILD_DIR']),
+                Copy('$TARGET', '$SOURCE')
+            ]
+        )
+        AlwaysBuild(bldNode)
+    
+    return targets
+
+# Prepare the environment to create builders for data files and directoires,
+# as well as a builder to run the app itself.
+env['BUILD_DIR']   = os.path.join(env['ROOT_BUILD_DIR'], 'runui')
+env['WAIT_ON_UI']  = False
+# Must create the entries for use here and by parent SConstruct to identify
+# these kinds of files for other use.
+env['CONF_FILES']  = ['openvisualizer.conf', 'logging.conf', 'trace.conf']
+env['DATA_DIRS']   = ['web_files', 'sim_files']
+env['DATA_FILES']  = []
+
+# Customize environment for each target. Must remove 'host' and 'port' 
+# options for GUI and CLI because they are not defined in those scripts.
+guiEnv            = env.Clone()
+guiEnv['HOSTOPT'] = None
+guiEnv['PORTOPT'] = None
+Alias('rungui', setupUiRunner(guiEnv, 'openVisualizerGui.py', []))
+
+cliEnv               = env.Clone()
+cliEnv['WAIT_ON_UI'] = True
+cliEnv['HOSTOPT']    = None
+cliEnv['PORTOPT']    = None
+Alias('runcli', setupUiRunner(cliEnv, 'openVisualizerCli.py', []))
+
+webEnv  = env.Clone()
+webdirs = ['web_files']
+Alias('runweb', setupUiRunner(webEnv, 'openVisualizerWeb.py', webdirs))

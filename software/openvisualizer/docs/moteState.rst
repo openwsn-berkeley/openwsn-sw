@@ -4,7 +4,7 @@ moteState Package
 :mod:`moteState` Module
 -----------------------
 
-.. automodule:: moteState.moteState
+.. automodule:: openvisualizer.moteState.moteState
     :members:
     :undoc-members:
     :show-inheritance:

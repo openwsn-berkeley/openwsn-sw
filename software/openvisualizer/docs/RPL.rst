@@ -4,7 +4,7 @@ RPL Package
 :mod:`RPL` Module
 -----------------
 
-.. automodule:: RPL.RPL
+.. automodule:: openvisualizer.RPL.RPL
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ RPL Package
 :mod:`SourceRoute` Module
 -------------------------
 
-.. automodule:: RPL.SourceRoute
+.. automodule:: openvisualizer.RPL.SourceRoute
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ RPL Package
 :mod:`UDPLatency` Module
 ------------------------
 
-.. automodule:: RPL.UDPLatency
+.. automodule:: openvisualizer.RPL.UDPLatency
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ RPL Package
 :mod:`topology` Module
 ----------------------
 
-.. automodule:: RPL.topology
+.. automodule:: openvisualizer.RPL.topology
     :members:
     :undoc-members:
     :show-inheritance:

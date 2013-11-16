@@ -4,7 +4,7 @@ eventBus Package
 :mod:`eventBusClient` Module
 ----------------------------
 
-.. automodule:: eventBus.eventBusClient
+.. automodule:: openvisualizer.eventBus.eventBusClient
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ eventBus Package
 :mod:`eventBusMonitor` Module
 -----------------------------
 
-.. automodule:: eventBus.eventBusMonitor
+.. automodule:: openvisualizer.eventBus.eventBusMonitor
     :members:
     :undoc-members:
     :show-inheritance:
