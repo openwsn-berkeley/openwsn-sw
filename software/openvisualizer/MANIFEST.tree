@@ -1,0 +1,6 @@
+include openvisualizer/data/web_files/static/*.js
+include openvisualizer/data/web_files/static/*.css
+include openvisualizer/data/web_files/static/images/*
+include openvisualizer/data/web_files/templates/*.tmpl
+include openvisualizer/data/sim_files/*
+include openvisualizer/data/*.conf

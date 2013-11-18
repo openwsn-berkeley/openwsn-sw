@@ -4,7 +4,7 @@ moteConnector Package
 :mod:`GenStackDefines` Module
 -----------------------------
 
-.. automodule:: moteConnector.GenStackDefines
+.. automodule:: openvisualizer.moteConnector.GenStackDefines
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ moteConnector Package
 :mod:`OpenParser` Module
 ------------------------
 
-.. automodule:: moteConnector.OpenParser
+.. automodule:: openvisualizer.moteConnector.OpenParser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ moteConnector Package
 :mod:`Parser` Module
 --------------------
 
-.. automodule:: moteConnector.Parser
+.. automodule:: openvisualizer.moteConnector.Parser
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ moteConnector Package
 :mod:`ParserData` Module
 ------------------------
 
-.. automodule:: moteConnector.ParserData
+.. automodule:: openvisualizer.moteConnector.ParserData
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ moteConnector Package
 :mod:`ParserException` Module
 -----------------------------
 
-.. automodule:: moteConnector.ParserException
+.. automodule:: openvisualizer.moteConnector.ParserException
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ moteConnector Package
 :mod:`ParserInfoErrorCritical` Module
 -------------------------------------
 
-.. automodule:: moteConnector.ParserInfoErrorCritical
+.. automodule:: openvisualizer.moteConnector.ParserInfoErrorCritical
     :members:
     :undoc-members:
     :show-inheritance:
@@ -52,7 +52,7 @@ moteConnector Package
 :mod:`ParserStatus` Module
 --------------------------
 
-.. automodule:: moteConnector.ParserStatus
+.. automodule:: openvisualizer.moteConnector.ParserStatus
     :members:
     :undoc-members:
     :show-inheritance:
@@ -60,7 +60,7 @@ moteConnector Package
 :mod:`SerialTester` Module
 --------------------------
 
-.. automodule:: moteConnector.SerialTester
+.. automodule:: openvisualizer.moteConnector.SerialTester
     :members:
     :undoc-members:
     :show-inheritance:
@@ -68,7 +68,7 @@ moteConnector Package
 :mod:`StackDefines` Module
 --------------------------
 
-.. automodule:: moteConnector.StackDefines
+.. automodule:: openvisualizer.moteConnector.StackDefines
     :members:
     :undoc-members:
     :show-inheritance:
@@ -76,7 +76,7 @@ moteConnector Package
 :mod:`moteConnector` Module
 ---------------------------
 
-.. automodule:: moteConnector.moteConnector
+.. automodule:: openvisualizer.moteConnector.moteConnector
     :members:
     :undoc-members:
     :show-inheritance:

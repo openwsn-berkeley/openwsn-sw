@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # Copyright (c) 2013, Ken Bannister.
 # All rights reserved.
 # 
@@ -6,20 +7,30 @@
 import sys
 import os
 
-import pathHelper
 if __name__=="__main__":
-    pathHelper.updatePath()
+    # Update pythonpath if running in in-tree development mode
+    basedir  = os.path.dirname(__file__)
+    confFile = os.path.join(basedir, "openvisualizer.conf")
+    if os.path.exists(confFile):
+        import pathHelper
+        pathHelper.updatePath()
 
 import logging
 log = logging.getLogger('openVisualizerWeb')
-import json
 
+try:
+    from openvisualizer.moteState import moteState
+except ImportError:
+    # Debug failed lookup on first library import
+    print 'ImportError: cannot find openvisualizer.moteState module'
+    print 'sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path))
+
+import json
 import bottle
 from bottle        import view
 
-from moteState     import moteState
 import openVisualizerApp
-import openvisualizer_utils as u
+import openvisualizer.openvisualizer_utils as u
 
 class OpenVisualizerWeb():
     '''
@@ -41,7 +52,7 @@ class OpenVisualizerWeb():
         self._defineRoutes()
         
         # To find page templates
-        bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.appDir))
+        bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.datadir))
         
     #======================== public ==========================================
     
@@ -86,7 +97,7 @@ class OpenVisualizerWeb():
         
     def _serverStatic(self, filepath):
         return bottle.static_file(filepath, 
-                                  root='{0}/web_files/static/'.format(self.app.appDir))
+                                  root='{0}/web_files/static/'.format(self.app.datadir))
         
     def _toggleRoot(self, moteid):
         '''
@@ -193,5 +204,8 @@ if __name__=="__main__":
                          'port = {0}'.format(argspace.port)]
             )))
     
-    websrv.run(host=argspace.host, port=argspace.port, quiet=True, debug=False)
+    websrv.run(host  = argspace.host, 
+               port  = argspace.port, 
+               quiet = not app.debug, 
+               debug = app.debug)
     

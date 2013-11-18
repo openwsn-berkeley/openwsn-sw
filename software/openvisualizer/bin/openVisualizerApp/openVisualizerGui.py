@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # Copyright (c) 2010-2013, Regents of the University of California. 
 # All rights reserved. 
 #  
@@ -7,21 +8,30 @@
 import sys
 import os
 
-import pathHelper
 if __name__=="__main__":
-    pathHelper.updatePath()
+    # Update pythonpath if running in in-tree development mode
+    basedir  = os.path.dirname(__file__)
+    confFile = os.path.join(basedir, "openvisualizer.conf")
+    if os.path.exists(confFile):
+        import pathHelper
+        pathHelper.updatePath()
 
 import logging
 log = logging.getLogger('openVisualizerGui')
 
-from moteState     import moteState
+try:
+    from openvisualizer.moteState import moteState
+except ImportError:
+    # Debug failed lookup on first library import
+    print 'ImportError: cannot find openvisualizer.moteState module'
+    print 'sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path))
 
 import openVisualizerApp
-import OpenWindow
-import OpenFrameState
-import OpenFrameButton
-import OpenFrameEventBus
-import openvisualizer_utils as u
+from openvisualizer.openUI import OpenWindow
+from openvisualizer.openUI import OpenFrameState
+from openvisualizer.openUI import OpenFrameButton
+from openvisualizer.openUI import OpenFrameEventBus
+import openvisualizer.openvisualizer_utils as u
 
 import Tkinter
 

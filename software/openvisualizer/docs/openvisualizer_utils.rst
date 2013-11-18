@@ -1,7 +1,7 @@
 openvisualizer_utils Module
 ===========================
 
-.. automodule:: openvisualizer_utils
+.. automodule:: openvisualizer.openvisualizer_utils
     :members:
     :undoc-members:
     :show-inheritance:

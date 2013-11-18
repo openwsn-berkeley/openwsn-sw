@@ -4,7 +4,7 @@ openLbr Package
 :mod:`openLbr` Module
 ---------------------
 
-.. automodule:: openLbr.openLbr
+.. automodule:: openvisualizer.openLbr.openLbr
     :members:
     :undoc-members:
     :show-inheritance:

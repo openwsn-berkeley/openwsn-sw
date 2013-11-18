@@ -25,3 +25,11 @@ openVisualizerApp Directory
     :undoc-members:
     :show-inheritance:
 
+:mod:`openVisualizerWeb` Module
+-------------------------------
+
+.. automodule:: openVisualizerWeb
+    :members:
+    :undoc-members:
+    :show-inheritance:
+

@@ -4,7 +4,7 @@ openTun Package
 :mod:`openTun` Module
 ---------------------
 
-.. automodule:: openTun.openTun
+.. automodule:: openvisualizer.openTun.openTun
     :members:
     :undoc-members:
     :show-inheritance:
@@ -18,7 +18,7 @@ openTun Package
 :mod:`openTunWindows` Module
 ----------------------------
 
-.. automodule:: openTun.openTunWindows
+.. automodule:: openvisualizer.openTun.openTunWindows
     :members:
     :undoc-members:
     :show-inheritance:

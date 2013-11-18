@@ -4,7 +4,7 @@ SimEngine Package
 :mod:`IdManager` Module
 -----------------------
 
-.. automodule:: SimEngine.IdManager
+.. automodule:: openvisualizer.SimEngine.IdManager
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ SimEngine Package
 :mod:`LocationManager` Module
 -----------------------------
 
-.. automodule:: SimEngine.LocationManager
+.. automodule:: openvisualizer.SimEngine.LocationManager
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ SimEngine Package
 :mod:`MoteHandler` Module
 -------------------------
 
-.. automodule:: SimEngine.MoteHandler
+.. automodule:: openvisualizer.SimEngine.MoteHandler
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ SimEngine Package
 :mod:`Propagation` Module
 -------------------------
 
-.. automodule:: SimEngine.Propagation
+.. automodule:: openvisualizer.SimEngine.Propagation
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ SimEngine Package
 :mod:`SimEngine` Module
 -----------------------
 
-.. automodule:: SimEngine.SimEngine
+.. automodule:: openvisualizer.SimEngine.SimEngine
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ SimEngine Package
 :mod:`TimeLine` Module
 ----------------------
 
-.. automodule:: SimEngine.TimeLine
+.. automodule:: openvisualizer.SimEngine.TimeLine
     :members:
     :undoc-members:
     :show-inheritance:

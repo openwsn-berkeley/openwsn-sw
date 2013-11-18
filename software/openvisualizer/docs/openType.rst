@@ -4,7 +4,7 @@ openType Package
 :mod:`openType` Module
 ----------------------
 
-.. automodule:: openType.openType
+.. automodule:: openvisualizer.openType.openType
     :members:
     :undoc-members:
     :show-inheritance:
@@ -12,7 +12,7 @@ openType Package
 :mod:`typeAddr` Module
 ----------------------
 
-.. automodule:: openType.typeAddr
+.. automodule:: openvisualizer.openType.typeAddr
     :members:
     :undoc-members:
     :show-inheritance:
@@ -20,7 +20,7 @@ openType Package
 :mod:`typeAsn` Module
 ---------------------
 
-.. automodule:: openType.typeAsn
+.. automodule:: openvisualizer.openType.typeAsn
     :members:
     :undoc-members:
     :show-inheritance:
@@ -28,7 +28,7 @@ openType Package
 :mod:`typeCellType` Module
 --------------------------
 
-.. automodule:: openType.typeCellType
+.. automodule:: openvisualizer.openType.typeCellType
     :members:
     :undoc-members:
     :show-inheritance:
@@ -36,7 +36,7 @@ openType Package
 :mod:`typeComponent` Module
 ---------------------------
 
-.. automodule:: openType.typeComponent
+.. automodule:: openvisualizer.openType.typeComponent
     :members:
     :undoc-members:
     :show-inheritance:
@@ -44,7 +44,7 @@ openType Package
 :mod:`typeRssi` Module
 ----------------------
 
-.. automodule:: openType.typeRssi
+.. automodule:: openvisualizer.openType.typeRssi
     :members:
     :undoc-members:
     :show-inheritance:

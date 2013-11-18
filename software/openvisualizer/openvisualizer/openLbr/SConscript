@@ -1,0 +1,15 @@
+import os
+
+Import('env')
+
+testenv = env.Clone()
+
+#===== unittests_openLbr
+
+unittests_openLbr = testenv.Command(
+    'test_report_openLbr.xml', [],
+    'py.test unit_tests --junitxml $TARGET.file',
+    chdir=os.path.join('openvisualizer', 'openLbr')
+)
+testenv.AlwaysBuild(unittests_openLbr)
+testenv.Alias('unittests_openLbr', unittests_openLbr)
