@@ -28,6 +28,7 @@ except ImportError:
 import json
 import bottle
 import random
+import re
 from bottle        import view
 
 import openVisualizerApp
