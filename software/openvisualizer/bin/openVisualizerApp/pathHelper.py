@@ -32,7 +32,7 @@ def updatePath():
     updatePath = True
     
     # do NOT update if running from SCons
-    # TODO: this methid is relatively fragile
+    # TODO: this method is relatively fragile
     uiFile = sys.argv[0]
     if uiFile.startswith('bin'):
         updatePath = False
@@ -40,4 +40,3 @@ def updatePath():
     # update the path, if needed
     if updatePath:
         sys.path.insert(0,os.path.join('..','..'))               # root
-        sys.path.insert(0,os.path.join('..','..','openvisualizer','eventBus','PyDispatcher-2.0.3')) 
