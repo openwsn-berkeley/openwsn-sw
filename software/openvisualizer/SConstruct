@@ -28,45 +28,51 @@ print '\n'.join(banner)
 Help('''
 Usage:
     scons [options] <rungui|runcli|runweb>
+    scons copy-simfw
     scons <sdist|sdist-native>
     scons unittests
     scons docs
    
 Targets:
     rungui/runcli/runweb:
-          Run native GUI, command line interface, or web application,
-          respectively, in build/runui directory.
-          Must run as superuser/administrator.
-           
-          Options
+        Run OpenVisualizer with GUI, command line, or web interface,
+        respectively.
+        The application is run in the build/runui/ directory. Since it accesses
+        your computer's network interfaces, it must be run as
+        superuser/administrator.
+        
+        Options
           --sim         Run in simulator mode with default count of motes.
           --simCount=n  Run in simulator mode with 'n' motes.
           --ovdebug     Enable debug mode; more detailed logging
           
-          Web UI only
+        Web UI only
           --host=<address> Web server listens on IP address;
                            default 0.0.0.0 (all interfaces)
           --port=n         Web server listens on port number 'n';
                            default 8080
-                           
+    
     copy-simfw:
-          Copy files for the simulator, generated from an OpenWSN firmware 
-          build on this host. Assumes firmware top-level directory is 
-          '../../../openwsn-fw'.
-            
-    sdist: Generate a standard Python source distribution archive (for 
-           setup.py) in build{0}dist directory. Installs data files to the 
-           openvisualizer package directory.
+        Copy files for the simulator, generated from an OpenWSN firmware 
+        build on this host. Assumes firmware top-level directory is 
+        '../../../openwsn-fw'.
+    
+    sdist:
+        Generate a standard Python source distribution archive (for 
+        setup.py) in build{0}dist directory. Installs data files to the 
+        openvisualizer package directory.
     
     sdist-native:
-          Linux only
-          Generate a standard Python source distribution archive (for 
-          setup.py) in build{0}dist directory. Installs to native directories 
-          for the OS on which this command is run. This command *must* be 
-          run on a Linux host to generate a Linux target archive. Installs 
-          data files to /usr/local/share.
-            
-    docs: Generate source documentation in build{0}html directory
+        Linux only
+        Generate a standard Python source distribution archive (for 
+        setup.py) in build{0}dist directory. Installs to native directories 
+        for the OS on which this command is run. This command *must* be 
+        run on a Linux host to generate a Linux target archive. Installs 
+        data files to /usr/local/share.
+    
+    docs:
+        Generate source documentation in build{0}html directory
+    
 '''.format(os.sep))
 # Help for trace option on next line. Removed from help because trace 
 # implementation is not working.
@@ -149,18 +155,30 @@ env['DATA_DIRS']  = runnerEnv['DATA_DIRS']
 #===== copy-simfw
 
 def copySimfw(env):
+    '''
+    Copies the firmware Python extension module from the firmware repository
+    into the software data directory.
+    '''
+    # root of the openwsn-fw clone
     fwdir   = os.path.join('..', '..', '..', 'openwsn-fw')
+    # in openwsn-fw, directory containing 'openwsnmodule_obj.h'
     incdir  = os.path.join(fwdir, 'firmware','openos','bsp','boards','python')
+    # in openwsn-fw, directory containing extension library
     libdir  = os.path.join(fwdir, 'firmware','openos','projects','common')
+    # extension of the library
     libext  = 'pyd' if sys.platform == 'win32' else 'so'
+    # directory in openwsn-sw to copy the files into
     datadir = os.path.join(appdir, 'sim_files')
     
-    return env.Command('sim', '', 
-                    [
-                    Copy(datadir, os.path.join(incdir, 'openwsnmodule_obj.h')),
-                    Copy(datadir, os.path.join(libdir, 'oos_openwsn.{0}'.format(libext))),
-                    ])
-                    
+    return env.Command(
+        'sim',
+        '', 
+        [
+            Copy(datadir, os.path.join(incdir, 'openwsnmodule_obj.h')),
+            Copy(datadir, os.path.join(libdir, 'oos_openwsn.{0}'.format(libext))),
+        ]
+    )
+
 Alias('copy-simfw', copySimfw(env))
 
 #===== sdist
