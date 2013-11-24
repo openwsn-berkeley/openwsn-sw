@@ -1,0 +1,192 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        %include htmlHead.tmpl
+        <style type="text/css">
+            #map-canvas {
+                height            : 600px;
+                width             : 850px;
+            }
+            #update_button {
+                padding           : 5px;
+                backgroundColor   : 'white';
+                borderStyle       : 'solid';
+                borderWidth       : 2px;
+                textAlign         : 'center';
+            }
+        </style>
+        <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <script type="text/javascript">
+            
+            var motes        = {};
+            var bundles      = [];
+            
+            function initialize() {
+                
+                // map
+                var mapOptions = {
+                    center:    new google.maps.LatLng(37.875095,-122.257473),
+                    zoom:      19,
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                };
+                var map = new google.maps.Map(
+                    document.getElementById("map-canvas"),
+                    mapOptions
+                );
+                
+                // motes
+                var title;
+                var marker;
+                % for (moteid,moteposition) in motesData.items():
+                    
+                    title  = {{moteid}}
+                    marker = new google.maps.Marker({
+                        position:      new google.maps.LatLng(
+                            {{moteposition['lat']}},
+                            {{moteposition['lon']}}
+                        ),
+                        draggable:     true,
+                        map:           map,
+                        title:         title.toString()
+                    });
+                    google.maps.event.addListener(
+                        marker,
+                        'dragend',
+                        markerMoved
+                    );
+                    motes[{{moteid}}] = {
+                        'marker': marker
+                    }
+                % end
+                
+                // bundles
+                var bundleColor;
+                var fromMote;
+                var toMote;
+                var pdr;
+                % for bundleData in bundles:
+                    
+                    fromMote = {{bundleData['fromMote']}};
+                    toMote   = {{bundleData['toMote']}};
+                    pdr      = {{bundleData['pdr']}};
+                    
+                    if        (pdr>0.66) {
+                        bundleColor = '#339933';
+                    } else if (pdr>0.33) {
+                        bundleColor = '#ff9900';
+                    } else {
+                        bundleColor = '#ff0000';
+                    }
+                    bundle = {
+                        'fromMote':    fromMote,
+                        'toMote':      toMote,
+                        'line':        new google.maps.Polyline(
+                            {
+                                path:          [
+                                    new google.maps.LatLng(
+                                        motes[fromMote].marker.getPosition().lat(),
+                                        motes[fromMote].marker.getPosition().lng()
+                                    ),
+                                    new google.maps.LatLng(
+                                        motes[toMote].marker.getPosition().lat(),
+                                        motes[toMote].marker.getPosition().lng()
+                                    )
+                                ],
+                                geodesic:      true,
+                                strokeColor:   bundleColor,
+                                strokeOpacity: 1.0,
+                                strokeWeight:  2
+                            }
+                        )
+                    }
+                    bundle.line.setMap(map);
+                    
+                    bundles.push(bundle);
+                % end
+                
+                // button
+                var updateButton;
+                updateButton                          = document.createElement('div');
+                updateButton.style.padding            = '5px';
+                updateButton.style.backgroundColor    = 'white';
+                updateButton.style.borderStyle        = 'solid';
+                updateButton.style.borderWidth        = '2px';
+                updateButton.style.cursor             = 'pointer';
+                updateButton.style.textAlign          = 'center';
+                updateButton.title                    = 'Click to save the positions';
+                updateButton.index                    = 1;   
+                map.controls[google.maps.ControlPosition.TOP_RIGHT].push(updateButton);
+                
+                var updateButtontext                  = document.createElement('div');
+                updateButtontext.style.fontFamily     = 'Arial,sans-serif';
+                updateButtontext.style.fontSize       = '12px';
+                updateButtontext.style.paddingLeft    = '4px';
+                updateButtontext.style.paddingRight   = '4px';
+                updateButtontext.innerHTML            = '<b>Save Positions</b>';
+                updateButton.appendChild(updateButtontext);
+                
+                google.maps.event.addDomListener(
+                    updateButton,
+                    'click',
+                    updateTopology
+                );
+            }
+            
+            google.maps.event.addDomListener(window, 'load', initialize);
+            
+            function markerMoved() {
+                var fromMote;
+                var toMote;
+                var i;
+                for (i=0; i<bundles.length; i++) {
+                    fromMote = bundles[i]['fromMote']
+                    toMote   = bundles[i]['toMote']
+                    bundles[i].line.setPath(
+                        [
+                            new google.maps.LatLng(
+                                motes[fromMote].marker.getPosition().lat(),
+                                motes[fromMote].marker.getPosition().lng()
+                            ),
+                            new google.maps.LatLng(
+                                motes[toMote].marker.getPosition().lat(),
+                                motes[toMote].marker.getPosition().lng()
+                            )
+                        ]
+                    )
+                }
+            }
+            
+            function updateTopology() {
+                var positions;
+                var moteId;
+                
+                positions = []
+                for (moteId in motes) {
+                    console.log()
+                    positions.push({
+                        'moteId': moteId,
+                        'lat':    motes[moteId].marker.getPosition().lat(),
+                        'lon':    motes[moteId].marker.getPosition().lng()
+                    })
+                }
+                
+                $.ajax({
+                    type:    "POST",
+                    url:     "/topology",
+                    data:    {'positions': positions}
+                })
+                .done(function( msg ) {
+                    console.log("OK");
+                })
+                .fail(function() {
+                    console.log("FAIL");
+                })
+            }
+        </script>
+    </head>
+    <body>
+        %include menuHeader.tmpl
+        <div id="map-canvas"/>
+    </body>
+</html>

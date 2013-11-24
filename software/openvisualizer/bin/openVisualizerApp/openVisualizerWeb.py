@@ -27,6 +27,7 @@ except ImportError:
 
 import json
 import bottle
+import random
 from bottle        import view
 
 import openVisualizerApp
@@ -62,16 +63,18 @@ class OpenVisualizerWeb():
         Matches web URL to impelementing method. Cannot use @route annotations
         on the methods due to the class-based implementation.
         '''
-        self.websrv.route(path='/',                       callback=self._showMoteview)
-        self.websrv.route(path='/moteview',               callback=self._showMoteview)
-        self.websrv.route(path='/moteview/:moteid',       callback=self._showMoteview)
-        self.websrv.route(path='/motedata/:moteid',       callback=self._getMoteData)
-        self.websrv.route(path='/toggle_root/:moteid',    callback=self._toggleRoot)
-        self.websrv.route(path='/eventBus',               callback=self._showEventBus)
-        self.websrv.route(path='/eventdata',              callback=self._getEventData)
-        self.websrv.route(path='/eventDebug/:enabled',    callback=self._setEventDebug)
-        self.websrv.route(path='/static/<filepath:path>', callback=self._serverStatic)
-
+        self.websrv.route(path='/',                                       callback=self._showMoteview)
+        self.websrv.route(path='/moteview',                               callback=self._showMoteview)
+        self.websrv.route(path='/moteview/:moteid',                       callback=self._showMoteview)
+        self.websrv.route(path='/motedata/:moteid',                       callback=self._getMoteData)
+        self.websrv.route(path='/toggle_root/:moteid',                    callback=self._toggleRoot)
+        self.websrv.route(path='/eventBus',                               callback=self._showEventBus)
+        self.websrv.route(path='/eventdata',                              callback=self._getEventData)
+        self.websrv.route(path='/eventDebug/:enabled',                    callback=self._setEventDebug)
+        self.websrv.route(path='/topology',                               callback=self._showTopology)
+        self.websrv.route(path='/topology',               method='POST',  callback=self._updateTopology)
+        self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
+    
     @view('moteview.tmpl')
     def _showMoteview(self, moteid=None):
         '''
@@ -94,11 +97,11 @@ class OpenVisualizerWeb():
             'requested_mote' : moteid if moteid else 'none',
         }
         return tmplData
-        
+    
     def _serverStatic(self, filepath):
         return bottle.static_file(filepath, 
                                   root='{0}/web_files/static/'.format(self.app.datadir))
-        
+    
     def _toggleRoot(self, moteid):
         '''
         Triggers toggle of DAGroot and bridge states, via moteState. No
@@ -115,7 +118,7 @@ class OpenVisualizerWeb():
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
             return '{"result" : "fail"}'
-                                  
+    
     def _getMoteData(self, moteid):
         '''
         Collects data for the provided mote.
@@ -142,7 +145,7 @@ class OpenVisualizerWeb():
             log.debug('Mote {0} not found in moteStates'.format(moteid))
             states = {}
         return states
-            
+    
     def _setEventDebug(self, enabled):
         '''
         Selects whether eventBus must export debug packets.
@@ -152,7 +155,7 @@ class OpenVisualizerWeb():
         log.info('Enable eventBus debug packets: {0}'.format(enabled))
         self.app.eventBusMonitor.setMeshDebugExport(enabled == 'true')
         return '{"result" : "success"}'
-
+    
     @view('eventBus.tmpl')
     def _showEventBus(self):
         '''
@@ -160,6 +163,72 @@ class OpenVisualizerWeb():
         for periodic updates of event list.
         '''
         return self._getEventData()
+    
+    @view('topology.tmpl')
+    def _showTopology(self):
+        
+        motes = {}
+        for id in range(10):
+            motes[id] = {
+                'lat':     37.875095-0.0005+random.random()*0.0010,
+                'lon':   -122.257473-0.0005+random.random()*0.0010,
+            }
+        
+        bundles = []
+        for _ in range(10):
+            added = False
+            while not added:
+                fromMote = random.choice(motes.keys())
+                toMote   = random.choice(motes.keys())
+                if fromMote==toMote:
+                    continue
+                if (fromMote,toMote) in bundles:
+                    continue
+                if (toMote,fromMote) in bundles:
+                    continue
+                bundles += [
+                    {
+                        'fromMote':   fromMote,
+                        'toMote':     toMote,
+                        'pdr':        random.random(),
+                    }
+                ]
+                added = True
+        
+        tmplData = {
+            'motesData'    : motes,
+            'bundles'     : bundles,
+        }
+        
+        return tmplData
+    
+    def _updateTopology(self):
+        
+        positionsTemp = {}
+        for (k,v) in bottle.request.forms.items():
+            m = re.match("positions\[(\w+)\]\[(\w+)\]", k)
+            assert m
+            index  = int(m.group(1))
+            param  =     m.group(2)
+            try:
+                v  = int(v)
+            except ValueError:
+                try:
+                    v  = float(v)
+                except ValueError:
+                    pass
+            if index not in positionsTemp:
+                positionsTemp[index] = {}
+            positionsTemp[index][param] = v
+        
+        positions = {}
+        for (_,v) in positionsTemp.items():
+            positions[v['moteId']] = {
+                'lat': v['lat'],
+                'lon': v['lon'],
+            }
+        
+        print positions
     
     def _getEventData(self):
         response = {
