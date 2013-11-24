@@ -19,6 +19,8 @@
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
         <script type="text/javascript">
             
+            var map;
+            var infowindow;
             var motes        = {};
             var bundles      = [];
             
@@ -30,10 +32,13 @@
                     zoom:      19,
                     mapTypeId: google.maps.MapTypeId.ROADMAP
                 };
-                var map = new google.maps.Map(
+                map = new google.maps.Map(
                     document.getElementById("map-canvas"),
                     mapOptions
                 );
+                
+                // infowindow
+                infowindow = new google.maps.InfoWindow();
                 
                 // motes
                 var title;
@@ -81,6 +86,7 @@
                     bundle = {
                         'fromMote':    fromMote,
                         'toMote':      toMote,
+                        'pdr':         pdr,
                         'line':        new google.maps.Polyline(
                             {
                                 path:          [
@@ -98,11 +104,12 @@
                                 strokeOpacity: 1.0,
                                 strokeWeight:  2
                             }
-                        )
+                        ),
                     }
                     bundle.line.setMap(map);
-                    
                     bundles.push(bundle);
+                    
+                    attachInfoWindow(bundle.line,bundles.length-1);
                 % end
                 
                 // button
@@ -134,6 +141,21 @@
             }
             
             google.maps.event.addDomListener(window, 'load', initialize);
+            
+            function attachInfoWindow(line,idx) {
+                var fromMote = bundles[idx].fromMote;
+                var toMote   = bundles[idx].toMote;
+                var pdr      = bundles[idx].pdr;
+                google.maps.event.addListener(
+                    bundle.line,
+                    'click',
+                    function(event){
+                        infowindow.setContent(fromMote+'-'+toMote+' : '+pdr);
+                        infowindow.setPosition(event.latLng);
+                        infowindow.open(map);
+                    }
+                );
+            }
             
             function markerMoved() {
                 var fromMote;
