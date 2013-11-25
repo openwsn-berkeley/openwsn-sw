@@ -21,7 +21,7 @@
             
             // global variables
             var map;
-            var pdrinfowindow;
+            var bundleinfo;
             var newBundle;
             var motes             = [];
             var bundles           = [];
@@ -45,10 +45,10 @@
                     mapOptions
                 );
                 
-                // pdrinfowindow
-                pdrinfowindow = new google.maps.InfoWindow();
+                // bundleinfo
+                bundleinfo = new google.maps.InfoWindow();
                 google.maps.event.addListener(
-                    pdrinfowindow,
+                    bundleinfo,
                     'closeclick',
                     clearMapLock
                 );
@@ -382,12 +382,13 @@
                 
                 content  = ''
                 content += fromMote+'-'+toMote+':<br/>'
-                content += '<input id="newPDR" value="'+bundles[bundleIdx].pdr+'"><br/>'
-                content += '<button onclick="pdrUpdated('+fromMote+','+toMote+')">set</button>'
+                content += '<input size="10" id="newPDR" value="'+bundles[bundleIdx].pdr+'">'
+                content += '<button onclick="pdrUpdated('+fromMote+','+toMote+')">set PDR</button><br/>'
+                content += '<button onclick="bundleDeleted('+fromMote+','+toMote+')">delete bundle</button>'
             
-                pdrinfowindow.setContent(content);
-                pdrinfowindow.setPosition(latlon);
-                pdrinfowindow.open(map);
+                bundleinfo.setContent(content);
+                bundleinfo.setPosition(latlon);
+                bundleinfo.open(map);
             }
             
             //=============== GUI events ======================================
@@ -471,12 +472,49 @@
                 newPDR = $("#newPDR").val();
                 
                 // update bundles
+                // TODO: do by updating from server
                 bundleIdx = getBundleIdx(fromMote,toMote)
                 bundles[bundleIdx].pdr = newPDR;
                 setBundleColor(bundleIdx);
                 
                 // POST bundle PDR to server
                 postBundlePDR(bundleIdx);
+            }
+            
+            function bundleDeleted(fromMote,toMote) {
+                $.ajax({
+                    type:    "DELETE",
+                    url:     "/topology/bundles",
+                    data:    {
+                        'fromMote': fromMote,
+                        'toMote':   toMote,
+                    }
+                })
+                .done(function( msg ) {
+                    console.log("INFO: bundle DELETEed from server.");
+                })
+                .fail(function() {
+                    console.log("ERROR: could not DELETE bundle.");
+                })
+                .always(function() {
+                    
+                    // get new data from server
+                    $.ajax({
+                        url:      "/topology/data",
+                        success:  handleNewData,
+                    })
+                    .fail(function() {
+                        console.log("ERROR: could not GET topology data");
+                    })
+                    .always(function() {
+                        
+                        // close info window
+                        bundleinfo.close();
+                        
+                        // resume automated update
+                        clearMapLock();
+                    });
+                })
             }
             
             function postBundlePDR(bundleIdx) {
@@ -508,7 +546,7 @@
                     console.log("ERROR: could not POST updated PDR.");
                 })
                 .always(function() {
-                    pdrinfowindow.close();
+                    bundleinfo.close();
                     clearMapLock();
                 })
             }
