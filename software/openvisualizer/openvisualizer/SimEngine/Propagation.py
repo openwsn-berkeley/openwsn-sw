@@ -29,7 +29,7 @@ class Propagation(eventBusClient.eventBusClient):
         
         # local variables
         self.dataLock             = threading.Lock()
-        self.connections          = []
+        self.connections          = {}
         
         # logging
         self.log                  = logging.getLogger('Propagation')
@@ -58,70 +58,115 @@ class Propagation(eventBusClient.eventBusClient):
     
     def createConnection(self,fromMote,toMote):
         
-        with self.dataLock:
+        pdr = random.random()
         
-            exists = False
+        with self.dataLock:
             
-            for connection in self.connections:
-                if (connection['fromMote']==fromMote and connection['toMote']==toMote):
-                    exists = True
+            # verify doesn't exist
             
-            if not exists:
-                self.connections += [
-                    {
-                        'fromMote':   fromMote,
-                        'toMote':     toMote,
-                        'pdr':        random.random(),
-                    }
-                ]
+            try:
+                self.connections[fromMote][toMote]
+            except KeyError:
+                exists = False
+            else:
+                exists = True
+            assert exists==False
+            
+            try:
+                self.connections[toMote][fromMote]
+            except KeyError:
+                exists = False
+            else:
+                exists = True
+            assert exists==False
+            
+            # create connection
+            
+            if fromMote not in self.connections:
+                self.connections[fromMote] = {}
+            self.connections[fromMote][toMote] = pdr
+            
+            if toMote not in self.connections:
+                self.connections[toMote] = {}
+            self.connections[toMote][fromMote] = pdr
     
     def retrieveConnections(self):
         
+        retrievedConnections = []
+        returnVal            = []
         with self.dataLock:
-            return copy.deepcopy(self.connections)
+            
+            for fromMote in self.connections:
+                for toMote in self.connections[fromMote]:
+                    if (toMote,fromMote) not in retrievedConnections:
+                        returnVal += [
+                            {
+                                'fromMote': fromMote,
+                                'toMote':   toMote,
+                                'pdr':      self.connections[fromMote][toMote],
+                            }
+                        ]
+                        retrievedConnections += [(fromMote,toMote)]
+        
+        return returnVal
     
     def updateConnection(self,fromMote,toMote,pdr):
         
         with self.dataLock:
-            
-            found = False
-            
-            for connection in self.connections:
-                if (connection['fromMote']==fromMote and connection['toMote']==toMote):
-                    connection['pdr']=pdr
-                    found = True
-            
-            assert found==True
+            self.connections[fromMote][toMote] = pdr
+            self.connections[toMote][fromMote] = pdr
     
     def deleteConnection(self,fromMote,toMote):
         
         with self.dataLock:
             
-            exists = False
+            # verify exists
             
-            for i in range(len(self.connections)):
-                if (self.connections[i]['fromMote']==fromMote and self.connections[i]['toMote']==toMote):
-                    exists = True
-                    self.connections.pop(i)
-                    break
-            
+            try:
+                self.connections[fromMote][toMote]
+            except KeyError:
+                exists = False
+            else:
+                exists = True
             assert exists==True
+            
+            try:
+                self.connections[toMote][fromMote]
+            except KeyError:
+                exists = False
+            else:
+                exists = True
+            assert exists==True
+            
+            # remove connection
+            del self.connections[fromMote][toMote]
+            if not self.connections[fromMote]:
+                del self.connections[fromMote]
+            
+            del self.connections[toMote][fromMote]
+            if not self.connections[toMote]:
+                del self.connections[toMote]
+            
     
     #======================== indication from eventBus ========================
     
     def _indicateTxStart(self,sender,signal,data):
         
-        (moteId,packet,channel) = data
+        (fromMote,packet,channel) = data
         
-        for mh in self.engine.moteHandlers:
-            mh.bspRadio.indicateTxStart(moteId,packet,channel)
+        if fromMote in self.connections:
+            for (toMote,pdr) in self.connections[fromMote].items():
+                mh = self.engine.getMoteHandlerById(toMote)
+                mh.bspRadio.indicateTxStart(fromMote,packet,channel)
     
     def _indicateTxEnd(self,sender,signal,data):
         
-        moteId = data
+        fromMote = data
         
-        for mh in self.engine.moteHandlers:
-            mh.bspRadio.indicateTxEnd(moteId)
+        if fromMote in self.connections:
+            for (toMote,pdr) in self.connections[fromMote].items():
+                mh = self.engine.getMoteHandlerById(toMote)
+                mh.bspRadio.indicateTxEnd(fromMote)
     
     #======================== private =========================================
     
