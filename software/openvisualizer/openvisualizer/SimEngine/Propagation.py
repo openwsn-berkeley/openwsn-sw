@@ -7,12 +7,17 @@
 
 import logging
 
+from openvisualizer.eventBus      import eventBusClient
+
 import SimEngine
 
-class Propagation(object):
+class Propagation(eventBusClient.eventBusClient):
     '''
     The propagation model of the engine.
     '''
+    
+    SIGNAL_WIRELESSTXSTART        = 'wirelessTxStart'
+    SIGNAL_WIRELESSTXEND          = 'wirelessTxEnd'
     
     def __init__(self):
         
@@ -25,8 +30,44 @@ class Propagation(object):
         self.log                  = logging.getLogger('Propagation')
         self.log.setLevel(logging.DEBUG)
         self.log.addHandler(logging.NullHandler())
-    
+        
+        # initialize parents class
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name                  = 'Propagation',
+            registrations         =  [
+                {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : self.SIGNAL_WIRELESSTXSTART,
+                    'callback'    : self._indicateTxStart,
+                },
+                {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : self.SIGNAL_WIRELESSTXEND,
+                    'callback'    : self._indicateTxEnd,
+                },
+            ]
+        )
+        
     #======================== public ==========================================
+    
+    
+    
+    #======================== indication from eventBus ========================
+    
+    def _indicateTxStart(self,sender,signal,data):
+        
+        (moteId,packet,channel) = data
+        
+        for mh in self.engine.moteHandlers:
+            mh.bspRadio.indicateTxStart(moteId,packet,channel)
+    
+    def _indicateTxEnd(self,sender,signal,data):
+        
+        moteId = data
+        
+        for mh in self.engine.moteHandlers:
+            mh.bspRadio.indicateTxEnd(moteId)
     
     #======================== private =========================================
     
