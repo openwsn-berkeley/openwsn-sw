@@ -22,10 +22,12 @@
             // global variables
             var map;
             var pdrinfowindow;
+            var newBundle;
             var motes             = [];
             var bundles           = [];
             var DATA_LOAD_PERIOD  = 5000;
             var mapLock           = false;
+            var busyDrawingBundle = false;
             
             /**
             \brief Initialize the topology display
@@ -51,6 +53,18 @@
                     clearMapLock
                 );
                 
+                // newBundle
+                newBundle = {
+                    'fromMote':  null,
+                    'line':      new google.maps.Polyline(
+                        {
+                            geodesic:      true,
+                            strokeOpacity: 0.5,
+                            strokeWeight:  1
+                        }
+                    )
+                }
+                
                 // load mote data
                 getTopologyData();
             }
@@ -64,7 +78,8 @@
                     $.ajax({
                         url:      "/topology/data",
                         success:  handleNewData,
-                    }).fail(function() {
+                    })
+                    .fail(function() {
                         console.log("ERROR: could not GET topology data");
                     });
                 }
@@ -126,6 +141,8 @@
                             'dragend',
                             moteMoved
                         );
+                        
+                        attachRightClickCreateBundle(id);
                     }
                     
                     // update mote
@@ -237,6 +254,109 @@
                     bundleColor = '#ff0000';
                 }
                 bundles[bundleIdx].line.setOptions({strokeColor: bundleColor});
+            }
+            
+            function attachRightClickCreateBundle(id) {
+                google.maps.event.addListener(
+                    motes[id].marker,
+                    'rightclick',
+                    function(event){
+                        createNewBundle(id);
+                    }
+                );
+            }
+            
+            function createNewBundle(id) {
+                
+                if (busyDrawingBundle==false) {
+                    // start
+                    
+                    console.log('start at '+id);
+                    
+                    // lock the automatic refresh of the map
+                    setMapLock();
+                    
+                    // remember I'm busy drawing now
+                    busyDrawingBundle = true;
+                    
+                    // start the line
+                    newBundle.fromMote = id;
+                    
+                    // listen to mouse moving
+                    google.maps.event.addListener(
+                        map,
+                        'mousemove',
+                        moveNewBundle
+                    );
+                    
+                } else {
+                    // stop
+                    
+                    console.log('stop at '+id);
+                    
+                    // stop listening to mouse moving
+                    google.maps.event.clearListeners(
+                        map,
+                        'mousemove'
+                    );
+                    
+                    // send new bundle to server
+                    putNewBundle(newBundle.fromMote,id);
+                }
+            }
+            
+            function moveNewBundle(pt) {
+                
+                newBundle.line.setPath(
+                    [
+                        new google.maps.LatLng(
+                            motes[newBundle.fromMote].lat,
+                            motes[newBundle.fromMote].lon
+                        ),
+                        pt.latLng
+                    ]
+                )
+                newBundle.line.setMap(map);
+            }
+            
+            function putNewBundle(fromMote,toMote) {
+                
+                $.ajax({
+                    type:    "PUT",
+                    url:     "/topology/bundles",
+                    data:    {
+                        'fromMote': fromMote,
+                        'toMote':   toMote,
+                    }
+                })
+                .done(function( msg ) {
+                    console.log("INFO: new bundle successfully PUT on server.");
+                })
+                .fail(function() {
+                    console.log("ERROR: could not PUT new bundle to server.");
+                })
+                .always(function() {
+                    
+                    // get new data from server
+                    $.ajax({
+                        url:      "/topology/data",
+                        success:  handleNewData,
+                    })
+                    .fail(function() {
+                        console.log("ERROR: could not GET topology data");
+                    })
+                    .always(function() {
+                        
+                        // hide line
+                        newBundle.line.setMap(null);
+                        
+                        // I'm not draing a new bundle anymore
+                        busyDrawingBundle = false;
+                        
+                        // resume automated update
+                        clearMapLock();
+                    });
+                })
             }
             
             function attachPdrInfoWindow(bundleIdx) {
@@ -374,7 +494,7 @@
                 
                 $.ajax({
                     type:    "POST",
-                    url:     "/topology/bundlepdr",
+                    url:     "/topology/bundles",
                     data:    {
                         'fromMote': bundles[bundleIdx].fromMote,
                         'toMote':   bundles[bundleIdx].toMote,

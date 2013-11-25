@@ -75,7 +75,8 @@ class OpenVisualizerWeb():
         self.websrv.route(path='/topology',                               callback=self._topologyPage)
         self.websrv.route(path='/topology/data',                          callback=self._topologyData)
         self.websrv.route(path='/topology/motes',         method='POST',  callback=self._updateTopologyMotes)
-        self.websrv.route(path='/topology/bundlepdr',     method='POST',  callback=self._updateTopologyBundlePdr)
+        self.websrv.route(path='/topology/bundles',       method='POST',  callback=self._topologyUpdatePdr)
+        self.websrv.route(path='/topology/bundles',       method='PUT',   callback=self._topologyAddBundle)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
     
     @view('moteview.tmpl')
@@ -260,7 +261,7 @@ class OpenVisualizerWeb():
         
         self.motes = motes
     
-    def _updateTopologyBundlePdr(self):
+    def _topologyUpdatePdr(self):
         data = bottle.request.forms
         assert sorted(data.keys())==sorted(['fromMote', 'toMote', 'pdr'])
         
@@ -277,6 +278,29 @@ class OpenVisualizerWeb():
         
         if not found:
             raise SystemError("setting PDR for unknown bundle {0}-{1}".format(fromMote,toMote))
+    
+    def _topologyAddBundle(self):
+        
+        data = bottle.request.forms
+        assert sorted(data.keys())==sorted(['fromMote', 'toMote'])
+        
+        fromMote = int(data['fromMote'])
+        toMote   = int(data['toMote'])
+        
+        exists = False
+        
+        for bundle in self.bundles:
+            if (bundle['fromMote']==fromMote and bundle['toMote']==toMote):
+                exists = True
+        
+        if not exists:
+            self.bundles += [
+                {
+                    'fromMote':   fromMote,
+                    'toMote':     toMote,
+                    'pdr':        random.random(),
+                }
+            ]
     
     def _getEventData(self):
         response = {
