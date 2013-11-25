@@ -6,6 +6,9 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 import logging
+import threading
+import copy
+import random
 
 from openvisualizer.eventBus      import eventBusClient
 
@@ -25,6 +28,8 @@ class Propagation(eventBusClient.eventBusClient):
         self.engine               = SimEngine.SimEngine()
         
         # local variables
+        self.dataLock             = threading.Lock()
+        self.connections          = []
         
         # logging
         self.log                  = logging.getLogger('Propagation')
@@ -51,7 +56,56 @@ class Propagation(eventBusClient.eventBusClient):
         
     #======================== public ==========================================
     
+    def createConnection(self,fromMote,toMote):
+        
+        with self.dataLock:
+        
+            exists = False
+            
+            for connection in self.connections:
+                if (connection['fromMote']==fromMote and connection['toMote']==toMote):
+                    exists = True
+            
+            if not exists:
+                self.connections += [
+                    {
+                        'fromMote':   fromMote,
+                        'toMote':     toMote,
+                        'pdr':        random.random(),
+                    }
+                ]
     
+    def retrieveConnections(self):
+        
+        with self.dataLock:
+            return copy.deepcopy(self.connections)
+    
+    def updateConnection(self,fromMote,toMote,pdr):
+        
+        with self.dataLock:
+            
+            found = False
+            
+            for connection in self.connections:
+                if (connection['fromMote']==fromMote and connection['toMote']==toMote):
+                    connection['pdr']=pdr
+                    found = True
+            
+            assert found==True
+    
+    def deleteConnection(self,fromMote,toMote):
+        
+        with self.dataLock:
+            
+            exists = False
+            
+            for i in range(len(self.connections)):
+                if (self.connections[i]['fromMote']==fromMote and self.connections[i]['toMote']==toMote):
+                    exists = True
+                    self.connections.pop(i)
+                    break
+            
+            assert exists==True
     
     #======================== indication from eventBus ========================
     

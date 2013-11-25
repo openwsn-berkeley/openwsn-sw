@@ -78,9 +78,9 @@ class OpenVisualizerWeb():
         self.websrv.route(path='/topology',                               callback=self._topologyPage)
         self.websrv.route(path='/topology/data',                          callback=self._topologyData)
         self.websrv.route(path='/topology/motes',     method='POST',      callback=self._topologyMotesUpdate)
-        self.websrv.route(path='/topology/bundles',   method='PUT',       callback=self._topologyBundlesCreate)
-        self.websrv.route(path='/topology/bundles',   method='POST',      callback=self._topologyBundlesUpdate)
-        self.websrv.route(path='/topology/bundles',   method='DELETE',    callback=self._topologyBundlesDelete)
+        self.websrv.route(path='/topology/connections',   method='PUT',   callback=self._topologyConnectionsCreate)
+        self.websrv.route(path='/topology/connections',   method='POST',  callback=self._topologyConnectionsUpdate)
+        self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
     
     @view('moteview.tmpl')
@@ -204,36 +204,12 @@ class OpenVisualizerWeb():
             except IndexError:
                break
         
-        # moteIds
-        moteIds = [m['id'] for m in motes]
-        
-        # bundles
-        bundles = []
-        '''
-        for _ in range(random.randint(5,10)):
-            added = False
-            while not added:
-                fromMote = random.choice(moteIds)
-                toMote   = random.choice(moteIds)
-                if fromMote==toMote:
-                    continue
-                if (fromMote,toMote) in self.bundles:
-                    continue
-                if (toMote,fromMote) in self.bundles:
-                    continue
-                self.bundles += [
-                    {
-                        'fromMote':   fromMote,
-                        'toMote':     toMote,
-                        'pdr':        random.random(),
-                    }
-                ]
-                added = True
-        '''
+        # connections
+        connections = self.engine.propagation.retrieveConnections()
         
         data = {
-            'motes'     : motes,
-            'bundles'   : bundles,
+            'motes'          : motes,
+            'connections'    : connections,
         }
         
         return data
@@ -261,7 +237,7 @@ class OpenVisualizerWeb():
             mh = self.engine.getMoteHandlerById(v['id'])
             mh.setLocation(v['lat'],v['lon'])
     
-    def _topologyBundlesCreate(self):
+    def _topologyConnectionsCreate(self):
         
         data = bottle.request.forms
         assert sorted(data.keys())==sorted(['fromMote', 'toMote'])
@@ -269,22 +245,9 @@ class OpenVisualizerWeb():
         fromMote = int(data['fromMote'])
         toMote   = int(data['toMote'])
         
-        exists = False
-        
-        for bundle in self.bundles:
-            if (bundle['fromMote']==fromMote and bundle['toMote']==toMote):
-                exists = True
-        
-        if not exists:
-            self.bundles += [
-                {
-                    'fromMote':   fromMote,
-                    'toMote':     toMote,
-                    'pdr':        random.random(),
-                }
-            ]
+        self.engine.propagation.createConnection(fromMote,toMote)
     
-    def _topologyBundlesUpdate(self):
+    def _topologyConnectionsUpdate(self):
         data = bottle.request.forms
         assert sorted(data.keys())==sorted(['fromMote', 'toMote', 'pdr'])
         
@@ -292,17 +255,9 @@ class OpenVisualizerWeb():
         toMote   = int(data['toMote'])
         pdr      = float(data['pdr'])
         
-        found = False
-        
-        for bundle in self.bundles:
-            if (bundle['fromMote']==fromMote and bundle['toMote']==toMote):
-                bundle['pdr']=pdr
-                found = True
-        
-        if not found:
-            raise SystemError("setting PDR for unknown bundle {0}-{1}".format(fromMote,toMote))
+        self.engine.propagation.updateConnection(fromMote,toMote,pdr)
     
-    def _topologyBundlesDelete(self):
+    def _topologyConnectionsDelete(self):
         
         data = bottle.request.forms
         assert sorted(data.keys())==sorted(['fromMote', 'toMote'])
@@ -310,12 +265,7 @@ class OpenVisualizerWeb():
         fromMote = int(data['fromMote'])
         toMote   = int(data['toMote'])
         
-        exists = False
-        
-        for i in range(len(self.bundles)):
-            if (self.bundles[i]['fromMote']==fromMote and self.bundles[i]['toMote']==toMote):
-                self.bundles.pop(i)
-                break
+        self.engine.propagation.deleteConnection(fromMote,toMote)
     
     def _getEventData(self):
         response = {

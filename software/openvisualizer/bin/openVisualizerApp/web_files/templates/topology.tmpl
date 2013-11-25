@@ -21,13 +21,13 @@
             
             // global variables
             var map;
-            var bundleinfo;
-            var newBundle;
-            var motes             = [];
-            var bundles           = [];
-            var DATA_LOAD_PERIOD  = 5000;
-            var mapLock           = false;
-            var busyDrawingBundle = false;
+            var connectioninfo;
+            var newConnection;
+            var motes                  = [];
+            var connections            = [];
+            var DATA_LOAD_PERIOD       = 5000;
+            var mapLock                = false;
+            var busyDrawingConnection  = false;
             
             /**
             \brief Initialize the topology display
@@ -45,16 +45,16 @@
                     mapOptions
                 );
                 
-                // bundleinfo
-                bundleinfo = new google.maps.InfoWindow();
+                // connectioninfo
+                connectioninfo = new google.maps.InfoWindow();
                 google.maps.event.addListener(
-                    bundleinfo,
+                    connectioninfo,
                     'closeclick',
                     clearMapLock
                 );
                 
-                // newBundle
-                newBundle = {
+                // newConnection
+                newConnection = {
                     'fromMote':  null,
                     'line':      new google.maps.Polyline(
                         {
@@ -100,9 +100,9 @@
                     motes[id].deleteMe      = true;
                 }
                 
-                // mark all bundles for deletion
-                for (i=0; i<bundles.length; i++) {
-                    bundles[i].deleteMe     = true;
+                // mark all connections for deletion
+                for (i=0; i<connections.length; i++) {
+                    connections[i].deleteMe     = true;
                 }
                 
                 // create/update motes
@@ -142,7 +142,7 @@
                             moteMoved
                         );
                         
-                        attachRightClickCreateBundle(id);
+                        attachRightClickCreateConnection(id);
                     }
                     
                     // update mote
@@ -156,24 +156,24 @@
                     motes[id].deleteMe      = false;
                 }
                 
-                // create/update bundles
+                // create/update connections
                 var fromMote;
                 var toMote;
                 var pdr;
-                var bundleIdx;
-                var bundleColor;
-                for (i=0; i<newData.bundles.length; i++) {
+                var connectionIdx;
+                var connectionColor;
+                for (i=0; i<newData.connections.length; i++) {
                     
-                    fromMote = newData.bundles[i].fromMote;
-                    toMote   = newData.bundles[i].toMote;
-                    pdr      = newData.bundles[i].pdr;
+                    fromMote = newData.connections[i].fromMote;
+                    toMote   = newData.connections[i].toMote;
+                    pdr      = newData.connections[i].pdr;
                     
-                    bundleIdx = getBundleIdx(fromMote,toMote);
+                    connectionIdx = getConnectionIdx(fromMote,toMote);
                     
-                    if (bundleIdx==null) {
-                        // new bundle
+                    if (connectionIdx==null) {
+                        // new connection
                         
-                        bundles.push(
+                        connections.push(
                             {
                                 'fromMote':    fromMote,
                                 'toMote':      toMote,
@@ -189,13 +189,13 @@
                             }
                         );
                         
-                        bundleIdx = bundles.length-1;
+                        connectionIdx = connections.length-1;
                         
-                        attachPdrInfoWindow(bundleIdx);
+                        attachPdrInfoWindow(connectionIdx);
                     }
                     
-                    // update bundle
-                    bundles[bundleIdx].line.setPath(
+                    // update connection
+                    connections[connectionIdx].line.setPath(
                         [
                             new google.maps.LatLng(
                                 motes[fromMote].lat,
@@ -207,25 +207,25 @@
                             )
                         ]
                     )
-                    bundles[bundleIdx].pdr = pdr;
-                    if        (bundles[bundleIdx].pdr>0.66) {
-                        bundleColor = '#339933';
-                    } else if (bundles[bundleIdx].pdr>0.33) {
-                        bundleColor = '#ff9900';
+                    connections[connectionIdx].pdr = pdr;
+                    if        (connections[connectionIdx].pdr>0.66) {
+                        connectionColor = '#339933';
+                    } else if (connections[connectionIdx].pdr>0.33) {
+                        connectionColor = '#ff9900';
                     } else {
-                        bundleColor = '#ff0000';
+                        connectionColor = '#ff0000';
                     }
-                    bundles[bundleIdx].line.setOptions({strokeColor: bundleColor});
+                    connections[connectionIdx].line.setOptions({strokeColor: connectionColor});
                     
-                    // don't delete this bundle
-                    bundles[bundleIdx].deleteMe  = false;
+                    // don't delete this connection
+                    connections[connectionIdx].deleteMe  = false;
                 }
                 
-                // delete all bundles still marked for deletion
-                for (i=0; i<bundles.length; i++) {
-                    if (bundles[i].deleteMe==true) {
-                        bundles[i].line.setMap(null);
-                        bundles.splice(i,1);
+                // delete all connections still marked for deletion
+                for (i=0; i<connections.length; i++) {
+                    if (connections[i].deleteMe==true) {
+                        connections[i].line.setMap(null);
+                        connections.splice(i,1);
                         i--;
                     }
                 }
@@ -240,11 +240,11 @@
                 }
             }
             
-            function getBundleIdx(fromMote,toMote) {
-                for (var i=0; i<bundles.length; i++) {
+            function getConnectionIdx(fromMote,toMote) {
+                for (var i=0; i<connections.length; i++) {
                     if  (
-                            bundles[i].fromMote==fromMote &&
-                            bundles[i].toMote==toMote
+                            connections[i].fromMote==fromMote &&
+                            connections[i].toMote==toMote
                         ) {
                         return i;
                     }
@@ -252,27 +252,27 @@
                 return null;
             }
             
-            function attachRightClickCreateBundle(id) {
+            function attachRightClickCreateConnection(id) {
                 google.maps.event.addListener(
                     motes[id].marker,
                     'rightclick',
                     function(event){
-                        bundleCreationStep(id);
+                        connectionCreationStep(id);
                     }
                 );
             }
             
-            function attachPdrInfoWindow(bundleIdx) {
-                var fromMote = bundles[bundleIdx].fromMote;
-                var toMote   = bundles[bundleIdx].toMote;
-                var pdr      = bundles[bundleIdx].pdr;
+            function attachPdrInfoWindow(connectionIdx) {
+                var fromMote = connections[connectionIdx].fromMote;
+                var toMote   = connections[connectionIdx].toMote;
+                var pdr      = connections[connectionIdx].pdr;
                 
                 google.maps.event.addListener(
-                    bundles[bundleIdx].line,
+                    connections[connectionIdx].line,
                     'click',
                     function(event){
                         setMapLock();
-                        bundleClicked(fromMote,toMote,event.latLng);
+                        connectionClicked(fromMote,toMote,event.latLng);
                     }
                 );
             }
@@ -330,9 +330,9 @@
                 })
             }
             
-            function bundleCreationStep(id) {
+            function connectionCreationStep(id) {
                 
-                if (busyDrawingBundle==false) {
+                if (busyDrawingConnection==false) {
                     // start
                     
                     console.log('start at '+id);
@@ -341,16 +341,16 @@
                     setMapLock();
                     
                     // remember I'm busy drawing now
-                    busyDrawingBundle = true;
+                    busyDrawingConnection = true;
                     
                     // start the line
-                    newBundle.fromMote = id;
+                    newConnection.fromMote = id;
                     
                     // listen to mouse moving
                     google.maps.event.addListener(
                         map,
                         'mousemove',
-                        bundleCreationMoved
+                        connectionCreationMoved
                     );
                     
                 } else {
@@ -364,40 +364,40 @@
                         'mousemove'
                     );
                     
-                    // send new bundle to server
-                    bundleCreated(newBundle.fromMote,id);
+                    // send new connection to server
+                    connectionCreated(newConnection.fromMote,id);
                 }
             }
             
-            function bundleCreationMoved(pt) {
+            function connectionCreationMoved(pt) {
                 
-                newBundle.line.setPath(
+                newConnection.line.setPath(
                     [
                         new google.maps.LatLng(
-                            motes[newBundle.fromMote].lat,
-                            motes[newBundle.fromMote].lon
+                            motes[newConnection.fromMote].lat,
+                            motes[newConnection.fromMote].lon
                         ),
                         pt.latLng
                     ]
                 )
-                newBundle.line.setMap(map);
+                newConnection.line.setMap(map);
             }
             
-            function bundleCreated(fromMote,toMote) {
+            function connectionCreated(fromMote,toMote) {
                 
                 $.ajax({
                     type:    "PUT",
-                    url:     "/topology/bundles",
+                    url:     "/topology/connections",
                     data:    {
                         'fromMote': fromMote,
                         'toMote':   toMote,
                     }
                 })
                 .done(function( msg ) {
-                    console.log("INFO: new bundle successfully PUT on server.");
+                    console.log("INFO: new connection successfully PUT on server.");
                 })
                 .fail(function() {
-                    console.log("ERROR: could not PUT new bundle to server.");
+                    console.log("ERROR: could not PUT new connection to server.");
                 })
                 .always(function() {
                     
@@ -412,10 +412,10 @@
                     .always(function() {
                         
                         // hide line
-                        newBundle.line.setMap(null);
+                        newConnection.line.setMap(null);
                         
-                        // I'm not draing a new bundle anymore
-                        busyDrawingBundle = false;
+                        // I'm not draing a new connection anymore
+                        busyDrawingConnection = false;
                         
                         // resume automated update
                         clearMapLock();
@@ -423,24 +423,24 @@
                 })
             }
             
-            function bundleClicked(fromMote,toMote,latlon) {
-                var bundleIdx;
+            function connectionClicked(fromMote,toMote,latlon) {
+                var connectionIdx;
                 var content;
                 
-                bundleIdx = getBundleIdx(fromMote,toMote);
+                connectionIdx = getConnectionIdx(fromMote,toMote);
                 
                 content  = ''
                 content += fromMote+'-'+toMote+':<br/>'
-                content += '<input size="10" id="newPDR" value="'+bundles[bundleIdx].pdr+'">'
-                content += '<button onclick="bundleUpdated('+fromMote+','+toMote+')">set PDR</button><br/>'
-                content += '<button onclick="bundleDeleted('+fromMote+','+toMote+')">delete bundle</button>'
+                content += '<input size="10" id="newPDR" value="'+connections[connectionIdx].pdr+'">'
+                content += '<button onclick="connectionUpdated('+fromMote+','+toMote+')">set PDR</button><br/>'
+                content += '<button onclick="connectionDeleted('+fromMote+','+toMote+')">delete connection</button>'
             
-                bundleinfo.setContent(content);
-                bundleinfo.setPosition(latlon);
-                bundleinfo.open(map);
+                connectioninfo.setContent(content);
+                connectioninfo.setPosition(latlon);
+                connectioninfo.open(map);
             }
             
-            function bundleUpdated(fromMote,toMote) {
+            function connectionUpdated(fromMote,toMote) {
                 var newPDR;
                 
                 // retrieve new PDR from form
@@ -449,7 +449,7 @@
                 // send to server
                 $.ajax({
                     type:    "POST",
-                    url:     "/topology/bundles",
+                    url:     "/topology/connections",
                     data:    {
                         'fromMote': fromMote,
                         'toMote':   toMote,
@@ -475,7 +475,7 @@
                     .always(function() {
                         
                         // close info window
-                        bundleinfo.close();
+                        connectioninfo.close();
                         
                         // resume automated update
                         clearMapLock();
@@ -483,22 +483,22 @@
                 })
             }
             
-            function bundleDeleted(fromMote,toMote) {
+            function connectionDeleted(fromMote,toMote) {
                 
                 // send to server
                 $.ajax({
                     type:    "DELETE",
-                    url:     "/topology/bundles",
+                    url:     "/topology/connections",
                     data:    {
                         'fromMote': fromMote,
                         'toMote':   toMote,
                     }
                 })
                 .done(function( msg ) {
-                    console.log("INFO: bundle DELETEed from server.");
+                    console.log("INFO: connection DELETEed from server.");
                 })
                 .fail(function() {
-                    console.log("ERROR: could not DELETE bundle.");
+                    console.log("ERROR: could not DELETE connection.");
                 })
                 .always(function() {
                     
@@ -513,7 +513,7 @@
                     .always(function() {
                         
                         // close info window
-                        bundleinfo.close();
+                        connectioninfo.close();
                         
                         // resume automated update
                         clearMapLock();
