@@ -19,11 +19,17 @@
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
         <script type="text/javascript">
             
+            // global variables
             var map;
-            var infowindow;
-            var motes        = {};
-            var bundles      = [];
+            var pdrinfowindow;
+            var motes             = [];
+            var bundles           = [];
+            var DATA_LOAD_PERIOD  = 5000;
+            var mapLock           = false;
             
+            /**
+            \brief Initialize the topology display
+            */
             function initialize() {
                 
                 // map
@@ -37,174 +43,360 @@
                     mapOptions
                 );
                 
-                // infowindow
-                infowindow = new google.maps.InfoWindow();
+                // pdrinfowindow
+                pdrinfowindow = new google.maps.InfoWindow();
+                google.maps.event.addListener(
+                    pdrinfowindow,
+                    'closeclick',
+                    clearMapLock
+                );
                 
-                // motes
+                // load mote data
+                getTopologyData();
+            }
+            
+            /**
+            \brief Retrieve the topology data from the server.
+            */
+            function getTopologyData() {
+                
+                if (mapLock==false) {
+                    $.ajax({
+                        url:      "/topology/data",
+                        success:  handleNewData,
+                    }).fail(function() {
+                        console.log("ERROR: could not GET topology data");
+                    });
+                }
+                
+                window.setTimeout(getTopologyData,DATA_LOAD_PERIOD);
+            }
+            
+            /**
+            \brief Update the topology using the new data.
+            */
+            function handleNewData(newData) {
+                var i;
                 var title;
                 var marker;
-                % for (moteid,moteposition) in motesData.items():
-                    
-                    title  = {{moteid}}
-                    marker = new google.maps.Marker({
-                        position:      new google.maps.LatLng(
-                            {{moteposition['lat']}},
-                            {{moteposition['lon']}}
-                        ),
-                        draggable:     true,
-                        map:           map,
-                        title:         title.toString()
-                    });
-                    google.maps.event.addListener(
-                        marker,
-                        'dragend',
-                        markerMoved
-                    );
-                    motes[{{moteid}}] = {
-                        'marker': marker
-                    }
-                % end
                 
-                // bundles
-                var bundleColor;
+                // mark all motes for deletion
+                for (id in motes) {
+                    motes[id].deleteMe      = true;
+                }
+                
+                // mark all bundles for deletion
+                for (i=0; i<bundles.length; i++) {
+                    bundles[i].deleteMe     = true;
+                }
+                
+                // create/update motes
+                var id;
+                var lat;
+                var lon;
+                for (i=0; i<newData.motes.length; i++) {
+                    
+                    id       = newData.motes[i].id;
+                    lat      = newData.motes[i].lat;
+                    lon      = newData.motes[i].lon;
+                    
+                    if (!(id in motes)) {
+                        // new mote
+                        
+                        // create mote
+                        motes[id] = {
+                            'lat':      lat,
+                            'lon':      lon,
+                            'deleteMe': false,
+                            'marker':   new google.maps.Marker({
+                                            draggable:     true,
+                                            map:           map,
+                                            title:         id.toString()
+                                        })
+                        }
+                        
+                        // add listeners
+                        google.maps.event.addListener(
+                            motes[id].marker,
+                            'dragstart',
+                            setMapLock
+                        );
+                        google.maps.event.addListener(
+                            motes[id].marker,
+                            'dragend',
+                            moteMoved
+                        );
+                    }
+                    
+                    // update mote
+                    motes[id].lat = lat;
+                    motes[id].lon = lon;
+                    motes[id].marker.setPosition(
+                        new google.maps.LatLng(lat,lon)
+                    );
+                    
+                    // don't delete this mote
+                    motes[id].deleteMe      = false;
+                }
+                
+                // create/update bundles
                 var fromMote;
                 var toMote;
                 var pdr;
-                % for bundleData in bundles:
+                var bundleIdx;
+                var bundleColor;
+                for (i=0; i<newData.bundles.length; i++) {
                     
-                    fromMote = {{bundleData['fromMote']}};
-                    toMote   = {{bundleData['toMote']}};
-                    pdr      = {{bundleData['pdr']}};
+                    fromMote = newData.bundles[i].fromMote;
+                    toMote   = newData.bundles[i].toMote;
+                    pdr      = newData.bundles[i].pdr;
                     
-                    if        (pdr>0.66) {
-                        bundleColor = '#339933';
-                    } else if (pdr>0.33) {
-                        bundleColor = '#ff9900';
-                    } else {
-                        bundleColor = '#ff0000';
-                    }
-                    bundle = {
-                        'fromMote':    fromMote,
-                        'toMote':      toMote,
-                        'pdr':         pdr,
-                        'line':        new google.maps.Polyline(
+                    bundleIdx = getBundleIdx(fromMote,toMote);
+                    
+                    if (bundleIdx==null) {
+                        // new bundle
+                        
+                        bundles.push(
                             {
-                                path:          [
-                                    new google.maps.LatLng(
-                                        motes[fromMote].marker.getPosition().lat(),
-                                        motes[fromMote].marker.getPosition().lng()
-                                    ),
-                                    new google.maps.LatLng(
-                                        motes[toMote].marker.getPosition().lat(),
-                                        motes[toMote].marker.getPosition().lng()
-                                    )
-                                ],
-                                geodesic:      true,
-                                strokeColor:   bundleColor,
-                                strokeOpacity: 1.0,
-                                strokeWeight:  2
+                                'fromMote':    fromMote,
+                                'toMote':      toMote,
+                                'deleteMe':    false,
+                                'line':        new google.maps.Polyline(
+                                    {
+                                        geodesic:      true,
+                                        strokeOpacity: 1.0,
+                                        strokeWeight:  2,
+                                        map:           map
+                                    }
+                                ),
                             }
-                        ),
+                        );
+                        
+                        bundleIdx = bundles.length-1;
+                        
+                        attachPdrInfoWindow(bundleIdx);
                     }
-                    bundle.line.setMap(map);
-                    bundles.push(bundle);
                     
-                    attachInfoWindow(bundle.line,bundles.length-1);
-                % end
+                    // update bundle
+                    bundles[bundleIdx].line.setPath(
+                        [
+                            new google.maps.LatLng(
+                                motes[fromMote].lat,
+                                motes[fromMote].lon
+                            ),
+                            new google.maps.LatLng(
+                                motes[toMote].lat,
+                                motes[toMote].lon
+                            )
+                        ]
+                    )
+                    bundles[bundleIdx].pdr = pdr;
+                    setBundleColor(bundleIdx);
+                    
+                    // don't delete this bundle
+                    bundles[bundleIdx].deleteMe  = false;
+                }
                 
-                // button
-                var updateButton;
-                updateButton                          = document.createElement('div');
-                updateButton.style.padding            = '5px';
-                updateButton.style.backgroundColor    = 'white';
-                updateButton.style.borderStyle        = 'solid';
-                updateButton.style.borderWidth        = '2px';
-                updateButton.style.cursor             = 'pointer';
-                updateButton.style.textAlign          = 'center';
-                updateButton.title                    = 'Click to save the positions';
-                updateButton.index                    = 1;   
-                map.controls[google.maps.ControlPosition.TOP_RIGHT].push(updateButton);
+                // delete all bundles still marked for deletion
+                for (i=0; i<bundles.length; i++) {
+                    if (bundles[i].deleteMe==true) {
+                        bundles[i].line.setMap(null);
+                        bundles.splice(i,1);
+                        i--;
+                    }
+                }
                 
-                var updateButtontext                  = document.createElement('div');
-                updateButtontext.style.fontFamily     = 'Arial,sans-serif';
-                updateButtontext.style.fontSize       = '12px';
-                updateButtontext.style.paddingLeft    = '4px';
-                updateButtontext.style.paddingRight   = '4px';
-                updateButtontext.innerHTML            = '<b>Save Positions</b>';
-                updateButton.appendChild(updateButtontext);
-                
-                google.maps.event.addDomListener(
-                    updateButton,
-                    'click',
-                    updateTopology
-                );
+                // delete all motes still marked for deletion
+                for (id in motes) {
+                    if (motes[id].deleteMe==true) {
+                        motes[id].marker.setMap(null);
+                        delete motes[id];
+                        i--;
+                    }
+                }
             }
             
-            google.maps.event.addDomListener(window, 'load', initialize);
+            function getBundleIdx(fromMote,toMote) {
+                for (var i=0; i<bundles.length; i++) {
+                    if  (
+                            bundles[i].fromMote==fromMote &&
+                            bundles[i].toMote==toMote
+                        ) {
+                        return i;
+                    }
+                }
+                return null;
+            }
             
-            function attachInfoWindow(line,idx) {
-                var fromMote = bundles[idx].fromMote;
-                var toMote   = bundles[idx].toMote;
-                var pdr      = bundles[idx].pdr;
+            function setBundleColor(bundleIdx) {
+                if        (bundles[bundleIdx].pdr>0.66) {
+                    bundleColor = '#339933';
+                } else if (bundles[bundleIdx].pdr>0.33) {
+                    bundleColor = '#ff9900';
+                } else {
+                    bundleColor = '#ff0000';
+                }
+                bundles[bundleIdx].line.setOptions({strokeColor: bundleColor});
+            }
+            
+            function attachPdrInfoWindow(bundleIdx) {
+                var fromMote = bundles[bundleIdx].fromMote;
+                var toMote   = bundles[bundleIdx].toMote;
+                var pdr      = bundles[bundleIdx].pdr;
+                
                 google.maps.event.addListener(
-                    bundle.line,
+                    bundles[bundleIdx].line,
                     'click',
                     function(event){
-                        infowindow.setContent(fromMote+'-'+toMote+' : '+pdr);
-                        infowindow.setPosition(event.latLng);
-                        infowindow.open(map);
+                        setMapLock();
+                        showPdrInfoWindow(fromMote,toMote,event.latLng);
                     }
                 );
             }
             
-            function markerMoved() {
+            function showPdrInfoWindow(fromMote,toMote,latlon) {
+                var bundleIdx;
+                var content;
+                
+                bundleIdx = getBundleIdx(fromMote,toMote);
+                
+                content  = ''
+                content += fromMote+'-'+toMote+':<br/>'
+                content += '<input id="newPDR" value="'+bundles[bundleIdx].pdr+'"><br/>'
+                content += '<button onclick="pdrUpdated('+fromMote+','+toMote+')">set</button>'
+            
+                pdrinfowindow.setContent(content);
+                pdrinfowindow.setPosition(latlon);
+                pdrinfowindow.open(map);
+            }
+            
+            //=============== GUI events ======================================
+            
+            function setMapLock() {
+                mapLock = true;
+            }
+            function clearMapLock() {
+                mapLock = false;
+            }
+            
+            function moteMoved() {
+                var i;
+                var id;
                 var fromMote;
                 var toMote;
-                var i;
+                
+                // update motes
+                for (id in motes) {
+                    motes[id].lat = motes[id].marker.getPosition().lat();
+                    motes[id].lon = motes[id].marker.getPosition().lng();
+                }
+                
+                // update bundles
                 for (i=0; i<bundles.length; i++) {
                     fromMote = bundles[i]['fromMote']
                     toMote   = bundles[i]['toMote']
                     bundles[i].line.setPath(
                         [
                             new google.maps.LatLng(
-                                motes[fromMote].marker.getPosition().lat(),
-                                motes[fromMote].marker.getPosition().lng()
+                                motes[fromMote].lat,
+                                motes[fromMote].lon
                             ),
                             new google.maps.LatLng(
-                                motes[toMote].marker.getPosition().lat(),
-                                motes[toMote].marker.getPosition().lng()
+                                motes[toMote].lat,
+                                motes[toMote].lon
                             )
                         ]
                     )
                 }
+                
+                // POST mote positions to server
+                postMotesPositions();
             }
             
-            function updateTopology() {
-                var positions;
+            function postMotesPositions() {
+                var tempMotes;
                 var moteId;
                 
-                positions = []
+                tempMotes = []
                 for (moteId in motes) {
-                    console.log()
-                    positions.push({
-                        'moteId': moteId,
-                        'lat':    motes[moteId].marker.getPosition().lat(),
-                        'lon':    motes[moteId].marker.getPosition().lng()
+                    tempMotes.push({
+                        'id':     moteId,
+                        'lat':    motes[moteId].lat,
+                        'lon':    motes[moteId].lon
                     })
                 }
                 
                 $.ajax({
                     type:    "POST",
-                    url:     "/topology",
-                    data:    {'positions': positions}
+                    url:     "/topology/motes",
+                    data:    {
+                        'motes': tempMotes,
+                    }
                 })
                 .done(function( msg ) {
-                    console.log("OK");
+                    console.log("INFO: new motePositions successfully POSTed to server.");
                 })
                 .fail(function() {
-                    console.log("FAIL");
+                    console.log("ERROR: could not POST updated topology data.");
+                })
+                .always(function() {
+                    clearMapLock();
                 })
             }
+            
+            function pdrUpdated(fromMote,toMote) {
+                var newPDR;
+                
+                // retrieve PDR from form
+                newPDR = $("#newPDR").val();
+                
+                // update bundles
+                bundleIdx = getBundleIdx(fromMote,toMote)
+                bundles[bundleIdx].pdr = newPDR;
+                setBundleColor(bundleIdx);
+                
+                // POST bundle PDR to server
+                postBundlePDR(bundleIdx);
+            }
+            
+            function postBundlePDR(bundleIdx) {
+                var tempMotes;
+                var moteId;
+                
+                tempMotes = []
+                for (moteId in motes) {
+                    tempMotes.push({
+                        'id':     moteId,
+                        'lat':    motes[moteId].lat,
+                        'lon':    motes[moteId].lon
+                    })
+                }
+                
+                $.ajax({
+                    type:    "POST",
+                    url:     "/topology/bundlepdr",
+                    data:    {
+                        'fromMote': bundles[bundleIdx].fromMote,
+                        'toMote':   bundles[bundleIdx].toMote,
+                        'pdr':      bundles[bundleIdx].pdr,
+                    }
+                })
+                .done(function( msg ) {
+                    console.log("INFO: new PDR successfully POSTed to server.");
+                })
+                .fail(function() {
+                    console.log("ERROR: could not POST updated PDR.");
+                })
+                .always(function() {
+                    pdrinfowindow.close();
+                    clearMapLock();
+                })
+            }
+            
+            //=============== main ============================================
+            
+            google.maps.event.addDomListener(window, 'load', initialize);
+            
         </script>
     </head>
     <body>

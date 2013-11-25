@@ -17,7 +17,6 @@
                 <script>
                 // Use last mode ID for moteview if available
                 var moteid = decodeURIComponent(getCookies()["selected_mote"]);
-                console.log("Set link to moteid " + moteid);
                 if (moteid == null || moteid == undefined || moteid == 'none') {
                     $("#moteview_link").attr("href", "/moteview");
                 } else {

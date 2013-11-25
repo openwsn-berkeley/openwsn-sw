@@ -72,8 +72,10 @@ class OpenVisualizerWeb():
         self.websrv.route(path='/eventBus',                               callback=self._showEventBus)
         self.websrv.route(path='/eventdata',                              callback=self._getEventData)
         self.websrv.route(path='/eventDebug/:enabled',                    callback=self._setEventDebug)
-        self.websrv.route(path='/topology',                               callback=self._showTopology)
-        self.websrv.route(path='/topology',               method='POST',  callback=self._updateTopology)
+        self.websrv.route(path='/topology',                               callback=self._topologyPage)
+        self.websrv.route(path='/topology/data',                          callback=self._topologyData)
+        self.websrv.route(path='/topology/motes',         method='POST',  callback=self._updateTopologyMotes)
+        self.websrv.route(path='/topology/bundlepdr',     method='POST',  callback=self._updateTopologyBundlePdr)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
     
     @view('moteview.tmpl')
@@ -166,48 +168,72 @@ class OpenVisualizerWeb():
         return self._getEventData()
     
     @view('topology.tmpl')
-    def _showTopology(self):
+    def _topologyPage(self):
+        '''
+        Retrieve the HTML/JS page.
+        '''
         
-        motes = {}
-        for id in range(10):
-            motes[id] = {
-                'lat':     37.875095-0.0005+random.random()*0.0010,
-                'lon':   -122.257473-0.0005+random.random()*0.0010,
-            }
+        return {}
+    
+    def _topologyData(self):
+        '''
+        Retrieve the topology data, in JSON format.
+        '''
         
-        bundles = []
-        for _ in range(10):
-            added = False
-            while not added:
-                fromMote = random.choice(motes.keys())
-                toMote   = random.choice(motes.keys())
-                if fromMote==toMote:
-                    continue
-                if (fromMote,toMote) in bundles:
-                    continue
-                if (toMote,fromMote) in bundles:
-                    continue
-                bundles += [
+        try:
+            self.motes
+            self.bundles
+            
+        except AttributeError:
+            
+            # motes
+            self.motes = []
+            for id in range(random.randint(5,10)):
+                self.motes += [
                     {
-                        'fromMote':   fromMote,
-                        'toMote':     toMote,
-                        'pdr':        random.random(),
+                        'id':    id,
+                        'lat':     37.875095-0.0005+random.random()*0.0010,
+                        'lon':   -122.257473-0.0005+random.random()*0.0010,
                     }
                 ]
-                added = True
+            
+            # moteIds
+            moteIds = [m['id'] for m in self.motes]
+            
+            # bundles
+            self.bundles = []
+            for _ in range(random.randint(5,10)):
+                added = False
+                while not added:
+                    fromMote = random.choice(moteIds)
+                    toMote   = random.choice(moteIds)
+                    if fromMote==toMote:
+                        continue
+                    if (fromMote,toMote) in self.bundles:
+                        continue
+                    if (toMote,fromMote) in self.bundles:
+                        continue
+                    self.bundles += [
+                        {
+                            'fromMote':   fromMote,
+                            'toMote':     toMote,
+                            'pdr':        random.random(),
+                        }
+                    ]
+                    added = True
         
-        tmplData = {
-            'motesData'    : motes,
-            'bundles'     : bundles,
+        data = {
+            'motes'     : self.motes,
+            'bundles'   : self.bundles,
         }
         
-        return tmplData
+        return data
     
-    def _updateTopology(self):
+    def _updateTopologyMotes(self):
         
-        positionsTemp = {}
+        motesTemp = {}
         for (k,v) in bottle.request.forms.items():
-            m = re.match("positions\[(\w+)\]\[(\w+)\]", k)
+            m = re.match("motes\[(\w+)\]\[(\w+)\]", k)
             assert m
             index  = int(m.group(1))
             param  =     m.group(2)
@@ -218,18 +244,39 @@ class OpenVisualizerWeb():
                     v  = float(v)
                 except ValueError:
                     pass
-            if index not in positionsTemp:
-                positionsTemp[index] = {}
-            positionsTemp[index][param] = v
+            if index not in motesTemp:
+                motesTemp[index] = {}
+            motesTemp[index][param] = v
         
-        positions = {}
-        for (_,v) in positionsTemp.items():
-            positions[v['moteId']] = {
-                'lat': v['lat'],
-                'lon': v['lon'],
-            }
+        motes = []
+        for (_,v) in motesTemp.items():
+            motes += [
+                {
+                    'id':  v['id'],
+                    'lat': v['lat'],
+                    'lon': v['lon'],
+                }
+            ]
         
-        print positions
+        self.motes = motes
+    
+    def _updateTopologyBundlePdr(self):
+        data = bottle.request.forms
+        assert sorted(data.keys())==sorted(['fromMote', 'toMote', 'pdr'])
+        
+        fromMote = int(data['fromMote'])
+        toMote   = int(data['toMote'])
+        pdr      = float(data['pdr'])
+        
+        found = False
+        
+        for bundle in self.bundles:
+            if (bundle['fromMote']==fromMote and bundle['toMote']==toMote):
+                bundle['pdr']=pdr
+                found = True
+        
+        if not found:
+            raise SystemError("setting PDR for unknown bundle {0}-{1}".format(fromMote,toMote))
     
     def _getEventData(self):
         response = {
