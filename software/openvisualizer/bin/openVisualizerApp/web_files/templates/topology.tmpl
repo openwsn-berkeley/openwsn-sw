@@ -208,7 +208,14 @@
                         ]
                     )
                     bundles[bundleIdx].pdr = pdr;
-                    setBundleColor(bundleIdx);
+                    if        (bundles[bundleIdx].pdr>0.66) {
+                        bundleColor = '#339933';
+                    } else if (bundles[bundleIdx].pdr>0.33) {
+                        bundleColor = '#ff9900';
+                    } else {
+                        bundleColor = '#ff0000';
+                    }
+                    bundles[bundleIdx].line.setOptions({strokeColor: bundleColor});
                     
                     // don't delete this bundle
                     bundles[bundleIdx].deleteMe  = false;
@@ -245,28 +252,85 @@
                 return null;
             }
             
-            function setBundleColor(bundleIdx) {
-                if        (bundles[bundleIdx].pdr>0.66) {
-                    bundleColor = '#339933';
-                } else if (bundles[bundleIdx].pdr>0.33) {
-                    bundleColor = '#ff9900';
-                } else {
-                    bundleColor = '#ff0000';
-                }
-                bundles[bundleIdx].line.setOptions({strokeColor: bundleColor});
-            }
-            
             function attachRightClickCreateBundle(id) {
                 google.maps.event.addListener(
                     motes[id].marker,
                     'rightclick',
                     function(event){
-                        createNewBundle(id);
+                        bundleCreationStep(id);
                     }
                 );
             }
             
-            function createNewBundle(id) {
+            function attachPdrInfoWindow(bundleIdx) {
+                var fromMote = bundles[bundleIdx].fromMote;
+                var toMote   = bundles[bundleIdx].toMote;
+                var pdr      = bundles[bundleIdx].pdr;
+                
+                google.maps.event.addListener(
+                    bundles[bundleIdx].line,
+                    'click',
+                    function(event){
+                        setMapLock();
+                        bundleClicked(fromMote,toMote,event.latLng);
+                    }
+                );
+            }
+            
+            //=============== GUI events ======================================
+            
+            function setMapLock() {
+                mapLock = true;
+            }
+            function clearMapLock() {
+                mapLock = false;
+            }
+            
+            function moteMoved() {
+                var tempMotes;
+                var moteId;
+                
+                tempMotes = []
+                for (moteId in motes) {
+                    tempMotes.push({
+                        'id':     moteId,
+                        'lat':    motes[moteId].marker.getPosition().lat(),
+                        'lon':    motes[moteId].marker.getPosition().lng()
+                    })
+                }
+                
+                $.ajax({
+                    type:    "POST",
+                    url:     "/topology/motes",
+                    data:    {
+                        'motes': tempMotes,
+                    }
+                })
+                .done(function( msg ) {
+                    console.log("INFO: new motePositions successfully POSTed to server.");
+                })
+                .fail(function() {
+                    console.log("ERROR: could not POST updated topology data.");
+                })
+                .always(function() {
+                    
+                    // get new data from server
+                    $.ajax({
+                        url:      "/topology/data",
+                        success:  handleNewData,
+                    })
+                    .fail(function() {
+                        console.log("ERROR: could not GET topology data");
+                    })
+                    .always(function() {
+                        
+                        // resume automated update
+                        clearMapLock();
+                    });
+                })
+            }
+            
+            function bundleCreationStep(id) {
                 
                 if (busyDrawingBundle==false) {
                     // start
@@ -286,7 +350,7 @@
                     google.maps.event.addListener(
                         map,
                         'mousemove',
-                        moveNewBundle
+                        bundleCreationMoved
                     );
                     
                 } else {
@@ -301,11 +365,11 @@
                     );
                     
                     // send new bundle to server
-                    putNewBundle(newBundle.fromMote,id);
+                    bundleCreated(newBundle.fromMote,id);
                 }
             }
             
-            function moveNewBundle(pt) {
+            function bundleCreationMoved(pt) {
                 
                 newBundle.line.setPath(
                     [
@@ -319,7 +383,7 @@
                 newBundle.line.setMap(map);
             }
             
-            function putNewBundle(fromMote,toMote) {
+            function bundleCreated(fromMote,toMote) {
                 
                 $.ajax({
                     type:    "PUT",
@@ -359,22 +423,7 @@
                 })
             }
             
-            function attachPdrInfoWindow(bundleIdx) {
-                var fromMote = bundles[bundleIdx].fromMote;
-                var toMote   = bundles[bundleIdx].toMote;
-                var pdr      = bundles[bundleIdx].pdr;
-                
-                google.maps.event.addListener(
-                    bundles[bundleIdx].line,
-                    'click',
-                    function(event){
-                        setMapLock();
-                        showPdrInfoWindow(fromMote,toMote,event.latLng);
-                    }
-                );
-            }
-            
-            function showPdrInfoWindow(fromMote,toMote,latlon) {
+            function bundleClicked(fromMote,toMote,latlon) {
                 var bundleIdx;
                 var content;
                 
@@ -383,7 +432,7 @@
                 content  = ''
                 content += fromMote+'-'+toMote+':<br/>'
                 content += '<input size="10" id="newPDR" value="'+bundles[bundleIdx].pdr+'">'
-                content += '<button onclick="pdrUpdated('+fromMote+','+toMote+')">set PDR</button><br/>'
+                content += '<button onclick="bundleUpdated('+fromMote+','+toMote+')">set PDR</button><br/>'
                 content += '<button onclick="bundleDeleted('+fromMote+','+toMote+')">delete bundle</button>'
             
                 bundleinfo.setContent(content);
@@ -391,97 +440,52 @@
                 bundleinfo.open(map);
             }
             
-            //=============== GUI events ======================================
-            
-            function setMapLock() {
-                mapLock = true;
-            }
-            function clearMapLock() {
-                mapLock = false;
-            }
-            
-            function moteMoved() {
-                var i;
-                var id;
-                var fromMote;
-                var toMote;
+            function bundleUpdated(fromMote,toMote) {
+                var newPDR;
                 
-                // update motes
-                for (id in motes) {
-                    motes[id].lat = motes[id].marker.getPosition().lat();
-                    motes[id].lon = motes[id].marker.getPosition().lng();
-                }
+                // retrieve new PDR from form
+                newPDR = $("#newPDR").val();
                 
-                // update bundles
-                for (i=0; i<bundles.length; i++) {
-                    fromMote = bundles[i]['fromMote']
-                    toMote   = bundles[i]['toMote']
-                    bundles[i].line.setPath(
-                        [
-                            new google.maps.LatLng(
-                                motes[fromMote].lat,
-                                motes[fromMote].lon
-                            ),
-                            new google.maps.LatLng(
-                                motes[toMote].lat,
-                                motes[toMote].lon
-                            )
-                        ]
-                    )
-                }
-                
-                // POST mote positions to server
-                postMotesPositions();
-            }
-            
-            function postMotesPositions() {
-                var tempMotes;
-                var moteId;
-                
-                tempMotes = []
-                for (moteId in motes) {
-                    tempMotes.push({
-                        'id':     moteId,
-                        'lat':    motes[moteId].lat,
-                        'lon':    motes[moteId].lon
-                    })
-                }
-                
+                // send to server
                 $.ajax({
                     type:    "POST",
-                    url:     "/topology/motes",
+                    url:     "/topology/bundles",
                     data:    {
-                        'motes': tempMotes,
+                        'fromMote': fromMote,
+                        'toMote':   toMote,
+                        'pdr':      newPDR,
                     }
                 })
                 .done(function( msg ) {
-                    console.log("INFO: new motePositions successfully POSTed to server.");
+                    console.log("INFO: new PDR successfully POSTed to server.");
                 })
                 .fail(function() {
-                    console.log("ERROR: could not POST updated topology data.");
+                    console.log("ERROR: could not POST new PDR.");
                 })
                 .always(function() {
-                    clearMapLock();
+                    
+                    // get new data from server
+                    $.ajax({
+                        url:      "/topology/data",
+                        success:  handleNewData,
+                    })
+                    .fail(function() {
+                        console.log("ERROR: could not GET topology data");
+                    })
+                    .always(function() {
+                        
+                        // close info window
+                        bundleinfo.close();
+                        
+                        // resume automated update
+                        clearMapLock();
+                    });
                 })
-            }
-            
-            function pdrUpdated(fromMote,toMote) {
-                var newPDR;
-                
-                // retrieve PDR from form
-                newPDR = $("#newPDR").val();
-                
-                // update bundles
-                // TODO: do by updating from server
-                bundleIdx = getBundleIdx(fromMote,toMote)
-                bundles[bundleIdx].pdr = newPDR;
-                setBundleColor(bundleIdx);
-                
-                // POST bundle PDR to server
-                postBundlePDR(bundleIdx);
             }
             
             function bundleDeleted(fromMote,toMote) {
+                
+                // send to server
                 $.ajax({
                     type:    "DELETE",
                     url:     "/topology/bundles",
@@ -514,40 +518,6 @@
                         // resume automated update
                         clearMapLock();
                     });
-                })
-            }
-            
-            function postBundlePDR(bundleIdx) {
-                var tempMotes;
-                var moteId;
-                
-                tempMotes = []
-                for (moteId in motes) {
-                    tempMotes.push({
-                        'id':     moteId,
-                        'lat':    motes[moteId].lat,
-                        'lon':    motes[moteId].lon
-                    })
-                }
-                
-                $.ajax({
-                    type:    "POST",
-                    url:     "/topology/bundles",
-                    data:    {
-                        'fromMote': bundles[bundleIdx].fromMote,
-                        'toMote':   bundles[bundleIdx].toMote,
-                        'pdr':      bundles[bundleIdx].pdr,
-                    }
-                })
-                .done(function( msg ) {
-                    console.log("INFO: new PDR successfully POSTed to server.");
-                })
-                .fail(function() {
-                    console.log("ERROR: could not POST updated PDR.");
-                })
-                .always(function() {
-                    bundleinfo.close();
-                    clearMapLock();
                 })
             }
             
