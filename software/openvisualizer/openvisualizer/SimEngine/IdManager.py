@@ -4,17 +4,20 @@
 #  
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
+
 import logging
-    
+
+import SimEngine
+
 class IdManager(object):
     '''
     The module which assigns ID to the motes.
     '''
     
-    def __init__(self,engine):
+    def __init__(self):
         
         # store params
-        self.engine               = engine
+        self.engine               = SimEngine.SimEngine()
         
         # local variables
         self.currentId            = 0

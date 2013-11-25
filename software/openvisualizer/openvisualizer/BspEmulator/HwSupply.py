@@ -6,6 +6,7 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
 
+from openvisualizer.SimEngine     import SimEngine
 import HwModule
 
 class HwSupply(HwModule.HwModule):
@@ -15,10 +16,10 @@ class HwSupply(HwModule.HwModule):
     
     INTR_SWITCHON  = 'hw_supply.switchOn'
     
-    def __init__(self,engine,motehandler):
+    def __init__(self,motehandler):
         
         # store params
-        self.engine          = engine
+        self.engine          = SimEngine.SimEngine()
         self.motehandler     = motehandler
         
         # local variables

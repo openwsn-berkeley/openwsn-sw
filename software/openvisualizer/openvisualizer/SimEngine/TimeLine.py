@@ -4,8 +4,11 @@
 #  
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
+
 import logging
 import threading
+
+import SimEngine
 
 class TimeLineStats(object):
     
@@ -34,10 +37,10 @@ class TimeLine(threading.Thread):
     The timeline of the engine.
     '''
     
-    def __init__(self,engine):
+    def __init__(self):
         
         # store params
-        self.engine               = engine
+        self.engine               = SimEngine.SimEngine()
         
         # local variables
         self.currentTime          = 0   # current time

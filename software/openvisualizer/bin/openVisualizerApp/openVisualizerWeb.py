@@ -33,13 +33,14 @@ from bottle        import view
 
 import openVisualizerApp
 import openvisualizer.openvisualizer_utils as u
+from openvisualizer.SimEngine   import SimEngine
 
 class OpenVisualizerWeb():
     '''
     Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web
     server.
     '''
-        
+    
     def __init__(self,app,websrv):
         '''
         :param app:    OpenVisualizerApp
@@ -48,17 +49,19 @@ class OpenVisualizerWeb():
         log.info('Creating OpenVisualizerWeb')
         
         # store params
-        self.app                    = app
-        self.websrv                 = websrv
+        self.app             = app
+        self.engine          = SimEngine.SimEngine()
+        self.websrv          = websrv
         
         self._defineRoutes()
         
         # To find page templates
         bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.datadir))
-        
+    
     #======================== public ==========================================
     
     #======================== private =========================================
+    
     def _defineRoutes(self):
         '''
         Matches web URL to impelementing method. Cannot use @route annotations
@@ -182,51 +185,55 @@ class OpenVisualizerWeb():
         Retrieve the topology data, in JSON format.
         '''
         
-        try:
-            self.motes
-            self.bundles
-            
-        except AttributeError:
-            
-            # motes
-            self.motes = []
-            for id in range(random.randint(5,10)):
-                self.motes += [
+        # motes
+        motes = []
+        rank  = 0
+        while True:
+            try:
+                mh            = self.engine.getMoteHandler(rank)
+                id            = mh.getId()
+                (lat,lon)     = mh.getLocation()
+                motes += [
                     {
                         'id':    id,
-                        'lat':     37.875095-0.0005+random.random()*0.0010,
-                        'lon':   -122.257473-0.0005+random.random()*0.0010,
+                        'lat':   lat,
+                        'lon':   lon,
                     }
                 ]
-            
-            # moteIds
-            moteIds = [m['id'] for m in self.motes]
-            
-            # bundles
-            self.bundles = []
-            for _ in range(random.randint(5,10)):
-                added = False
-                while not added:
-                    fromMote = random.choice(moteIds)
-                    toMote   = random.choice(moteIds)
-                    if fromMote==toMote:
-                        continue
-                    if (fromMote,toMote) in self.bundles:
-                        continue
-                    if (toMote,fromMote) in self.bundles:
-                        continue
-                    self.bundles += [
-                        {
-                            'fromMote':   fromMote,
-                            'toMote':     toMote,
-                            'pdr':        random.random(),
-                        }
-                    ]
-                    added = True
+                rank+=1
+            except IndexError:
+               break
+        
+        # moteIds
+        moteIds = [m['id'] for m in motes]
+        
+        # bundles
+        bundles = []
+        '''
+        for _ in range(random.randint(5,10)):
+            added = False
+            while not added:
+                fromMote = random.choice(moteIds)
+                toMote   = random.choice(moteIds)
+                if fromMote==toMote:
+                    continue
+                if (fromMote,toMote) in self.bundles:
+                    continue
+                if (toMote,fromMote) in self.bundles:
+                    continue
+                self.bundles += [
+                    {
+                        'fromMote':   fromMote,
+                        'toMote':     toMote,
+                        'pdr':        random.random(),
+                    }
+                ]
+                added = True
+        '''
         
         data = {
-            'motes'     : self.motes,
-            'bundles'   : self.bundles,
+            'motes'     : motes,
+            'bundles'   : bundles,
         }
         
         return data
@@ -250,17 +257,9 @@ class OpenVisualizerWeb():
                 motesTemp[index] = {}
             motesTemp[index][param] = v
         
-        motes = []
         for (_,v) in motesTemp.items():
-            motes += [
-                {
-                    'id':  v['id'],
-                    'lat': v['lat'],
-                    'lon': v['lon'],
-                }
-            ]
-        
-        self.motes = motes
+            mh = self.engine.getMoteHandlerById(v['id'])
+            mh.setLocation(v['lat'],v['lon'])
     
     def _topologyBundlesCreate(self):
         
