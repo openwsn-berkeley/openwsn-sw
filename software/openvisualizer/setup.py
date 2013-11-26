@@ -1,5 +1,6 @@
-from distutils.core import setup
+from setuptools     import setup
 import glob
+import os
 from openvisualizer import ovVersion
 
 '''
@@ -10,6 +11,9 @@ single tree of directories, and so is more portable.
 
 In contrast to the native setup, the installer is free to relocate the tree
 of directories with install options for setup.py.
+
+This implementation is based on setuptools, and builds the list of module
+dependencies by reading 'requirements.pip'.
 '''
 
 VERSION   = '.'.join([str(v) for v in ovVersion.VERSION])
@@ -18,6 +22,16 @@ webtmpl   = 'data/web_files/templates'
 simdata   = 'data/sim_files'
 with open('README.txt') as f:
     LONG_DESCRIPTION = f.read()
+    
+# Create list of required modules for 'install_requires' parameter. Cannot use
+# pip.req.parse_requirements() because it requires the pwd module, which is 
+# Unix only.
+# Assumes requirements file contains only module lines and comments.
+deplist = []
+with open(os.path.join('openvisualizer', 'data', 'requirements.pip')) as f:
+    for line in f:
+        if not line.startswith('#'):
+            deplist.append(line)
 
 def appdirGlob(globstr, subdir=''):
     appdir = 'bin/openVisualizerApp'
@@ -40,6 +54,7 @@ setup(
     # Copy simdata files by extension so don't copy .gitignore in that directory.
     package_data     = {'openvisualizer': [
                         'data/*.conf',
+                        'data/requirements.pip',
                         '/'.join([webstatic, '*.css']), 
                         '/'.join([webstatic, '*.js']), 
                         '/'.join([webstatic, '*.png']),
@@ -47,8 +62,11 @@ setup(
                         '/'.join([webtmpl, '*']), 
                         '/'.join([simdata, '*.pyd']), 
                         '/'.join([simdata, '*.so']), 
-                        '/'.join([simdata, '*.h']), 
+                        '/'.join([simdata, '*.h']) 
                         ]},
+    install_requires = deplist,
+    # Must extract zip to edit conf files.
+    zip_safe         = False,
     version          = VERSION,
     author           = 'Thomas Watteyne',
     author_email     = 'watteyne@eecs.berkeley.edu',
