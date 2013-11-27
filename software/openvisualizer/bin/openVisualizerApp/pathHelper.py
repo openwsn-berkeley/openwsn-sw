@@ -37,6 +37,6 @@ def updatePath():
     if uiFile.startswith('bin'):
         updatePath = False
     
-    # update the path, if needed
+    # update the path, if needed, to include the root openvisualizer directory
     if updatePath:
         sys.path.insert(0,os.path.join('..','..'))               # root

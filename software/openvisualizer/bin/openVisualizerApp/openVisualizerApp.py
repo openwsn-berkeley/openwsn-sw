@@ -269,38 +269,48 @@ def _initExternalDirs(appdir, debug):
         if not _verifyConfpath(appdir):
             raise RuntimeError('Config file not in expected directory: {0}'.format(appdir))
         if debug:
-            print 'External dir from appdir'
+            print 'App data found via appdir'
         return (appdir, appdir, appdir)
     
     filedir = os.path.dirname(__file__)
     if _verifyConfpath(filedir):
         if debug:
-            print 'External dir from openVisualizerApp.py'
+            print 'App data found via openVisualizerApp.py'
         return (filedir, filedir, filedir)
         
-    confdir = appdirs.site_config_dir('openvisualizer', 'OpenWSN')
+    confdir      = appdirs.site_config_dir('openvisualizer', 'OpenWSN')
+    # Must use system log dir on Linux since running as superuser.
+    linuxLogdir  = '/var/log/openvisualizer'
     if _verifyConfpath(confdir):
         if not sys.platform.startswith('linux'):
             raise RuntimeError('Native OS external directories supported only on Linux')
             
         datadir = appdirs.site_data_dir('openvisualizer', 'OpenWSN')
+        logdir  = linuxLogdir
         if os.path.exists(datadir):
-            logdir = '/var/log/openvisualizer'
             if not os.path.exists(logdir):
-                os.mkdir(logdir, 750)
+                os.mkdir(logdir)
             if debug:
-                print 'External dir from OS'
+                print 'App data found via native OS'
             return (confdir, datadir, logdir)
         else:
             raise RuntimeError('Cannot find expected data directory: {0}'.format(datadir))
 
     datadir = os.path.join(os.path.dirname(u.__file__), 'data')
     if _verifyConfpath(datadir):
+        if sys.platform == 'win32':
+            logdir = appdirs.user_log_dir('openvisualizer', 'OpenWSN', opinion=False)
+        else:
+            logdir = linuxLogdir
+        if not os.path.exists(logdir):
+            # Must make intermediate directories on Windows
+            os.makedirs(logdir)
         if debug:
-            print 'External dir from openvisualizer package'
-        return (datadir, datadir, datadir)
+            print 'App data found via openvisualizer package'
+            
+        return (datadir, datadir, logdir)
     else:
-        raise RuntimeError('Cannot find expected data directory: {0}'.format(pkgdir))
+        raise RuntimeError('Cannot find expected data directory: {0}'.format(datadir))
                     
 def _verifyConfpath(confdir):
     '''

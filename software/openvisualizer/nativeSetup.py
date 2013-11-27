@@ -16,6 +16,9 @@ superuser to run OpenVisualizer, so user-level directories like
 
 For native file storage to work, the installer *must not* modify the location 
 of these files at install time.
+
+Use of the legacy distutils package also accommodates existing Linux packaging 
+tools.
 '''
 
 VERSION   = '.'.join([str(v) for v in ovVersion.VERSION])
@@ -33,6 +36,7 @@ def appdirGlob(globstr, subdir=''):
         return glob.glob('/'.join([appdir, globstr]))
     else:
         return glob.glob('/'.join([appdir, subdir, globstr]))
+        
 
 setup(
     name             = 'openVisualizer',
