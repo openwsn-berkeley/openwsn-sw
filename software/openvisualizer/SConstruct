@@ -29,7 +29,7 @@ Help('''
 Usage:
     scons [options] <rungui|runcli|runweb>
     scons copy-simfw
-    scons <sdist|sdist-native>
+    scons <sdist|upload|sdist-native>
     scons unittests
     scons docs
    
@@ -61,6 +61,11 @@ Targets:
         Generate a standard Python source distribution archive (for 
         setup.py) in build{0}dist directory. Installs data files to the 
         openvisualizer package directory.
+        
+    upload: 
+        Uploads sdist archive to PyPI. The user must be registered as an
+        Owner or Maintainer of OpenVisualizer. The user's PyPI credentials
+        must be stored in their home directory .pypirc file.
     
     sdist-native:
         Linux only
@@ -183,41 +188,52 @@ Alias('copy-simfw', copySimfw(env))
 
 #===== sdist
 
-def makeTreeSdist(env):
+def makeTreeSdist(env, target):
     '''
-    Creates the source dist archive for a tree-based install. Uses a
-    phony target to force build.
+    Creates a target that requires creation of a source distribution. Uses
+    the target name as a phony target to force the build. Supports 'sdist' and
+    'upload' targets.
     
-    First, copies thAde data files from the openVisualizerApp directory as 
-    data for the openvisualizer package. Then creates the source dist 
-    archive. Cleans up the temporary package data file.
+    First, copies the data files from the openVisualizerApp directory as data
+    for the openvisualizer package. Then creates the source dist archive.
+    Cleans up the temporary package data file.
     '''
     datadir = os.path.join('openvisualizer', 'data')
     appdir  = os.path.join('bin', 'openVisualizerApp')
     distdir = os.path.join('build', 'dist')
+    topdir  = os.path.join('..', '..')
     cmdlist = []
     
     cmdlist.append(Delete(distdir))
-    cmdlist.append(Delete('MANIFEST'))
-    cmdlist.append(Delete(datadir))   # In case it didn't get deleted last time
-    cmdlist.append(Copy('setup.py', 'treeSetup.py'))
+    cmdlist.append(Delete(datadir))
+    cmdlist.append(Delete('openVisualizer.egg-info'))
     
     cmdlist.append(Mkdir(datadir))
+    cmdlist.append(Copy(os.path.join(datadir, 'requirements.pip'), 
+                        os.path.join(topdir, 'requirements.pip')))
     for conf in env['CONF_FILES']:
         cmdlist.append(Copy(os.path.join(datadir, conf), os.path.join(appdir, conf)))
     for data in env['DATA_DIRS']:
         cmdlist.append(Copy(os.path.join(datadir, data), os.path.join(appdir, data)))
-    
-    cmdlist.append(' '.join(['python setup.py sdist',
-                            '--template MANIFEST.tree',
-                            '--formats=gztar,zip',
-                            '--dist-dir {0}'.format(distdir)]))
-    cmdlist.append(Delete('setup.py'))
+        
+    sdistLines = ['python setup.py sdist',
+                  '--formats=gztar,zip',
+                  '--dist-dir {0}'.format(distdir)]
+    if target == 'sdist':
+        cmdlist.append(' '.join(sdistLines))
+    elif target == 'upload':
+        # Must first run sdist before upload
+        cmdlist.append(' '.join(sdistLines + ['upload']))
+    else:
+        print 'Target "{0}" not supported'.format(target)
+                                
     cmdlist.append(Delete(datadir))
+    cmdlist.append(Delete('openVisualizer.egg-info'))
     
-    return env.Command('tree', '', cmdlist)
+    return env.Command(target, '', cmdlist)
 
-Alias('sdist', makeTreeSdist(env))
+Alias('sdist', makeTreeSdist(env, 'sdist'))
+Alias('upload', makeTreeSdist(env, 'upload'))
 
 #===== sdist-native
 
@@ -234,7 +250,8 @@ def makeNativeSdist(env):
                     Delete('MANIFEST'),
                     Copy('setup.py', 'nativeSetup.py'),
                     'python setup.py sdist --dist-dir {0}'.format(distdir),
-                    Delete('setup.py')
+                    Delete('setup.py'),
+                    Delete('MANIFEST'),
                     ])
                     
 Alias('sdist-native', makeNativeSdist(env))
