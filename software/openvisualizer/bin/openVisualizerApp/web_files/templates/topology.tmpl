@@ -15,8 +15,20 @@
                 borderWidth       : 2px;
                 textAlign         : 'center';
             }
+            .labels {
+                color             : yellow;
+                background-color  : blue;
+                font-family       : "Lucida Grande", "Arial", sans-serif;
+                font-size         : 10px;
+                font-weight       : bold;
+                text-align        : center;
+                width             : 40px;
+                border            : 1px solid yellow;
+                white-space       : nowrap;
+            }
         </style>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
+        <script src="/static/markerwithlabel.js"></script>
         <script type="text/javascript">
             
             // global variables
@@ -123,10 +135,13 @@
                             'lat':      lat,
                             'lon':      lon,
                             'deleteMe': false,
-                            'marker':   new google.maps.Marker({
+                            'marker':   new MarkerWithLabel({
                                             draggable:     true,
                                             map:           map,
-                                            title:         id.toString()
+                                            labelContent:  id.toString(),
+                                            labelAnchor:   new google.maps.Point(22, 0),
+                                            labelClass:    "labels",
+                                            labelStyle:    {opacity: 0.75},
                                         })
                         }
                         
