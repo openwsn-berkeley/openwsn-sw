@@ -30,6 +30,7 @@ class Propagation(eventBusClient.eventBusClient):
         # local variables
         self.dataLock             = threading.Lock()
         self.connections          = {}
+        self.pendingTxEnd         = []
         
         # logging
         self.log                  = logging.getLogger('Propagation')
@@ -59,6 +60,7 @@ class Propagation(eventBusClient.eventBusClient):
     def createConnection(self,fromMote,toMote):
         
         pdr = random.random()
+        pdr = 1.0
         
         with self.dataLock:
             
@@ -156,8 +158,14 @@ class Propagation(eventBusClient.eventBusClient):
         
         if fromMote in self.connections:
             for (toMote,pdr) in self.connections[fromMote].items():
-                mh = self.engine.getMoteHandlerById(toMote)
-                mh.bspRadio.indicateTxStart(fromMote,packet,channel)
+                if random.random()<=pdr:
+                    
+                    # indicate start of transmission
+                    mh = self.engine.getMoteHandlerById(toMote)
+                    mh.bspRadio.indicateTxStart(fromMote,packet,channel)
+                    
+                    # remember to signal end of transmission
+                    self.pendingTxEnd += [(fromMote,toMote)]
     
     def _indicateTxEnd(self,sender,signal,data):
         
@@ -165,8 +173,13 @@ class Propagation(eventBusClient.eventBusClient):
         
         if fromMote in self.connections:
             for (toMote,pdr) in self.connections[fromMote].items():
-                mh = self.engine.getMoteHandlerById(toMote)
-                mh.bspRadio.indicateTxEnd(fromMote)
+                try:
+                    self.pendingTxEnd.remove((fromMote,toMote))
+                except ValueError:
+                    pass
+                else:
+                    mh = self.engine.getMoteHandlerById(toMote)
+                    mh.bspRadio.indicateTxEnd(fromMote)
     
     #======================== private =========================================
     
