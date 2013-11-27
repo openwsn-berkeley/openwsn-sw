@@ -33,9 +33,12 @@ from bottle        import view
 
 import openVisualizerApp
 import openvisualizer.openvisualizer_utils as u
+from openvisualizer.eventBus import eventBusClient
 from openvisualizer.SimEngine   import SimEngine
 
-class OpenVisualizerWeb():
+from pydispatch import dispatcher
+
+class OpenVisualizerWeb(eventBusClient.eventBusClient):
     '''
     Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web
     server.
@@ -57,6 +60,13 @@ class OpenVisualizerWeb():
         
         # To find page templates
         bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.datadir))
+        
+        # initialize parent class
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name                  = 'OpenVisualizerWeb',
+            registrations         =  [],
+        )
     
     #======================== public ==========================================
     
@@ -77,10 +87,11 @@ class OpenVisualizerWeb():
         self.websrv.route(path='/eventDebug/:enabled',                    callback=self._setEventDebug)
         self.websrv.route(path='/topology',                               callback=self._topologyPage)
         self.websrv.route(path='/topology/data',                          callback=self._topologyData)
-        self.websrv.route(path='/topology/motes',     method='POST',      callback=self._topologyMotesUpdate)
+        self.websrv.route(path='/topology/motes',         method='POST',  callback=self._topologyMotesUpdate)
         self.websrv.route(path='/topology/connections',   method='PUT',   callback=self._topologyConnectionsCreate)
         self.websrv.route(path='/topology/connections',   method='POST',  callback=self._topologyConnectionsUpdate)
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
+        self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
     
     @view('moteview.tmpl')
@@ -266,6 +277,27 @@ class OpenVisualizerWeb():
         toMote   = int(data['toMote'])
         
         self.engine.propagation.deleteConnection(fromMote,toMote)
+    
+    def _topologyRouteRetrieve(self):
+        
+        data = bottle.request.query
+        
+        assert data.keys()==['destination']
+        
+        detination_eui = [0x14,0x15,0x92,0xcc,0x00,0x00,0x00,int(data['destination'])]
+        
+        route = self._dispatchAndGetResult(
+            signal       = 'getSourceRoute', 
+            data         = detination_eui,
+        )
+        
+        route = [r[-1] for r in route]
+        
+        data = {
+            'route'          : route,
+        }
+        
+        return data
     
     def _getEventData(self):
         response = {
