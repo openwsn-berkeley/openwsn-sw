@@ -32,8 +32,8 @@ class LocationManager(object):
     def getLocation(self):
         
         # get random location around Cory Hall, UC Berkeley
-        lat =   37.875095-0.0005+random.random()*0.0010,
-        lon = -122.257473-0.0005+random.random()*0.0010,
+        lat =   37.875095-0.0005+random.random()*0.0010
+        lon = -122.257473-0.0005+random.random()*0.0010
         
         # debug
         if self.log.isEnabledFor(logging.DEBUG):

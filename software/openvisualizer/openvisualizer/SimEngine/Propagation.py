@@ -9,6 +9,7 @@ import logging
 import threading
 import copy
 import random
+from math import radians, cos, sin, asin, sqrt, log10
 
 from openvisualizer.eventBus      import eventBusClient
 
@@ -62,9 +63,15 @@ class Propagation(eventBusClient.eventBusClient):
         pdr = random.random()
         pdr = 1.0
         
+        FREQUENCY_GHz        =    2.4
+        TX_POWER_dBm         =    0.0
+        PISTER_HACK_LOSS     =   40.0
+        SENSITIVITY_dBm      = -101.0
+        GREY_AREA_dB         =   15.0
+        
         with self.dataLock:
             
-            # verify doesn't exist
+            #===== verify doesn't exist
             
             try:
                 self.connections[fromMote][toMote]
@@ -82,15 +89,50 @@ class Propagation(eventBusClient.eventBusClient):
                 exists = True
             assert exists==False
             
-            # create connection
+            #===== calculate pdr using Pister-hack model
             
-            if fromMote not in self.connections:
-                self.connections[fromMote] = {}
-            self.connections[fromMote][toMote] = pdr
+            # retrieve position
+            mhFrom            = self.engine.getMoteHandlerById(fromMote)
+            (latFrom,lonFrom) = mhFrom.getLocation()
+            mhTo              = self.engine.getMoteHandlerById(toMote)
+            (latTo,lonTo)     = mhTo.getLocation()
             
-            if toMote not in self.connections:
-                self.connections[toMote] = {}
-            self.connections[toMote][fromMote] = pdr
+            # compute distance
+            lonFrom, latFrom, lonTo, latTo = map(radians, [lonFrom, latFrom, lonTo, latTo])
+            dlon             = lonTo - lonFrom 
+            dlat             = latTo - latFrom 
+            a                = sin(dlat/2)**2 + cos(latFrom) * cos(latTo) * sin(dlon/2)**2
+            c                = 2 * asin(sqrt(a)) 
+            d_km                = 6367 * c
+            
+            print d_km
+            
+            # compute reception power (first Friis, then apply Pister-hack)
+            Prx              = TX_POWER_dBm - (20*log10(d_km) + 20*log10(FREQUENCY_GHz) + 92.45)
+            Prx             -= PISTER_HACK_LOSS*random.random()
+            
+            print Prx
+            
+            # turn into PDR
+            if   Prx<SENSITIVITY_dBm:
+                pdr          = 0.0
+            elif Prx>SENSITIVITY_dBm+GREY_AREA_dB:
+                pdr          = 1.0
+            else:
+                pdr          = (Prx-SENSITIVITY_dBm)/GREY_AREA_dB
+            
+            print pdr
+            
+            #==== record connection
+            
+            if pdr:
+                if fromMote not in self.connections:
+                    self.connections[fromMote] = {}
+                self.connections[fromMote][toMote] = pdr
+                
+                if toMote not in self.connections:
+                    self.connections[toMote] = {}
+                self.connections[toMote][fromMote] = pdr
     
     def retrieveConnections(self):
         
