@@ -60,9 +60,6 @@ class Propagation(eventBusClient.eventBusClient):
     
     def createConnection(self,fromMote,toMote):
         
-        pdr = random.random()
-        pdr = 1.0
-        
         FREQUENCY_GHz        =    2.4
         TX_POWER_dBm         =    0.0
         PISTER_HACK_LOSS     =   40.0
@@ -70,24 +67,6 @@ class Propagation(eventBusClient.eventBusClient):
         GREY_AREA_dB         =   15.0
         
         with self.dataLock:
-            
-            #===== verify doesn't exist
-            
-            try:
-                self.connections[fromMote][toMote]
-            except KeyError:
-                exists = False
-            else:
-                exists = True
-            assert exists==False
-            
-            try:
-                self.connections[toMote][fromMote]
-            except KeyError:
-                exists = False
-            else:
-                exists = True
-            assert exists==False
             
             #===== calculate pdr using Pister-hack model
             
@@ -105,13 +84,9 @@ class Propagation(eventBusClient.eventBusClient):
             c                = 2 * asin(sqrt(a)) 
             d_km                = 6367 * c
             
-            print d_km
-            
             # compute reception power (first Friis, then apply Pister-hack)
             Prx              = TX_POWER_dBm - (20*log10(d_km) + 20*log10(FREQUENCY_GHz) + 92.45)
             Prx             -= PISTER_HACK_LOSS*random.random()
-            
-            print Prx
             
             # turn into PDR
             if   Prx<SENSITIVITY_dBm:
@@ -123,7 +98,7 @@ class Propagation(eventBusClient.eventBusClient):
             
             print pdr
             
-            #==== record connection
+            #==== create, update or delete connection
             
             if pdr:
                 if fromMote not in self.connections:
@@ -133,6 +108,8 @@ class Propagation(eventBusClient.eventBusClient):
                 if toMote not in self.connections:
                     self.connections[toMote] = {}
                 self.connections[toMote][fromMote] = pdr
+            else:
+                self.deleteConnection(toMote,fromMote)
     
     def retrieveConnections(self):
         
@@ -164,33 +141,16 @@ class Propagation(eventBusClient.eventBusClient):
         
         with self.dataLock:
             
-            # verify exists
-            
             try:
-                self.connections[fromMote][toMote]
+                del self.connections[fromMote][toMote]
+                if not self.connections[fromMote]:
+                    del self.connections[fromMote]
+                
+                del self.connections[toMote][fromMote]
+                if not self.connections[toMote]:
+                    del self.connections[toMote]
             except KeyError:
-                exists = False
-            else:
-                exists = True
-            assert exists==True
-            
-            try:
-                self.connections[toMote][fromMote]
-            except KeyError:
-                exists = False
-            else:
-                exists = True
-            assert exists==True
-            
-            # remove connection
-            del self.connections[fromMote][toMote]
-            if not self.connections[fromMote]:
-                del self.connections[fromMote]
-            
-            del self.connections[toMote][fromMote]
-            if not self.connections[toMote]:
-                del self.connections[toMote]
-            
+                pass # did not exist
     
     #======================== indication from eventBus ========================
     
