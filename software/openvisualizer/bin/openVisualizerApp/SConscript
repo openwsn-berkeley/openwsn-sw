@@ -10,6 +10,7 @@ Provides rungui, runcli, and runweb targets.
 
 import os
 import subprocess
+import sconsUtils
 
 Import('env')
 
@@ -76,10 +77,12 @@ def setupUiRunner(env, uiFile, dataDirs):
     Sets up dependencies for data files required to run an OpenVisualizer 
     UI. The data files are copied to the environment's BUILD_DIR.
     
+    * Copies simulation firmware to the sim_files data directory if running
+      a simulation.
     * Creates commands to copy conf files unless they exist already. The 
-    user may have edited them.
+      user may have edited them.
     * Creates commands to copy the provided static data directories 
-    unconditionally.
+      unconditionally.
     
     :param uiFile:   Filename to run in openVisualizerApp directory
     :param dataDirs: Dirs containing static data
@@ -90,6 +93,12 @@ def setupUiRunner(env, uiFile, dataDirs):
     env.Append(BUILDERS = {'RunUi' : Builder(action = uiRunner)})
     
     targets = env.RunUi(uiFile)
+
+    if env['SIMOPT'] or env['SIMCOUNT']:
+        # Appending uiFile to pseudo-target to make it unique.
+        simfwTarget = 'simui-{0}'.format(uiFile)
+        Depends(targets, simfwTarget)
+        sconsUtils.copySimfw(env, simfwTarget)
     
     for node in (env['CONF_FILES'] + env['DATA_FILES']):
         bldNode = os.path.join(env['BUILD_DIR'], node)
