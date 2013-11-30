@@ -70,10 +70,10 @@ setup(
     version          = VERSION,
     author           = 'Thomas Watteyne',
     author_email     = 'watteyne@eecs.berkeley.edu',
-    description      = 'OpenWSN wireless sensor network monitoring, visualization, and debugging tool',
+    description      = 'Wireless sensor network monitoring, visualization, and debugging tool',
     long_description = LONG_DESCRIPTION,
-    url              = 'http://www.openwsn.org/',
-    keywords         = ['6TiSCH','Internet of Things','6LoWPAN','sensor','mote'],
+    url              = 'https://openwsn.atlassian.net/wiki/display/OW/OpenVisualizer',
+    keywords         = ['6TiSCH','Internet of Things','6LoWPAN','802.15.4e','sensor','mote'],
     platforms        = ['platform-independent'],
     license          = 'BSD 3-Clause',
     classifiers      = [
