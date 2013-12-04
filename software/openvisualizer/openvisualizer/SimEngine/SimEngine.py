@@ -154,10 +154,17 @@ class SimEngine(object):
     
     #=== called from the main script
     
-    def indicateNewMote(self,moteHandler):
+    def indicateNewMote(self,newMoteHandler):
         
         # add this mote to my list of motes
-        self.moteHandlers.append(moteHandler)
+        self.moteHandlers.append(newMoteHandler)
+        
+        # create connections to already existing motes
+        for mh in self.moteHandlers[:-1]:
+            self.propagation.createConnection(
+                fromMote     = newMoteHandler.getId(),
+                toMote       = mh.getId(),
+            )
     
     #=== called from timeline
     

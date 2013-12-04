@@ -96,8 +96,6 @@ class Propagation(eventBusClient.eventBusClient):
             else:
                 pdr          = (Prx-SENSITIVITY_dBm)/GREY_AREA_dB
             
-            print pdr
-            
             #==== create, update or delete connection
             
             if pdr:
