@@ -5,8 +5,8 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
 log = logging.getLogger('openTunLinux')
-log.setLevel(logging.ERROR)
-log.addHandler(logging.NullHandler())
+# Do not set the default null log handlers here. Logging already will have been
+# configured, because this class is imported later, on the fly, by OpenTun.
 
 import threading
 import time
