@@ -4,6 +4,7 @@
 #  
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
+
 import threading
 import logging
 import time
@@ -39,17 +40,34 @@ class SimEngine(object):
     The main simulation engine.
     '''
     
+    #======================== singleton pattern ===============================
+    
+    _instance = None
+    _init     = False
+    
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(SimEngine, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+    
+    #======================== main ============================================
+    
     def __init__(self,loghandler=logging.NullHandler()):
+        
+        # don't re-initialize an instance (singleton pattern)
+        if self._init:
+            return
+        self._init = True
         
         # store params
         self.loghandler           = loghandler
         
         # local variables
         self.moteHandlers         = []
-        self.timeline             = TimeLine.TimeLine(self)
-        self.propagation          = Propagation.Propagation(self)
-        self.idmanager            = IdManager.IdManager(self)
-        self.locationmanager      = LocationManager.LocationManager(self) 
+        self.timeline             = TimeLine.TimeLine()
+        self.propagation          = Propagation.Propagation()
+        self.idmanager            = IdManager.IdManager()
+        self.locationmanager      = LocationManager.LocationManager() 
         self.pauseSem             = threading.Lock()
         self.isPaused             = False
         self.stopAfterSteps       = None
@@ -63,13 +81,13 @@ class SimEngine(object):
         
         # logging core modules
         for loggerName in [
-                   'SimEngine',
-                   'Timeline',
-                   'Propagation',
-                   'IdManager',
-                   'LocationManager',
-                   'SimCli',
-                   ]:
+                'SimEngine',
+                'Timeline',
+                'Propagation',
+                'IdManager',
+                'LocationManager',
+                'SimCli',
+            ]:
             temp = logging.getLogger(loggerName)
             temp.setLevel(logging.INFO)
             temp.addHandler(loghandler)
@@ -136,10 +154,17 @@ class SimEngine(object):
     
     #=== called from the main script
     
-    def indicateNewMote(self,moteHandler):
+    def indicateNewMote(self,newMoteHandler):
         
         # add this mote to my list of motes
-        self.moteHandlers.append(moteHandler)
+        self.moteHandlers.append(newMoteHandler)
+        
+        # create connections to already existing motes
+        for mh in self.moteHandlers[:-1]:
+            self.propagation.createConnection(
+                fromMote     = newMoteHandler.getId(),
+                toMote       = mh.getId(),
+            )
     
     #=== called from timeline
     

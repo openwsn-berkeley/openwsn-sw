@@ -6,6 +6,7 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
 
+from openvisualizer.SimEngine   import SimEngine
 import BspModule
 
 class BspEui64(BspModule.BspModule):
@@ -13,10 +14,10 @@ class BspEui64(BspModule.BspModule):
     Emulates the 'eui64' BSP module
     '''
     
-    def __init__(self,engine,motehandler):
+    def __init__(self,motehandler):
         
         # store params
-        self.engine          = engine
+        self.engine          = SimEngine.SimEngine()
         self.motehandler     = motehandler
         
         # local variables

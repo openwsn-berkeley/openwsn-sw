@@ -71,7 +71,7 @@ class OpenVisualizerApp(object):
             MoteHandler.readNotifIds(os.path.join(self.datadir, 'sim_files', 'openwsnmodule_obj.h'))
             self.moteProbes       = []
             for _ in range(self.numMotes):
-                moteHandler       = MoteHandler.MoteHandler(self.simengine,oos_openwsn.OpenMote())
+                moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                 self.simengine.indicateNewMote(moteHandler)
                 self.moteProbes  += [moteProbe.moteProbe(emulatedMote=moteHandler)]
         

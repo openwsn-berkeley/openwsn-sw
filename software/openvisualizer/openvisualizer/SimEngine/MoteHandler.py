@@ -12,6 +12,7 @@ import os
 import time
 import binascii
 
+from openvisualizer.SimEngine   import SimEngine
 from openvisualizer.BspEmulator import BspBoard
 from openvisualizer.BspEmulator import BspBsp_timer
 from openvisualizer.BspEmulator import BspDebugpins
@@ -40,7 +41,7 @@ def readNotifIds(headerPath):
     f     = open(headerPath)
     lines = f.readlines()
     f.close()
-
+    
     global notifString
     for line in lines:
         m = re.search('MOTE_NOTIF_(\w+)',line)
@@ -56,10 +57,10 @@ def notifId(s):
 
 class MoteHandler(threading.Thread):
     
-    def __init__(self,engine,mote):
+    def __init__(self,mote):
         
         # store params
-        self.engine          = engine
+        self.engine          = SimEngine.SimEngine()
         self.mote            = mote
         
         #=== local variables
@@ -72,17 +73,17 @@ class MoteHandler(threading.Thread):
         self.numRxCommands   = 0
         self.numTxCommands   = 0
         # hw
-        self.hwSupply        = HwSupply.HwSupply(self.engine,self)
-        self.hwCrystal       = HwCrystal.HwCrystal(self.engine,self)
+        self.hwSupply        = HwSupply.HwSupply(self)
+        self.hwCrystal       = HwCrystal.HwCrystal(self)
         # bsp
-        self.bspBoard        = BspBoard.BspBoard(self.engine,self)
-        self.bspBsp_timer    = BspBsp_timer.BspBsp_timer(self.engine,self)
-        self.bspDebugpins    = BspDebugpins.BspDebugpins(self.engine,self)
-        self.bspEui64        = BspEui64.BspEui64(self.engine,self)
-        self.bspLeds         = BspLeds.BspLeds(self.engine,self)
-        self.bspRadiotimer   = BspRadiotimer.BspRadiotimer(self.engine,self)
-        self.bspRadio        = BspRadio.BspRadio(self.engine,self)
-        self.bspUart         = BspUart.BspUart(self.engine,self)
+        self.bspBoard        = BspBoard.BspBoard(self)
+        self.bspBsp_timer    = BspBsp_timer.BspBsp_timer(self)
+        self.bspDebugpins    = BspDebugpins.BspDebugpins(self)
+        self.bspEui64        = BspEui64.BspEui64(self)
+        self.bspLeds         = BspLeds.BspLeds(self)
+        self.bspRadiotimer   = BspRadiotimer.BspRadiotimer(self)
+        self.bspRadio        = BspRadio.BspRadio(self)
+        self.bspUart         = BspUart.BspUart(self)
         # status
         self.booted          = False
         self.cpuRunning      = threading.Lock()
@@ -235,6 +236,9 @@ class MoteHandler(threading.Thread):
     
     def getLocation(self):
         return self.location
+    
+    def setLocation(self,lat,lon):
+        self.location = (lat,lon)
     
     def handleEvent(self,functionToCall):
         

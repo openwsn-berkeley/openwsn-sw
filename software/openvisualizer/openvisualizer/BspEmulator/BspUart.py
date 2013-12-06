@@ -7,6 +7,7 @@
 import logging
 import threading
 
+from openvisualizer.SimEngine     import SimEngine
 import BspModule
 
 class BspUart(BspModule.BspModule):
@@ -18,10 +19,10 @@ class BspUart(BspModule.BspModule):
     INTR_RX   = 'uart.rx'
     BAUDRATE  = 115200
     
-    def __init__(self,engine,motehandler):
+    def __init__(self,motehandler):
         
         # store params
-        self.engine               = engine
+        self.engine               = SimEngine.SimEngine()
         self.motehandler          = motehandler
         
         # local variables

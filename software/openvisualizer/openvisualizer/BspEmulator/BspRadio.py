@@ -4,9 +4,12 @@
 #  
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
+
 import logging
 
-from openvisualizer.eventBus import eventBusClient
+from openvisualizer.SimEngine     import SimEngine, \
+                                         Propagation
+from openvisualizer.eventBus      import eventBusClient
 import BspModule
 
 class RadioState:
@@ -35,13 +38,10 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
     INTR_STARTOFFRAME_PROPAGATION = 'radio.startofframe_fromPropagation'
     INTR_ENDOFFRAME_PROPAGATION   = 'radio.endofframe_fromPropagation'
     
-    SIGNAL_WIRELESSTXSTART        = 'wirelessTxStart'
-    SIGNAL_WIRELESSTXEND          = 'wirelessTxEnd'
-    
-    def __init__(self,engine,motehandler):
+    def __init__(self,motehandler):
         
         # store params
-        self.engine      = engine
+        self.engine      = SimEngine.SimEngine()
         self.motehandler = motehandler
         
         # local variables
@@ -61,18 +61,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         eventBusClient.eventBusClient.__init__(
             self,
             name                  = 'BspRadio_{0}'.format(self.motehandler.getId()),
-            registrations         =  [
-                {
-                    'sender'      : self.WILDCARD,
-                    'signal'      : self.SIGNAL_WIRELESSTXSTART,
-                    'callback'    : self._indicateTxStart,
-                },
-                {
-                    'sender'      : self.WILDCARD,
-                    'signal'      : self.SIGNAL_WIRELESSTXEND,
-                    'callback'    : self._indicateTxEnd,
-                },
-            ]
+            registrations         =  [],
         )
         
         # set initial state
@@ -314,7 +303,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         
         # indicate transmission starts on eventBus
         self.dispatch(          
-            signal           = self.SIGNAL_WIRELESSTXSTART,
+            signal           = Propagation.Propagation.SIGNAL_WIRELESSTXSTART,
             data             = (self.motehandler.getId(),self.txBuf,self.frequency)
         )
         
@@ -352,7 +341,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         
         # indicate transmission ends on eventBus
         self.dispatch(          
-            signal           = self.SIGNAL_WIRELESSTXEND,
+            signal           = Propagation.Propagation.SIGNAL_WIRELESSTXEND,
             data             = self.motehandler.getId(),
         )
         
@@ -380,11 +369,9 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         # do NOT kick the scheduler
         return True
     
-    #======================== indication from eventBus ========================
+    #======================== indication from Propagation =====================
     
-    def _indicateTxStart(self,sender,signal,data):
-        
-        (moteId,packet,channel) = data
+    def indicateTxStart(self,moteId,packet,channel):
         
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('_indicateTxStart from moteId={0} channel={1} len={2}'.format(moteId,channel,len(packet)))
@@ -410,9 +397,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
                 self.INTR_STARTOFFRAME_PROPAGATION,
             )
     
-    def _indicateTxEnd(self,sender,signal,data):
-        
-        moteId = data
+    def indicateTxEnd(self,moteId):
         
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('_indicateTxEnd from moteId={0}'.format(moteId))

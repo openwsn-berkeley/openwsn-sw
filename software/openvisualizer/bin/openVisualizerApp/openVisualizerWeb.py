@@ -27,17 +27,23 @@ except ImportError:
 
 import json
 import bottle
+import random
+import re
 from bottle        import view
 
 import openVisualizerApp
 import openvisualizer.openvisualizer_utils as u
+from openvisualizer.eventBus import eventBusClient
+from openvisualizer.SimEngine   import SimEngine
 
-class OpenVisualizerWeb():
+from pydispatch import dispatcher
+
+class OpenVisualizerWeb(eventBusClient.eventBusClient):
     '''
     Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web
     server.
     '''
-        
+    
     def __init__(self,app,websrv):
         '''
         :param app:    OpenVisualizerApp
@@ -46,32 +52,48 @@ class OpenVisualizerWeb():
         log.info('Creating OpenVisualizerWeb')
         
         # store params
-        self.app                    = app
-        self.websrv                 = websrv
+        self.app             = app
+        self.engine          = SimEngine.SimEngine()
+        self.websrv          = websrv
         
         self._defineRoutes()
         
         # To find page templates
         bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.datadir))
         
+        # initialize parent class
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name                  = 'OpenVisualizerWeb',
+            registrations         =  [],
+        )
+    
     #======================== public ==========================================
     
     #======================== private =========================================
+    
     def _defineRoutes(self):
         '''
         Matches web URL to impelementing method. Cannot use @route annotations
         on the methods due to the class-based implementation.
         '''
-        self.websrv.route(path='/',                       callback=self._showMoteview)
-        self.websrv.route(path='/moteview',               callback=self._showMoteview)
-        self.websrv.route(path='/moteview/:moteid',       callback=self._showMoteview)
-        self.websrv.route(path='/motedata/:moteid',       callback=self._getMoteData)
-        self.websrv.route(path='/toggle_root/:moteid',    callback=self._toggleRoot)
-        self.websrv.route(path='/eventBus',               callback=self._showEventBus)
-        self.websrv.route(path='/eventdata',              callback=self._getEventData)
-        self.websrv.route(path='/eventDebug/:enabled',    callback=self._setEventDebug)
-        self.websrv.route(path='/static/<filepath:path>', callback=self._serverStatic)
-
+        self.websrv.route(path='/',                                       callback=self._showMoteview)
+        self.websrv.route(path='/moteview',                               callback=self._showMoteview)
+        self.websrv.route(path='/moteview/:moteid',                       callback=self._showMoteview)
+        self.websrv.route(path='/motedata/:moteid',                       callback=self._getMoteData)
+        self.websrv.route(path='/toggle_root/:moteid',                    callback=self._toggleRoot)
+        self.websrv.route(path='/eventBus',                               callback=self._showEventBus)
+        self.websrv.route(path='/eventdata',                              callback=self._getEventData)
+        self.websrv.route(path='/eventDebug/:enabled',                    callback=self._setEventDebug)
+        self.websrv.route(path='/topology',                               callback=self._topologyPage)
+        self.websrv.route(path='/topology/data',                          callback=self._topologyData)
+        self.websrv.route(path='/topology/motes',         method='POST',  callback=self._topologyMotesUpdate)
+        self.websrv.route(path='/topology/connections',   method='PUT',   callback=self._topologyConnectionsCreate)
+        self.websrv.route(path='/topology/connections',   method='POST',  callback=self._topologyConnectionsUpdate)
+        self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
+        self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
+        self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
+    
     @view('moteview.tmpl')
     def _showMoteview(self, moteid=None):
         '''
@@ -94,11 +116,11 @@ class OpenVisualizerWeb():
             'requested_mote' : moteid if moteid else 'none',
         }
         return tmplData
-        
+    
     def _serverStatic(self, filepath):
         return bottle.static_file(filepath, 
                                   root='{0}/web_files/static/'.format(self.app.datadir))
-        
+    
     def _toggleRoot(self, moteid):
         '''
         Triggers toggle of DAGroot and bridge states, via moteState. No
@@ -115,7 +137,7 @@ class OpenVisualizerWeb():
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
             return '{"result" : "fail"}'
-                                  
+    
     def _getMoteData(self, moteid):
         '''
         Collects data for the provided mote.
@@ -142,7 +164,7 @@ class OpenVisualizerWeb():
             log.debug('Mote {0} not found in moteStates'.format(moteid))
             states = {}
         return states
-            
+    
     def _setEventDebug(self, enabled):
         '''
         Selects whether eventBus must export debug packets.
@@ -152,7 +174,7 @@ class OpenVisualizerWeb():
         log.info('Enable eventBus debug packets: {0}'.format(enabled))
         self.app.eventBusMonitor.setMeshDebugExport(enabled == 'true')
         return '{"result" : "success"}'
-
+    
     @view('eventBus.tmpl')
     def _showEventBus(self):
         '''
@@ -160,6 +182,122 @@ class OpenVisualizerWeb():
         for periodic updates of event list.
         '''
         return self._getEventData()
+    
+    @view('topology.tmpl')
+    def _topologyPage(self):
+        '''
+        Retrieve the HTML/JS page.
+        '''
+        
+        return {}
+    
+    def _topologyData(self):
+        '''
+        Retrieve the topology data, in JSON format.
+        '''
+        
+        # motes
+        motes = []
+        rank  = 0
+        while True:
+            try:
+                mh            = self.engine.getMoteHandler(rank)
+                id            = mh.getId()
+                (lat,lon)     = mh.getLocation()
+                motes += [
+                    {
+                        'id':    id,
+                        'lat':   lat,
+                        'lon':   lon,
+                    }
+                ]
+                rank+=1
+            except IndexError:
+               break
+        
+        # connections
+        connections = self.engine.propagation.retrieveConnections()
+        
+        data = {
+            'motes'          : motes,
+            'connections'    : connections,
+        }
+        
+        return data
+    
+    def _topologyMotesUpdate(self):
+        
+        motesTemp = {}
+        for (k,v) in bottle.request.forms.items():
+            m = re.match("motes\[(\w+)\]\[(\w+)\]", k)
+            assert m
+            index  = int(m.group(1))
+            param  =     m.group(2)
+            try:
+                v  = int(v)
+            except ValueError:
+                try:
+                    v  = float(v)
+                except ValueError:
+                    pass
+            if index not in motesTemp:
+                motesTemp[index] = {}
+            motesTemp[index][param] = v
+        
+        for (_,v) in motesTemp.items():
+            mh = self.engine.getMoteHandlerById(v['id'])
+            mh.setLocation(v['lat'],v['lon'])
+    
+    def _topologyConnectionsCreate(self):
+        
+        data = bottle.request.forms
+        assert sorted(data.keys())==sorted(['fromMote', 'toMote'])
+        
+        fromMote = int(data['fromMote'])
+        toMote   = int(data['toMote'])
+        
+        self.engine.propagation.createConnection(fromMote,toMote)
+    
+    def _topologyConnectionsUpdate(self):
+        data = bottle.request.forms
+        assert sorted(data.keys())==sorted(['fromMote', 'toMote', 'pdr'])
+        
+        fromMote = int(data['fromMote'])
+        toMote   = int(data['toMote'])
+        pdr      = float(data['pdr'])
+        
+        self.engine.propagation.updateConnection(fromMote,toMote,pdr)
+    
+    def _topologyConnectionsDelete(self):
+        
+        data = bottle.request.forms
+        assert sorted(data.keys())==sorted(['fromMote', 'toMote'])
+        
+        fromMote = int(data['fromMote'])
+        toMote   = int(data['toMote'])
+        
+        self.engine.propagation.deleteConnection(fromMote,toMote)
+    
+    def _topologyRouteRetrieve(self):
+        
+        data = bottle.request.query
+        
+        assert data.keys()==['destination']
+        
+        detination_eui = [0x14,0x15,0x92,0xcc,0x00,0x00,0x00,int(data['destination'])]
+        
+        route = self._dispatchAndGetResult(
+            signal       = 'getSourceRoute', 
+            data         = detination_eui,
+        )
+        
+        route = [r[-1] for r in route]
+        
+        data = {
+            'route'          : route,
+        }
+        
+        return data
     
     def _getEventData(self):
         response = {

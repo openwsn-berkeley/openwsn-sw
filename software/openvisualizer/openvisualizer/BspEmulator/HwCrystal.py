@@ -8,6 +8,7 @@ import logging
 import random
 import math
 
+from openvisualizer.SimEngine     import SimEngine
 import HwModule
 
 class HwCrystal(HwModule.HwModule):
@@ -18,10 +19,10 @@ class HwCrystal(HwModule.HwModule):
     FREQUENCY = 32768
     MAXDRIFT  = 0
     
-    def __init__(self,engine,motehandler):
+    def __init__(self,motehandler):
         
         # store params
-        self.engine          = engine
+        self.engine          = SimEngine.SimEngine()
         self.motehandler     = motehandler
         
         # local variables
