@@ -85,6 +85,7 @@ class RPL(eventBusClient.eventBusClient):
         self.dagRootEui64         = None
         self.sourceRoute          = SourceRoute.SourceRoute()
         self.latencyStats         = {}
+        self.registeredDagRoot    = None
         
         # send a DIO periodically
         self._scheduleSendDIO(self.DIO_PERIOD) 
@@ -115,11 +116,28 @@ class RPL(eventBusClient.eventBusClient):
             self.dagRootEui64     = data['eui64'][:]
         
         # register to RPL traffic
-        if self.networkPrefix and self.dagRootEui64:
+        if self.dagRootEui64!=self.registeredDagRoot and self.networkPrefix and self.dagRootEui64:
+            
+            # unregister from old dagRoot
+            if self.registeredDagRoot:
+                self.unregister(
+                    sender        = self.WILDCARD,
+                    signal        = (
+                        tuple(self.networkPrefix + self.registeredDagRoot),
+                        self.PROTO_ICMPv6,
+                        self.IANA_ICMPv6_RPL_TYPE
+                    ),
+                    callback      = self._fromMoteDataLocal_notif,
+                )
+            
+            # remember who to registered to
+            self.registeredDagRoot = self.dagRootEui64
+            
+            # register to new dagRoot
             self.register(
                 sender            = self.WILDCARD,
                 signal            = (
-                    tuple(self.networkPrefix + self.dagRootEui64),
+                    tuple(self.networkPrefix + self.registeredDagRoot),
                     self.PROTO_ICMPv6,
                     self.IANA_ICMPv6_RPL_TYPE
                 ),

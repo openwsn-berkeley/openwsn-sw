@@ -80,6 +80,7 @@ class eventBusClient(object):
             self.registrations += [newRegistration]
     
     def unregister(self,sender,signal,callback):
+        
         with self.dataLock:
             rem = None
             for s in self.registrations:
@@ -103,6 +104,7 @@ class eventBusClient(object):
                         (r['sender']==sender or r['sender']==self.WILDCARD)
                     ):
                     callback = r['callback']
+                    break
         
         if not callback:
             return None

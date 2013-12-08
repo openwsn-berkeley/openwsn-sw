@@ -653,9 +653,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         Record the DAGroot's EUI64 address.
         '''
         with self.stateLock:
-            self.dagRootEui64     = []
-            for c in data['eui64']:
-                self.dagRootEui64     +=[int(c)]  
+            self.dagRootEui64     = [int(b) for b in data['eui64']]
 
 #===== formatting
     

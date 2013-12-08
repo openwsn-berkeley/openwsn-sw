@@ -105,6 +105,7 @@ class moteConnector(eventBusClient.eventBusClient):
                 raise SystemError('unexpected action={0}'.format(data['action']))
     
     def _infoDagRoot_handler(self,sender,signal,data):
+        
         if  data['serialPort']==self.serialport:
             # this moteConnector is connected to a DAGroot
             

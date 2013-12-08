@@ -33,7 +33,7 @@ class OpenEncoder(json.JSONEncoder):
             return { obj.__class__.__name__: obj.__dict__ }
         else:
             return super(OpenEncoder, self).default(obj)
-                          
+
 class StateElem(object):
     '''
     Abstract superclass for internal mote state classes.
@@ -223,7 +223,6 @@ class StateQueue(StateElem):
         self.data[8].update(notif.creator_8,notif.owner_8)
         self.data[9].update(notif.creator_9,notif.owner_9)
 
-
 class StateNeighborsRow(StateElem):
     
     def update(self,notif):
@@ -254,7 +253,6 @@ class StateNeighborsRow(StateElem):
                                    notif.asn_2_3,
                                    notif.asn_4)
 
-		
 class StateIsSync(StateElem):
     
     def update(self,notif):
@@ -269,6 +267,7 @@ class StateIdManager(StateElem):
         StateElem.__init__(self)
         self.eventBusClient  = eventBusClient
         self.moteConnector   = moteConnector
+        self.isDAGroot       = None
     
     def get16bAddr(self):
         try:
@@ -306,8 +305,11 @@ class StateIdManager(StateElem):
                                         notif.myPrefix_bodyL)
         
         # announce information about the DAG root to the eventBus
-        if self.data[0]['isDAGroot']==1:
-        
+        if  (
+                self.isDAGroot!=self.data[0]['isDAGroot'] and
+                self.data[0]['isDAGroot']==1
+            ):
+            
             # dispatch
             self.eventBusClient.dispatch(
                 signal        = 'infoDagRoot',
@@ -316,6 +318,9 @@ class StateIdManager(StateElem):
                                     'eui64':        self.data[0]['my64bID'].addr,
                                 },
             )
+        
+        # record isDAGroot
+        self.isDAGroot = self.data[0]['isDAGroot']
 
 class StateMyDagRank(StateElem):
     
