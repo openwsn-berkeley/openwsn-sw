@@ -34,10 +34,10 @@ class RPL(eventBusClient.eventBusClient):
     # Period between successive DIOs, in seconds.
     DIO_PERIOD                    = 10    
     
-    ALL_RPL_NODES_MULTICAST       = [0xff,0x02,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x1a]                      
+    ALL_RPL_NODES_MULTICAST       = [0xff,0x02]+[0x00]*13+[0x1a]
     
     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
-    IANA_ICMPv6_RPL_TYPE          = 155              
+    IANA_ICMPv6_RPL_TYPE          = 155
     
     # RPL DIO (RFC6550)
     DIO_OPT_GROUNDED              = 1<<7
@@ -85,7 +85,6 @@ class RPL(eventBusClient.eventBusClient):
         self.dagRootEui64         = None
         self.sourceRoute          = SourceRoute.SourceRoute()
         self.latencyStats         = {}
-        self.registeredDagRoot    = None
         
         # send a DIO periodically
         self._scheduleSendDIO(self.DIO_PERIOD) 
@@ -111,33 +110,41 @@ class RPL(eventBusClient.eventBusClient):
         '''
         Record the DAGroot's EUI64 address.
         '''
-        # store
-        with self.stateLock:
-            self.dagRootEui64     = data['eui64'][:]
         
-        # register to RPL traffic
-        if self.dagRootEui64!=self.registeredDagRoot and self.networkPrefix and self.dagRootEui64:
+        eui64 = data['eui64'][:]
+        
+        # register if DAGroot
+        if data['isDAGroot']==1 and self.networkPrefix:
             
-            # unregister from old dagRoot
-            if self.registeredDagRoot:
-                self.unregister(
-                    sender        = self.WILDCARD,
-                    signal        = (
-                        tuple(self.networkPrefix + self.registeredDagRoot),
-                        self.PROTO_ICMPv6,
-                        self.IANA_ICMPv6_RPL_TYPE
-                    ),
-                    callback      = self._fromMoteDataLocal_notif,
-                )
+            # log
+            log.info("registering to DAGroot {0}".format(u.formatAddr(eui64)))
             
-            # remember who to registered to
-            self.registeredDagRoot = self.dagRootEui64
-            
-            # register to new dagRoot
+            # register
             self.register(
                 sender            = self.WILDCARD,
                 signal            = (
-                    tuple(self.networkPrefix + self.registeredDagRoot),
+                    tuple(self.networkPrefix + eui64),
+                    self.PROTO_ICMPv6,
+                    self.IANA_ICMPv6_RPL_TYPE
+                ),
+                callback          = self._fromMoteDataLocal_notif,
+            )
+            
+            # store DAGroot
+            with self.stateLock:
+                self.dagRootEui64 = data['eui64'][:]
+        
+        # unregister if not DAGroot
+        if data['isDAGroot']==0:
+            
+            # log
+            log.info("unregistering from DAGroot {0}".format(u.formatAddr(eui64)))
+            
+            # unregister from old DAGroot
+            self.unregister(
+                sender            = self.WILDCARD,
+                signal            = (
+                    tuple(self.networkPrefix + eui64),
                     self.PROTO_ICMPv6,
                     self.IANA_ICMPv6_RPL_TYPE
                 ),
@@ -256,8 +263,7 @@ class RPL(eventBusClient.eventBusClient):
             signal          = 'bytesToMesh',
             data            = (nextHop,dio)
         )
-
-
+    
     def _indicateDAO(self,tup):    
         '''
         Indicate a new DAO was received.

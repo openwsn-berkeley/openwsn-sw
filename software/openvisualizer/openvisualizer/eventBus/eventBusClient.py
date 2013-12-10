@@ -70,6 +70,23 @@ class eventBusClient(object):
     
     def register(self,sender,signal,callback):
         
+        # detect duplicate registrations
+        with self.dataLock:
+            for reg in self.registrations:
+                if  (
+                        reg['sender']==sender and
+                        reg['signal']==signal and
+                        reg['callback']==callback
+                    ):
+                    raise   SystemError(
+                                "Duplicate registration of sender={0} signal={1} callback={2}".format(
+                                    sender,
+                                    signal,
+                                    callback,
+                                )
+                            )
+        
+        # register
         newRegistration = {
             'sender':        sender,
             'signal':        signal,
@@ -82,13 +99,13 @@ class eventBusClient(object):
     def unregister(self,sender,signal,callback):
         
         with self.dataLock:
-            rem = None
-            for s in self.registrations:
-                if self._signalsEquivalent(s, signal):
-                    rem=s
-                    break
-            if (rem!=None):
-                self.registrations.remove(rem) 
+            for reg in self.registrations:
+                if  (
+                        reg['sender']==sender                             and
+                        self._signalsEquivalent(reg['signal'], signal)    and
+                        reg['callback']==callback
+                    ):
+                    self.registrations.remove(reg)
     
     #======================== private =========================================
     

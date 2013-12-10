@@ -305,17 +305,15 @@ class StateIdManager(StateElem):
                                         notif.myPrefix_bodyL)
         
         # announce information about the DAG root to the eventBus
-        if  (
-                self.isDAGroot!=self.data[0]['isDAGroot'] and
-                self.data[0]['isDAGroot']==1
-            ):
+        if  self.isDAGroot!=self.data[0]['isDAGroot']:
             
             # dispatch
             self.eventBusClient.dispatch(
                 signal        = 'infoDagRoot',
                 data          = {
-                                    'serialPort':   self.moteConnector.serialport,
+                                    'isDAGroot':    self.data[0]['isDAGroot'],
                                     'eui64':        self.data[0]['my64bID'].addr,
+                                    'serialPort':   self.moteConnector.serialport,
                                 },
             )
         
