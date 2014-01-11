@@ -150,6 +150,10 @@ class RPL(eventBusClient.eventBusClient):
                 ),
                 callback          = self._fromMoteDataLocal_notif,
             )
+            
+            # clear DAGroot
+            with self.stateLock:
+                self.dagRootEui64 = None
     
     def _fromMoteDataLocal_notif(self,sender,signal,data):
         '''
