@@ -87,7 +87,7 @@ class eventBusMonitor(object):
                 self.stats[key] = 0
             self.stats[key] += 1
         
-        if signal=='infoDagRoot':
+        if signal=='infoDagRoot' and data['isDAGroot']==1:
             self.dagRootEui64 = data['eui64'][:]
         
         if signal=='wirelessTxStart':
