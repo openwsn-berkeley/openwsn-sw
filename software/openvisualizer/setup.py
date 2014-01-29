@@ -1,6 +1,9 @@
 from setuptools     import setup
+from setuptools.command.build_py import build_py as _build_py
 import glob
+import platform
 import os
+import shutil
 from openvisualizer import ovVersion
 
 '''
@@ -23,9 +26,9 @@ simdata   = 'data/sim_files'
 with open('README.txt') as f:
     LONG_DESCRIPTION = f.read()
     
-# Create list of required modules for 'install_requires' parameter. Cannot use
-# pip.req.parse_requirements() because it requires the pwd module, which is 
-# Unix only.
+# Create list of required modules for 'install_requires' parameter. Cannot create
+# this list with pip.req.parse_requirements() because it requires the pwd module,
+# which is Unix only.
 # Assumes requirements file contains only module lines and comments.
 deplist = []
 with open(os.path.join('openvisualizer', 'data', 'requirements.pip')) as f:
@@ -39,6 +42,35 @@ def appdirGlob(globstr, subdir=''):
         return glob.glob('/'.join([appdir, globstr]))
     else:
         return glob.glob('/'.join([appdir, subdir, globstr]))
+        
+class build_py(_build_py):
+    '''
+    Extends setuptools build of openvisualizer package data at installation time.
+    Selects and copies the architecture-specific simulation module from an OS-based 
+    subdirectory up to the parent 'sim_files' directory. Excludes the OS subdirectories
+    from installation.
+    '''
+    def build_package_data(self):
+        _build_py.build_package_data(self)
+
+        osname  = 'windows' if os.name=='nt' else 'linux'
+        suffix  = 'amd64' if platform.architecture()[0]=='64bit' else 'x86'
+        fileExt = 'pyd' if os.name=='nt' else 'so'
+
+        simPath = None
+        for package, src_dir, build_dir, filenames in self.data_files:
+            for filename in filenames:
+                moduleName = 'oos_openwsn-{0}.{1}'.format(suffix, fileExt)
+                modulePath = os.path.join(osname, moduleName)
+                if package == 'openvisualizer' and filename.endswith(modulePath):
+                    srcfile  = os.path.join(src_dir, filename)
+                    simPath  = os.path.join(build_dir, 'data', 'sim_files')
+                    target   = os.path.join(simPath, 'oos_openwsn.{0}'.format(fileExt))
+                    self.copy_file(srcfile, target)
+        
+        if simPath:
+            shutil.rmtree(os.path.join(simPath, 'linux'))
+            shutil.rmtree(os.path.join(simPath, 'windows'))
 
 setup(
     name             = 'openVisualizer',
@@ -60,8 +92,8 @@ setup(
                         '/'.join([webstatic, '*.png']),
                         '/'.join([webstatic, 'images', '*']), 
                         '/'.join([webtmpl, '*']), 
-                        '/'.join([simdata, '*.pyd']), 
-                        '/'.join([simdata, '*.so']), 
+                        '/'.join([simdata, 'windows', '*.pyd']), 
+                        '/'.join([simdata, 'linux',   '*.so']), 
                         '/'.join([simdata, '*.h']) 
                         ]},
     install_requires = deplist,
@@ -88,4 +120,5 @@ setup(
                        'Topic :: Internet',
                        'Topic :: Software Development',
                        ],
+    cmdclass           = {'build_py' : build_py},
 )

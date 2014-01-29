@@ -94,7 +94,7 @@ def setupUiRunner(env, uiFile, dataDirs):
     
     targets = env.RunUi(uiFile)
 
-    if env['SIMOPT'] or env['SIMCOUNT']:
+    if (env['SIMOPT'] or env['SIMCOUNT']) and env['SIMCOPYOPT']:
         # Appending uiFile to pseudo-target to make it unique.
         simfwTarget = 'simui-{0}'.format(uiFile)
         Depends(targets, simfwTarget)
