@@ -5,6 +5,7 @@
 # https://openwsn.atlassian.net/wiki/display/OW/License
 
 import os
+import platform
 import subprocess
 import sys
 import SCons
@@ -45,6 +46,8 @@ Targets:
         Options
           --sim         Run in simulator mode with default count of motes.
           --simCount=n  Run in simulator mode with 'n' motes.
+          --nosimcopy   Skips copying simulation firmware at startup from the
+                        openwsn-fw directory.
           --ovdebug     Enable debug mode; more detailed logging
           
         Web UI only
@@ -57,6 +60,13 @@ Targets:
         Copy files for the simulator, generated from an OpenWSN firmware 
         build on this host. Assumes firmware top-level directory is 
         '../../../openwsn-fw'.
+        
+        Options
+          --simhost=<platform-os> 
+                        Platform and OS for firmware; supports creation of a
+                        setup package with multiple variants. Defaults to the
+                        platform-OS on which SCons is running. Valid entries:
+                        amd64-linux, x86-linux, amd64-windows, x86-windows
     
     sdist:
         Generate a standard Python source distribution archive (for 
@@ -118,6 +128,12 @@ AddOption('--simCount',
     type      = 'int')
 runnerEnv['SIMCOUNT'] = GetOption('simCount')
 
+AddOption('--nosimcopy',
+    dest      = 'simcopyOpt',
+    default   = True,
+    action    = 'store_true')
+runnerEnv['SIMCOPYOPT'] = GetOption('simcopyOpt')
+
 AddOption('--trace',
     dest      = 'traceOpt',
     default   = False,
@@ -148,7 +164,30 @@ runnerEnv['PORTOPT'] = GetOption('portOpt')
 
 #============================ SCons targets ===================================
 
+#===== copy-simfw
+
+simhosts = ['amd64-linux','x86-linux','amd64-windows','x86-windows']
+if os.name == 'nt':
+    defaultIndex = 2 if platform.architecture()[0]=='64bit' else 3
+else:
+    defaultIndex = 0 if platform.architecture()[0]=='64bit' else 1
+
+AddOption('--simhost',
+    dest      = 'simhostOpt',
+    default   = simhosts[defaultIndex],
+    type      = 'choice',
+    choices   = simhosts)
+
+# Must copy SIMHOSTOPT to runner environment since it also reads sconsUtils.py.
+env['SIMHOSTOPT']       = GetOption('simhostOpt')
+runnerEnv['SIMHOSTOPT'] = env['SIMHOSTOPT']
+
+Alias('copy-simfw', sconsUtils.copySimfw(env, 'simcopy'))
+
 #===== rungui, runcli, runweb
+
+# Must define run targets below the copy-simfw target so SIMHOSTOPT is available. 
+# Run targets may copy simulation firmware before starting.
 
 appdir = os.path.join('bin', 'openVisualizerApp')
 
@@ -161,10 +200,6 @@ SConscript(
 # dist targets below.
 env['CONF_FILES'] = runnerEnv['CONF_FILES']
 env['DATA_DIRS']  = runnerEnv['DATA_DIRS']
-
-#===== copy-simfw
-
-Alias('copy-simfw', sconsUtils.copySimfw(env, 'simcopy'))
 
 #===== sdist
 
