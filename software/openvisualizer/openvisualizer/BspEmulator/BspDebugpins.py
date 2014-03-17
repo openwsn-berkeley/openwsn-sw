@@ -8,6 +8,7 @@ import logging
 
 from openvisualizer.SimEngine   import SimEngine
 import BspModule
+import VcdLogger
 
 class BspDebugpins(BspModule.BspModule):
     '''
@@ -21,12 +22,14 @@ class BspDebugpins(BspModule.BspModule):
         self.motehandler     = motehandler
         
         # local variables
+        self.timeline        = self.engine.timeline
         self.framePinHigh    = False
         self.slotPinHigh     = False
         self.fsmPinHigh      = False
         self.taskPinHigh     = False
         self.isrPinHigh      = False
         self.radioPinHigh    = False
+        self.vcdLogger       = VcdLogger.VcdLogger()
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspDebugpins')
@@ -43,7 +46,7 @@ class BspDebugpins(BspModule.BspModule):
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('cmd_init')
         
-        # remember that module has been intialized
+        # remember that module has been initialized
         self.isInitialized = True
     
     def cmd_frame_toggle(self):
@@ -56,6 +59,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.framePinHigh = not self.framePinHigh
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'frame',
+            state  = self.framePinHigh,
+        )
     
     def cmd_frame_clr(self):
         '''emulates
@@ -67,6 +78,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.framePinHigh = False
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'frame',
+            state  = self.framePinHigh,
+        )
     
     def cmd_frame_set(self):
         '''emulates
@@ -78,6 +97,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.framePinHigh = True
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'frame',
+            state  = self.framePinHigh,
+        )
     
     def cmd_slot_toggle(self):
         '''emulates
@@ -89,6 +116,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.slotPinHigh = not self.slotPinHigh
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'slot',
+            state  = self.slotPinHigh,
+        )
     
     def cmd_slot_clr(self):
         '''emulates
@@ -100,6 +135,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.slotPinHigh = False
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'slot',
+            state  = self.slotPinHigh,
+        )
     
     def cmd_slot_set(self):
         '''emulates
@@ -111,6 +154,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.slotPinHigh = True
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'slot',
+            state  = self.slotPinHigh,
+        )
     
     def cmd_fsm_toggle(self):
         '''emulates
@@ -122,6 +173,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.fsmPinHigh = not self.fsmPinHigh
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'fsm',
+            state  = self.fsmPinHigh,
+        )
     
     def cmd_fsm_clr(self):
         '''emulates
@@ -133,6 +192,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.fsmPinHigh = False
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'fsm',
+            state  = self.fsmPinHigh,
+        )
     
     def cmd_fsm_set(self):
         '''emulates
@@ -144,6 +211,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.fsmPinHigh = True
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'fsm',
+            state  = self.fsmPinHigh,
+        )
     
     def cmd_task_toggle(self):
         '''emulates
@@ -155,6 +230,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.taskPinHigh = not self.taskPinHigh
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'task',
+            state  = self.taskPinHigh,
+        )
     
     def cmd_task_clr(self):
         '''emulates
@@ -166,6 +249,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.taskPinHigh = False
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'task',
+            state  = self.taskPinHigh,
+        )
     
     def cmd_task_set(self):
         '''emulates
@@ -177,6 +268,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.taskPinHigh = True
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'task',
+            state  = self.taskPinHigh,
+        )
     
     def cmd_isr_toggle(self):
         '''emulates
@@ -188,6 +287,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.isrPinHigh = not self.isrPinHigh
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'isr',
+            state  = self.isrPinHigh,
+        )
     
     def cmd_isr_clr(self):
         '''emulates
@@ -199,6 +306,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.isrPinHigh = False
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'isr',
+            state  = self.isrPinHigh,
+        )
     
     def cmd_isr_set(self):
         '''emulates
@@ -210,6 +325,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.isrPinHigh = True
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'isr',
+            state  = self.isrPinHigh,
+        )
     
     def cmd_radio_toggle(self):
         '''emulates
@@ -221,6 +344,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.radioPinHigh = not self.radioPinHigh
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'radio',
+            state  = self.radioPinHigh,
+        )
     
     def cmd_radio_clr(self):
         '''emulates
@@ -232,6 +363,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.radioPinHigh = False
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'radio',
+            state  = self.radioPinHigh,
+        )
     
     def cmd_radio_set(self):
         '''emulates
@@ -243,6 +382,14 @@ class BspDebugpins(BspModule.BspModule):
         
         # change the internal state
         self.radioPinHigh = True
+        
+        # log VCD
+        self.vcdLogger.log(
+            ts     = self.timeline.getCurrentTime(),
+            mote   = self.motehandler.getId(),
+            signal = 'radio',
+            state  = self.radioPinHigh,
+        )
     
     #=== getters
     

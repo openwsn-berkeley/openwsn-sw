@@ -17,7 +17,7 @@ class HwCrystal(HwModule.HwModule):
     '''
     
     FREQUENCY = 32768
-    MAXDRIFT  = 0
+    MAXDRIFT  = 5
     
     def __init__(self,motehandler):
         
@@ -31,8 +31,13 @@ class HwCrystal(HwModule.HwModule):
         self.maxDrift        = self.MAXDRIFT
         
         # local variables
-        self.drift           = float(random.uniform(-self.maxDrift,
-                                                    +self.maxDrift))
+        self.drift           =  float(
+                                    random.uniform(
+                                        -self.maxDrift,
+                                        +self.maxDrift
+                                    )
+                                )
+        self._period         = None # do not use directly, used by _getPeriod()
         self.tsTick          = self.timeline.getCurrentTime()
         
         # initialize the parent
@@ -78,6 +83,8 @@ class HwCrystal(HwModule.HwModule):
         :returns: The time it will be in a given number of ticks.
         '''
         
+        assert numticks>=0
+        
         timeLastTick         = self.getTimeLastTick()
         period               = self._getPeriod()
         
@@ -112,8 +119,9 @@ class HwCrystal(HwModule.HwModule):
     
     def _getPeriod(self):
         
-        period               = float(1)/float(self.frequency)             # nominal period
-        period              += float(self.drift)*float(period/1000000)    # apply drift
+        if self._period==None:
+            self._period  = float(1)/float(self.frequency)                     # nominal period
+            self._period += float(self.drift/1000000.0)*float(self._period)    # apply drift
+            print self._period
         
-        return period
-        
+        return self._period

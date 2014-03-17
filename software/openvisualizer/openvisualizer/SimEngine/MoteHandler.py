@@ -258,6 +258,7 @@ class MoteHandler(threading.Thread):
         else:
             # call the funcion (mote runs in ISR)
             kickScheduler = functionToCall()
+            
             assert kickScheduler in [True,False]
             
             if kickScheduler:
