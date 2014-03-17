@@ -2,6 +2,8 @@ import threading
 
 class VcdLogger(object):
     
+    ACTIVITY_DUR = 1000 # 1000ns=1us
+    
     #======================== singleton pattern ===============================
     
     _instance = None
@@ -26,7 +28,7 @@ class VcdLogger(object):
         # local variables
         self.f          = open('debugpins.vcd','w')
         self.signame    = {}
-        self.lastTs     = 0
+        self.lastTs     = {}
         self.dataLock   = threading.Lock()
         sigChar         = ord('!')
         
@@ -47,9 +49,6 @@ class VcdLogger(object):
                 sigChar += 1
         header += ['$upscope $end\n']
         header += ['$enddefinitions $end\n']
-        header += ['#0\n']
-        for ((mote,signal),sigChar) in self.signame.items():
-            header += ['0{0}\n'.format(self.signame[(mote,signal)])]
         header  = ''.join(header)
         
         # write header
@@ -60,9 +59,6 @@ class VcdLogger(object):
         assert signal in self.SIGNAMES
         assert state in [True,False]
         
-        if signal in ['isr','task']:
-            return # poipoi
-        
         # cofig state to val
         if state:
             val = 1
@@ -72,8 +68,10 @@ class VcdLogger(object):
         with self.dataLock:
             # format
             output  = []
-            if ts!=self.lastTs:
-                output += ['#{0}\n'.format(int(ts*1000000)*1000)]
+            tsTemp = int(ts*1000000)*1000
+            if ((mote,signal) in self.lastTs) and self.lastTs[(mote,signal)]==ts:
+                tsTemp += self.ACTIVITY_DUR
+            output += ['#{0}\n'.format(tsTemp)]
             output += ['{0}{1}\n'.format(val,self.signame[(mote,signal)])]
             output  = ''.join(output)
             
@@ -81,5 +79,5 @@ class VcdLogger(object):
             self.f.write(output)
             
             # remember ts
-            self.lastTs = ts
+            self.lastTs[(mote,signal)] = ts
         
