@@ -73,7 +73,6 @@ class VcdLogger(object):
             # format
             output  = []
             if ts!=self.lastTs:
-                #output += ['#{0}\n'.format(int((ts-self.lastTs)*1000000000))]
                 output += ['#{0}\n'.format(int(ts*1000000)*1000)]
             output += ['{0}{1}\n'.format(val,self.signame[(mote,signal)])]
             output  = ''.join(output)

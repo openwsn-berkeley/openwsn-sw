@@ -17,7 +17,7 @@ class HwCrystal(HwModule.HwModule):
     '''
     
     FREQUENCY = 32768
-    MAXDRIFT  = 5
+    MAXDRIFT  = 0
     
     def __init__(self,motehandler):
         
@@ -122,6 +122,5 @@ class HwCrystal(HwModule.HwModule):
         if self._period==None:
             self._period  = float(1)/float(self.frequency)                     # nominal period
             self._period += float(self.drift/1000000.0)*float(self._period)    # apply drift
-            print self._period
         
         return self._period

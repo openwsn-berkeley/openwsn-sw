@@ -94,9 +94,6 @@ class BspRadiotimer(BspModule.BspModule):
         '''emulates
            void radiotimer_setPeriod(uint16_t period)'''
         
-        if period!=491 and period!=491*3:
-            print 'cmd_setPeriod period={0}'.format(period)
-        print 'cmd_setPeriod period={0}'.format(period)
         # store params
         self.period          = period
         
