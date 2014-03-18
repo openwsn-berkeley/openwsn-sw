@@ -31,6 +31,7 @@ class BspBsp_timer(BspModule.BspModule):
         self.running         = False
         self.compareArmed    = False
         self.timeLastReset   = None
+        self.timeLastCompare = None
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspBsp_timer')
@@ -52,6 +53,7 @@ class BspBsp_timer(BspModule.BspModule):
         
         # remember the time of last reset
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
+        self.timeLastCompare = self.timeLastReset
         
         # calculate time at overflow event (in 'ROLLOVER' ticks)
         overflowTime         = self.hwCrystal.getTimeIn(self.ROLLOVER)
@@ -93,9 +95,9 @@ class BspBsp_timer(BspModule.BspModule):
             # log the activity
             if self.log.isEnabledFor(logging.DEBUG):
                 self.log.debug('cmd_scheduleIn delayTicks='+str(delayTicks))
-            '''
+            
             # get current counter value
-            counterVal                = self.hwCrystal.getTicksSince(self.timeLastReset)
+            counterVal                = self.hwCrystal.getTicksSince(self.timeLastCompare)
             
             # how many ticks until compare event
             if counterVal<delayTicks:
@@ -105,9 +107,7 @@ class BspBsp_timer(BspModule.BspModule):
             
             # calculate time at overflow event (in 'period' ticks)
             compareTime               = self.hwCrystal.getTimeIn(ticksBeforeEvent)
-            '''
-            # calculate time at compare event (in 'period' ticks)
-            compareTime               = self.hwCrystal.getTimeIn(delayTicks)
+            
             # schedule compare event
             self.timeline.scheduleEvent(
                 atTime = compareTime,
@@ -178,6 +178,7 @@ class BspBsp_timer(BspModule.BspModule):
         
         # remember the time of last reset
         self.timeLastReset   = self.hwCrystal.getTimeLastTick()
+        self.timeLastCompare = self.timeLastReset
         
         # calculate time at overflow event (in 'ROLLOVER' ticks)
         overflowTime         = self.hwCrystal.getTimeIn(self.ROLLOVER)
@@ -224,6 +225,13 @@ class BspBsp_timer(BspModule.BspModule):
         '''
         A compare event happened.
         '''
+        # remember the time of this comparison.
+        self.timeLastCompare    = self.hwCrystal.getTimeLastTick()
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('timeLastCompare='+str(self.timeLastCompare))
+            self.log.debug('ROLLOVER='+str(self.ROLLOVER))
         
         # send interrupt to mote
         self.motehandler.mote.bsp_timer_isr()
