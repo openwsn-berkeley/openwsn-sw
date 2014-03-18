@@ -4,6 +4,7 @@
 #  
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
+
 import logging
 import random
 import math
@@ -37,8 +38,16 @@ class HwCrystal(HwModule.HwModule):
                                         +self.maxDrift
                                     )
                                 )
-        self._period         = None # do not use directly, used by _getPeriod()
-        self.tsTick          = self.timeline.getCurrentTime()
+        
+        # the duration of one tick. Since it is constant, it is only calculated
+        # once by _getPeriod(). Therefore, do not use directly, rather use
+        # _getPeriod()
+        self._period         = None
+        
+        # tsTick is a timestamp associated with any tick in the past. Since the
+        # period is constant, it is used to ensure alignement of timestamps
+        # to an integer number of ticks.
+        self.tsTick          = None
         
         # initialize the parent
         HwModule.HwModule.__init__(self,'HwCrystal')
@@ -50,6 +59,7 @@ class HwCrystal(HwModule.HwModule):
         Start the crystal.
         '''
         
+        # get the timestamp of a 
         self.tsTick          = self.timeline.getCurrentTime()
         
         # log
@@ -60,15 +70,30 @@ class HwCrystal(HwModule.HwModule):
         '''
         Return the timestamp of the last tick.
         
+     self.tsTick                currentTime                                    
+          |                          |                   period                
+          V                          v                <---------->             
+        -----------------------------------------------------------------------
+          |          |   ...    |          |          |          |          |  
+        -----------------------------------------------------------------------
+           <------------------------->                                          
+                 timeSinceLast                                                 
+                                ^                                              
+                                |                                              
+                           timeLastTick                                        
+        
         :returns: The timestamp of the last tick.
         '''
+        
+        # make sure crystal has been started
+        assert self.tsTick!=None
         
         currentTime          = self.timeline.getCurrentTime()
         timeSinceLast        = currentTime-self.tsTick
         period               = self._getPeriod()
         
-        numTicksSinceLast    = math.floor(float(timeSinceLast)/float(period))
-        timeLastTick         = self.tsTick+numTicksSinceLast*period
+        ticksSinceLast       = float(timeSinceLast)/float(period)
+        timeLastTick         = self.tsTick+ticksSinceLast*period
         
         self.tsTick          = timeLastTick
         
@@ -80,9 +105,26 @@ class HwCrystal(HwModule.HwModule):
         
         :param numticks: The number of ticks of interest.
         
+        
+          called here                                                          
+               |                                                    period     
+               V                                                 <---------->  
+        -----------------------------------------------------------------------
+          |          |          |          |          |          |          |  
+        -----------------------------------------------------------------------
+          ^          ^          ^          ^                                   
+          |          |          |          |                                   
+          +----------+----------+--------- +                                   
+                  numticks ticks                                               
+          ^                                ^                                   
+          |                                |                                   
+     timeLastTick                       returned value                         
+        
         :returns: The time it will be in a given number of ticks.
         '''
         
+        # make sure crystal has been started
+        assert self.tsTick!=None
         assert numticks>=0
         
         timeLastTick         = self.getTimeLastTick()
@@ -96,8 +138,24 @@ class HwCrystal(HwModule.HwModule):
         
         :param eventTime: The time of the event of interest.
         
+           eventTime                                   currentTime              
+               |                                           |        period     
+               V                                           V     <---------->  
+        -----------------------------------------------------------------------
+          |          |          |          |          |          |          |  
+        -----------------------------------------------------------------------
+                                                      ^                        
+                                                      |                        
+                                                 timeLastTick                  
+                     ^          ^          ^          ^                        
+                     |          |          |          |                        
+                     +----------+----------+----------+                        
+                          
         :returns: The number of ticks since the time passed.
         '''
+        
+        # make sure crystal has been started
+        assert self.tsTick!=None
         
         # get the current time
         currentTime          = self.timeline.getCurrentTime()
@@ -109,11 +167,13 @@ class HwCrystal(HwModule.HwModule):
         timeLastTick         = self.getTimeLastTick()
         
         # return the number of ticks
-        if eventTime>timeLastTick:
-            return 0
+        if timeLastTick<eventTime:
+            returnVal = 0
         else:
             period           = self._getPeriod()
-            return int(math.floor(float(timeLastTick-eventTime)/float(period)))
+            returnVal        = int(float(timeLastTick-eventTime)/float(period))
+        
+        return returnVal
     
     #======================== private =========================================
     

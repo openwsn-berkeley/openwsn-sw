@@ -121,6 +121,14 @@ class MoteHandler(threading.Thread):
         mote.set_callback(notifId('debugpins_radio_toggle'),              self.bspDebugpins.cmd_radio_toggle)
         mote.set_callback(notifId('debugpins_radio_clr'),                 self.bspDebugpins.cmd_radio_clr)
         mote.set_callback(notifId('debugpins_radio_set'),                 self.bspDebugpins.cmd_radio_set)
+        mote.set_callback(notifId('debugpins_ka_clr'),                    self.bspDebugpins.cmd_ka_clr)
+        mote.set_callback(notifId('debugpins_ka_set'),                    self.bspDebugpins.cmd_ka_set)
+        mote.set_callback(notifId('debugpins_syncPacket_clr'),            self.bspDebugpins.cmd_syncPacket_clr)
+        mote.set_callback(notifId('debugpins_syncPacket_set'),            self.bspDebugpins.cmd_syncPacket_set)
+        mote.set_callback(notifId('debugpins_syncAck_clr'),               self.bspDebugpins.cmd_syncAck_clr)
+        mote.set_callback(notifId('debugpins_syncAck_set'),               self.bspDebugpins.cmd_syncAck_set)
+        mote.set_callback(notifId('debugpins_debug_clr'),                 self.bspDebugpins.cmd_debug_clr)
+        mote.set_callback(notifId('debugpins_debug_set'),                 self.bspDebugpins.cmd_debug_set)
         # eui64
         mote.set_callback(notifId('eui64_get'),                           self.bspEui64.cmd_get)
         # leds

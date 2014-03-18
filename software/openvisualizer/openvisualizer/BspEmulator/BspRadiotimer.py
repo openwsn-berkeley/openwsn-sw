@@ -28,7 +28,7 @@ class BspRadiotimer(BspModule.BspModule):
         self.timeline        = self.engine.timeline
         self.hwCrystal       = self.motehandler.hwCrystal
         self.running         = False   # whether the counter is currently running
-        self.timeLastReset   = 0       # time at last counter reset
+        self.timeLastReset   = None    # time at last counter reset
         self.period          = None    # counter period
         self.compareArmed    = False   # whether the compare is armed
         

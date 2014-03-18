@@ -18,18 +18,22 @@ class BspDebugpins(BspModule.BspModule):
     def __init__(self,motehandler):
         
         # store params
-        self.engine          = SimEngine.SimEngine()
-        self.motehandler     = motehandler
+        self.engine               = SimEngine.SimEngine()
+        self.motehandler          = motehandler
         
         # local variables
-        self.timeline        = self.engine.timeline
-        self.framePinHigh    = False
-        self.slotPinHigh     = False
-        self.fsmPinHigh      = False
-        self.taskPinHigh     = False
-        self.isrPinHigh      = False
-        self.radioPinHigh    = False
-        self.vcdLogger       = VcdLogger.VcdLogger()
+        self.timeline             = self.engine.timeline
+        self.framePinHigh         = False
+        self.slotPinHigh          = False
+        self.fsmPinHigh           = False
+        self.taskPinHigh          = False
+        self.isrPinHigh           = False
+        self.radioPinHigh         = False
+        self.kaPinHigh            = False
+        self.syncPacketPinHigh    = False
+        self.syncAckPinHigh       = False
+        self.debugPinHigh         = False
+        self.vcdLogger            = VcdLogger.VcdLogger()
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspDebugpins')
@@ -313,6 +317,128 @@ class BspDebugpins(BspModule.BspModule):
         # log VCD
         self._logVcd('radio')
     
+    # ka
+    
+    def cmd_ka_clr(self):
+        '''emulates
+           void debugpins_ka_clr()'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_ka_clr')
+        
+        # change the internal state
+        self.kaPinHigh = False
+        
+        # log VCD
+        self._logVcd('ka')
+    
+    def cmd_ka_set(self):
+        '''emulates
+           void debugpins_ka_set()'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_ka_set')
+        
+        # change the internal state
+        self.kaPinHigh = True
+        
+        # log VCD
+        self._logVcd('ka')
+    
+    # syncPacket
+    
+    def cmd_syncPacket_clr(self):
+        '''emulates
+           void debugpins_syncPacket_clr()'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_syncPacket_clr')
+        
+        # change the internal state
+        self.syncPacketPinHigh = False
+        
+        # log VCD
+        self._logVcd('syncPacket')
+    
+    def cmd_syncPacket_set(self):
+        '''emulates
+           void debugpins_syncPacket_set()'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_syncPacket_set')
+        
+        # change the internal state
+        self.syncPacketPinHigh = True
+        
+        # log VCD
+        self._logVcd('syncPacket')
+    
+    # syncAck
+    
+    def cmd_syncAck_clr(self):
+        '''emulates
+           void debugpins_syncAck_clr()'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_syncAck_clr')
+        
+        # change the internal state
+        self.syncAckPinHigh = False
+        
+        # log VCD
+        self._logVcd('syncAck')
+    
+    def cmd_syncAck_set(self):
+        '''emulates
+           void debugpins_syncAck_set()'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_syncAck_set')
+        
+        # change the internal state
+        self.syncAckPinHigh = True
+        
+        # log VCD
+        self._logVcd('syncAck')
+    
+    # debug
+    
+    def cmd_debug_clr(self):
+        '''emulates
+           void debugpins_debug_clr()'''
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_debug_clr')
+        
+        # change the internal state
+        self.debugPinHigh = False
+        
+        # log VCD
+        self._logVcd('debug')
+    
+    def cmd_debug_set(self):
+        '''emulates
+           void debugpins_debug_set()'''
+        
+        print 'poipoipoipoi'
+        
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('cmd_debug_set')
+        
+        # change the internal state
+        self.debugPinHigh = True
+        
+        # log VCD
+        self._logVcd('debug')
+    
     #=== getters
     
     def get_framePinHigh(self):
@@ -329,6 +455,18 @@ class BspDebugpins(BspModule.BspModule):
     
     def get_radioPinHigh(self):
         return self.radioPinHigh
+    
+    def get_kaPinHigh(self):
+        return self.kaPinHigh
+    
+    def get_syncPacketPinHigh(self):
+        return self.syncPacketPinHigh
+    
+    def get_syncAckPinHigh(self):
+        return self.syncAckPinHigh
+    
+    def get_debugPinHigh(self):
+        return self.debugPinHigh
     
     #======================== private =========================================
     

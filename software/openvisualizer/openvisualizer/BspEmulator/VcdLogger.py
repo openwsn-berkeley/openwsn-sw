@@ -9,7 +9,7 @@ class VcdLogger(object):
     _instance = None
     _init     = False
     
-    SIGNAMES  = ['frame','slot','fsm','task','isr','radio']
+    SIGNAMES  = ['frame','slot','fsm','task','isr','radio','ka','syncPacket','syncAck','debug']
     
     def __new__(cls, *args, **kwargs):
         if not cls._instance:

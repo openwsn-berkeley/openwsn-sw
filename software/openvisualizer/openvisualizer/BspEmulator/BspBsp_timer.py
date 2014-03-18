@@ -30,7 +30,7 @@ class BspBsp_timer(BspModule.BspModule):
         self.hwCrystal       = self.motehandler.hwCrystal
         self.running         = False
         self.compareArmed    = False
-        self.timeLastReset   = self.hwCrystal.getTimeLastTick()
+        self.timeLastReset   = None
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspBsp_timer')
