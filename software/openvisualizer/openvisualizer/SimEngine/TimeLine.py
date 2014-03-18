@@ -84,6 +84,9 @@ class TimeLine(threading.Thread):
         
         # apply the delay
         self.engine.pauseOrDelay()
+
+        overflowDuration1 = 0
+        overflowDuration2 = 0
         
         while True:
             
@@ -97,6 +100,16 @@ class TimeLine(threading.Thread):
             
             # pop the event at the head of the timeline
             event = self.timeline.pop(0)
+
+            if str(event.desc) == 'radiotimer.overflow':
+                if str(event.moteId) == '1':
+                    print "radiotimer overflow duration in ms (mote 1):"+str(1000*(event.atTime-overflowDuration1))
+                    overflowDuration1 = event.atTime
+            if str(event.desc) == 'radiotimer.overflow':
+                if str(event.moteId) == '2':
+                    print "radiotimer overflow duration in ms (mote 2):"+str(1000*(event.atTime-overflowDuration2))
+                    print ""
+                    overflowDuration2 = event.atTime
             
             # make sure that this event is later in time than the previous
             assert(self.currentTime<=event.atTime)
