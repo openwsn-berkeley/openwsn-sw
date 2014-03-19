@@ -85,6 +85,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/eventBus',                               callback=self._showEventBus)
         self.websrv.route(path='/eventdata',                              callback=self._getEventData)
         self.websrv.route(path='/wiresharkDebug/:enabled',                callback=self._setWiresharkDebug)
+        self.websrv.route(path='/gologicDebug/:enabled',                  callback=self._setGologicDebug)
         self.websrv.route(path='/topology',                               callback=self._topologyPage)
         self.websrv.route(path='/topology/data',                          callback=self._topologyData)
         self.websrv.route(path='/topology/motes',         method='POST',  callback=self._topologyMotesUpdate)
@@ -173,6 +174,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
         log.info('Enable wireshark debug : {0}'.format(enabled))
         self.app.eventBusMonitor.setWiresharkDebug(enabled == 'true')
+        return '{"result" : "success"}'
+    
+    def _setGologicDebug(self, enabled):
+        log.info('Enable GoLogic debug : {0}'.format(enabled))
+        print 'TODO _setGologicDebug()'
         return '{"result" : "success"}'
     
     @view('eventBus.tmpl')

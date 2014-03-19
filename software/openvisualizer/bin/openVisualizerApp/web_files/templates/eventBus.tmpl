@@ -54,20 +54,39 @@
     <div class="block-group ui-widget ui-widget-content ui-corner-all ov-page-width">
         <div class="block event-box" style="height: 1.5em">
             <form>
-                <ul><li>
-                    <label for="wireshark_debug" class="rel_label_fld" style="text-align: right; float:right; width: 8em; padding-left: 0em">Wireshark debug</label>
-                    <input style="float: right" id="wireshark_debug" type="checkbox" />
-                </li></ul>
+                <table>
+                    <tr>
+                        <td>
+                            <label for="wireshark_debug" class="rel_label_fld" style="text-align: right; float:right; width: 8em; padding-left: 0em">Wireshark debug</label>
+                            <input style="float: right" id="wireshark_debug" type="checkbox" />
+                        </td>
+                        <td>
+                            <label for=gologic_debug" class="rel_label_fld" style="text-align: right; float:right; width: 8em; padding-left: 0em">GoLogic debug</label>
+                            <input style="float: right" id="gologic_debug" type="checkbox" />
+                        </td>
+                    </tr>
+                </table>
                 <script>
                 $("#wireshark_debug").change(function() {
                     is_selected = $(this).is(':checked');
-                    console.log('Update for debug selection: ' + is_selected);
+                    console.log('Update for wireshark debug selection: ' + is_selected);
                     
                     $.ajax({
                         dataType: "json",
                         url: "/wiresharkDebug/" + is_selected,
-                        success: updateForDebug,
-                        error: errorOnEventDebug
+                        success: wiresharkDebugUpdateSuccess,
+                        error:   wiresharkDebugUpdateFail
+                    });
+                });
+                $("#gologic_debug").change(function() {
+                    is_selected = $(this).is(':checked');
+                    console.log('Update for GoLogic debug selection: ' + is_selected);
+                    
+                    $.ajax({
+                        dataType: "json",
+                        url: "/gologicDebug/" + is_selected,
+                        success: wiresharkDebugUpdateSuccess,
+                        error:   wiresharkDebugUpdateFail
                     });
                 });
                 </script>
@@ -123,8 +142,20 @@
     }
 
     // Callback for debug packet selection.
-    function updateForDebug(json) {
-        console.log("Event debug packet selection succeeded");
+    function wiresharkDebugUpdateSuccess(json) {
+        console.log("wiresharkDebugUpdateSuccess");
+    }
+    
+    function wiresharkDebugUpdateFail(jqxhr, status, errorThrown) {
+        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
+    }
+    
+    function gologicDebugUpdateSuccess(json) {
+        console.log("gologicDebugUpdateSuccess");
+    }
+    
+    function gologicDebugUpdateFail(jqxhr, status, errorThrown) {
+        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
     }
     
     function errorOnAjax(event, jqxhr, status, errorThrown) {
@@ -133,9 +164,7 @@
         console.log('Ajax (' + event + ') ' + status + errText);
     }    
     
-    function errorOnEventDebug(jqxhr, status, errorThrown) {
-        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
-    }
+    
     
     function errorOnEventdata(jqxhr, status, errorThrown) {
         errorOnAjax('eventdata', jqxhr, status, errorThrown);
