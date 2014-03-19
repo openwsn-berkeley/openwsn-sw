@@ -33,8 +33,10 @@ from bottle        import view
 
 import openVisualizerApp
 import openvisualizer.openvisualizer_utils as u
-from openvisualizer.eventBus import eventBusClient
-from openvisualizer.SimEngine   import SimEngine
+from openvisualizer.eventBus      import eventBusClient
+from openvisualizer.SimEngine     import SimEngine
+from openvisualizer.BspEmulator   import VcdLogger
+
 
 from pydispatch import dispatcher
 
@@ -178,7 +180,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     
     def _setGologicDebug(self, enabled):
         log.info('Enable GoLogic debug : {0}'.format(enabled))
-        print 'TODO _setGologicDebug({0})'.format(enabled)
+        VcdLogger.VcdLogger().setEnabled(enabled == 'true')
         return '{"result" : "success"}'
     
     @view('eventBus.tmpl')

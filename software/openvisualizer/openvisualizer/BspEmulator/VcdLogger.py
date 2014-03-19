@@ -30,6 +30,7 @@ class VcdLogger(object):
         self.signame    = {}
         self.lastTs     = {}
         self.dataLock   = threading.Lock()
+        self.enabled    = False
         sigChar         = ord('!')
         
         # create header
@@ -54,12 +55,23 @@ class VcdLogger(object):
         # write header
         self.f.write(header)
     
+    def setEnabled(self,enabled):
+        assert enabled in [True,False]
+        
+        with self.dataLock:
+            self.enabled = enabled
+    
     def log(self,ts,mote,signal,state):
         
         assert signal in self.SIGNAMES
         assert state in [True,False]
         
-        # cofig state to val
+        # stop here if not enables
+        with self.dataLock:
+            if not self.enabled:
+                return
+        
+        # translate state to val
         if state:
             val = 1
         else:
