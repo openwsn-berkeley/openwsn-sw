@@ -86,8 +86,6 @@ class BspBsp_timer(BspModule.BspModule):
         '''
         emulates
         void bsp_timer_scheduleIn(PORT_TIMER_WIDTH delayTicks)
-        
-        \todo should be relative to last compare event
         '''
         
         try:
@@ -96,14 +94,16 @@ class BspBsp_timer(BspModule.BspModule):
             if self.log.isEnabledFor(logging.DEBUG):
                 self.log.debug('cmd_scheduleIn delayTicks='+str(delayTicks))
             
-            # get current counter value
-            counterVal                = self.hwCrystal.getTicksSince(self.timeLastCompare)
+            # get number of ticks since last compare
+            ticksSinceCompare         = self.hwCrystal.getTicksSince(self.timeLastCompare)
             
             # how many ticks until compare event
-            if counterVal<delayTicks:
-                ticksBeforeEvent      = delayTicks-counterVal
+            if ticksSinceCompare>delayTicks:
+                # we're already too late, schedule compare event right now
+                
+                ticksBeforeEvent      = 0
             else:
-                ticksBeforeEvent      = self.ROLLOVER-counterVal+delayTicks
+                ticksBeforeEvent      = delayTicks-ticksSinceCompare
             
             # calculate time at overflow event (in 'period' ticks)
             compareTime               = self.hwCrystal.getTimeIn(ticksBeforeEvent)
