@@ -178,7 +178,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     
     def _setGologicDebug(self, enabled):
         log.info('Enable GoLogic debug : {0}'.format(enabled))
-        print 'TODO _setGologicDebug()'
+        print 'TODO _setGologicDebug({0})'.format(enabled)
         return '{"result" : "success"}'
     
     @view('eventBus.tmpl')

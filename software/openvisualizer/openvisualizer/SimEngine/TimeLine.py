@@ -84,8 +84,6 @@ class TimeLine(threading.Thread):
         
         # apply the delay
         self.engine.pauseOrDelay()
-
-        tsLastOverflow = {}
         
         while True:
             
@@ -99,18 +97,6 @@ class TimeLine(threading.Thread):
             
             # pop the event at the head of the timeline
             event = self.timeline.pop(0)
-
-            if str(event.desc) == 'radiotimer.overflow':
-                if event.moteId not in tsLastOverflow:
-                    tsLastOverflow[event.moteId] = 0
-                overflowS         = event.atTime-tsLastOverflow[event.moteId]
-                overflowTicks     = overflowS/self.engine.getMoteHandlerById(event.moteId).hwCrystal._getPeriod()
-                print "(mote {0}) radiotimer overflow duration : {1} us, {2} ticks".format(
-                    event.moteId,
-                    1000000*overflowS,
-                    overflowTicks,
-                )
-                tsLastOverflow[event.moteId] = event.atTime
             
             # make sure that this event is later in time than the previous
             assert(self.currentTime<=event.atTime)
