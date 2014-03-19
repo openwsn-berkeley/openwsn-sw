@@ -84,7 +84,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/toggle_root/:moteid',                    callback=self._toggleRoot)
         self.websrv.route(path='/eventBus',                               callback=self._showEventBus)
         self.websrv.route(path='/eventdata',                              callback=self._getEventData)
-        self.websrv.route(path='/eventDebug/:enabled',                    callback=self._setEventDebug)
+        self.websrv.route(path='/wiresharkDebug/:enabled',                callback=self._setWiresharkDebug)
         self.websrv.route(path='/topology',                               callback=self._topologyPage)
         self.websrv.route(path='/topology/data',                          callback=self._topologyData)
         self.websrv.route(path='/topology/motes',         method='POST',  callback=self._topologyMotesUpdate)
@@ -165,14 +165,14 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             states = {}
         return states
     
-    def _setEventDebug(self, enabled):
+    def _setWiresharkDebug(self, enabled):
         '''
         Selects whether eventBus must export debug packets.
         
         :param enabled: 'true' if enabled; any other value considered false
         '''
-        log.info('Enable eventBus debug packets: {0}'.format(enabled))
-        self.app.eventBusMonitor.setMeshDebugExport(enabled == 'true')
+        log.info('Enable wireshark debug : {0}'.format(enabled))
+        self.app.eventBusMonitor.setWiresharkDebug(enabled == 'true')
         return '{"result" : "success"}'
     
     @view('eventBus.tmpl')
@@ -301,7 +301,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     
     def _getEventData(self):
         response = {
-            'isDebugPkts' : 'true' if self.app.eventBusMonitor.meshDebugEnabled else 'false',
+            'isDebugPkts' : 'true' if self.app.eventBusMonitor.wiresharkDebugEnabled else 'false',
             'stats'       : self.app.eventBusMonitor.getStats(),
         }
         return response

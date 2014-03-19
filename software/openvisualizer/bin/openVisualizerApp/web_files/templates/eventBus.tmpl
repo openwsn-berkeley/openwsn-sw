@@ -55,17 +55,17 @@
         <div class="block event-box" style="height: 1.5em">
             <form>
                 <ul><li>
-                    <label for="debug_select" class="rel_label_fld" style="text-align: right; float:right; width: 11em; padding-left: 0em">Export debug packets?</label>
-                    <input style="float: right" id="debug_select" type="checkbox" />
+                    <label for="wireshark_debug" class="rel_label_fld" style="text-align: right; float:right; width: 8em; padding-left: 0em">Wireshark debug</label>
+                    <input style="float: right" id="wireshark_debug" type="checkbox" />
                 </li></ul>
                 <script>
-                $("#debug_select").change(function() {
+                $("#wireshark_debug").change(function() {
                     is_selected = $(this).is(':checked');
                     console.log('Update for debug selection: ' + is_selected);
                     
                     $.ajax({
                         dataType: "json",
-                        url: "/eventDebug/" + is_selected,
+                        url: "/wiresharkDebug/" + is_selected,
                         success: updateForDebug,
                         error: errorOnEventDebug
                     });
@@ -93,8 +93,8 @@
     // Update debug checkbox
     // Param isDebugPkts: boolean true for checked, or any other value for unchecked
     function updateDebugSelect(isDebugPkts) {
-        if ($("#debug_select").is(':checked') != isDebugPkts) {
-            $("#debug_select").click();
+        if ($("#wireshark_debug").is(':checked') != isDebugPkts) {
+            $("#wireshark_debug").click();
         }
     }
     
@@ -182,12 +182,14 @@
         <h3>Other</h3>
         <table style="color: #ffffff;">
             <tbody>
-            <tr><td style="font-weight: bold;">Export debug packets?</td>
-                <td>Writes 'bytesToMesh' and 'fromMote.data' packets to the TUN network interface, wrapped in a <a href="http://wiki.wireshark.org/IEEE_802.15.4">ZEP</a> header.</td>
-            </tr>
+                <tr>
+                    <td style="font-weight: bold;">Wireshark debug</td>
+                    <td>
+                        6LoWPAN packet transiting in the OpenVisualizerare are written to the TUN network interface, wrapped in a <a href="http://wiki.wireshark.org/IEEE_802.15.4">ZEP</a> header.
+                    </td>
+                </tr>
             </tbody>
         </table>
     </div>
-
   </body>
 </html>
