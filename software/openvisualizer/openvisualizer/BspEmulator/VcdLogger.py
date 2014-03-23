@@ -29,12 +29,12 @@ class VcdLogger(object):
         self.f          = open('debugpins.vcd','w')
         self.signame    = {}
         self.lastTs     = {}
-        self.dataLock   = threading.Lock()
+        self.dataLock   = threading.RLock()
         self.enabled    = False
         sigChar         = ord('!')
         
         # create header
-        header  = []
+        header     = []
         header += ['$timescale 1ns $end\n']
         header += ['$scope module logic $end\n']
         for mote in [1,2]: # poipoi
@@ -48,9 +48,10 @@ class VcdLogger(object):
                     )
                 ]
                 sigChar += 1
-        header += ['$upscope $end\n']
-        header += ['$enddefinitions $end\n']
-        header  = ''.join(header)
+        header    += ['$upscope $end\n']
+        header    += ['$enddefinitions $end\n']
+        header    += ['#0\n']
+        header     = ''.join(header)
         
         # write header
         self.f.write(header)
@@ -78,6 +79,7 @@ class VcdLogger(object):
             val = 0
         
         with self.dataLock:
+            
             # format
             output  = []
             tsTemp = int(ts*1000000)*1000
@@ -92,4 +94,3 @@ class VcdLogger(object):
             
             # remember ts
             self.lastTs[(mote,signal)] = ts
-        
