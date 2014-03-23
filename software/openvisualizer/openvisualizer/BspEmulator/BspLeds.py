@@ -44,6 +44,8 @@ class BspLeds(BspModule.BspModule):
         # remember that module has been intialized
         self.isInitialized = True
     
+    # error LED
+    
     def cmd_error_on(self):
         '''emulates
            void leds_error_on()'''
@@ -85,8 +87,15 @@ class BspLeds(BspModule.BspModule):
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('cmd_error_isOn')
         
-        raise NotImplementedError()
+        if self.errorLedOn:
+            returnVal = 1
+        else:
+            returnVal = 0
         
+        return returnVal
+    
+    # radio LED
+    
     def cmd_radio_on(self):
         '''emulates
            void leds_radio_on()'''
@@ -127,6 +136,15 @@ class BspLeds(BspModule.BspModule):
         # log the activity
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('cmd_radio_isOn')
+        
+        if self.radioLedOn:
+            returnVal = 1
+        else:
+            returnVal = 0
+        
+        return returnVal
+    
+    # sync LED
     
     def cmd_sync_on(self):
         '''emulates
@@ -168,6 +186,15 @@ class BspLeds(BspModule.BspModule):
         # log the activity
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('cmd_sync_isOn')
+        
+        if self.syncLedOn:
+            returnVal = 1
+        else:
+            returnVal = 0
+        
+        return returnVal
+    
+    # debug LED
     
     def cmd_debug_on(self):
         '''emulates
@@ -210,8 +237,15 @@ class BspLeds(BspModule.BspModule):
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('cmd_debug_isOn')
         
-        raise NotImplementedError()
+        if self.debugLedOn:
+            returnVal = 1
+        else:
+            returnVal = 0
         
+        return returnVal
+    
+    # all LEDs
+    
     def cmd_all_on(self):
         '''emulates'
            void leds_all_on()'''
