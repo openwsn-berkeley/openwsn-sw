@@ -1,8 +1,14 @@
+import os
+import traceback
 import threading
 
 class VcdLogger(object):
     
-    ACTIVITY_DUR = 1000 # 1000ns=1us
+    ACTIVITY_DUR   = 1000 # 1000ns=1us
+    FILENAME       = 'debugpins.vcd'
+    FILENAME_SWAP  = 'debugpins.vcd.swap'
+    ENDVAR_LINE    = '$upscope $end\n'
+    ENDDEF_LINE    = '$enddefinitions $end\n'
     
     #======================== singleton pattern ===============================
     
@@ -26,35 +32,26 @@ class VcdLogger(object):
         self._init = True
         
         # local variables
-        self.f          = open('debugpins.vcd','w')
+        self.f          = open(self.FILENAME,'w')
         self.signame    = {}
         self.lastTs     = {}
         self.dataLock   = threading.RLock()
         self.enabled    = False
-        sigChar         = ord('!')
+        self.sigChar    = ord('!')
         
         # create header
-        header     = []
-        header += ['$timescale 1ns $end\n']
-        header += ['$scope module logic $end\n']
-        for mote in [1,2]: # poipoi
-            for signal in self.SIGNAMES:
-                self.signame[(mote,signal)] = chr(sigChar)
-                header += [
-                    '$var wire 1 {0} {1}_{2} $end\n'.format(
-                        chr(sigChar),
-                        mote,
-                        signal,
-                    )
-                ]
-                sigChar += 1
-        header    += ['$upscope $end\n']
-        header    += ['$enddefinitions $end\n']
-        header    += ['#0\n']
-        header     = ''.join(header)
+        header          = []
+        header         += ['$timescale 1ns $end\n']
+        header         += ['$scope module logic $end\n']
+        # variables will be declared here by self._addMote()
+        header         += [self.ENDVAR_LINE]
+        header         += [self.ENDDEF_LINE]
+        header          = ''.join(header)
         
         # write header
         self.f.write(header)
+    
+    #======================== public ==========================================
     
     def setEnabled(self,enabled):
         assert enabled in [True,False]
@@ -80,13 +77,17 @@ class VcdLogger(object):
         
         with self.dataLock:
             
+            # add mote if needed
+            if mote not in self.signame:
+                self._addMote(mote)
+            
             # format
             output  = []
             tsTemp = int(ts*1000000)*1000
             if ((mote,signal) in self.lastTs) and self.lastTs[(mote,signal)]==ts:
                 tsTemp += self.ACTIVITY_DUR
             output += ['#{0}\n'.format(tsTemp)]
-            output += ['{0}{1}\n'.format(val,self.signame[(mote,signal)])]
+            output += ['{0}{1}\n'.format(val,self.signame[mote][signal])]
             output  = ''.join(output)
             
             # write
@@ -94,3 +95,46 @@ class VcdLogger(object):
             
             # remember ts
             self.lastTs[(mote,signal)] = ts
+    
+    #======================== private =========================================
+    
+    def _addMote(self,mote):
+        assert mote not in self.signame
+        
+        #=== populate signame
+        self.signame[mote] = {}
+        for signal in self.SIGNAMES:
+            self.signame[mote][signal] = chr(self.sigChar)
+            self.sigChar += 1
+        
+        #=== close FILENAME
+        self.f.close()
+        
+        #=== FILENAME -> FILENAME_SWAP
+        fswap = open(self.FILENAME_SWAP,'w')
+        for line in open(self.FILENAME,'r'):
+            # declare variables
+            if line==self.ENDVAR_LINE:
+                for signal in self.SIGNAMES:
+                    fswap.write(
+                        '$var wire 1 {0} {1}_{2} $end\n'.format(
+                            self.signame[mote][signal],
+                            mote,
+                            signal,
+                        )
+                    )
+            # print line
+            fswap.write(line)
+            # initialize variables
+            if line==self.ENDDEF_LINE:
+                for signal in self.SIGNAMES:
+                    fswap.write('#0\n')
+                    fswap.write('0{0}\n'.format(self.signame[mote][signal]))
+        fswap.close()
+        
+        #=== FILENAME_SWAP -> FILENAME
+        os.remove(self.FILENAME)
+        os.rename(self.FILENAME_SWAP, self.FILENAME)
+        
+        #=== re-open FILENAME
+        self.f = open(self.FILENAME,'a')
