@@ -9,3 +9,5 @@ __pycache__
 .sconsign.dblite
 test_report_*.xml
 
+
+*.vcd

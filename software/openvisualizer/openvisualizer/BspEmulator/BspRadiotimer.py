@@ -16,7 +16,7 @@ class BspRadiotimer(BspModule.BspModule):
     
     INTR_COMPARE  = 'radiotimer.compare'
     INTR_OVERFLOW = 'radiotimer.overflow'
-    PERIOD        = 32768
+    OVERFLOW      = 0xffff+1
     
     def __init__(self,motehandler):
         
@@ -28,7 +28,7 @@ class BspRadiotimer(BspModule.BspModule):
         self.timeline        = self.engine.timeline
         self.hwCrystal       = self.motehandler.hwCrystal
         self.running         = False   # whether the counter is currently running
-        self.timeLastReset   = 0       # time at last counter reset
+        self.timeLastReset   = None    # time at last counter reset
         self.period          = None    # counter period
         self.compareArmed    = False   # whether the compare is armed
         
@@ -108,7 +108,7 @@ class BspRadiotimer(BspModule.BspModule):
         if ticksSinceReset<self.period:
             ticksBeforeEvent = self.period-ticksSinceReset
         else:
-            ticksBeforeEvent = self.PERIOD-ticksSinceReset+self.period
+            ticksBeforeEvent = self.OVERFLOW-ticksSinceReset+self.period
         
         # calculate time at overflow event (in 'period' ticks)
         overflowTime         = self.hwCrystal.getTimeIn(ticksBeforeEvent)

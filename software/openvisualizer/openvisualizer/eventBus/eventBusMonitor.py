@@ -28,14 +28,14 @@ class eventBusMonitor(object):
         # store params
         
         # local variables
-        self.dataLock             = threading.Lock()
-        self.stats                = {}
-        self.meshDebugEnabled     = False
-        self.dagRootEui64         = [0x00]*8
-        self.simMode              = False
+        self.dataLock                  = threading.Lock()
+        self.stats                     = {}
+        self.wiresharkDebugEnabled     = False
+        self.dagRootEui64              = [0x00]*8
+        self.simMode                   = False
         
         # give this instance a name
-        self.name                 = 'eventBusMonitor'
+        self.name                      = 'eventBusMonitor'
         
         # connect to dispatcher
         dispatcher.connect(
@@ -62,7 +62,7 @@ class eventBusMonitor(object):
         # send back JSON string
         return json.dumps(returnVal)
         
-    def setMeshDebugExport(self,isEnabled):
+    def setWiresharkDebug(self,isEnabled):
         '''
         Turns on/off the export of a copy of mesh-bound messages to the
         Internet interface, in the form of ZEP packets. Well-suited to
@@ -70,9 +70,9 @@ class eventBusMonitor(object):
         See http://wiki.wireshark.org/IEEE_802.15.4 for ZEP details.
         '''
         with self.dataLock:
-            self.meshDebugEnabled = (True and isEnabled)
+            self.wiresharkDebugEnabled = (True and isEnabled)
         log.info('%s export of ZEP mesh debug packets to Internet',
-                'Enabled' if self.meshDebugEnabled else 'Disabled')
+                'Enabled' if self.wiresharkDebugEnabled else 'Disabled')
     
     #======================== private =========================================
     
@@ -94,7 +94,7 @@ class eventBusMonitor(object):
             # this signal only exists is simulation mode
             self.simMode = True
         
-        if self.meshDebugEnabled:
+        if self.wiresharkDebugEnabled:
             
             if self.simMode:
                 # simulation mode

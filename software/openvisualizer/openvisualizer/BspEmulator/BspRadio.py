@@ -187,6 +187,9 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         
         # change state
         self._changeState(RadioState.RFOFF)
+        
+        # wiggle de debugpin
+        self.motehandler.bspDebugpins.cmd_radio_clr()
     
     def cmd_loadPacket(self,packetToLoad):
         '''emulates
@@ -225,6 +228,9 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         
         # change state
         self._changeState(RadioState.TX_ENABLED)
+        
+        # wiggle de debugpin
+        self.motehandler.bspDebugpins.cmd_radio_set()
     
     def cmd_txNow(self):
         '''emulates
@@ -262,6 +268,9 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         
         # change state
         self._changeState(RadioState.LISTENING)
+        
+        # wiggle de debugpin
+        self.motehandler.bspDebugpins.cmd_radio_set()
     
     def cmd_rxNow(self):
         '''emulates

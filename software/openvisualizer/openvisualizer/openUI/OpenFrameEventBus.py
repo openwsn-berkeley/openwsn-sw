@@ -35,9 +35,9 @@ class OpenFrameEventBus(OpenFrame.OpenFrame):
         
         self.zepToggle = OpenGuiLib.OpenCheckbox(self.container,
                                 text='Export bytesToMesh packets as ZEP on TUN interface',
-                                cb=eventBusMonitor.setMeshDebugExport)
+                                cb=eventBusMonitor.setWiresharkDebug)
                                 
-        self.zepToggle.setState(self.eventBusMonitor.meshDebugEnabled)
+        self.zepToggle.setState(self.eventBusMonitor.wiresharkDebugEnabled)
         self.zepToggle.grid(row=2,column=0)
         
         # trigger the update of the stats
@@ -71,7 +71,7 @@ class OpenFrameEventBus(OpenFrame.OpenFrame):
             ]
         )
         # update in case changed by something besides GUI
-        self.zepToggle.setState(self.eventBusMonitor.meshDebugEnabled)
+        self.zepToggle.setState(self.eventBusMonitor.wiresharkDebugEnabled)
         
         # schedule next update
         self.after(self.GUIUPDATEPERIOD,self._updateStats)
