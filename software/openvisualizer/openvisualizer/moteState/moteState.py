@@ -151,7 +151,10 @@ class StateMacStats(StateElem):
         self.data[0]['minCorrection']       = notif.minCorrection
         self.data[0]['maxCorrection']       = notif.maxCorrection
         self.data[0]['numDeSync']           = notif.numDeSync
-        self.data[0]['dutyCycle']           = notif.dutyCycle
+        if notif.numTicsTotal!=0:
+            self.data[0]['dutyCycle']           = (float(notif.numTicsOn)/float(notif.numTicsTotal))*100
+        else:
+            self.data[0]['dutyCycle']           = 0
 
 class StateScheduleRow(StateElem):
 
