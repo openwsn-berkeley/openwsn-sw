@@ -199,7 +199,7 @@ class ParserStatus(Parser.Parser):
                                         'asn_4',                     # B
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
-										'joinPrio',                  # B
+                                        'joinPrio',                  # B
                                     ],
                                 )
     

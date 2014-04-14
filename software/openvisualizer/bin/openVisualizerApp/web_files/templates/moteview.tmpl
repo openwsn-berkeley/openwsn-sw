@@ -226,25 +226,32 @@
             <div class="block t2" style="width:300px">
                 <form><fieldset>
                     <legend>MAC Stats</legend>
-                    <ul><li>
-                        <label for="mincorrection_fld" class="rel_label_fld">Min. Correction</label>
-                        <div class="rel_value_fld" id="mincorrection_fld"></div>
-                    </li><li>
-                        <label for="maxcorrection_fld" class="rel_label_fld">Max. Correction</label>
-                        <div class="rel_value_fld" id="maxcorrection_fld"></div>
-                    </li><li>
-                        <label for="syncpkts_fld" class="rel_label_fld">Sync Packets</label>
-                        <div class="rel_value_fld" id="syncpkts_fld"></div>
-                    </li><li>
-                        <label for="syncacks_fld" class="rel_label_fld">Ack Packets</label>
-                        <div class="rel_value_fld" id="syncacks_fld"></div>
-                    </li><li>
-                        <label for="desyncpkts_fld" class="rel_label_fld">De-sync Packets</label>
-                        <div class="rel_value_fld" id="desyncpkts_fld"></div>
-                    </li><li>
-                        <label for="dutycycle_fld" class="rel_label_fld">Duty Cycle</label>
-                        <div class="rel_value_fld" id="dutycycle_fld"></div>
-                    </li></ul>
+                    <ul>
+                        <li>
+                            <label for="mincorrection_fld" class="rel_label_fld">Min. Correction</label>
+                            <div class="rel_value_fld" id="mincorrection_fld"></div>
+                        </li>
+                        <li>
+                            <label for="maxcorrection_fld" class="rel_label_fld">Max. Correction</label>
+                            <div class="rel_value_fld" id="maxcorrection_fld"></div>
+                        </li>
+                        <li>
+                            <label for="syncpkts_fld" class="rel_label_fld">Sync Packets</label>
+                            <div class="rel_value_fld" id="syncpkts_fld"></div>
+                        </li>
+                        <li>
+                            <label for="syncacks_fld" class="rel_label_fld">Ack Packets</label>
+                            <div class="rel_value_fld" id="syncacks_fld"></div>
+                        </li>
+                        <li>
+                            <label for="desyncpkts_fld" class="rel_label_fld">De-sync Packets</label>
+                            <div class="rel_value_fld" id="desyncpkts_fld"></div>
+                        </li>
+                        <li>
+                            <label for="dutycycle_fld" class="rel_label_fld">Duty Cycle</label>
+                            <div class="rel_value_fld" id="dutycycle_fld"></div>
+                        </li>
+                    </ul>
                 </fieldset></form>
             </div>
         </div></div>
@@ -295,20 +302,19 @@
         $("#bridge_fld").text(       hasJson && idJson.isBridge > 0 ? 'Yes' : 'No');
         $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' 
                                                                     : 'Not synchronized');
-        $("#pan_fld").text(          hasJson ? idJson.myPANID : '');
-        $("#asn_fld").text(          hasJson ? asnJson.asn : '');
-        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank : '');
-        $("#outread_fld").text(      hasJson ? outbufJson.index_read : '');
-        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write : '');
-        $("#backexp_fld").text(      hasJson ? backoffJson.backoffExponent : '');
-        $("#backoff_fld").text(      hasJson ? backoffJson.backoff : '');
-        $("#mincorrection_fld").text(hasJson ? macstatsJson.minCorrection : '');
-        $("#maxcorrection_fld").text(hasJson ? macstatsJson.maxCorrection : '');
-        $("#syncpkts_fld").text(     hasJson ? macstatsJson.numSyncPkt : '');
-        $("#syncacks_fld").text(     hasJson ? macstatsJson.numSyncAck : '');
-        $("#desyncpkts_fld").text(   hasJson ? macstatsJson.numDeSync : '');
-        // Cut off insignificant decimal places due to floating point output
-        $("#dutycycle_fld").text(hasJson ? macstatsJson.dutyCycle.toPrecision(6) : '');
+        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
+        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
+        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
+        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
+        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');
+        $("#backexp_fld").text(      hasJson ? backoffJson.backoffExponent     : '');
+        $("#backoff_fld").text(      hasJson ? backoffJson.backoff             : '');
+        $("#mincorrection_fld").text(hasJson ? macstatsJson.minCorrection      : '');
+        $("#maxcorrection_fld").text(hasJson ? macstatsJson.maxCorrection      : '');
+        $("#syncpkts_fld").text(     hasJson ? macstatsJson.numSyncPkt         : '');
+        $("#syncacks_fld").text(     hasJson ? macstatsJson.numSyncAck         : '');
+        $("#desyncpkts_fld").text(   hasJson ? macstatsJson.numDeSync          : '');
+        $("#dutycycle_fld").text(    hasJson ? macstatsJson.dutyCycle          : '');
         
         sched_grid.setData(hasJson ? schedJson : []);
         sched_grid.invalidate();
