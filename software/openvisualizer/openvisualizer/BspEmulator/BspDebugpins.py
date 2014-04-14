@@ -427,8 +427,6 @@ class BspDebugpins(BspModule.BspModule):
         '''emulates
            void debugpins_debug_set()'''
         
-        print 'poipoipoipoi'
-        
         # log the activity
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('cmd_debug_set')
