@@ -25,6 +25,11 @@ class typeComponent(openType.openType):
     #MAClow
     COMPONENT_IEEE802154                = 0x08
     COMPONENT_IEEE802154E               = 0x09
+    
+    
+    
+    
+    
     #MAClow<->MAChigh ("virtual components")
     COMPONENT_RES_TO_IEEE802154E        = 0x0a
     COMPONENT_IEEE802154E_TO_RES        = 0x0b
@@ -71,6 +76,8 @@ class typeComponent(openType.openType):
     COMPONENT_UDPSTORM                  = 0x2e
     COMPONENT_UDPLATENCY                = 0x2f
     COMPONENT_TEST                      = 0x30
+    COMPONENT_R6T                       = 0x31
+    COMPONENT_SWARMBAND                 = 0x32
     
     def __init__(self):
         # log
@@ -195,6 +202,10 @@ class typeComponent(openType.openType):
             self.desc = 'UDPLATENCY'
         elif type==self.COMPONENT_TEST:
             self.desc = 'TEST'
+        elif type==self.COMPONENT_R6T:
+            self.desc = 'R6T'
+        elif type==self.COMPONENT_SWARMBAND:
+            self.desc = 'SWARMBAND'
         else:
             self.desc = 'unknown'
             self.addr = None
