@@ -92,7 +92,7 @@ class HwCrystal(HwModule.HwModule):
         timeSinceLast        = currentTime-self.tsTick
         period               = self._getPeriod()
         
-        ticksSinceLast       = float(timeSinceLast)/float(period)
+        ticksSinceLast       = round(float(timeSinceLast)/float(period))
         timeLastTick         = self.tsTick+ticksSinceLast*period
         
         self.tsTick          = timeLastTick
