@@ -25,7 +25,11 @@ class OpenLbr(eventBusClient.eventBusClient):
       Compression Format for IPv6 Datagrams over IEEE 802.15.4-Based Networks.
     * *http://tools.ietf.org/html/rfc2460* 
       Internet Protocol, Version 6 (IPv6) Specification
+    * *http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
+       The IPv6 Flow Label within a RPL domain  
     '''
+    #implementing http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
+    FLOW_LABEL_RPL_DOMAIN   = True
     
     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
     IANA_PROTOCOL_IPv6ROUTE  = 43
@@ -509,6 +513,10 @@ class OpenLbr(eventBusClient.eventBusClient):
         if (tf == self.IPHC_TF_3B):
             pkt_ipv6['flow_label'] = ((pkt_lowpan[ptr]) << 16) + ((pkt_lowpan[ptr+1]) << 8) + ((pkt_lowpan[ptr+2]) << 0)
             ptr = ptr + 3
+            if (self.FLOW_LABEL_RPL_DOMAIN):
+                 #log this situation as an error to see it 
+                 log.error("FLOW_LABEL_RPL_DOMAIN draft implemented")
+                 pkt_ipv6['flow_label'] = 0
         elif (tf == self.IPHC_TF_ELIDED):
             pkt_ipv6['flow_label'] = 0
         else:
