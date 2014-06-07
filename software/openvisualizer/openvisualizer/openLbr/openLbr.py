@@ -229,7 +229,17 @@ class OpenLbr(eventBusClient.eventBusClient):
                 #skip the header and process the rest of the message.
                 ipv6dic['next_header'] = ipv6dic['hop_next_header']
                 
+            #===================================================================
+            if (self.FLOW_LABEL_RPL_DOMAIN and 'flags' in ipv6dic):
+                #if flow label si formatted following thubert-flow-label draft then check for loops as if it was a hop route header
+                if ((ipv6dic['flags'] & self.O_FLAG) == self.O_FLAG):    
+                    log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
                 
+                if ((ipv6dic['flags'] & self.R_FLAG) == self.R_FLAG):
+                    #error -- loop in the route
+                    log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                
+            #===================================================================
                 
             if (ipv6dic['next_header']==self.IANA_ICMPv6):
                 #icmp header
@@ -512,11 +522,13 @@ class OpenLbr(eventBusClient.eventBusClient):
         tf = ((pkt_lowpan[0]) >> 3) & 0x03
         if (tf == self.IPHC_TF_3B):
             pkt_ipv6['flow_label'] = ((pkt_lowpan[ptr]) << 16) + ((pkt_lowpan[ptr+1]) << 8) + ((pkt_lowpan[ptr+2]) << 0)
-            ptr = ptr + 3
+            #print "flow label {0}".format(pkt_ipv6['flow_label'])
             if (self.FLOW_LABEL_RPL_DOMAIN):
-                 #log this situation as an error to see it 
-                 log.error("FLOW_LABEL_RPL_DOMAIN draft implemented")
-                 pkt_ipv6['flow_label'] = 0
+                pkt_ipv6['flags']=((pkt_lowpan[ptr]) << 16);
+                #log this situation as an error to see it 
+                log.error("FLOW_LABEL_RPL_DOMAIN draft implemented")
+                pkt_ipv6['flow_label'] = 0
+            ptr = ptr + 3
         elif (tf == self.IPHC_TF_ELIDED):
             pkt_ipv6['flow_label'] = 0
         else:
