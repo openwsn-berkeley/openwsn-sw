@@ -28,25 +28,25 @@ import openvisualizer.openvisualizer_utils as u
 
 class RPL(eventBusClient.eventBusClient):
     
-    _TARGET_INFORMATION_TYPE  = 0x05
-    _TRANSIT_INFORMATION_TYPE = 0x06
+    _TARGET_INFORMATION_TYPE           = 0x05
+    _TRANSIT_INFORMATION_TYPE          = 0x06
     
     # Period between successive DIOs, in seconds.
-    DIO_PERIOD                    = 10    
+    DIO_PERIOD                         = 10
     
-    ALL_RPL_NODES_MULTICAST       = [0xff,0x02]+[0x00]*13+[0x1a]
+    ALL_RPL_NODES_MULTICAST            = [0xff,0x02]+[0x00]*13+[0x1a]
     
     # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
-    IANA_ICMPv6_RPL_TYPE          = 155
+    IANA_ICMPv6_RPL_TYPE               = 155
     
     # RPL DIO (RFC6550)
-    DIO_OPT_GROUNDED              = 1<<7
-    MOP_DIO_A                     = 1<<5
-    MOP_DIO_B                     = 1<<4
-    MOP_DIO_C                     = 1<<3
-    PRF_DIO_A                     = 1<<2
-    PRF_DIO_B                     = 1<<1
-    PRF_DIO_C                     = 1<<0
+    DIO_OPT_GROUNDED                   = 1<<7
+    MOP_DIO_A                          = 1<<5
+    MOP_DIO_B                          = 1<<4
+    MOP_DIO_C                          = 1<<3
+    PRF_DIO_A                          = 1<<2
+    PRF_DIO_B                          = 1<<1
+    PRF_DIO_C                          = 1<<0
     
     def __init__(self):
         
@@ -198,7 +198,8 @@ class RPL(eventBusClient.eventBusClient):
         '''
         Send a DIO.
         '''
-        # don't send DIO if I didn't discover the DAGroot EUI64.
+        
+        # don't send DIO if I didn't discover the DAGroot's EUI64
         if not self.dagRootEui64:
             return
         
@@ -240,19 +241,27 @@ class RPL(eventBusClient.eventBusClient):
         
         # DODAGID
         with self.stateLock:
-            idxSrc           = len(dio) #this is a little hack as the source is the dodag..
+            idxSrc           = len(dio) # this is a little hack as the source is the dodag
             dio             += self.networkPrefix
             dio             += self.dagRootEui64
         
-        idxPayload           = len(dio)
-        # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
+        # wireshark calculates the IPv6 source and destination from the 
+        # 6LoWPAN header. It is lot aware of the network prefix and uses
+        # link-local addresses. We do the same in this implementation to avoid
+        # checksum errors in Wireshark.
+        wiresharkSrc         = [0xfe,0x80]+[0x00]*6+[dio[idxSrc+8]|0x02]+dio[idxSrc+9:idxSrc+16]
+        wiresharkDst         = [
+            0xfe,0x80,0x00,0x00,0x00,0x00,0x00,0x00,
+            0x00,0x00,0x00,0xff,0xfe,0x00,0xff,0xff,
+        ]
         
+        # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
         checksum             = u.calculatePseudoHeaderCRC(
-            dio[idxSrc:idxSrc+16],
-            self.ALL_RPL_NODES_MULTICAST,
-            [0x00,0x00],
-            [0x00]+dio[idxNH:idxNH+1],
-            dio[idxPayload:]
+            src              = wiresharkSrc,
+            dst              = wiresharkDst,
+            length           = [0x00,0x00,0x00,len(dio[idxICMPv6:])],
+            nh               = [0x00]+dio[idxNH:idxNH+1],
+            payload          = dio[idxICMPv6:],
         )
         
         dio[idxICMPv6CS  ]   = checksum[0]
@@ -264,8 +273,8 @@ class RPL(eventBusClient.eventBusClient):
 
         # dispatch
         self.dispatch(
-            signal          = 'bytesToMesh',
-            data            = (nextHop,dio)
+            signal           = 'bytesToMesh',
+            data             = (nextHop,dio)
         )
     
     def _indicateDAO(self,tup):    

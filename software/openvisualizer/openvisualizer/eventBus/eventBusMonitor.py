@@ -236,7 +236,13 @@ class eventBusMonitor(object):
         # CRC See https://tools.ietf.org/html/rfc2460.
       
         # not sure if the payload contains the udp header in this case.
-        udp[6:8] = u.calculatePseudoHeaderCRC(addr,addr,[0x00,0x00]+udp[4:6],[0x00,0x00,0x00,17],zep)
+        udp[6:8] = u.calculatePseudoHeaderCRC(
+            src         = addr,
+            dst         = addr,
+            length      = [0x00,0x00]+udp[4:6],
+            nh          = [0x00,0x00,0x00,17],
+            payload     = zep,
+        )
         
         # IPv6
         ip     = [6<<4]                  # v6 + traffic class (upper nybble)
