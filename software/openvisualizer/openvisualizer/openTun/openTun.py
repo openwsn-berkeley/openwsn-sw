@@ -8,7 +8,8 @@ log = logging.getLogger('openTun')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
-import os
+# import os
+import sys 
 import socket
 import time
 
@@ -26,16 +27,30 @@ def create():
     # Must import here rather than at top of module to avoid a circular 
     # reference to OpenTun class.
     
-    if os.name=='nt':
-       from openTunWindows import OpenTunWindows
-       return OpenTunWindows()
+    # if os.name=='nt':
+       # from openTunWindows import OpenTunWindows
+       # return OpenTunWindows()
        
-    elif os.name=='posix':
-       from openTunLinux import OpenTunLinux
-       return OpenTunLinux()
+    # elif os.name=='posix':
+       # from openTunLinux import OpenTunLinux
+       # return OpenTunLinux()
        
+    # else:
+        # raise NotImplementedError('OS {0} not supported'.format(os.name))
+    
+    if sys.platform.startswith('win32'):
+        from openTunWindows import OpenTunWindows
+        return OpenTunWindows()
+        
+    elif sys.platform.startswith('linux'):
+        from openTunLinux import OpenTunLinux
+        return OpenTunLinux()
+        
+    elif sys.platform.startswith('darwin'):
+        from openTunMACOSX import OpenTunMACOSX
+        return OpenTunMACOSX()
     else:
-        raise NotImplementedError('OS {0} not supported'.format(os.name))
+        raise NotImplementedError('Platform {0} not supported'.format(sys.platform))
         
 
 class OpenTun(eventBusClient.eventBusClient):
