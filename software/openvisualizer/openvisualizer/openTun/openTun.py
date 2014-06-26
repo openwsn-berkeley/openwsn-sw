@@ -47,8 +47,8 @@ def create():
         return OpenTunLinux()
         
     elif sys.platform.startswith('darwin'):
-        from openTunMACOSX import OpenTunMACOSX
-        return OpenTunMACOSX()
+        from openTunMACOS import OpenTunMACOS
+        return OpenTunMACOS()
     else:
         raise NotImplementedError('Platform {0} not supported'.format(sys.platform))
         

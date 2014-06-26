@@ -4,7 +4,7 @@
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
-log = logging.getLogger('openTunLinux')
+log = logging.getLogger('openTunMACOS')
 # Do not set the default null log handlers here. Logging already will have been
 # configured, because this class is imported later, on the fly, by OpenTun.
 
