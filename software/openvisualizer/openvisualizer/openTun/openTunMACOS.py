@@ -164,12 +164,12 @@ class OpenTunMACOS(openTun.OpenTun):
                 ifname='tun{0}'.format(tun_counter)
                 f=os.open("/dev/{0}".format(ifname), os.O_RDWR)
             except OSError:
-                tun_counter+=1			
+                tun_counter+=1            
         
         if tun_counter==16:
-            return None
+            raise OSError('TUN device not found: check if it exists or if it is busy')
         else:
-        #=====		
+        #=====
             log.info("configuring IPv6 address...")
             prefixStr = u.formatIPv6Addr(openTun.IPV6PREFIX)
             hostStr   = u.formatIPv6Addr(openTun.IPV6HOST)
@@ -182,7 +182,7 @@ class OpenTunMACOS(openTun.OpenTun):
             # added 'metric 1' for router-compatibility constraint 
             # (show ping packet on wireshark but don't send to mote at all)
             # os.system('ip -6 route add ' + prefixStr + ':1415:9200::/96 dev ' + ifname + ' metric 1') 
-            os.system('route add -inet6 {0}:1415:9200::/96 -interface {1} metric 1'.format(prefixStr, ifname))
+            os.system('route add -inet6 {0}:1415:9200::/96 -interface {1}'.format(prefixStr, ifname))
             # trying to set a gateway for this route
             #os.system('ip -6 route add ' + prefixStr + '::/64 via ' + IPv6Prefix + ':' + hostStr + '/64') 
             
