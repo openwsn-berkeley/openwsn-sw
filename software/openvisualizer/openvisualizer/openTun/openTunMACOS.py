@@ -163,6 +163,7 @@ class OpenTunMACOS(openTun.OpenTun):
             try:
                 ifname='tun{0}'.format(tun_counter)
                 f=os.open("/dev/{0}".format(ifname), os.O_RDWR)
+                break
             except OSError:
                 tun_counter+=1            
         
