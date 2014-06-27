@@ -190,7 +190,7 @@ class OpenTunMACOS(openTun.OpenTun):
         #=====
             log.info("enabling IPv6 forwarding...")
             # os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')
-            os.system('sysctl net.inet6.ip6.forwarding=1')
+            os.system('sysctl -w net.inet6.ip6.forwarding=1')
             
         #=====
             print('\ncreated following virtual interface:')
