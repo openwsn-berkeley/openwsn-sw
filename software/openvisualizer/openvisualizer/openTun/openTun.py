@@ -38,9 +38,9 @@ def create():
         
     elif sys.platform.startswith('darwin'):
         from openTunMACOS import OpenTunMACOS
-		f=OpenTunMACOS()
+        f=OpenTunMACOS()
         if f!=None:
-		    return f
+            return f
         else:
             raise OSError('TUN device not found: check if it exists or if it is busy')
 			
