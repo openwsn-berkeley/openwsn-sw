@@ -109,7 +109,7 @@ class TunReadThread(threading.Thread):
     
 #============================ main class ======================================
 
-class OpenTunMACOSX(openTun.OpenTun):
+class OpenTunMACOS(openTun.OpenTun):
     '''
     Class which interfaces between a TUN virtual interface and an EventBus.
     '''
