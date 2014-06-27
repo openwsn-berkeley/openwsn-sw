@@ -159,47 +159,46 @@ class OpenTunMACOSX(openTun.OpenTun):
         log.info("opening tun interface")
         
         tun_counter=0
-#        while tun_counter<16:
-#            try:
-        ifname='tun{0}'.format(tun_counter)
-        f=os.open("/dev/{0}".format(ifname), os.O_RDWR)
+        while tun_counter<16:
+            try:
+                ifname='tun{0}'.format(tun_counter)
+                f=os.open("/dev/{0}".format(ifname), os.O_RDWR)
+            except OSError:
+                tun_counter+=1			
         
-        #=====
-        log.info("configuring IPv6 address...")
-        prefixStr = u.formatIPv6Addr(openTun.IPV6PREFIX)
-        hostStr   = u.formatIPv6Addr(openTun.IPV6HOST)
-        
-        v=os.system('ifconfig {0} inet6 {1}:{2} prefixlen 64'.format(ifname, prefixStr, hostStr))
-        v=os.system('ifconfig {0} inet6 fe80::{1} prefixlen 64 add'.format(ifname, hostStr))
-#                v = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
-#                v = os.system('ip link set ' + ifname + ' up')
-#                v = os.system('ip -6 addr add ' + prefixStr + ':' + hostStr + '/64 dev ' + ifname)
-#                v = os.system('ip -6 addr add fe80::' + hostStr + '/64 dev ' + ifname)
-#                
-        #=====
-        log.info("adding static route route...")
-        # added 'metric 1' for router-compatibility constraint 
-        # (show ping packet on wireshark but don't send to mote at all)
-#        os.system('ip -6 route add ' + prefixStr + ':1415:9200::/96 dev ' + ifname + ' metric 1') 
-        # trying to set a gateway for this route
-        #os.system('ip -6 route add ' + prefixStr + '::/64 via ' + IPv6Prefix + ':' + hostStr + '/64') 
-        
-        #=====
-        log.info("enabling IPv6 forwarding...")
-        os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')
-        
-        #=====
-        print('\ncreated following virtual interface:')
-#        os.system('ip addr show ' + ifname)
-        os.system('ifconfig {0}'.format(ifname))
-        
-        #=====start radvd
-        #os.system('radvd start')
-        
-        return f
-#            except:
-#                tun_counter+=1
+        if tun_counter==16:
+            return None
+        else:
+        #=====		
+            log.info("configuring IPv6 address...")
+            prefixStr = u.formatIPv6Addr(openTun.IPV6PREFIX)
+            hostStr   = u.formatIPv6Addr(openTun.IPV6HOST)
             
+            v=os.system('ifconfig {0} inet6 {1}:{2} prefixlen 64'.format(ifname, prefixStr, hostStr))
+            v=os.system('ifconfig {0} inet6 fe80::{1} prefixlen 64 add'.format(ifname, hostStr))
+            
+        #=====
+            log.info("adding static route route...")
+            # added 'metric 1' for router-compatibility constraint 
+            # (show ping packet on wireshark but don't send to mote at all)
+            # os.system('ip -6 route add ' + prefixStr + ':1415:9200::/96 dev ' + ifname + ' metric 1') 
+			os.system('route add -inet6 {0}:1415:9200::/96 -interface {1} metric 1'.format(prefixStr, ifname))
+            # trying to set a gateway for this route
+            #os.system('ip -6 route add ' + prefixStr + '::/64 via ' + IPv6Prefix + ':' + hostStr + '/64') 
+            
+        #=====
+            log.info("enabling IPv6 forwarding...")
+            # os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')
+			os.system('sysctl net.inet6.ip6.forwarding=1')
+            
+        #=====
+            print('\ncreated following virtual interface:')
+            os.system('ifconfig {0}'.format(ifname))
+            
+        #=====start radvd
+            #os.system('radvd start')
+            
+            return f
          
     def _createTunReadThread(self):
         '''

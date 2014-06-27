@@ -27,16 +27,6 @@ def create():
     # Must import here rather than at top of module to avoid a circular 
     # reference to OpenTun class.
     
-    # if os.name=='nt':
-       # from openTunWindows import OpenTunWindows
-       # return OpenTunWindows()
-       
-    # elif os.name=='posix':
-       # from openTunLinux import OpenTunLinux
-       # return OpenTunLinux()
-       
-    # else:
-        # raise NotImplementedError('OS {0} not supported'.format(os.name))
     
     if sys.platform.startswith('win32'):
         from openTunWindows import OpenTunWindows
@@ -48,7 +38,12 @@ def create():
         
     elif sys.platform.startswith('darwin'):
         from openTunMACOS import OpenTunMACOS
-        return OpenTunMACOS()
+		f=OpenTunMACOS()
+        if f!=None:
+		    return f
+        else:
+            raise OSError('TUN device not found: check if it exists or if it is busy')
+			
     else:
         raise NotImplementedError('Platform {0} not supported'.format(sys.platform))
         
