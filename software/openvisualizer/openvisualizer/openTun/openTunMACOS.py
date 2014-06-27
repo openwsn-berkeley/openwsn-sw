@@ -182,14 +182,14 @@ class OpenTunMACOSX(openTun.OpenTun):
             # added 'metric 1' for router-compatibility constraint 
             # (show ping packet on wireshark but don't send to mote at all)
             # os.system('ip -6 route add ' + prefixStr + ':1415:9200::/96 dev ' + ifname + ' metric 1') 
-			os.system('route add -inet6 {0}:1415:9200::/96 -interface {1} metric 1'.format(prefixStr, ifname))
+		    os.system('route add -inet6 {0}:1415:9200::/96 -interface {1} metric 1'.format(prefixStr, ifname))
             # trying to set a gateway for this route
             #os.system('ip -6 route add ' + prefixStr + '::/64 via ' + IPv6Prefix + ':' + hostStr + '/64') 
             
         #=====
             log.info("enabling IPv6 forwarding...")
             # os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')
-			os.system('sysctl net.inet6.ip6.forwarding=1')
+		    os.system('sysctl net.inet6.ip6.forwarding=1')
             
         #=====
             print('\ncreated following virtual interface:')
