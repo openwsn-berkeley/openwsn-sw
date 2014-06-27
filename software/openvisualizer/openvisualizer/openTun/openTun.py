@@ -8,7 +8,6 @@ log = logging.getLogger('openTun')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
-# import os
 import sys 
 import socket
 import time
