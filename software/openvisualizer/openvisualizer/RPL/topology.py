@@ -51,6 +51,26 @@ class topology(eventBusClient.eventBusClient):
     def getParents(self,sender,signal,data):
         return self.parents
     
+    def getDAG(self):
+        states = []
+        edges = []
+        motes = []
+        
+        with self.dataLock:
+            for src, dsts in self.parents.iteritems():
+                src_s = ''.join(['%02X' % x for x in src[-2:] ])
+                motes.append(src_s)
+                for dst in dsts:
+                    dst_s = ''.join(['%02X' % x for x in dst[-2:] ])
+                    edges.append({ 'u':src_s, 'v':dst_s })
+                    motes.append(dst_s)
+            motes = list(set(motes))
+            for mote in motes:
+                d = { 'id': mote, 'value': { 'label': mote } } 
+                states.append(d)
+        
+        return (states,edges)
+        
     def updateParents(self,sender,signal,data):
         ''' inserts parent information into the parents dictionary '''
         with self.dataLock:

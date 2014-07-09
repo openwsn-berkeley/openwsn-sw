@@ -1,12 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-    <head>
-        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
-        %include htmlHead.tmpl
-        <style type="text/css">
+	<head>
+		%include head.tmpl
+		<style type="text/css">
             #map-canvas {
                 height            : 600px;
-                width             : 850px;
+                display           : block;
             }
             #update_button {
                 padding           : 5px;
@@ -28,9 +27,8 @@
             }
         </style>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
-        <script src="/static/markerwithlabel.js"></script>
+        <script src="/static/js/markerwithlabel.js"></script>
         <script type="text/javascript">
-            
             // global variables
             var map;
             var connectioninfo;
@@ -605,12 +603,27 @@
             
             //=============== main ============================================
             
-            google.maps.event.addDomListener(window, 'load', initialize);
-            
+            google.maps.event.addDomListener(window, 'load', initialize);  
         </script>
-    </head>
-    <body>
-        %include menuHeader.tmpl
-        <div id="map-canvas"/>
-    </body>
+	</head>
+	<body>
+		<div id="wrapper">
+			%include navbar.tmpl
+			
+			<div id="page-wrapper">
+                %include help.tmpl
+	            <div class="row">
+	                <div class="col-lg-12">
+	                    <h1 class="page-header">Topology</h1>
+	                </div>
+	            </div>
+
+	            <div class="row">
+	                <div class="col-lg-12">
+	                	<div id="map-canvas"/>
+	                </div>
+	            </div>
+	        </div>
+	    </div>
+	</body>
 </html>

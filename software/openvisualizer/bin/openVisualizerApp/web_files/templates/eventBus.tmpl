@@ -1,224 +1,137 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-      %include htmlHead.tmpl
-  </head>
+	<head>
+		%include head.tmpl
+	</head>
+	<body>
+		<div id="wrapper">
+			%include navbar.tmpl
 
-  <body>
-    <script>
-    var intervalId;
-    var event_grid;
-    var sort_fnctn;
-    // Specific variable for rows in event grid; for sorting use.
-    var event_rows;
-    var sort_field;
-    var sort_ascend;
-    
-    $(function() {
-        // Initialize events grid
-        var event_cols = [
-            {id: "sender", name: "Sender", field: "sender", sortable: true},
-            {id: "signal", name: "Event",  field: "signal", sortable: true},
-            {id: "count",  name: "Count",  field: "num",    sortable: true},
-        ];
-        event_cols[0].width    = 250;
-        event_cols[0].maxWidth = 250;
-        event_cols[1].width    = 325;
-        event_cols[1].maxWidth = 325;
-        event_cols[2].width    =  75;
-        event_cols[2].maxWidth = 125;
-        event_cols[2].cssClass = "grid_num_col";
-        
-        event_rows = [];
-        event_grid = new Slick.Grid("#event_grid", event_rows, event_cols, {});
-        
-        // Setup column sorting
-        event_grid.onSort.subscribe(function(e, args){
-            sort_field  = args.sortCol.field;
-            sort_ascend = args.sortAsc;
-            console.log("Sorting on field: " + sort_field);
-            
-            event_rows.sort(
-                    sort_field == 'num' 
-                        ? sort_rows_numeric 
-                        : sort_rows_alpha);
-            event_grid.invalidate();         
-        });
-        %# Don't escape quotes in stats
-        updateForDataValues({{!stats}}, {{isDebugPkts}});
-    });
-    </script>
+			<div id="page-wrapper">
+				%include help.tmpl
+	            <div class="row">
+	                <div class="col-lg-12">
+	                    <h1 class="page-header">Event Bus</h1>
+	                </div>
+	            </div>
 
-    %# Displays page header section, including menu and background graphic.
-    %include menuHeader.tmpl
-    <div class="block-group ui-widget ui-widget-content ui-corner-all ov-page-width">
-        <div class="block event-box" style="height: 1.5em">
-            <form>
-                <table>
-                    <tr>
-                        <td>
-                            <label for="wireshark_debug" class="rel_label_fld" style="text-align: right; float:right; width: 8em; padding-left: 0em"><a href="http://www.wireshark.org/download.html" target="_new">Wireshark</a> debug</label>
-                            <input style="float: right" id="wireshark_debug" type="checkbox" />
-                        </td>
-                        <td>
-                            <label for=gologic_debug" class="rel_label_fld" style="text-align: right; float:right; width: 7em; padding-left: 0em"><a href="http://www.nci-usa.com/frame_downloads_software.htm" target="_new">GoLogic</a> debug</label>
-                            <input style="float: right" id="gologic_debug" type="checkbox" />
-                        </td>
-                    </tr>
-                </table>
-                <script>
-                $("#wireshark_debug").change(function() {
-                    is_selected = $(this).is(':checked');
-                    console.log('Update for wireshark debug selection: ' + is_selected);
-                    
-                    $.ajax({
-                        dataType: "json",
-                        url: "/wiresharkDebug/" + is_selected,
-                        success: wiresharkDebugUpdateSuccess,
-                        error:   wiresharkDebugUpdateFail
-                    });
-                });
-                $("#gologic_debug").change(function() {
-                    is_selected = $(this).is(':checked');
-                    console.log('Update for GoLogic debug selection: ' + is_selected);
-                    
-                    $.ajax({
-                        dataType: "json",
-                        url: "/gologicDebug/" + is_selected,
-                        success: wiresharkDebugUpdateSuccess,
-                        error:   wiresharkDebugUpdateFail
-                    });
-                });
-                </script>
-            </form>
-        </div>
-        <div class="event_b1 block event-box">
-            <div id="event_grid" style="height: 600px; margin-left: 1em"></div>
-        </div>
-    </div>
-    
-    <script>
-    function updateEventGrid(event_rows) {
-        if (sort_field != null) {
-            event_rows.sort(
-                    sort_field == 'num' 
-                        ? sort_rows_numeric 
-                        : sort_rows_alpha);
-        }
-        event_grid.setData(event_rows);
-        event_grid.invalidate();
-    }
-    
-    // Update debug checkbox
-    // Param isDebugPkts: boolean true for checked, or any other value for unchecked
-    function updateDebugSelect(isDebugPkts) {
-        if ($("#wireshark_debug").is(':checked') != isDebugPkts) {
-            $("#wireshark_debug").click();
-        }
-    }
-    
-    // Common update function for original template or Ajax updates.
-    // Expects parameters as JSON.
-    // Param stats:       Array of JS objects (JSON already parsed)
-    // Param isDebugPkts: 'true' for checked, or 'false' for unchecked
-    function updateForDataValues(stats, isDebugPkts) {
-        updateEventGrid(stats);
-        updateDebugSelect($.parseJSON(isDebugPkts));
-        
-        timeoutId = setTimeout(function() {
-            $.ajax({
-                dataType: "json",
-                url: "/eventdata",
-                success: updateForData,
-                error: errorOnEventdata
-            });
-        }, 5000);
-    }
-    
-    // Callback for AJAX data retrieval.
-    function updateForData(json) {
-        console.log("Update for event data received");
-        updateForDataValues($.parseJSON(json.stats), json.isDebugPkts);
-    }
+	            <div class="row">
+	                <div class="col-lg-12">
+	                    <div class="form-group">
+	                        <div class="checkbox">
+	                            <label for="wireshark_debug"><a href="http://www.wireshark.org/download.html" target="_new">Wireshark</a> debug</label>
+                            	<input id="wireshark_debug" type="checkbox" />
+	                        </div>
+	                        <div class="checkbox">
+	                            <label for="gologic_debug"><a href="http://www.nci-usa.com/frame_downloads_software.htm" target="_new">GoLogic</a> debug</label>
+                            	<input id="gologic_debug" type="checkbox" />
+	                        </div>
+	                    </div>
+			        </div>
 
-    // Callback for debug packet selection.
-    function wiresharkDebugUpdateSuccess(json) {
-        console.log("wiresharkDebugUpdateSuccess");
-    }
-    
-    function wiresharkDebugUpdateFail(jqxhr, status, errorThrown) {
-        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
-    }
-    
-    function gologicDebugUpdateSuccess(json) {
-        console.log("gologicDebugUpdateSuccess");
-    }
-    
-    function gologicDebugUpdateFail(jqxhr, status, errorThrown) {
-        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
-    }
-    
-    function errorOnAjax(event, jqxhr, status, errorThrown) {
-        var errText = (errorThrown == null || errorThrown.length == 0)
-                ? '' : ': ' + errorThrown;
-        console.log('Ajax (' + event + ') ' + status + errText);
-    }    
-    
-    
-    
-    function errorOnEventdata(jqxhr, status, errorThrown) {
-        errorOnAjax('eventdata', jqxhr, status, errorThrown);
-    }
-    
-    function sort_rows_alpha(a, b){
-        // Create variables to reduce garbage generation
-        // Must use toString() since may be an array.
-        var aLow = a[sort_field].toString().toLowerCase();
-        var bLow = b[sort_field].toString().toLowerCase();
-        
-        var result = aLow > bLow 
-                            ? 1
-                            : aLow < bLow ? -1 : 0;
+			        <script>
+		                $("#wireshark_debug").change(function() {
+		                    is_selected = $(this).is(':checked');
+		                    console.log('Update for wireshark debug selection: ' + is_selected);
+		                    
+		                    $.ajax({
+		                        dataType: "json",
+		                        url: "/wiresharkDebug/" + is_selected,
+		                        success: wiresharkDebugUpdateSuccess,
+		                        error:   wiresharkDebugUpdateFail
+		                    });
+		                });
+		                $("#gologic_debug").change(function() {
+		                    is_selected = $(this).is(':checked');
+		                    console.log('Update for GoLogic debug selection: ' + is_selected);
+		                    
+		                    $.ajax({
+		                        dataType: "json",
+		                        url: "/gologicDebug/" + is_selected,
+		                        success: wiresharkDebugUpdateSuccess,
+		                        error:   wiresharkDebugUpdateFail
+		                    });
+		                });
+			        </script>
+			    </div>
 
-        return sort_ascend ? result : -result;
-    }
-    
-    function sort_rows_numeric(a, b){
-        var result = a[sort_field] > b[sort_field] 
-                            ? 1
-                            : a[sort_field] < b[sort_field] ? -1 : 0;
+			    <div class="row">
+	                <div class="col-lg-12">
+	                	<div id="tab-stats" class="table-responsive"></div>
+	                	<script>
+							setTimeout(function(){
+							    update_json();
+							}, 10);
 
-        return sort_ascend ? result : -result;
-    }
-    </script>
+							// Common update function for original template or Ajax updates.
+						    // Expects parameters as JSON.
+						    // Param stats:       Array of JS objects (JSON already parsed)
+						    // Param isDebugPkts: 'true' for checked, or 'false' for unchecked
+							function update_json(){
+								$.ajax({
+									dataType: "json",
+									url: "/eventdata",
+									success: sucesso,
+									error: errorOnEventdata
+								});
 
-    <div id="help_dialog" style="display: none;" title="Event Bus Help">
-        <h3>Event Bus Grid</h3>
-        <table style="color: #ffffff;">
-            <tbody>
-            <tr><td style="font-weight: bold;">Sender</td>
-                <td>Component that pushed the event onto the event bus</td>
-            </tr>
-            <tr><td style="font-weight: bold;">Signal</td>
-                <td>Type of event generated</td>
-            </tr>
-            <tr><td style="font-weight: bold;">Count</td>
-                <td>Accumulated count of event signals put on the event bus</td>
-            </tr>
-            </tbody>
-        </table>
-        <p>You may sort on any column by clicking on its title.</p>
-        <h3>Other</h3>
-        <table style="color: #ffffff;">
-            <tbody>
-                <tr>
-                    <td style="font-weight: bold;">Wireshark debug</td>
-                    <td>
-                        6LoWPAN packet transiting in the OpenVisualizerare are written to the TUN network interface, wrapped in a <a href="http://wiki.wireshark.org/IEEE_802.15.4">ZEP</a> header.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>
-  </body>
+								setTimeout(function(){
+								    update_json();
+								}, 5000);
+							}
+
+							function sucesso(json){
+								// Event Bus responsive table
+								statsJson = $.parseJSON(json.stats)
+								debugJson = json.isDebugPkts
+
+								var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Sender</th><th>Event</th><th>Count</th></tr></thead><tbody>";
+
+								$.each(statsJson, function() {
+									var tbl_row = "<td>" + this['sender'] + "</td>";
+									tbl_row += "<td>" + this['signal'] + "</td>";
+									tbl_row += "<td>" + this['num'] + "</td>";
+									tbl_body += "<tr class=\"odd gradeX\">" + tbl_row + "</tr>";
+								});
+
+								tbl_body += "</tbody></table>";
+								//console.log(tbl_body);
+								$("#tab-stats").html(tbl_body).text();
+								console.log("Update for event data received");
+							}
+						</script>
+	                </div>
+
+	                <script>
+					    // Callback for debug packet selection.
+					    function wiresharkDebugUpdateSuccess(json) {
+					        console.log("wiresharkDebugUpdateSuccess");
+					    }
+					    
+					    function wiresharkDebugUpdateFail(jqxhr, status, errorThrown) {
+					        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
+					    }
+					    
+					    function gologicDebugUpdateSuccess(json) {
+					        console.log("gologicDebugUpdateSuccess");
+					    }
+					    
+					    function gologicDebugUpdateFail(jqxhr, status, errorThrown) {
+					        errorOnAjax('EventDebug', jqxhr, status, errorThrown);
+					    }
+					    
+					    function errorOnAjax(event, jqxhr, status, errorThrown) {
+					        var errText = (errorThrown == null || errorThrown.length == 0)
+					                ? '' : ': ' + errorThrown;
+					        console.log('Ajax (' + event + ') ' + status + errText);
+					    }    
+						
+					    function errorOnEventdata(jqxhr, status, errorThrown) {
+					        errorOnAjax('eventdata', jqxhr, status, errorThrown);
+					    }
+					</script>
+	            </div>
+			</div>
+	    </div>
+	</body>
 </html>
