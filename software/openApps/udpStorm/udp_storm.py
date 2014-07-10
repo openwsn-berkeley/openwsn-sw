@@ -3,8 +3,6 @@ import sys
 from Tkinter import *
 import tkMessageBox
 import re
-from Queue import Queue
-import threading
 import time
 import struct
 
@@ -14,63 +12,8 @@ p = os.path.abspath(p)
 sys.path.insert(0,p)
 
 from coap import coap
+from coap import coapDefines as d
 
-class SendCoap(threading.Thread):
-    def __init__(self,addr,method,period,win,queue):
-        threading.Thread.__init__(self)
-        self.addr = addr
-        self.method = method
-        self.period = period
-        self.win = win
-        self.queue = queue
-        self.running = False
-        self.coap = None
-        self.timer_cbk = None
-        self.tmr = 0
-
-    def wait_answer(self):
-        self.tmr = self.tmr + 1
-        self.update_status("STATUS","Waiting answer ({0}) ...".format(self.tmr))
-        self.timer_cbk = self.win.after(1000,self.wait_answer)
-        
-    def exec_request(self):
-        self.coap = coap.coap()
-        if self.method == 'GET':
-            uri = 'coap://[{0}]//storm/period'.format(self.addr)
-            r = self.coap.GET(uri)
-            self.per = struct.unpack('>H',r)
-            self.update_status("PERIOD",self.per)
-        else:
-            uri = 'coap://[{0}]//storm/period={1}'.format(self.addr,self.per)
-            self.coap.PUT(uri)
-        
-    def run(self):
-        self.running = True
-        while self.running:
-            try:
-                self.tmr = 0
-                self.update_status("STATUS","Sending coap")
-                self.timer_cbk = self.win.after(1000,self.wait_answer)
-                self.exec_request()
-                self.win.after_cancel(self.wait_answer) 
-            except Exception, e:
-                self.update_status("STATUS","Failed {0}".format(repr(e)))
-            else:
-                self.update_status("STATUS","Success !")
-        self.running = False
-        
-    def quit(self):
-        if self.running:
-            if self.coap:
-                self.coap.close()
-            self.running = False
-        
-    def update_status(self,t,m):
-        self.queue.put((t,m))
-        try:
-            self.win.event_generate('<<UpdateStatus>>', when='tail')
-        except:
-            pass
 
 class UDPStormGUI(object):
 
@@ -83,24 +26,10 @@ class UDPStormGUI(object):
         self.period.set(0)
         self.status = StringVar()
         self.status.set('')
-
+        self.coap = coap.coap()
         self.create_gui()
-
-        self.task = None
-        self.queue = Queue()
-        self.master.bind('<<UpdateStatus>>', self.update_status)
-
         self.master.mainloop()
 
-    def update_status(self,event):
-        t,m = self.queue.get()
-        if t == "PERIOD":
-            self.period.set(m)
-        elif t == "STATUS":
-            self.status.set(m)
-        else:
-            self.status.set(repr(m))
-    
     def create_gui(self):
         self.master.wm_title("UDP Storm")
 
@@ -114,7 +43,7 @@ class UDPStormGUI(object):
         f = Frame(self.master,padx=5,pady=5)
         Label(f,text="coap://[").pack(side=LEFT,expand=NO)
         Entry(f,textvariable=self.ipv6_addr,width=40).pack(side=LEFT,expand=YES,fill=X)
-        Label(f,text="]/storm/period=").pack(side=LEFT,expand=NO)
+        Label(f,text="]/strm/period=").pack(side=LEFT,expand=NO)
         Entry(f,textvariable=self.period,width=10).pack(side=LEFT,expand=NO)
         f.pack(side=TOP,expand=YES,fill=X)
         
@@ -129,7 +58,8 @@ class UDPStormGUI(object):
 
         self.master.protocol("WM_DELETE_WINDOW", self.close)
         
-    def validate(self):
+    def validate(self,check_per=True):
+        if check_per:
         try:
             per = self.period.get()
         except:
@@ -161,30 +91,43 @@ class UDPStormGUI(object):
             
         return True
 
-    def kill_task(self):
-        if self.task:
-            if self.task.isAlive():
-                self.task.quit()
-                time.sleep(2)
 
     def get_cmd(self, event=None):
-        if self.validate():
-            self.kill_task()
+        if self.validate(False):
+            self.status.set('')
+            self.master.update_idletasks()
             ipv6 = self.ipv6_addr.get().strip()
             per = self.period.get()
-            self.task = SendCoap(ipv6,'GET',per,self.master,self.queue)
-            self.task.start()
+            uri = 'coap://[{0}]/strm/period'.format(ipv6)
+            self.status.set(uri)
+            try:
+                r = self.coap.GET(uri)
+                per = struct.unpack('>H',''.join([ chr(c) for c in r ]))[0]
+            except Exception, e:
+                self.status.set('Failed: {0}'.format(repr(e)))
+            else:
+                self.period.set(per)
+                self.status.set('GET OK!')
 
     def put_cmd(self, event=None):
         if self.validate():
-            self.kill_task()
+            self.status.set('')
+            self.master.update_idletasks()
             ipv6 = self.ipv6_addr.get().strip()
+            uri = 'coap://[{0}]/strm/period'.format(ipv6)
             per = self.period.get()
-            self.task = SendCoap(ipv6,'GET',per,self.master,self.queue)
-            self.task.start()
+            per = [ ord(c) for c in struct.pack('>H',per) ]
+            self.status.set(uri)
+            try:
+                r = self.coap.PUT(uri,payload=per)
+            except Exception, e:
+                self.status.set('Failed: {0}'.format(repr(e)))
+            else:
+                self.status.set('PUT OK!')
         
     def close(self):
-        self.kill_task()
+        if self.coap:
+            self.coap.close()
         self.master.destroy()
         
 UDPStormGUI(Tk())
