@@ -11,3 +11,4 @@ test_report_*.xml
 
 
 *.vcd
+/software/openApps/rstorm/*.config
