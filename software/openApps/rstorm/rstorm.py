@@ -14,16 +14,21 @@ sys.path.insert(0,p)
 from coap import coap
 from coap import coapDefines as d
 
+CONFIG_FILENAME = 'rstorm.config'
+DFLT_IPv6       = 'bbbb::'
+DFLT_PERIOD     = 10
 
-class UDPStormGUI(object):
+class RStormGUI(object):
 
     def __init__(self, master):
-
+        
+        (ipv6,period) = self._readConfigFile()
+        
         self.master = master
         self.ipv6_addr = StringVar()
-        self.ipv6_addr.set('bbbb::')
+        self.ipv6_addr.set(ipv6)
         self.period = IntVar()
-        self.period.set(0)
+        self.period.set(period)
         self.status = StringVar()
         self.status.set('')
         self.coap = coap.coap()
@@ -31,10 +36,10 @@ class UDPStormGUI(object):
         self.master.mainloop()
 
     def create_gui(self):
-        self.master.wm_title("UDP Storm")
+        self.master.wm_title("rstorm client")
 
         f = Frame(self.master,padx=5,pady=5)
-        Label(f,text="IETF90 plugfest - UDP Storm for OpenWSN").pack(side=LEFT,expand=NO)
+        Label(f,text="IETF90 plugfest - CoAP rstorm client for OpenWSN").pack(side=LEFT,expand=NO)
         f.pack(side=TOP,expand=YES,fill=X)
 
         f = Frame(self.master,height=2,bd=1,relief=SUNKEN,padx=5,pady=5)
@@ -43,7 +48,7 @@ class UDPStormGUI(object):
         f = Frame(self.master,padx=5,pady=5)
         Label(f,text="coap://[").pack(side=LEFT,expand=NO)
         Entry(f,textvariable=self.ipv6_addr,width=40).pack(side=LEFT,expand=YES,fill=X)
-        Label(f,text="]/strm/period=").pack(side=LEFT,expand=NO)
+        Label(f,text="]/storm period=").pack(side=LEFT,expand=NO)
         Entry(f,textvariable=self.period,width=10).pack(side=LEFT,expand=NO)
         f.pack(side=TOP,expand=YES,fill=X)
         
@@ -58,17 +63,17 @@ class UDPStormGUI(object):
 
         self.master.protocol("WM_DELETE_WINDOW", self.close)
         
-    def validate(self,check_per=True):
-        if check_per:
-        try:
-            per = self.period.get()
-        except:
-            tkMessageBox.showwarning("Period","Invalid number for period")
-            return False
-        
-        if (per < 0) or (per > (2**16-1)):
-            tkMessageBox.showwarning("Period","Invalid range for period [0-65535]")
-            return False
+    def validate(self,check_period=True):
+        if check_period:
+            try:
+                per = self.period.get()
+            except:
+                tkMessageBox.showwarning("Period","Invalid number for period")
+                return False
+            
+            if (per < 0) or (per > (2**16-1)):
+                tkMessageBox.showwarning("Period","Invalid range for period [0-65535]")
+                return False
         
         ipv6 = self.ipv6_addr.get().strip()
         self.ipv6_addr.set(ipv6)
@@ -91,8 +96,8 @@ class UDPStormGUI(object):
             
         return True
 
-
     def get_cmd(self, event=None):
+        self._writeConfigFile()
         if self.validate(False):
             self.status.set('')
             self.master.update_idletasks()
@@ -110,6 +115,7 @@ class UDPStormGUI(object):
                 self.status.set('GET OK!')
 
     def put_cmd(self, event=None):
+        self._writeConfigFile()
         if self.validate():
             self.status.set('')
             self.master.update_idletasks()
@@ -129,7 +135,38 @@ class UDPStormGUI(object):
         if self.coap:
             self.coap.close()
         self.master.destroy()
+    
+    def _writeConfigFile(self):
         
-UDPStormGUI(Tk())
+        output  = []
+        output += ['ipv6={0}'.format(self.ipv6_addr.get().strip())]
+        output += ['period={0}'.format(self.period.get())]
+        output  = '\n'.join(output)
+        
+        with open(CONFIG_FILENAME,'w') as f:
+            f.write(output)
+    
+    def _readConfigFile(self):
+        
+        ipv6   = DFLT_IPv6
+        period = DFLT_PERIOD
+        
+        try:
+            with open(CONFIG_FILENAME,'r') as f:
+                for line in f:
+                    m = re.search('ipv6=(\S+)', line)
+                    if m:
+                        ipv6 = m.group(1).strip()
+                    m = re.search('period=([0-9]+)', line)
+                    if m:
+                        period = m.group(1).strip()
+        except Exception as err:
+            pass
+        
+        return (ipv6,period)
 
+def main():
+    RStormGUI(Tk())
 
+if __name__=="__main__":
+    main()
