@@ -1,414 +1,423 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
-  <head>
-      %include htmlHead.tmpl
-  </head>
+	<head>
+		%include head.tmpl
+	</head>
+	<body>
+		<script>
+		    // Identifies the function that refreshes mote state on an interval.
+		    var timeoutId;
+		    var moteid;
+		    
+		    $(function() {
+		        
+		        
+		        // Set selected mote if so specified in request. Must do this after
+		        // grid variables have been defined so mote selection works.
+		        % if requested_mote:
+		            var selMote = '{{requested_mote}}';
+		        % else:
+		            var selMote = 'none';
+		        % end
+		        console.log('Display requested mote selection: ' + selMote);
+		        $("#mote_select").val(selMote).change();
+		    });
+		</script>
 
-  <body>
-    <script>
-    // Identifies the function that refreshes mote state on an interval.
-    var timeoutId;
-    var moteid;
-    var sched_grid;
-    var queue_grid;
-    var nbrs_grid;
-    
-    $(function() {
-        // Initialize schedule grid
-        var sched_cols = [
-            {id: "slotOffset",    name: "Offset",   field: "slotOffset"},
-            {id: "type",          name: "Type",     field: "type"},
-            {id: "shared",        name: "Shared?",  field: "shared"},
-            {id: "channelOffset", name: "Channel",  field: "channelOffset"},
-            {id: "neighbor_type", name: "Nbr Type", field: "neighbor"},
-            {id: "numRx",         name: "RX",       field: "numRx"},
-            {id: "numTx",         name: "TX",       field: "numTx"},
-            {id: "numTxACK",      name: "TX ACK",   field: "numTxACK"},
-            {id: "lastUsedAsn",   name: "Last ASN", field: "lastUsedAsn"}
-        ];
-        sched_cols[8].width = 150;  // ASN must be wide
-        sched_grid = new Slick.Grid("#tab_sched_sched", [], sched_cols, {});
-        
-        // Initialize packet queue grid
-        var queue_cols = [
-            {id: "creator", name: "Creator",    field: "creator"},
-            {id: "owner",   name: "Owner",      field: "owner"}
-        ];
-        var queue_opts = { 
-            defaultColumnWidth: 300,
-        }
-        queue_grid = new Slick.Grid("#tab_sched_queue", [], queue_cols, queue_opts);
-        
-        // Initialize neighbor grid
-        var nbrs_cols = [
-            {id: "used",                   name: "Used",                     field: "used"},
-            {id: "parentPreference",       name: "Parent Preference",        field: "parentPreference"},
-            {id: "stableNeighbor",         name: "Stable Neighbor",          field: "stableNeighbor"},
-            {id: "switchStabilityCounter", name: "Switch Stability Counter", field: "switchStabilityCounter"},
-            {id: "addr",                   name: "Address",                  field: "addr"},
-            {id: "DAGrank",                name: "DAG Rank",                 field: "DAGrank"},
-			{id: "JoinPrio",               name: "JP",                       field: "joinPrio"},	
-            {id: "rssi",                   name: "RSS",                      field: "rssi"},
-            {id: "numRx",                  name: "RX",                       field: "numRx"},
-            {id: "numTx",                  name: "TX",                       field: "numTx"},
-            {id: "numTxACK",               name: "TX ACK",                   field: "numTxACK"},
-            {id: "numWraps",               name: "Wrap Count",               field: "numWraps"},
-            {id: "asn",                    name: "ASN",                      field: "asn"}
-        ];
-        nbrs_cols[4].width = 250;   // Address must be wide
-        nbrs_cols[12].width = 150;  // ASN must be wide
-        nbrs_grid = new Slick.Grid("#tab_nbrs", [], nbrs_cols, {});
-        
-        // Works around a bug in display of this grid. The horizontal
-        // scrollbar was cut off.
-        var isNbrsDisplayOk = false;
-        $("#tabs").tabs({
-            activate: function( event, ui ) { 
-                if (!isNbrsDisplayOk) {
-                    console.log('Redisplaying neighbors grid to workaround bug');
-                    nbrs_grid.resizeCanvas();
-                    isNbrsDisplayOk = true;
-                }
-            }
-        });
-        
-        // Set selected mote if so specified in request. Must do this after
-        // grid variables have been defined so mote selection works.
-        % if requested_mote:
-            var selMote = '{{requested_mote}}';
-        % else:
-            var selMote = 'none';
-        % end
-        console.log('Display requested mote selection: ' + selMote);
-        $("#mote_select").val(selMote).change();
-    });
-    </script>
+		<div id="wrapper">
+			%include navbar.tmpl
 
-    %# Displays page header section, including menu and background graphic.
-    %include menuHeader.tmpl
-    
-    <!-- Mote header section -->
-    <div class="block-group ui-widget ui-widget-content ui-corner-all ov-page-width" id="mote_header">
-        <div class="block motecol1 grid-box">
-            <form>
-            <ul><li>
-                <!-- Mote dropdown selection and selection event handler. -->
-                <label for="mote_select" class="rel_label_fld">Mote</label>
-                <select class="rel_value_fld" id="mote_select" size="1">
-                    <option value="none">Select mote...</option>
-                    % for mote in motelist:
-                       <option>{{mote}}</option>
-                    % end
-                </select>
-                <script>
-                $("#mote_select").change(function() {
-                    moteid =  $(this).val()
-                    
-                    if (moteid != null && moteid != undefined && moteid != 'none') {
-                        console.log('Update for mote selection: ' + moteid);
-                        // Store to allow automatically selecting this mote.
-                        setCookie("selected_mote", moteid);
-                        $("#moteview_link").attr("href", "/moteview/" + moteid);
-                        $.ajax({
-                            dataType: "json",
-                            url: "/motedata/" + moteid,
-                            success: updateForData,
-                            error: errorOnAjax
-                        });
-                    } else {
-                        console.log('Update for mote selection: ' + moteid);
-                        // Store to allow automatically selecting this mote.
-                        setCookie("selected_mote", moteid);
-                        $("#moteview_link").attr("href", "/moteview");
-                        updateForData({});
-                    }
-                    
-                    // Don't allow to reselect null option.
-                    //$("#mote_select option[value='none']").remove();
-                });
-                </script>
-            </li><li style="margin-top:0.5em">
-                <label for="prefix_fld" class="rel_label_fld">Prefix</label>
-                <div class="rel_value_fld" id="prefix_fld"></div>
-            </li><li>
-                <label for="id64_fld" class="rel_label_fld">EUI-64</label>
-                <div class="rel_value_fld" id="id64_fld"></div>
-            </li></ul>
-            </form>
-        </div>
+			<div id="page-wrapper">
+				%include help.tmpl
+	            <div class="row">
+	                <div class="col-lg-12">
+	                    <h1 class="page-header">Motes</h1>
+	                </div>
+	            </div>
 
-        <div class="block motecol2 grid-box">
-            <div class="block-group rootcol-sum">
-                <div class="block rootcol1">
-                    <form>
-                    <fieldset>
-                        <legend>Root Status</legend>
-                        <ul><li>
-                            <label for="dagroot_fld" class="rel_label_fld">DAG Root?</label>
-                            <div class="rel_value_fld" id="dagroot_fld">No</div>
-                        </li><li>
-                            <label for="bridge_fld" class="rel_label_fld">Bridge mode?</label>
-                            <div class="rel_value_fld" id="bridge_fld">No</div>
-                        </li></ul>
-                    </fieldset>
-                    </form>
-                </div>
-                <div class="block rootcol2">
-                    <button id="toggle_btn" style="font-size: 0.9em; margin-top: 2em">Toggle</button>
-                </div>
-                <script>
-                $( "#toggle_btn" )
-                    .button()
-                    .click(function( event ) {
-                        console.log('Toggling root for mote ' + moteid);
-                        $.ajax({
-                            dataType: "json",
-                            url: "/toggle_root/" + moteid,
-                            success: updateForToggle,
-                            error: errorOnAjax
-                        });
-                    });
-                </script>
-            </div>
-        </div>
-    </div>
-    
-    <div class="field_box ov-page-width" id="tabs" style="height:650px;">
-        <ul>
-            <li><a href=#tab_net>Network</a></li>
-            <li><a href=#tab_sched>Schedule</a></li>
-            <li><a href=#tab_nbrs id=>Neighbors</a></li>
-        </ul>
-        <div id="tab_net" style="width:800px; padding-left: 1em">
-        <!-- Inner div required for block-group to avoid interaction with previous block-group. -->
-        <div class="block-group">
-            <div class="block t1">
-                <form><fieldset>
-                    <legend>General</legend>
-                    <ul><li>
-                        <label for="sync_fld" class="rel_label_fld">&nbsp;</label>
-                        <div class="rel_value_fld" id="sync_fld">Not synchronized</div>
-                    </li><li>
-                        <label for="pan_fld" class="rel_label_fld">PAN</label>
-                        <div class="rel_value_fld" id="pan_fld"></div>
-                    </li><li>
-                        <label for="asn_fld" class="rel_label_fld">ASN</label>
-                        <div class="rel_value_fld" id="asn_fld"></div>
-                    </li><li>
-                        <label for="dagrank_fld" class="rel_label_fld">DAG Rank</label>
-                        <div class="rel_value_fld" id="dagrank_fld"></div>
-                    </li></ul>
-                </fieldset></form>
-                
-                <form><fieldset>
-                    <legend>Output Buffer</legend>
-                    <ul><li>
-                        <label for="outread_fld" class="rel_label_fld">Read Index</label>
-                        <div class="rel_value_fld" id="outread_fld"></div>
-                    </li><li>
-                        <label for="outwrite_fld" class="rel_label_fld">Write Index</label>
-                        <div class="rel_value_fld" id="outwrite_fld"></div>
-                    </li></ul>
-                </fieldset></form>
-                
-                <form><fieldset>
-                    <legend>Backoff</legend>
-                    <ul><li>
-                        <label for="backexp_fld" class="rel_label_fld">Exponent</label>
-                        <div class="rel_value_fld" id="backexp_fld"></div>
-                    </li><li>
-                        <label for="backoff_fld" class="rel_label_fld">Backoff</label>
-                        <div class="rel_value_fld" id="backoff_fld"></div>
-                    </li></ul>
-                </fieldset></form>
-            </div>
-            
-            <div class="block t2" style="width:300px">
-                <form><fieldset>
-                    <legend>MAC Stats</legend>
-                    <ul>
-                        <li>
-                            <label for="mincorrection_fld" class="rel_label_fld">Min. Correction</label>
-                            <div class="rel_value_fld" id="mincorrection_fld"></div>
-                        </li>
-                        <li>
-                            <label for="maxcorrection_fld" class="rel_label_fld">Max. Correction</label>
-                            <div class="rel_value_fld" id="maxcorrection_fld"></div>
-                        </li>
-                        <li>
-                            <label for="syncpkts_fld" class="rel_label_fld">Num. Packet Sync</label>
-                            <div class="rel_value_fld" id="syncpkts_fld"></div>
-                        </li>
-                        <li>
-                            <label for="syncacks_fld" class="rel_label_fld">Num. Ack Sync</label>
-                            <div class="rel_value_fld" id="syncacks_fld"></div>
-                        </li>
-                        <li>
-                            <label for="desyncpkts_fld" class="rel_label_fld">Num. Desync.</label>
-                            <div class="rel_value_fld" id="desyncpkts_fld"></div>
-                        </li>
-                        <li>
-                            <label for="dutycycle_fld" class="rel_label_fld">Radio Duty Cycle</label>
-                            <div class="rel_value_fld" id="dutycycle_fld"></div>
-                        </li>
-                    </ul>
-                </fieldset></form>
-            </div>
-        </div></div>
-        
-        <div id="tab_sched" style="width:800px;height:600px;">
-            <span>Slot Schedule</span>
-            <div id="tab_sched_sched" style="width:800px;height:250px;"></div>
-            <span>Packet Queue</span>
-            <div id="tab_sched_queue" style="width:600px;height:300px;"></div>
-        </div>
-        
-        <div id="tab_nbrs" style="width:800px;height:350px;"></div>
-    </div>
-    
-    <!--  Must define these functions after all fields have been defined. -->
-    <script>
-    function updateForData(json) {
-        // Updates all fields for the selected mote, and schedules the
-        // next update.
-        console.log('Update for mote data received');
-        var hasJson = true
-        if (json.result && json.result == "none") {
-            console.log('no data in result');
-            hasJson = false;
-        } else if (!json.Asn) {
-            console.log('Asn not found in result');
-            hasJson = false;
-        }
-        
-        if (hasJson) {
-            asnJson      = $.parseJSON(json.Asn)[0];
-            idJson       = $.parseJSON(json.IdManager)[0];
-            syncJson     = $.parseJSON(json.IsSync)[0];
-            dagrankJson  = $.parseJSON(json.MyDagRank)[0];
-            outbufJson   = $.parseJSON(json.OutputBuffer)[0];
-            backoffJson  = $.parseJSON(json.Backoff)[0];
-            macstatsJson = $.parseJSON(json.MacStats)[0];
-            schedJson    = $.parseJSON(json.Schedule);
-            queueJson    = $.parseJSON(json.Queue);
-            nbrsJson     = $.parseJSON(json.Neighbors);
-        }
-        
-        // Exclude tailing description from server
-        $("#prefix_fld").text(hasJson ? idJson.myPrefix.split(' ')[0] : '');
-        $("#id64_fld").text(  hasJson ? idJson.my64bID.split(' ')[0]  : '');
-        
-        $("#dagroot_fld").text(      hasJson && idJson.isDAGroot > 0 ? 'Yes' : 'No');
-        $("#bridge_fld").text(       hasJson && idJson.isBridge > 0 ? 'Yes' : 'No');
-        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' 
-                                                                    : 'Not synchronized');
-        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
-        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
-        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
-        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
-        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');
-        $("#backexp_fld").text(      hasJson ? backoffJson.backoffExponent     : '');
-        $("#backoff_fld").text(      hasJson ? backoffJson.backoff             : '');
-        $("#mincorrection_fld").text(hasJson ? macstatsJson.minCorrection      : '');
-        $("#maxcorrection_fld").text(hasJson ? macstatsJson.maxCorrection      : '');
-        $("#syncpkts_fld").text(     hasJson ? macstatsJson.numSyncPkt         : '');
-        $("#syncacks_fld").text(     hasJson ? macstatsJson.numSyncAck         : '');
-        $("#desyncpkts_fld").text(   hasJson ? macstatsJson.numDeSync          : '');
-        $("#dutycycle_fld").text(    hasJson ? macstatsJson.dutyCycle          : '');
-        
-        sched_grid.setData(hasJson ? schedJson : []);
-        sched_grid.invalidate();
-        queue_grid.setData(hasJson ? queueJson : []);
-        queue_grid.invalidate();
-        nbrs_grid.setData(hasJson ? nbrsJson : []);
-        nbrs_grid.invalidate();
-        
-        if (hasJson) {
-            timeoutId = setTimeout(function() {
-                $.ajax({
-                    dataType: "json",
-                    url: "/motedata/" + moteid,
-                    success: updateForData,
-                    error: errorOnAjax
-                });
-            }, 5000);
-        }
-    }
-    
-    function updateForToggle(json) {
-        // Reset timeout to 1 second for the next data retrieval, to
-        // provide quicker feedback to user that toggle succeeded.
-        // Must wait 1 second for mote to publish updated status.
-        console.log('Toggle root succeeded');
-        if (timeoutId != null) {
-            clearTimeout(timeoutId);
-            console.log('Timeout cleared');
-        }
-        timeoutId = setTimeout(function() {
-            $.ajax({
-                dataType: "json",
-                url: "/motedata/" + moteid,
-                success: updateForData,
-                error: errorOnAjax
-            });
-        }, 1000);
-    }    
-    
-    function errorOnAjax(jqxhr, status, errorstr) {
-        var errText = (errorstr == null)
-                ? '' : ', error: ' + errorstr;
-        console.log('Ajax error: ' + status + errText);
-    }    
-    </script>
+	            <div class="row">
+                	<div class="col-lg-12">
+		                <select class="rel_value_fld" id="mote_select" size="1">
+		                    <option value="none">Select mote...</option>
+		                    % for mote in motelist:
+		                       <option>{{mote}}</option>
+		                    % end
+		                </select>
+		                <button id="toggle_btn" type="button" class="btn btn-default btn-xs">Toggle</button>
+		                <script>
+		                    $("#mote_select").change(function() {
+		                        moteid =  $(this).val()
+		                        
+		                        if (moteid != null && moteid != undefined && moteid != 'none') {
+		                            console.log('Update for mote selection: ' + moteid);
+		                            // Store to allow automatically selecting this mote.
+		                            setCookie("selected_mote", moteid);
+		                            $("#moteview_link").attr("href", "/moteview/" + moteid);
+		                            $.ajax({
+		                                dataType: "json",
+		                                url: "/motedata/" + moteid,
+		                                success: updateForData,
+		                                error: errorOnAjax
+		                            });
+		                        } else {
+		                            console.log('Update for mote selection: ' + moteid);
+		                            // Store to allow automatically selecting this mote.
+		                            setCookie("selected_mote", moteid);
+		                            $("#moteview_link").attr("href", "/moteview");
+		                            updateForData({});
+		                        }
+		                        
+		                        // Don't allow to reselect null option.
+		                        //$("#mote_select option[value='none']").remove();
+		                    });
+		                </script>
 
-    <div id="help_dialog" style="display: none;" title="Motes Help">
-        <table style="color: #ffffff;">
-            <tbody>
-            <tr><td style="font-weight: bold;">Prefix</td>
-                <td></td>
-            </tr>
-            <tr><td style="font-weight: bold;">EUI-64</td>
-                <td>64-bit, unique identifier for this mote</td>
-            </tr>
-            <tr><td style="font-weight: bold;">Root Status</td>
-                <td>Is this mote a network root node?</td>
-            </tr>
-            <tr><td style="font-weight: bold;">DAG Root?</td>
-                <td>An RPL DAG root</td>
-            </tr>
-            <tr><td style="font-weight: bold;">Bridge?</td>
-                <td>Is OpenVisualizer managing mote messaging?</td>
-            </tr>
-            <tr><td></td>
-                <td></td>
-            </tr>
-            </tbody>
-        </table>
-        <h3>Network tab</h3>
-        <table style="color: #ffffff;">
-            <tr><td style="font-weight: bold;">Synchronized</td>
-                <td>(15.4e) Is mote synchronized to network?</td>
-            </tr>
-            <tr><td style="font-weight: bold;">PAN</td>
-                <td>(15.4) 16-bit PAN ID assigned by network coordinator</td>
-            </tr>
-            <tr><td style="font-weight: bold;">ASN</td>
-                <td>(15.4e) Absolute Slot Number</td>
-            </tr>
-        </table>
-        <h3>Schedule tab</h3>
-        <table style="color: #ffffff;">
-            <tr><td style="font-weight: bold;">Slot Schedule</td>
-                <td>(15.4e) Shows the definition and statistics for each 
-                allocated TX/RX slot for this mote</td>
-            </tr>
-            <tr><td style="font-weight: bold;">Packet Queue</td>
-                <td>Lists the firmware components that created and currently own 
-                each active packet</td>
-            </tr>
-        </table>
-    </div>
+		                <script>
+			                $( "#toggle_btn" )
+			                    .button()
+			                    .click(function( event ) {
+			                        console.log('Toggling root for mote ' + moteid);
+			                        $.ajax({
+			                            dataType: "json",
+			                            url: "/toggle_root/" + moteid,
+			                            success: updateForToggle,
+			                            error: errorOnAjax
+			                        });
+			                    });
+		                </script>
+		            </div>
+		        </div>
 
-  </body>
+		        <div class="row">
+		            <div class="col-lg-6">
+		            	<h5>Mote</h5>
+	                    <div class="list-group">
+	                        <a class="list-group-item">
+	                            <i class="fa fa-upload fa-fw"></i> Prefix
+	                            <span class="pull-right text-muted small" id="prefix_fld"><em></em>
+	                            </span>
+	                        </a>
+	                        <a class="list-group-item">
+	                            <i class="fa fa-bolt fa-fw"></i> EUI-64
+	                            <span class="pull-right text-muted small" id="id64_fld"><em></em>
+	                            </span>
+	                        </a>
+	                    </div>
+                	</div>
 
+	                <div class="col-lg-6">
+	                	<h5>Root Status</h5>
+	                    <div class="list-group">
+	                        <a class="list-group-item">
+	                            <i class="fa fa-shopping-cart fa-fw"></i> DAG Root?
+	                            <span class="pull-right text-muted small" id="dagroot_fld"><em>No</em>
+	                            </span>
+	                        </a>
+	                        <a class="list-group-item">
+	                            <i class="fa fa-money fa-fw"></i> Bridge mode?
+	                            <span class="pull-right text-muted small" id="bridge_fld"><em>No</em>
+	                            </span>
+	                        </a>
+	                    </div>
+	                </div>
+            	</div>
+
+	            <div class="row">
+	                <div class="col-lg-12">
+	                	
+	                    <div class="panel panel-default">
+	                        <div class="panel-heading">
+	                            Data
+	                        </div>
+	                        
+	                        <div class="panel-body">
+	                        
+	                            <ul class="nav nav-tabs">
+	                                <li class="active"><a href="#network" data-toggle="tab">Network</a>
+	                                </li>
+	                                <li><a href="#schedule" data-toggle="tab">Schedule</a>
+	                                </li>
+	                                <li><a href="#neighbors" data-toggle="tab">Neighbors</a>
+	                                </li>
+	                            </ul>
+
+	                            <div class="tab-content">
+	                                <div class="tab-pane fade in active" id="network">
+	                                    <div class="row">
+	                                        <br><br>
+	                                        <div class="col-lg-6">
+	                                            <div class="well well-lg">
+	                                                <h5>General</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-tasks fa-fw"></i> PAN
+	                                                        <span class="pull-right text-muted small" id="pan_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> ASN
+	                                                        <span class="pull-right text-muted small" id="asn_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-bolt fa-fw"></i> DAG Rank
+	                                                        <span class="pull-right text-muted small" id="dagrank_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                                <h5>Output Buffer</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-tasks fa-fw"></i> Read Index
+	                                                        <span class="pull-right text-muted small" id="outread_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Write Index
+	                                                        <span class="pull-right text-muted small" id="outwrite_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                                <h5>Backoff</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Exponent
+	                                                        <span class="pull-right text-muted small" id="backexp_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Backoff
+	                                                        <span class="pull-right text-muted small" id="backoff_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                        <div class="col-lg-6">
+	                                            <div class="well well-lg">
+	                                                <h5>Backoff</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Min. Correction
+	                                                        <span class="pull-right text-muted small" id="mincorrection_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Max. Correction
+	                                                        <span class="pull-right text-muted small" id="maxcorrection_fld"><em>-</em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Num. Packet
+	                                                        <span class="pull-right text-muted small" id="syncpkts_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                                <h5>Sync</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Num. Ack Sync
+	                                                        <span class="pull-right text-muted small" id="syncacks_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Num. Desync.
+	                                                        <span class="pull-right text-muted small" id="desyncpkts_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Radio Duty Cycle
+	                                                        <span class="pull-right text-muted small" id="dutycycle_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                    </div>
+	                                </div>
+
+	                                <div class="tab-pane fade" id="schedule">
+	                                    <div class="row">
+	                                        <div class="col-lg-12">
+	                                            <div class="panel-body">
+	                                                <h5>Slot Schedule</h5>
+	                                                <div id="tab-slot-sched" class="table-responsive"></div>
+	                                                <br>
+	                                                <h5>Packet Queue</h5>
+	                                                <div id="tab-pack-queue" class="table-responsive"></div>
+	                                            </div>
+	                                        </div>
+	                                    </div>
+	                                </div>
+
+	                                <div class="tab-pane fade" id="neighbors">
+	                                    <div class="row">
+	                                        <div class="col-lg-12">
+	                                            <div class="panel-body">
+	                                                <div id="tab-nbrs" class="table-responsive"></div>
+	                                            </div>
+	                                        </div>
+	                                    </div>
+	                                </div>
+
+	                                <!--  Must define these functions after all fields have been defined. -->
+								    <script>
+									    function updateForData(json) {
+									        // Updates all fields for the selected mote, and schedules the
+									        // next update.
+									        console.log('Update for mote data received');
+									        var hasJson = true
+									        if (json.result && json.result == "none") {
+									            console.log('no data in result');
+									            hasJson = false;
+									        } else if (!json.Asn) {
+									            console.log('Asn not found in result');
+									            hasJson = false;
+									        }
+									        
+									        if (hasJson) {
+									            asnJson      = $.parseJSON(json.Asn)[0];
+									            idJson       = $.parseJSON(json.IdManager)[0];
+									            syncJson     = $.parseJSON(json.IsSync)[0];
+									            dagrankJson  = $.parseJSON(json.MyDagRank)[0];
+									            outbufJson   = $.parseJSON(json.OutputBuffer)[0];
+									            backoffJson  = $.parseJSON(json.Backoff)[0];
+									            macstatsJson = $.parseJSON(json.MacStats)[0];
+									            schedJson    = $.parseJSON(json.Schedule);
+									            queueJson    = $.parseJSON(json.Queue);
+									            nbrsJson     = $.parseJSON(json.Neighbors);
+									        }
+									        
+									        // Exclude tailing description from server
+									        $("#prefix_fld").text(hasJson ? idJson.myPrefix.split(' ')[0] : '');
+									        $("#id64_fld").text(  hasJson ? idJson.my64bID.split(' ')[0]  : '');
+									        
+									        $("#dagroot_fld").text(      hasJson && idJson.isDAGroot > 0 ? 'Yes' : 'No');
+									        $("#bridge_fld").text(       hasJson && idJson.isBridge > 0 ? 'Yes' : 'No');
+									        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' : 'Not synchronized');
+									        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
+									        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
+									        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
+									        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
+									        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');
+									        $("#backexp_fld").text(      hasJson ? backoffJson.backoffExponent     : '');
+									        $("#backoff_fld").text(      hasJson ? backoffJson.backoff             : '');
+									        $("#mincorrection_fld").text(hasJson ? macstatsJson.minCorrection      : '');
+									        $("#maxcorrection_fld").text(hasJson ? macstatsJson.maxCorrection      : '');
+									        $("#syncpkts_fld").text(     hasJson ? macstatsJson.numSyncPkt         : '');
+									        $("#syncacks_fld").text(     hasJson ? macstatsJson.numSyncAck         : '');
+									        $("#desyncpkts_fld").text(   hasJson ? macstatsJson.numDeSync          : '');
+									        $("#dutycycle_fld").text(    hasJson ? macstatsJson.dutyCycle          : '');
+									        
+									        // Slot Schedule responsive table
+									        if (hasJson) {
+									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Offset</th><th>Type</th><th>Shared?</th><th>Channel</th><th>Nbr Type</th><th>RX</th><th>TX</th><th>TX ACK</th><th>Last ASN</th></tr></thead><tbody>";
+
+										        $.each(schedJson, function() {
+											        var tbl_row = "<td>" + this['slotOffset'] + "</td>";
+											        tbl_row += "<td>" + this['type'] + "</td>";
+											        tbl_row += "<td>" + this['shared'] + "</td>";
+											        tbl_row += "<td>" + this['channelOffset'] + "</td>";
+											        tbl_row += "<td>" + this['neighbor'] + "</td>";
+											        tbl_row += "<td>" + this['numRx'] + "</td>";
+											        tbl_row += "<td>" + this['numTx'] + "</td>";
+											        tbl_row += "<td>" + this['numTxACK'] + "</td>";
+											        tbl_row += "<td>" + this['lastUsedAsn'] + "</td>";
+											        tbl_body += "<tr class=\"odd gradeX\">" + tbl_row + "</tr>";
+												});
+
+												tbl_body += "</tbody></table>";
+											    //console.log(tbl_body);
+											    $("#tab-slot-sched").html(tbl_body).text();
+											}
+
+									        // Package Queue responsive table
+									        if (hasJson) {
+									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Creator</th><th>Owner</th></tr></thead><tbody>";
+									        
+										        $.each(queueJson, function() {
+											        var tbl_row = "<td>" + this['creator'] + "</td>";
+											        tbl_row += "<td>" + this['owner'] + "</td>";
+											        tbl_body += "<tr class=\"odd gradeX\">" + tbl_row + "</tr>";
+												});
+
+												tbl_body += "</tbody></table>";
+											    //console.log(tbl_body);
+											    $("#tab-pack-queue").html(tbl_body).text();
+											}
+
+											// Neighbors responsive table
+									        if (hasJson) {
+									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Used</th><th>Parent</th><th>Stable</th><th>Stability</th><th>Address</th><th>DAG Rank</th><th>JP</th><th>RSS</th><th>RX</th><th>TX</th><th>TX ACK</th><th>Wrap</th><th>ASN</th></tr></thead><tbody>";
+									        
+										        $.each(nbrsJson, function() {
+											        var tbl_row = "<td>" + this['used'] + "</td>";
+											        tbl_row += "<td>" + this['parentPreference'] + "</td>";
+											        tbl_row += "<td>" + this['stableNeighbor'] + "</td>";
+											        tbl_row += "<td>" + this['switchStabilityCounter'] + "</td>";
+											        tbl_row += "<td>" + this['addr'] + "</td>";
+											        tbl_row += "<td>" + this['DAGrank'] + "</td>";
+											        tbl_row += "<td>" + this['joinPrio'] + "</td>";
+											        tbl_row += "<td>" + this['rssi'] + "</td>";
+											        tbl_row += "<td>" + this['numRx'] + "</td>";
+											        tbl_row += "<td>" + this['numTx'] + "</td>";
+											        tbl_row += "<td>" + this['numTxACK'] + "</td>";
+											        tbl_row += "<td>" + this['numWraps'] + "</td>";
+											        tbl_row += "<td>" + this['asn'] + "</td>";
+											        tbl_body += "<tr class=\"odd gradeX\">" + tbl_row + "</tr>";
+												});
+
+												tbl_body += "</tbody></table>";
+											    //console.log(tbl_body);
+											    $("#tab-nbrs").html(tbl_body).text();
+											}
+
+									        
+									        if (hasJson) {
+									            timeoutId = setTimeout(function() {
+									                $.ajax({
+									                    dataType: "json",
+									                    url: "/motedata/" + moteid,
+									                    success: updateForData,
+									                    error: errorOnAjax
+									                });
+									            }, 5000);
+									        }
+									    }
+									    
+									    function updateForToggle(json) {
+									        // Reset timeout to 1 second for the next data retrieval, to
+									        // provide quicker feedback to user that toggle succeeded.
+									        // Must wait 1 second for mote to publish updated status.
+									        console.log('Toggle root succeeded');
+									        if (timeoutId != null) {
+									            clearTimeout(timeoutId);
+									            console.log('Timeout cleared');
+									        }
+									        timeoutId = setTimeout(function() {
+									            $.ajax({
+									                dataType: "json",
+									                url: "/motedata/" + moteid,
+									                success: updateForData,
+									                error: errorOnAjax
+									            });
+									        }, 1000);
+									    }
+									    
+									    function errorOnAjax(jqxhr, status, errorstr) {
+									        var errText = (errorstr == null)
+									                ? '' : ', error: ' + errorstr;
+									        console.log('Ajax error: ' + status + errText);
+									    }
+								    </script>
+	                            </div>
+	                        
+	                        </div>
+	                    </div>
+	                	
+	                </div>  
+	            </div>
+	        </div>
+	    </div>
+	</body>
 </html>
