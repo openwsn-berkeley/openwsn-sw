@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Thu, 06 Feb 2014 22:17:40
+# on Sun, 13 Jul 2014 02:17:53
 #
 
 components = {
@@ -53,8 +53,9 @@ components = {
   46: "UDPSTORM",
   47: "UDPLATENCY",
   48: "TEST",
-  49: "R6TUS",
+  49: "R6T",
   50: "SWARMBAND",
+  51: "RRT",
 }
 
 errorDescriptions = {
