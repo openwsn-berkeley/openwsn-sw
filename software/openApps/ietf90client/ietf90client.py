@@ -14,7 +14,7 @@ if __name__=='__main__':
 from coap import coap
 from coap import coapDefines as d
 
-CONFIG_FILENAME = 'rstorm.config'
+CONFIG_FILENAME = '{0}.config'.format(os.path.basename(__file__).split('.')[0])
 DFLT_IPv6       = 'bbbb::'
 DFLT_PERIOD     = 10
 GUI_REFRESH_MS  = 500
@@ -38,14 +38,14 @@ class ThreadDeferrer(threading.Thread):
             if self.cb_ok:
                 self.cb_ok(response)
 
-class CoapHandler(object):
+class IETF90Client(object):
     
     #=== singleton pattern start ===
     _instance = None
     _init     = False
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
-            cls._instance = super(CoapHandler, cls).__new__(cls, *args, **kwargs)
+            cls._instance = super(IETF90Client, cls).__new__(cls, *args, **kwargs)
         return cls._instance
     #=== singleton pattern stop ===
     
@@ -262,7 +262,7 @@ class CoapHandler(object):
         self._instance       = None
         self._init           = False
 
-class RStormGUI(object):
+class IETF90ClientGUI(object):
 
     def __init__(self):
         
@@ -336,13 +336,13 @@ class RStormGUI(object):
     #======================== GUI refreshers ==================================
     
     def _refresh_period(self):
-        newPeriod = CoapHandler().getPeriod()
+        newPeriod = IETF90Client().getPeriod()
         if newPeriod!=None:
             self.period.set(newPeriod)
         self.guiPeriod.after(GUI_REFRESH_MS,self._refresh_period)
     
     def _refresh_status(self):
-        newStatus = CoapHandler().getStatus()
+        newStatus = IETF90Client().getStatus()
         self.status.set(newStatus)
         self.guiStatus.after(GUI_REFRESH_MS,self._refresh_status)
     
@@ -356,7 +356,7 @@ class RStormGUI(object):
     #======================== GUI callbacks ===================================
     
     def _cb_close(self):
-        CoapHandler().close()
+        IETF90Client().close()
         self.guiroot.destroy()
     
     def _cb_storm_GET(self, event=None):
@@ -367,7 +367,7 @@ class RStormGUI(object):
             return
         
         ipv6   = self._get_ipv6_entry()
-        CoapHandler().getStormPeriod(ipv6)
+        IETF90Client().getStormPeriod(ipv6)
         
         self._writeConfigFile()
     
@@ -381,7 +381,7 @@ class RStormGUI(object):
         
         ipv6   = self._get_ipv6_entry()
         period = self.period.get()
-        CoapHandler().setStormPeriod(ipv6,period)
+        IETF90Client().setStormPeriod(ipv6,period)
         
         self._writeConfigFile()
     
@@ -393,7 +393,7 @@ class RStormGUI(object):
             return
         
         ipv6   = self._get_ipv6_entry()
-        CoapHandler().add6topCell(ipv6)
+        IETF90Client().add6topCell(ipv6)
         
         self._writeConfigFile()
     
@@ -405,7 +405,7 @@ class RStormGUI(object):
             return
         
         ipv6   = self._get_ipv6_entry()
-        CoapHandler().delete6topCell(ipv6)
+        IETF90Client().delete6topCell(ipv6)
         
         self._writeConfigFile()
     
@@ -469,8 +469,8 @@ class RStormGUI(object):
         return (ipv6,period)
 
 def main():
-    CoapHandler()
-    RStormGUI()
+    IETF90Client()
+    IETF90ClientGUI()
 
 if __name__=="__main__":
     main()
