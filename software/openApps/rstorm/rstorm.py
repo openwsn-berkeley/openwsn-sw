@@ -1,16 +1,15 @@
 import os
 import sys
-from Tkinter import *
+import Tkinter
 import tkMessageBox
 import re
 import time
 import struct
 import threading
 
-p = os.path.dirname(sys.argv[0])
-p = os.path.join(p,'..','..','..','..','coap')
-p = os.path.abspath(p)
-sys.path.insert(0,p)
+if __name__=='__main__':
+    here = sys.path[0]
+    sys.path.insert(0, os.path.join(here, '..','..','..','..','coap'))
 
 from coap import coap
 from coap import coapDefines as d
@@ -41,7 +40,24 @@ class ThreadDeferrer(threading.Thread):
 
 class CoapHandler(object):
     
+    #=== singleton pattern start ===
+    _instance = None
+    _init     = False
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = super(CoapHandler, cls).__new__(cls, *args, **kwargs)
+        return cls._instance
+    #=== singleton pattern stop ===
+    
     def __init__(self):
+        
+        #=== singleton pattern start ===
+        if self._init:
+            return
+        self._init = True
+        #=== singleton pattern stop ===
+        
+        # local variables
         self.dataLock             = threading.RLock()
         self.coap                 = coap.coap()
         self.busy                 = False
@@ -50,34 +66,38 @@ class CoapHandler(object):
         self.statusStart          = None
         self.period               = None
     
-    #===== retrieve period
+    #===== getStormPeriod
     
-    def retrieve(self,uri):
+    def getStormPeriod(self,ipv6):
         with self.dataLock:
             if self.busy:
                 self.statusBusy   = True
                 return
+        
+        uri                       = 'coap://[{0}]/storm'.format(ipv6)
+        with self.dataLock:
             self.busy             = True
             self.statusBusy       = False
             self.status           = 'GET {0}'.format(uri)
             self.statusStart      = time.time()
+        
         ThreadDeferrer(
             cmd                   = self.coap.GET,
             args                  = [uri],
             kwargs                = {},
-            cb_ok                 = self.retrieve_cb_ok,
-            cb_fail               = self.retrieve_cb_fail,
+            cb_ok                 = self.getStormPeriod_cb_ok,
+            cb_fail               = self.getStormPeriod_cb_fail,
         )
     
-    def retrieve_cb_ok(self,response):
+    def getStormPeriod_cb_ok(self,response):
         try:
-            period = struct.unpack('>H',''.join([chr(c) for c in response]))[0]
+            period                = struct.unpack('>H',''.join([chr(c) for c in response]))[0]
         except Exception as err:
             with self.dataLock:
                 self.status       = 'Failed: {0}'.format(err)
         else:
             with self.dataLock:
-                self.status       = 'GET OK!'
+                self.status       = 'GET success'
                 self.period       = period
         finally:
             with self.dataLock:
@@ -85,20 +105,24 @@ class CoapHandler(object):
                 self.statusBusy   = False
                 self.statusStart  = None
     
-    def retrieve_cb_fail(self,err):
+    def getStormPeriod_cb_fail(self,err):
         with self.dataLock:
             self.busy             = False
             self.statusBusy       = False
-            self.status           = 'GET Failed: {0}'.format(err)
+            self.status           = 'GET failed: {0}'.format(err)
             self.statusStart      = None
     
-    #===== update period
+    #===== setStormPeriod
     
-    def update_period(self,uri,period):
+    def setStormPeriod(self,ipv6,period):
         with self.dataLock:
             if self.busy:
                 self.statusBusy   = True
                 return
+        
+        uri                       = 'coap://[{0}]/storm'.format(ipv6)
+        
+        with self.dataLock:
             self.busy             = True
             self.statusBusy       = False
             self.status           = 'PUT {0} period={1}'.format(uri,period)
@@ -106,23 +130,97 @@ class CoapHandler(object):
         ThreadDeferrer(
             cmd                   = self.coap.PUT,
             args                  = [uri],
-            kwargs                = {'payload': period},
-            cb_ok                 = self.update_cb_ok,
-            cb_fail               = self.update_cb_fail,
+            kwargs                = {'payload': [ ord(c) for c in struct.pack('>H',period) ]},
+            cb_ok                 = self.setStormPeriod_cb_ok,
+            cb_fail               = self.setStormPeriod_cb_fail,
         )
     
-    def update_cb_ok(self,response):
+    def setStormPeriod_cb_ok(self,response):
         with self.dataLock:
             self.busy             = False
             self.statusBusy       = False
-            self.status           = 'PUT OK!'
+            self.status           = 'PUT success'
             self.statusStart      = None
     
-    def update_cb_fail(self,err):
+    def setStormPeriod_cb_fail(self,err):
         with self.dataLock:
             self.busy             = False
             self.statusBusy       = False
-            self.status           = 'PUT Failed: {0}'.format(err)
+            self.status           = 'PUT failed: {0}'.format(err)
+            self.statusStart      = None
+    
+    #===== add6topCell
+    
+    def add6topCell(self,ipv6):
+        with self.dataLock:
+            if self.busy:
+                self.statusBusy   = True
+                return
+        
+        uri                       = 'coap://[{0}]/6t'.format(ipv6)
+        with self.dataLock:
+            self.busy             = True
+            self.statusBusy       = False
+            self.status           = 'PUT {0}'.format(uri)
+            self.statusStart      = time.time()
+        
+        ThreadDeferrer(
+            cmd                   = self.coap.PUT,
+            args                  = [uri],
+            kwargs                = {},
+            cb_ok                 = self.add6topCell_cb_ok,
+            cb_fail               = self.add6topCell_cb_fail,
+        )
+    
+    def add6topCell_cb_ok(self,response):
+        with self.dataLock:
+            self.busy             = False
+            self.statusBusy       = False
+            self.status           = 'PUT success'
+            self.statusStart      = None
+    
+    def add6topCell_cb_fail(self,err):
+        with self.dataLock:
+            self.busy             = False
+            self.statusBusy       = False
+            self.status           = 'PUT failed: {0}'.format(err)
+            self.statusStart      = None
+    
+    #===== delete6topCell
+    
+    def delete6topCell(self,ipv6):
+        with self.dataLock:
+            if self.busy:
+                self.statusBusy   = True
+                return
+        
+        uri                       = 'coap://[{0}]/6t'.format(ipv6)
+        with self.dataLock:
+            self.busy             = True
+            self.statusBusy       = False
+            self.status           = 'DELETE {0}'.format(uri)
+            self.statusStart      = time.time()
+        
+        ThreadDeferrer(
+            cmd                   = self.coap.DELETE,
+            args                  = [uri],
+            kwargs                = {},
+            cb_ok                 = self.delete6topCell_cb_ok,
+            cb_fail               = self.delete6topCell_cb_fail,
+        )
+    
+    def delete6topCell_cb_ok(self,response):
+        with self.dataLock:
+            self.busy             = False
+            self.statusBusy       = False
+            self.status           = 'DELETE success'
+            self.statusStart      = None
+    
+    def delete6topCell_cb_fail(self,err):
+        with self.dataLock:
+            self.busy             = False
+            self.statusBusy       = False
+            self.status           = 'DELETE failed: {0}'.format(err)
             self.statusStart      = None
     
     #===== getters
@@ -131,7 +229,7 @@ class CoapHandler(object):
         with self.dataLock:
             returnVal  = []
             if self.statusBusy:
-                returnVal += ['[busy] '.format(time.time()-self.statusStart)]
+                returnVal += ['[busy] ']
             returnVal += [self.status]
             if self.statusStart!=None:
                 returnVal += [' ({0}s)'.format(int(time.time()-self.statusStart))]
@@ -155,90 +253,168 @@ class CoapHandler(object):
     def status(self,value):
         print value
         with self.dataLock:
-            self._status = value
+            self._status     = value
     
     #===== admin
     
     def close(self):
         self.coap.close()
+        self._instance       = None
+        self._init           = False
 
 class RStormGUI(object):
 
-    def __init__(self, master):
+    def __init__(self):
         
-        (ipv6,period) = self._readConfigFile()
+        #=== read configuration from file
+        (ipv6,period)        = self._readConfigFile()
         
-        self.master = master
-        self.ipv6_addr = StringVar()
+        #=== local variable
+        self.guiroot         = Tkinter.Tk()
+        self.guiroot.resizable(False,False)
+        self.ipv6_addr       = Tkinter.StringVar()
         self.ipv6_addr.set(ipv6)
-        self.period = IntVar()
+        self.period          = Tkinter.IntVar()
         self.period.set(period)
-        self.status = StringVar()
+        self.status          = Tkinter.StringVar()
         self.status.set('')
-        self.coapHandler = CoapHandler()
-        self.create_gui()
-        self.master.mainloop()
-
-    def create_gui(self):
-        self.master.wm_title("rstorm client")
-
-        f = Frame(self.master,padx=5,pady=5)
-        Label(f,text="IETF90 plugfest - CoAP rstorm client for OpenWSN").pack(side=LEFT,expand=NO)
-        f.pack(side=TOP,expand=YES,fill=X)
-
-        f = Frame(self.master,height=2,bd=1,relief=SUNKEN,padx=5,pady=5)
-        f.pack(side=TOP,fill=X)
         
-        f = Frame(self.master,padx=5,pady=5)
-        Label(f,text="coap://[").pack(side=LEFT,expand=NO)
-        Entry(f,textvariable=self.ipv6_addr,width=40).pack(side=LEFT,expand=YES,fill=X)
-        Label(f,text="]/storm period=").pack(side=LEFT,expand=NO)
-        self.guiPeriod = Entry(f,textvariable=self.period,width=10)
-        self.guiPeriod.pack(side=LEFT,expand=NO)
-        self.guiPeriod.after(GUI_REFRESH_MS,self.updatePeriod)
-        f.pack(side=TOP,expand=YES,fill=X)
+        #=== create GUI interface
         
-        f = Frame(self.master,height=2,bd=1,relief=SUNKEN,padx=5,pady=5)
-        f.pack(side=TOP,fill=X)
+        # close button
+        self.guiroot.protocol("WM_DELETE_WINDOW", self._cb_close)
         
-        f = Frame(self.master,padx=5,pady=5)
-        Button(f,text="GET",width=10,command=self.get_cmd,default=ACTIVE).pack(side=RIGHT,expand=NO)
-        Button(f,text="PUT",width=10,command=self.put_cmd,default=ACTIVE).pack(side=RIGHT,expand=NO)
-        self.guiStatus = Label(f,textvariable=self.status,anchor=W)
-        self.guiStatus.pack(side=LEFT,expand=YES,fill=X)
-        self.guiStatus.after(GUI_REFRESH_MS,self.updateStatus)
-        f.pack(side=TOP,expand=YES,fill=X)
-
-        self.master.protocol("WM_DELETE_WINDOW", self.close)
+        # title
+        self.guiroot.wm_title("IETF90 CoAP client - OpenWSN")
+        
+        # row: ipv6
+        f = Tkinter.Frame(self.guiroot,padx=5,pady=5)
+        Tkinter.Label(f,text="coap://[").pack(side=Tkinter.LEFT,expand=Tkinter.NO)
+        Tkinter.Entry(f,textvariable=self.ipv6_addr,width=40).pack(side=Tkinter.LEFT,expand=Tkinter.YES,fill=Tkinter.X)
+        Tkinter.Label(f,text="]/").pack(side=Tkinter.LEFT,expand=Tkinter.NO)
+        f.pack(side=Tkinter.TOP,expand=Tkinter.YES,fill=Tkinter.X)
+        
+        # row: separator
+        f = Tkinter.Frame(self.guiroot,height=2,bd=1,relief=Tkinter.SUNKEN,padx=5,pady=5)
+        f.pack(side=Tkinter.TOP,fill=Tkinter.X)
+        
+        # row: /storm
+        f = Tkinter.Frame(self.guiroot,padx=5,pady=5)
+        Tkinter.Label(f,text="/storm period=").pack(side=Tkinter.LEFT,expand=Tkinter.NO)
+        self.guiPeriod = Tkinter.Entry(f,textvariable=self.period,width=10)
+        self.guiPeriod.pack(side=Tkinter.LEFT,expand=Tkinter.NO)
+        self.guiPeriod.after(GUI_REFRESH_MS,self._refresh_period)
+        Tkinter.Button(f,text="PUT",width=10,command=self._cb_storm_PUT,default=Tkinter.ACTIVE).pack(side=Tkinter.RIGHT,expand=Tkinter.NO)
+        Tkinter.Button(f,text="GET",width=10,command=self._cb_storm_GET,default=Tkinter.ACTIVE).pack(side=Tkinter.RIGHT,expand=Tkinter.NO)
+        f.pack(side=Tkinter.TOP,expand=Tkinter.YES,fill=Tkinter.X)
+        
+        # row: separator
+        f = Tkinter.Frame(self.guiroot,height=2,bd=1,relief=Tkinter.SUNKEN,padx=5,pady=5)
+        f.pack(side=Tkinter.TOP,fill=Tkinter.X)
+        
+        # row: /6t
+        f = Tkinter.Frame(self.guiroot,padx=5,pady=5)
+        Tkinter.Label(f,text="/6t").pack(side=Tkinter.LEFT,expand=Tkinter.NO)
+        Tkinter.Button(f,text="DELETE",width=10,command=self._cb_6t_DELETE,default=Tkinter.ACTIVE).pack(side=Tkinter.RIGHT,expand=Tkinter.NO)
+        Tkinter.Button(f,text="PUT",width=10,command=self._cb_6t_PUT,default=Tkinter.ACTIVE).pack(side=Tkinter.RIGHT,expand=Tkinter.NO)
+        f.pack(side=Tkinter.TOP,expand=Tkinter.YES,fill=Tkinter.X)
+        
+        # row: separator
+        f = Tkinter.Frame(self.guiroot,height=2,bd=1,relief=Tkinter.SUNKEN,padx=5,pady=5)
+        f.pack(side=Tkinter.TOP,fill=Tkinter.X)
+        
+        # row: status
+        f = Tkinter.Frame(self.guiroot,padx=5,pady=5)
+        self.guiStatus = Tkinter.Label(f,textvariable=self.status,anchor=Tkinter.W)
+        self.guiStatus.pack(side=Tkinter.LEFT,expand=Tkinter.YES,fill=Tkinter.X)
+        self.guiStatus.after(GUI_REFRESH_MS,self._refresh_status)
+        f.pack(side=Tkinter.TOP,expand=Tkinter.YES,fill=Tkinter.X)
+        
+        #=== start GUI
+        self.guiroot.mainloop()
     
-    def updatePeriod(self):
-        newPeriod = self.coapHandler.getPeriod()
+    #======================== GUI refreshers ==================================
+    
+    def _refresh_period(self):
+        newPeriod = CoapHandler().getPeriod()
         if newPeriod!=None:
             self.period.set(newPeriod)
-        self.guiPeriod.after(GUI_REFRESH_MS,self.updatePeriod)
+        self.guiPeriod.after(GUI_REFRESH_MS,self._refresh_period)
     
-    def updateStatus(self):
-        newStatus = self.coapHandler.getStatus()
+    def _refresh_status(self):
+        newStatus = CoapHandler().getStatus()
         self.status.set(newStatus)
-        self.guiStatus.after(GUI_REFRESH_MS,self.updateStatus)
+        self.guiStatus.after(GUI_REFRESH_MS,self._refresh_status)
     
-    def validate(self,check_period=True):
-        if check_period:
-            try:
-                period = self.period.get()
-            except:
-                tkMessageBox.showwarning("Period","Invalid number for period")
-                return False
-            
-            if (period < 0) or (period > (2**16-1)):
-                tkMessageBox.showwarning("Period","Invalid range for period [0-65535]")
-                return False
-        
+    #======================== GUI helpers =====================================
+    
+    def _get_ipv6_entry(self):
         ipv6 = self.ipv6_addr.get().strip()
         self.ipv6_addr.set(ipv6)
+        return ipv6
+    
+    #======================== GUI callbacks ===================================
+    
+    def _cb_close(self):
+        CoapHandler().close()
+        self.guiroot.destroy()
+    
+    def _cb_storm_GET(self, event=None):
+        try:
+            self._validate_entry_ipv6()
+        except ValueError as err:
+            tkMessageBox.showwarning('Oops!',str(err))
+            return
+        
+        ipv6   = self._get_ipv6_entry()
+        CoapHandler().getStormPeriod(ipv6)
+        
+        self._writeConfigFile()
+    
+    def _cb_storm_PUT(self, event=None):
+        try:
+            self._validate_entry_ipv6()
+            self._validate_entry_period()
+        except ValueError as err:
+            tkMessageBox.showwarning('Oops!',str(err))
+            return
+        
+        ipv6   = self._get_ipv6_entry()
+        period = self.period.get()
+        CoapHandler().setStormPeriod(ipv6,period)
+        
+        self._writeConfigFile()
+    
+    def _cb_6t_PUT(self, event=None):
+        try:
+            self._validate_entry_ipv6()
+        except ValueError as err:
+            tkMessageBox.showwarning('Oops!',str(err))
+            return
+        
+        ipv6   = self._get_ipv6_entry()
+        CoapHandler().add6topCell(ipv6)
+        
+        self._writeConfigFile()
+    
+    def _cb_6t_DELETE(self, event=None):
+        try:
+            self._validate_entry_ipv6()
+        except ValueError as err:
+            tkMessageBox.showwarning('Oops!',str(err))
+            return
+        
+        ipv6   = self._get_ipv6_entry()
+        CoapHandler().delete6topCell(ipv6)
+        
+        self._writeConfigFile()
+    
+    #======================== format validation ===============================
+    
+    def _validate_entry_ipv6(self):
         
         # http://stackoverflow.com/questions/53497/regular-expression-that-matches-valid-ipv6-addresses
-        pattern = r"\b(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|" + \
+        IPv6_PATTERN = r"\b(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|" + \
             r"([0-9a-fA-F]{1,4}:){1,6}:[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,5}(:[0-9a-fA-F]{1,4}){1,2}|" + \
             r"([0-9a-fA-F]{1,4}:){1,4}(:[0-9a-fA-F]{1,4}){1,3}|([0-9a-fA-F]{1,4}:){1,3}(:[0-9a-fA-F]{1,4}){1,4}|" + \
             r"([0-9a-fA-F]{1,4}:){1,2}(:[0-9a-fA-F]{1,4}){1,5}|[0-9a-fA-F]{1,4}:((:[0-9a-fA-F]{1,4}){1,6})|" + \
@@ -247,52 +423,37 @@ class RStormGUI(object):
             r"(2[0-4]|1{0,1}[0-9]){0,1}[0-9])|([0-9a-fA-F]{1,4}:){1,4}:((25[0-5]|(2[0-4]|" + \
             r"1{0,1}[0-9]){0,1}[0-9]).){3,3}(25[0-5]|(2[0-4]|1{0,1}[0-9]){0,1}[0-9]))\b"
         
-        if re.match(pattern, ipv6):
-            return True
-        else:
-            tkMessageBox.showwarning("IPv6","Invalid IPv6 address")
-            return False
-            
-        return True
-
-    def get_cmd(self, event=None):
-        if self.validate(False):
-            self.master.update_idletasks()
-            ipv6   = self.ipv6_addr.get().strip()
-            uri    = 'coap://[{0}]/storm'.format(ipv6)
-            self.coapHandler.retrieve(uri)
-        self._writeConfigFile()
-
-    def put_cmd(self, event=None):
-        self._writeConfigFile()
-        if self.validate():
-            self.status.set('')
-            self.master.update_idletasks()
-            ipv6   = self.ipv6_addr.get().strip()
-            uri    = 'coap://[{0}]/storm/'.format(ipv6)
+        ipv6 = self._get_ipv6_entry()
+        
+        if not re.match(IPv6_PATTERN, ipv6):
+            raise ValueError("Invalid IPv6 address")
+    
+    def _validate_entry_period(self):
+        try:
             period = self.period.get()
-            period = [ ord(c) for c in struct.pack('>H',period) ]
-            self.coapHandler.update_period(uri,period)
-
-    def close(self):
-        self.coapHandler.close()
-        self.master.destroy()
-
+        except:
+            raise ValueError("Invalid number for period")
+        
+        if (period<0x0000) or (period>0xffff):
+            raise ValueError("Invalid range for period [0x0000-0xffff]")
+    
+    #======================== file interaction ================================
+    
     def _writeConfigFile(self):
         
         output  = []
         output += ['ipv6={0}'.format(self.ipv6_addr.get().strip())]
         output += ['period={0}'.format(self.period.get())]
         output  = '\n'.join(output)
-
+        
         with open(CONFIG_FILENAME,'w') as f:
             f.write(output)
-
+   
     def _readConfigFile(self):
-
+        
         ipv6   = DFLT_IPv6
         period = DFLT_PERIOD
-
+        
         try:
             with open(CONFIG_FILENAME,'r') as f:
                 for line in f:
@@ -304,11 +465,12 @@ class RStormGUI(object):
                         period = m.group(1).strip()
         except Exception as err:
             pass
-
+        
         return (ipv6,period)
 
 def main():
-    RStormGUI(Tk())
+    CoapHandler()
+    RStormGUI()
 
 if __name__=="__main__":
     main()
