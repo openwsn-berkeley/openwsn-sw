@@ -46,6 +46,8 @@ Targets:
         Options
           --sim         Run in simulator mode with default count of motes.
           --simCount=n  Run in simulator mode with 'n' motes.
+          --simTopology=<linear|fully-meshed>
+                        Force a certain topology for simulation.
           --nosimcopy   Skips copying simulation firmware at startup from the
                         openwsn-fw directory.
           --ovdebug     Enable debug mode; more detailed logging
@@ -127,6 +129,12 @@ AddOption('--simCount',
     default   = 0,
     type      = 'int')
 runnerEnv['SIMCOUNT'] = GetOption('simCount')
+
+AddOption('--simTopology',
+    dest      = 'simTopology',
+    default   = '',
+    type      = 'string')
+runnerEnv['SIMTOPOLOGY'] = GetOption('simTopology')
 
 AddOption('--nosimcopy',
     dest      = 'simcopyOpt',

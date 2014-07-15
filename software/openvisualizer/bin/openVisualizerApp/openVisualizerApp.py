@@ -32,7 +32,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology):
         
         # store params
         self.confdir              = confdir
@@ -53,7 +53,7 @@ class OpenVisualizerApp(object):
         if self.simulatorMode:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             
-            self.simengine        = SimEngine.SimEngine()
+            self.simengine        = SimEngine.SimEngine(simTopology)
             self.simengine.start()
         
         # create a moteProbe for each mote
@@ -171,24 +171,29 @@ def main(parser=None):
         argspace.numMotes = DEFAULT_MOTE_COUNT
 
     log.info('Initializing OpenVisualizerApp with options:\n\t{0}'.format(
-            '\n\t'.join(['appdir   = {0}'.format(argspace.appdir),
-                         'sim      = {0}'.format(argspace.simulatorMode),
-                         'simCount = {0}'.format(argspace.numMotes),
-                         'trace    = {0}'.format(argspace.trace),
-                         'debug    = {0}'.format(argspace.debug)],
+            '\n    '.join(['appdir   = {0}'.format(argspace.appdir),
+                           'sim      = {0}'.format(argspace.simulatorMode),
+                           'simCount = {0}'.format(argspace.numMotes),
+                           'trace    = {0}'.format(argspace.trace),
+                           'debug    = {0}'.format(argspace.debug)],
             )))
     log.info('Using external dirs:\n\t{0}'.format(
-            '\n\t'.join(['conf     = {0}'.format(confdir),
-                         'data     = {0}'.format(datadir),
-                         'log      = {0}'.format(logdir)],
+            '\n    '.join(['conf     = {0}'.format(confdir),
+                           'data     = {0}'.format(datadir),
+                           'log      = {0}'.format(logdir)],
             )))
     log.info('sys.path:\n\t{0}'.format('\n\t'.join(str(p) for p in sys.path)))
         
     return OpenVisualizerApp(
-        confdir, datadir, logdir,
-        argspace.simulatorMode, argspace.numMotes, 
-        argspace.trace, argspace.debug
-    )    
+        confdir         = confdir,
+        datadir         = datadir,
+        logdir          = logdir,
+        simulatorMode   = argspace.simulatorMode,
+        numMotes        = argspace.numMotes,
+        trace           = argspace.trace,
+        debug           = argspace.debug,
+        simTopology     = argspace.simTopology,
+    )
 
 def _addParserArgs(parser):
     parser.add_argument('-a', '--appDir', 
@@ -214,6 +219,12 @@ def _addParserArgs(parser):
         default    = False,
         action     = 'store_true',
         help       = 'enables memory debugging'
+    )
+    parser.add_argument('-st', '--simTopology',
+        dest       = 'simTopology',
+        default    = '',
+        action     = 'store',
+        help       = 'force a certain toplogy (simulation mode only)'
     )
     parser.add_argument('-d', '--debug',
         dest       = 'debug',
