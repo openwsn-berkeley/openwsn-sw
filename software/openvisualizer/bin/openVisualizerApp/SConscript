@@ -42,14 +42,17 @@ def uiRunner(target, source, env):
     ]
     if env['SIMCOUNT']:
         # Must append to list in a single item, without embedded quotes.
-        argList.append('-n {0}'.format(env['SIMCOUNT']))
+        argList.append('--simCount={0}'.format(env['SIMCOUNT']))
     elif env['SIMOPT']:
-        argList.append('-s')
+        argList.append('--sim')
+    
+    if env['SIMTOPOLOGY']:
+        argList.append('--simTopology={0}'.format(env['SIMTOPOLOGY']))
     
     if env['TRACEOPT']:
-        argList.append('-t')
+        argList.append('--trace')
     if env['DEBUGOPT']:
-        argList.append('-d')
+        argList.append('--debug')
         
     if env['HOSTOPT']:
         argList.append('-H {0}'.format(env['HOSTOPT']))
