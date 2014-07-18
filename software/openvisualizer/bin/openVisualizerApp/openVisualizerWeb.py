@@ -29,6 +29,8 @@ import json
 import bottle
 import random
 import re
+import threading
+import signal
 from bottle        import view
 
 import openVisualizerApp
@@ -349,19 +351,49 @@ if __name__=="__main__":
     parser   =  ArgumentParser()
     _addParserArgs(parser)
     argspace = parser.parse_known_args()[0]
-
+    
+    # log
+    log.info(
+        'Initializing OpenVisualizerWeb with options: \n\t{0}'.format(
+            '\n    '.join(
+                [
+                    'host = {0}'.format(argspace.host),
+                    'port = {0}'.format(argspace.port)
+                ]
+            )
+        )
+    )
+    
+    #===== start the app
     app      = openVisualizerApp.main(parser)
+    
+    #===== add a web interface
     websrv   = bottle.Bottle()
     webapp   = OpenVisualizerWeb(app, websrv)
-
-    # Must first allow openVisualizerApp to initialize logging.
-    log.info('Initializing OpenVisualizerWeb with options: \n\t{0}'.format(
-            '\n\t'.join(['host = {0}'.format(argspace.host),
-                         'port = {0}'.format(argspace.port)]
-            )))
     
-    websrv.run(host  = argspace.host, 
-               port  = argspace.port, 
-               quiet = not app.debug, 
-               debug = app.debug)
+    # start web interface in a separate thread
+    webthread = threading.Thread(
+        target = websrv.run,
+        kwargs = {
+            'host'  : argspace.host,
+            'port'  : argspace.port,
+            'quiet' : not app.debug,
+            'debug' : app.debug,
+        }
+    )
+    webthread.start()
     
+    #===== add a cli (minimal) interface
+    
+    banner  = []
+    banner += ['OpenVisualizer']
+    banner += ['web interface started at {0}:{1}'.format(argspace.host,argspace.port)]
+    banner += ['enter \'q\' to exit']
+    banner  = '\n'.join(banner)
+    print banner
+    
+    while True:
+        input = raw_input('> ')
+        if input=='q':
+            print 'bye bye.'
+            os.kill(os.getpid(), signal.SIGTERM)
