@@ -1,13 +1,13 @@
 /* Global Styles */
 
 body {
-    padding-top: 100px;
+    padding-top: 121px;
     background-color: #f8f8f8;
 }
 
 @media(min-width:768px) {
     body {
-        padding-top: 50px;
+        padding-top: 11px;
     }
 }
 
@@ -128,7 +128,6 @@ body {
         z-index: 1;
         position: absolute;
         width: 185px;
-        margin-top: 51px;
     }
 
     .navbar-top-links .dropdown-messages,
@@ -190,10 +189,12 @@ body {
 
 /* Logo */
 
-.navbar-brand {
-    color: #333 !important;
-    font-size: 22px;
-    font-style: italic;
+#logo {
+    border-bottom: 3px solid #e7e7e7;
+}
+
+.logo-img {
+    padding: 12px 42px;
 }
 
 /* Override */
@@ -208,4 +209,8 @@ a :hover {
 
 .active {
     background-color: white;
+}
+
+.navbar {
+    min-height: 11px !important;
 }
