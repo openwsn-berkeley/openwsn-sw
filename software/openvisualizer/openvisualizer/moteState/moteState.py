@@ -332,6 +332,14 @@ class StateMyDagRank(StateElem):
             self.data.append({})
         self.data[0]['myDAGrank']           = notif.myDAGrank
 
+class StatekaPeriod(StateElem):
+    
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        self.data[0]['kaPeriod']            = notif.kaPeriod
+
 class StateTable(StateElem):
 
     def __init__(self,rowClass,columnOrder=None):
@@ -362,6 +370,7 @@ class moteState(eventBusClient.eventBusClient):
     ST_ISSYNC           = 'IsSync'
     ST_IDMANAGER        = 'IdManager'
     ST_MYDAGRANK        = 'MyDagRank'
+    ST_KAPERIOD         = 'kaPeriod'
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
@@ -373,6 +382,7 @@ class moteState(eventBusClient.eventBusClient):
         ST_ISSYNC,
         ST_IDMANAGER, 
         ST_MYDAGRANK,
+        ST_KAPERIOD,
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
@@ -440,6 +450,7 @@ class moteState(eventBusClient.eventBusClient):
                                                 self.moteConnector
                                               )
         self.state[self.ST_MYDAGRANK]       = StateMyDagRank()
+        self.state[self.ST_KAPERIOD]        = StatekaPeriod()
         
         self.notifHandlers = {
             self.parserStatus.named_tuple[self.ST_OUPUTBUFFER]:
@@ -462,9 +473,11 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_IDMANAGER].update,
             self.parserStatus.named_tuple[self.ST_MYDAGRANK]:
                 self.state[self.ST_MYDAGRANK].update,
-        
+            self.parserStatus.named_tuple[self.ST_KAPERIOD]:
+                self.state[self.ST_KAPERIOD].update,
         }
-              # initialize parent class
+        
+        # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
             name             = 'moteState@{0}'.format(self.moteConnector.serialport),
@@ -476,6 +489,7 @@ class moteState(eventBusClient.eventBusClient):
                 },
             ]
         )
+    
     #======================== public ==========================================
     
     def getStateElemNames(self):

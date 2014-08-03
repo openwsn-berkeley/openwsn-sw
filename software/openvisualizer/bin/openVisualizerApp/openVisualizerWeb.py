@@ -160,6 +160,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                 ms.ST_ASN         : ms.getStateElem(ms.ST_ASN).toJson('data'),
                 ms.ST_ISSYNC      : ms.getStateElem(ms.ST_ISSYNC).toJson('data'),
                 ms.ST_MYDAGRANK   : ms.getStateElem(ms.ST_MYDAGRANK).toJson('data'),
+                ms.ST_KAPERIOD    : ms.getStateElem(ms.ST_KAPERIOD).toJson('data'),
                 ms.ST_OUPUTBUFFER : ms.getStateElem(ms.ST_OUPUTBUFFER).toJson('data'),
                 ms.ST_BACKOFF     : ms.getStateElem(ms.ST_BACKOFF).toJson('data'),
                 ms.ST_MACSTATS    : ms.getStateElem(ms.ST_MACSTATS).toJson('data'),

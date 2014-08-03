@@ -81,6 +81,7 @@ class OpenVisualizerGui(object):
                     moteState.moteState.ST_ISSYNC,
                     moteState.moteState.ST_ASN,
                     moteState.moteState.ST_MYDAGRANK,
+                    moteState.moteState.ST_KAPERIOD,
                     moteState.moteState.ST_OUPUTBUFFER,
                     moteState.moteState.ST_BACKOFF,
                 ],

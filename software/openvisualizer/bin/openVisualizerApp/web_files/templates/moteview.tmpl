@@ -229,6 +229,11 @@
 	                                                        <span class="pull-right text-muted small" id="dutycycle_fld"><em></em>
 	                                                        </span>
 	                                                    </a>
+                                                        <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Keep-Alive Period
+	                                                        <span class="pull-right text-muted small" id="kaperiod_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
 	                                                </div>
 	                                            </div>
 	                                        </div>
@@ -285,6 +290,7 @@
 									            schedJson    = $.parseJSON(json.Schedule);
 									            queueJson    = $.parseJSON(json.Queue);
 									            nbrsJson     = $.parseJSON(json.Neighbors);
+                                                kaPeriodJson = $.parseJSON(json.kaPeriod)[0];
 									        }
 									        
 									        // Exclude tailing description from server
@@ -307,6 +313,7 @@
 									        $("#syncacks_fld").text(     hasJson ? macstatsJson.numSyncAck         : '');
 									        $("#desyncpkts_fld").text(   hasJson ? macstatsJson.numDeSync          : '');
 									        $("#dutycycle_fld").text(    hasJson ? macstatsJson.dutyCycle          : '');
+                                            $("#kaperiod_fld").text(     hasJson ? kaPeriodJson.kaPeriod           : '');
 									        
 									        // Slot Schedule responsive table
 									        if (hasJson) {

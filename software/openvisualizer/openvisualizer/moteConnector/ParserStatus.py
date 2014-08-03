@@ -202,6 +202,15 @@ class ParserStatus(Parser.Parser):
                                         'joinPrio',                  # B
                                     ],
                                 )
+        self._addFieldsParser   (   
+                                    3,
+                                    10,
+                                    'kaPeriod',
+                                    '<H',
+                                    [
+                                        'kaPeriod',                  # H
+                                    ],
+                                )
     
     #======================== public ==========================================
     
