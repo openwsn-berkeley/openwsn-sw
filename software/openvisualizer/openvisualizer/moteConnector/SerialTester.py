@@ -24,7 +24,7 @@ class SerialTester(eventBusClient.eventBusClient):
     DFLT_NUM_TESTPKT    = 20  ##< number of test packets to send
     DFLT_TIMEOUT        = 5   ##< timeout in second for getting a reply
     
-    def __init__(self,moteProbeIp,moteProbeTcpPort,moteProbeSerialPort):
+    def __init__(self,moteProbeSerialPort):
         
         # log
         log.info("creating instance")
@@ -44,11 +44,10 @@ class SerialTester(eventBusClient.eventBusClient):
         self.waitForReply         = threading.Event()
         self._resetStats()
         
-        
         # give this thread a name
         self.name = 'SerialTester@{0}'.format(self)
         
-         
+        # initialize parent 
         eventBusClient.eventBusClient.__init__(
             self,
             name             = self.name,
@@ -68,17 +67,17 @@ class SerialTester(eventBusClient.eventBusClient):
     
     def _receiveDataFromMoteSerial(self,sender,signal,data):
         
-        # handle input
-        if (chr(input[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
+        # handle data
+        if (chr(data[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
             # don't handle if I'm not testing
             with self.dataLock:
-               if not self.busyTesting:
-                  return
+                if not self.busyTesting:
+                    return
             with self.dataLock:
-               self.lastReceived = input[1+2+5:] # type (1B), moteId (2B), ASN (5B)
+               self.lastReceived = data[1+2+5:] # type (1B), moteId (2B), ASN (5B)
                # wake up other thread
                self.waitForReply.set()
-                        
+    
     #===== setup test
     
     def setTestPktLength(self,newLength):
@@ -97,7 +96,7 @@ class SerialTester(eventBusClient.eventBusClient):
             self.timeout     = newTimeout
     
     def setTrace(self,newTraceCb):
-        assert callable(newTraceCb)
+        assert (callable(newTraceCb)) or (newTraceCb==None)
         with self.dataLock:
             self.traceCb     = newTraceCb
     
@@ -139,9 +138,6 @@ class SerialTester(eventBusClient.eventBusClient):
             
             # prepare random packet to send
             packetToSend = [random.randint(0x00,0xff) for _ in range(testPktLen)]
-            #packetToSend = [0x11*(i+1) for i in range(testPktLen)]
-            #packetToSend[2] = 0x7e
-            #packetToSend[5] = 0x7d
             
             # remember as last sent packet
             with self.dataLock:
@@ -149,10 +145,11 @@ class SerialTester(eventBusClient.eventBusClient):
             
             # send
             self.dispatch(
-                      #sender        = self.name,
-                      signal        = 'fromMoteConnector@'+self.moteProbeSerialPort,
-                      data          = ''.join([chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend])
-                      )   
+                signal        = 'fromMoteConnector@'+self.moteProbeSerialPort,
+                data          = ''.join(
+                    [chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend]
+                )
+            )
             
             with self.dataLock:
                 self.stats['numSent']                 += 1

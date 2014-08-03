@@ -7,9 +7,9 @@ if __name__=='__main__':
     sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
     sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
     
-from moteProbe     import moteProbe
-from moteConnector.SerialTester import SerialTester
-from OpenCli       import OpenCli
+from openvisualizer.moteProbe                    import moteProbe
+from openvisualizer.moteConnector.SerialTester   import SerialTester
+from OpenCli                                     import OpenCli
 
 LOCAL_ADDRESS     = '127.0.0.1'
 MAX_BYTES_TO_SEND = 50
@@ -26,36 +26,48 @@ class serialTesterCli(OpenCli):
         OpenCli.__init__(self,"Serial Tester",self._quit_cb)
         
         # add commands
-        self.registerCommand('pklen',
-                             'pl',
-                             'test packet length, in bytes',
-                             ['pklen'],
-                             self._handle_pklen)
-        self.registerCommand('numpk',
-                             'num',
-                             'number of test packets',
-                             ['numpk'],
-                             self._handle_numpk)
-        self.registerCommand('timeout',
-                             'tout',
-                             'timeout for answer, in seconds',
-                             ['timeout'],
-                             self._handle_timeout)
-        self.registerCommand('trace',
-                             'trace',
-                             'activate console trace',
-                             ['on/off'],
-                             self._handle_trace)
-        self.registerCommand('testserial',
-                             't',
-                             'test serial port',
-                             [],
-                             self._handle_testserial)
-        self.registerCommand('stats',
-                             'st',
-                             'print stats',
-                             [],
-                             self._handle_stats)
+        self.registerCommand(
+            'pklen',
+            'pl',
+            'test packet length, in bytes',
+            ['pklen'],
+            self._handle_pklen
+        )
+        self.registerCommand(
+            'numpk',
+            'num',
+            'number of test packets',
+            ['numpk'],
+            self._handle_numpk
+        )
+        self.registerCommand(
+            'timeout',
+            'tout',
+            'timeout for answer, in seconds',
+            ['timeout'],
+            self._handle_timeout
+        )
+        self.registerCommand(
+            'trace',
+            'trace',
+            'activate console trace',
+            ['on/off'],
+            self._handle_trace
+        )
+        self.registerCommand(
+            'testserial',
+            't',
+            'test serial port',
+            [],
+            self._handle_testserial
+        )
+        self.registerCommand(
+            'stats',
+            'st',
+            'print stats',
+            [],
+            self._handle_stats
+        )
         
         # by default, turn trace on
         self._handle_pklen([10])
@@ -102,44 +114,31 @@ class serialTesterCli(OpenCli):
     
     def _quit_cb(self):
         self.moteConnector_handler.quit()
-        self.moteProbe_handler.quit()
+        self.moteProbe_handler.close()
 
 def main():
     
     moteProbe_handler        = None
     moteConnector_handler    = None
     
-    # find serial port
+    # get serial port name
     if len(sys.argv)>1:
-        portToConnect = sys.argv[1]
+        serialportname = sys.argv[1]
     else:
-        serialPorts = moteProbe.findSerialPorts()
-        print serialPorts
-        portToConnect = _selectPort(serialPorts)
+        serialportname = raw_input('Serial port to connect to: ')
+    
+    serialport = (serialportname, moteProbe.BAUDRATE_GINA)
     
     # create a moteProbe
-    moteProbe_handler = moteProbe.moteProbe(portToConnect)
+    moteProbe_handler = moteProbe.moteProbe(serialport)
     
     # create a SerialTester to attached to the moteProbe
-    moteConnector_handler = SerialTester(
-                                LOCAL_ADDRESS,
-                                moteProbe_handler,
-                                portToConnect[0]
-                            )
+    moteConnector_handler = SerialTester(serialportname)
     
     # create an open CLI
     cli = serialTesterCli(moteProbe_handler,moteConnector_handler)
     cli.start()
-    
-def _selectPort(serialPorts):
-    while 1:
-        print 'Select serial port to connect'
-        port = (raw_input(), moteProbe.BAUDRATE_GINA)
-        for serialPort in serialPorts:
-            if port == serialPort:
-                return port
-        print 'Port not allowed, try again'
-    
+
 #============================ application logging =============================
 import logging
 import logging.handlers
