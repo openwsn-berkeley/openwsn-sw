@@ -26,8 +26,9 @@ from   openvisualizer.moteConnector import OpenParser
 
 #============================ functions =======================================
 
-BAUDRATE_TELOSB = 115200 # poipoipoi
+BAUDRATE_TELOSB = 115200
 BAUDRATE_GINA   = 115200
+BAUDRATE_WSN430 = 115200
 
 def findSerialPorts():
     '''
@@ -52,6 +53,8 @@ def findSerialPorts():
                     serialports.append( (str(val[1]),BAUDRATE_TELOSB) )
                 elif val[0].find('Silabser')>-1:
                     serialports.append( (str(val[1]),BAUDRATE_GINA) )
+                elif val[0].find('ProlificSerial')>-1:
+                    serialports.append( (str(val[1]),BAUDRATE_WSN430) )
     elif os.name=='posix':
         serialports = [(s,BAUDRATE_GINA) for s in glob.glob('/dev/ttyUSB*')]
     
