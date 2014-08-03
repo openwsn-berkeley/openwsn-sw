@@ -2,17 +2,13 @@ import sys
 import os
 
 if __name__=='__main__':
-    cur_path = sys.path[0]
-    sys.path.insert(0, os.path.join(cur_path, '..', '..','eventBus','PyDispatcher-2.0.3'))# PyDispatcher-2.0.3/
-    sys.path.insert(0, os.path.join(cur_path, '..', '..'))                     # openvisualizer/
-    sys.path.insert(0, os.path.join(cur_path, '..', '..', '..', 'openCli'))    # openCli/
+    here = sys.path[0]
+    sys.path.insert(0, os.path.join(here, '..', '..'))                     # openvisualizer/
+    sys.path.insert(0, os.path.join(here, '..', '..', '..', 'openCli'))    # openCli/
     
 from openvisualizer.moteProbe                    import moteProbe
 from openvisualizer.moteConnector.SerialTester   import SerialTester
 from OpenCli                                     import OpenCli
-
-LOCAL_ADDRESS     = '127.0.0.1'
-MAX_BYTES_TO_SEND = 50
 
 class serialTesterCli(OpenCli):
     
