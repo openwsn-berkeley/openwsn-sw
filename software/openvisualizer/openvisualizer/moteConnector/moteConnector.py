@@ -90,17 +90,17 @@ class moteConnector(eventBusClient.eventBusClient):
                 # toggle the DAGroot status
                 self._sendToMoteProbe(
                     dataToSend = [
-                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETROOT,
+                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETROOTBRIDGE,
                         OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
                     ],
                 )
                 # toggle the bridge status
-                self._sendToMoteProbe(
-                    dataToSend = [
-                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETBRIDGE,
-                        OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
-                    ],
-                )
+                #self._sendToMoteProbe(
+                #    dataToSend = [
+                #        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETBRIDGE,
+                #        OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
+                #    ],
+                #)
             else:
                 raise SystemError('unexpected action={0}'.format(data['action']))
     

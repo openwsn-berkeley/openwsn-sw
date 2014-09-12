@@ -27,6 +27,7 @@ class OpenParser(Parser.Parser):
     
     SERFRAME_PC2MOTE_SETROOT           = ord('R')
     SERFRAME_PC2MOTE_SETBRIDGE         = ord('B')
+    SERFRAME_PC2MOTE_SETROOTBRIDGE     = ord('Z')
     SERFRAME_PC2MOTE_DATA              = ord('D')
     SERFRAME_PC2MOTE_TRIGGERTCPINJECT  = ord('T')
     SERFRAME_PC2MOTE_TRIGGERUDPINJECT  = ord('U')
