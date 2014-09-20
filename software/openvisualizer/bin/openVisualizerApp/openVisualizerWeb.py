@@ -31,6 +31,7 @@ import random
 import re
 import threading
 import signal
+import functools
 from bottle        import view
 
 import openVisualizerApp
@@ -38,9 +39,13 @@ import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventBus      import eventBusClient
 from openvisualizer.SimEngine     import SimEngine
 from openvisualizer.BspEmulator   import VcdLogger
+from openvisualizer import ovVersion
 
 
 from pydispatch import dispatcher
+
+# add default parameters to all bottle templates
+view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
 
 class OpenVisualizerWeb(eventBusClient.eventBusClient):
     '''

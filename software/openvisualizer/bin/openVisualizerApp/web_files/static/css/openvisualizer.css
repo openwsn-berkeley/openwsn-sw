@@ -214,3 +214,10 @@ a :hover {
 .navbar {
     min-height: 11px !important;
 }
+
+.ovVersion {
+    color:         #c0c0c0;
+    position:      absolute;
+    left:          50%;
+    transform:     translate(-50%, 0%);
+}
