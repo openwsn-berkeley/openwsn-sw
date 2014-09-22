@@ -116,7 +116,6 @@ class StateMacStats(StateElem):
         self.data[0]['minCorrection']       = notif.minCorrection
         self.data[0]['maxCorrection']       = notif.maxCorrection
         self.data[0]['numDeSync']           = notif.numDeSync
-        self.data[0]['dutyCycle']           = notif.dutyCycle
 
 class StateScheduleRow(StateElem):
 
