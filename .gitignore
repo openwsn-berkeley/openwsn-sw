@@ -6,3 +6,9 @@
 *.log.5
 *.pyc
 __pycache__
+.sconsign.dblite
+test_report_*.xml
+
+
+*.vcd
+/software/openApps/ietf90client/*.config

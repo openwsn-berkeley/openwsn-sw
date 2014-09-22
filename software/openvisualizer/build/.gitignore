@@ -1,0 +1,4 @@
+# Hack to get Git to save the build directory.
+# Ignore everything except this .gitignore file.
+*
+!.gitignore

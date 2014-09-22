@@ -1,0 +1,4 @@
+# All sim firmware files are considered external.
+*.so
+*.pyd
+*.h

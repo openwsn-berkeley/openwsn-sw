@@ -1,0 +1,45 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>OpenWSN</title>
+
+<!-- Core CSS - all pages -->
+<link href="/static/font-awesome/css/font-awesome.css" rel="stylesheet">
+<link href="/static/css/bootstrap.min.css" rel="stylesheet">
+<link href="/static/css/openvisualizer.css" rel="stylesheet">
+
+<!-- Core JS - all pages -->
+<script src="/static/js/jquery-1.10.2.js"></script>
+<script src="/static/js/bootstrap.min.js"></script>
+<script src="/static/js/plugins/metisMenu/jquery.metisMenu.js"></script>
+<script src="/static/js/openvisualizer.js"></script>
+<script src="/static/js/jiraissuecollector.js"></script>
+
+<link rel="shortcut icon" href="images/favicon.ico">
+
+<script>
+    // Return the document's cookies as an object of name/value pairs.
+    // Assume that cookie values are encoded with encodeURIComponent().
+    // From 'JavaScript: The Definitive Guide, 6th Edition'; Example 20-1
+    function getCookies() {
+        var cookies = {};           // The object we will return
+        var all = document.cookie;  // Get all cookies in one big string
+        if (all === "")             // If the property is the empty string
+            return cookies;         // return an empty object
+        var list = all.split("; "); // Split into individual name=value pairs
+        for(var i = 0; i < list.length; i++) {  // For each cookie
+            var cookie = list[i];
+            var p = cookie.indexOf("=");        // Find the first = sign
+            var name = cookie.substring(0,p);   // Get cookie name
+            var value = cookie.substring(p+1);  // Get cookie value
+            value = decodeURIComponent(value);  // Decode the value
+            cookies[name] = value;              // Store name and value in object
+        }
+        return cookies;
+    }
+
+    // Ensure cookie is available for all pages by setting path to "/".
+    function setCookie(name, value) {
+        document.cookie = name + "=" + encodeURIComponent(value) + "; path=/";
+    }
+</script>

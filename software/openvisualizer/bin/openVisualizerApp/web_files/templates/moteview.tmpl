@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		%include head.tmpl
+	</head>
+	<body>
+		<script>
+		    // Identifies the function that refreshes mote state on an interval.
+		    var timeoutId;
+		    var moteid;
+		    
+		    $(function() {
+		        
+		        
+		        // Set selected mote if so specified in request. Must do this after
+		        // grid variables have been defined so mote selection works.
+		        % if requested_mote:
+		            var selMote = '{{requested_mote}}';
+		        % else:
+		            var selMote = 'none';
+		        % end
+		        console.log('Display requested mote selection: ' + selMote);
+		        $("#mote_select").val(selMote).change();
+		    });
+		</script>
+
+		<div id="wrapper">
+			%include navbar.tmpl ovVersion=ovVersion
+
+			<div id="page-wrapper">
+	            <div class="row">
+	                <div class="col-lg-12">
+	                    <h1 class="page-header">Motes</h1>
+	                </div>
+	            </div>
+
+	            <div class="row">
+                	<div class="col-lg-12">
+		                <select class="rel_value_fld" id="mote_select" size="1">
+		                    <option value="none">Select mote...</option>
+		                    % for mote in motelist:
+		                       <option>{{mote}}</option>
+		                    % end
+		                </select>
+		                <button id="toggle_btn" type="button" class="btn btn-default btn-xs">Toggle</button>
+		                <script>
+		                    $("#mote_select").change(function() {
+		                        moteid =  $(this).val()
+		                        
+		                        if (moteid != null && moteid != undefined && moteid != 'none') {
+		                            console.log('Update for mote selection: ' + moteid);
+		                            // Store to allow automatically selecting this mote.
+		                            setCookie("selected_mote", moteid);
+		                            $("#moteview_link").attr("href", "/moteview/" + moteid);
+		                            $.ajax({
+		                                dataType: "json",
+		                                url: "/motedata/" + moteid,
+		                                success: updateForData,
+		                                error: errorOnAjax
+		                            });
+		                        } else {
+		                            console.log('Update for mote selection: ' + moteid);
+		                            // Store to allow automatically selecting this mote.
+		                            setCookie("selected_mote", moteid);
+		                            $("#moteview_link").attr("href", "/moteview");
+		                            updateForData({});
+		                        }
+		                        
+		                        // Don't allow to reselect null option.
+		                        //$("#mote_select option[value='none']").remove();
+		                    });
+		                </script>
+
+		                <script>
+			                $( "#toggle_btn" )
+			                    .button()
+			                    .click(function( event ) {
+			                        console.log('Toggling root for mote ' + moteid);
+			                        $.ajax({
+			                            dataType: "json",
+			                            url: "/toggle_root/" + moteid,
+			                            success: updateForToggle,
+			                            error: errorOnAjax
+			                        });
+			                    });
+		                </script>
+		            </div>
+		        </div>
+
+		        <div class="row">
+		            <div class="col-lg-6">
+		            	<h5>Mote</h5>
+	                    <div class="list-group">
+	                        <a class="list-group-item">
+	                            <i class="fa fa-upload fa-fw"></i> Prefix
+	                            <span class="pull-right text-muted small" id="prefix_fld"><em></em>
+	                            </span>
+	                        </a>
+	                        <a class="list-group-item">
+	                            <i class="fa fa-bolt fa-fw"></i> EUI-64
+	                            <span class="pull-right text-muted small" id="id64_fld"><em></em>
+	                            </span>
+	                        </a>
+	                    </div>
+                	</div>
+
+	                <div class="col-lg-6">
+	                	<h5>Root Status</h5>
+	                    <div class="list-group">
+	                        <a class="list-group-item">
+	                            <i class="fa fa-shopping-cart fa-fw"></i> DAG Root?
+	                            <span class="pull-right text-muted small" id="dagroot_fld"><em>No</em>
+	                            </span>
+	                        </a>
+	                        <a class="list-group-item">
+	                            <i class="fa fa-money fa-fw"></i> Bridge mode?
+	                            <span class="pull-right text-muted small" id="bridge_fld"><em>No</em>
+	                            </span>
+	                        </a>
+	                    </div>
+	                </div>
+            	</div>
+
+	            <div class="row">
+	                <div class="col-lg-12">
+	                	
+	                    <div class="panel panel-default">
+	                        <div class="panel-heading">
+	                            Data
+	                        </div>
+	                        
+	                        <div class="panel-body">
+	                        
+	                            <ul class="nav nav-tabs">
+	                                <li class="active"><a href="#network" data-toggle="tab">Network</a>
+	                                </li>
+	                                <li><a href="#schedule" data-toggle="tab">Schedule</a>
+	                                </li>
+	                                <li><a href="#neighbors" data-toggle="tab">Neighbors</a>
+	                                </li>
+	                            </ul>
+
+	                            <div class="tab-content">
+	                                <div class="tab-pane fade in active" id="network">
+	                                    <div class="row">
+	                                        <br><br>
+	                                        <div class="col-lg-6">
+	                                            <div class="well well-lg">
+	                                                <h5>General</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-tasks fa-fw"></i> PAN
+	                                                        <span class="pull-right text-muted small" id="pan_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> ASN
+	                                                        <span class="pull-right text-muted small" id="asn_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-bolt fa-fw"></i> DAG Rank
+	                                                        <span class="pull-right text-muted small" id="dagrank_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                                <h5>Output Buffer</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-tasks fa-fw"></i> Read Index
+	                                                        <span class="pull-right text-muted small" id="outread_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Write Index
+	                                                        <span class="pull-right text-muted small" id="outwrite_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                                <h5>Backoff</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Exponent
+	                                                        <span class="pull-right text-muted small" id="backexp_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Backoff
+	                                                        <span class="pull-right text-muted small" id="backoff_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                        <div class="col-lg-6">
+	                                            <div class="well well-lg">
+	                                                <h5>Backoff</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Min. Correction
+	                                                        <span class="pull-right text-muted small" id="mincorrection_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Max. Correction
+	                                                        <span class="pull-right text-muted small" id="maxcorrection_fld"><em>-</em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Num. Packet
+	                                                        <span class="pull-right text-muted small" id="syncpkts_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                                <h5>Sync</h5>
+	                                                <div class="list-group">
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Num. Ack Sync
+	                                                        <span class="pull-right text-muted small" id="syncacks_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Num. Desync.
+	                                                        <span class="pull-right text-muted small" id="desyncpkts_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Radio Duty Cycle
+	                                                        <span class="pull-right text-muted small" id="dutycycle_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+                                                        <a class="list-group-item">
+	                                                        <i class="fa fa-upload fa-fw"></i> Keep-Alive Period
+	                                                        <span class="pull-right text-muted small" id="kaperiod_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
+	                                                </div>
+	                                            </div>
+	                                        </div>
+	                                    </div>
+	                                </div>
+
+	                                <div class="tab-pane fade" id="schedule">
+	                                    <div class="row">
+	                                        <div class="col-lg-12">
+	                                            <div class="panel-body">
+	                                                <h5>Slot Schedule</h5>
+	                                                <div id="tab-slot-sched" class="table-responsive"></div>
+	                                                <br>
+	                                                <h5>Packet Queue</h5>
+	                                                <div id="tab-pack-queue" class="table-responsive"></div>
+	                                            </div>
+	                                        </div>
+	                                    </div>
+	                                </div>
+
+	                                <div class="tab-pane fade" id="neighbors">
+	                                    <div class="row">
+	                                        <div class="col-lg-12">
+	                                            <div class="panel-body">
+	                                                <div id="tab-nbrs" class="table-responsive"></div>
+	                                            </div>
+	                                        </div>
+	                                    </div>
+	                                </div>
+
+	                                <!--  Must define these functions after all fields have been defined. -->
+								    <script>
+									    function updateForData(json) {
+									        // Updates all fields for the selected mote, and schedules the
+									        // next update.
+									        console.log('Update for mote data received');
+									        var hasJson = true
+									        if (json.result && json.result == "none") {
+									            console.log('no data in result');
+									            hasJson = false;
+									        } else if (!json.Asn) {
+									            console.log('Asn not found in result');
+									            hasJson = false;
+									        }
+									        
+									        if (hasJson) {
+									            asnJson      = $.parseJSON(json.Asn)[0];
+									            idJson       = $.parseJSON(json.IdManager)[0];
+									            syncJson     = $.parseJSON(json.IsSync)[0];
+									            dagrankJson  = $.parseJSON(json.MyDagRank)[0];
+									            outbufJson   = $.parseJSON(json.OutputBuffer)[0];
+									            backoffJson  = $.parseJSON(json.Backoff)[0];
+									            macstatsJson = $.parseJSON(json.MacStats)[0];
+									            schedJson    = $.parseJSON(json.Schedule);
+									            queueJson    = $.parseJSON(json.Queue);
+									            nbrsJson     = $.parseJSON(json.Neighbors);
+                                                kaPeriodJson = $.parseJSON(json.kaPeriod)[0];
+									        }
+									        
+									        // Exclude tailing description from server
+									        $("#prefix_fld").text(hasJson ? idJson.myPrefix.split(' ')[0] : '');
+									        $("#id64_fld").text(  hasJson ? idJson.my64bID.split(' ')[0]  : '');
+									        
+									        $("#dagroot_fld").text(      hasJson && idJson.isDAGroot > 0 ? 'Yes' : 'No');
+									        $("#bridge_fld").text(       hasJson && idJson.isBridge > 0 ? 'Yes' : 'No');
+									        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' : 'Not synchronized');
+									        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
+									        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
+									        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
+									        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
+									        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');
+									        $("#backexp_fld").text(      hasJson ? backoffJson.backoffExponent     : '');
+									        $("#backoff_fld").text(      hasJson ? backoffJson.backoff             : '');
+									        $("#mincorrection_fld").text(hasJson ? macstatsJson.minCorrection      : '');
+									        $("#maxcorrection_fld").text(hasJson ? macstatsJson.maxCorrection      : '');
+									        $("#syncpkts_fld").text(     hasJson ? macstatsJson.numSyncPkt         : '');
+									        $("#syncacks_fld").text(     hasJson ? macstatsJson.numSyncAck         : '');
+									        $("#desyncpkts_fld").text(   hasJson ? macstatsJson.numDeSync          : '');
+									        $("#dutycycle_fld").text(    hasJson ? macstatsJson.dutyCycle          : '');
+                                            $("#kaperiod_fld").text(     hasJson ? kaPeriodJson.kaPeriod           : '');
+									        
+									        // Slot Schedule responsive table
+									        if (hasJson) {
+									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Offset</th><th>Type</th><th>Shared?</th><th>Channel</th><th>Nbr Type</th><th>RX</th><th>TX</th><th>TX ACK</th><th>Last ASN</th></tr></thead><tbody>";
+
+										        $.each(schedJson, function() {
+											        var tbl_row = "<td>" + this['slotOffset'] + "</td>";
+											        tbl_row += "<td>" + this['type'] + "</td>";
+											        tbl_row += "<td>" + this['shared'] + "</td>";
+											        tbl_row += "<td>" + this['channelOffset'] + "</td>";
+											        tbl_row += "<td>" + this['neighbor'] + "</td>";
+											        tbl_row += "<td>" + this['numRx'] + "</td>";
+											        tbl_row += "<td>" + this['numTx'] + "</td>";
+											        tbl_row += "<td>" + this['numTxACK'] + "</td>";
+											        tbl_row += "<td>" + this['lastUsedAsn'] + "</td>";
+											        tbl_body += "<tr class=\"odd gradeX\">" + tbl_row + "</tr>";
+												});
+
+												tbl_body += "</tbody></table>";
+											    //console.log(tbl_body);
+											    $("#tab-slot-sched").html(tbl_body).text();
+											}
+
+									        // Package Queue responsive table
+									        if (hasJson) {
+									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Creator</th><th>Owner</th></tr></thead><tbody>";
+									        
+										        $.each(queueJson, function() {
+											        var tbl_row = "<td>" + this['creator'] + "</td>";
+											        tbl_row += "<td>" + this['owner'] + "</td>";
+											        tbl_body += "<tr class=\"odd gradeX\">" + tbl_row + "</tr>";
+												});
+
+												tbl_body += "</tbody></table>";
+											    //console.log(tbl_body);
+											    $("#tab-pack-queue").html(tbl_body).text();
+											}
+
+											// Neighbors responsive table
+									        if (hasJson) {
+									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Used</th><th>Parent</th><th>Stable</th><th>Stability</th><th>Address</th><th>DAG Rank</th><th>JP</th><th>RSS</th><th>RX</th><th>TX</th><th>TX ACK</th><th>Wrap</th><th>ASN</th></tr></thead><tbody>";
+									        
+										        $.each(nbrsJson, function() {
+											        var tbl_row = "<td>" + this['used'] + "</td>";
+											        tbl_row += "<td>" + this['parentPreference'] + "</td>";
+											        tbl_row += "<td>" + this['stableNeighbor'] + "</td>";
+											        tbl_row += "<td>" + this['switchStabilityCounter'] + "</td>";
+											        tbl_row += "<td>" + this['addr'] + "</td>";
+											        tbl_row += "<td>" + this['DAGrank'] + "</td>";
+											        tbl_row += "<td>" + this['joinPrio'] + "</td>";
+											        tbl_row += "<td>" + this['rssi'] + "</td>";
+											        tbl_row += "<td>" + this['numRx'] + "</td>";
+											        tbl_row += "<td>" + this['numTx'] + "</td>";
+											        tbl_row += "<td>" + this['numTxACK'] + "</td>";
+											        tbl_row += "<td>" + this['numWraps'] + "</td>";
+											        tbl_row += "<td>" + this['asn'] + "</td>";
+											        tbl_body += "<tr class=\"odd gradeX\">" + tbl_row + "</tr>";
+												});
+
+												tbl_body += "</tbody></table>";
+											    //console.log(tbl_body);
+											    $("#tab-nbrs").html(tbl_body).text();
+											}
+
+									        
+									        if (hasJson) {
+									            timeoutId = setTimeout(function() {
+									                $.ajax({
+									                    dataType: "json",
+									                    url: "/motedata/" + moteid,
+									                    success: updateForData,
+									                    error: errorOnAjax
+									                });
+									            }, 5000);
+									        }
+									    }
+									    
+									    function updateForToggle(json) {
+									        // Reset timeout to 1 second for the next data retrieval, to
+									        // provide quicker feedback to user that toggle succeeded.
+									        // Must wait 1 second for mote to publish updated status.
+									        console.log('Toggle root succeeded');
+									        if (timeoutId != null) {
+									            clearTimeout(timeoutId);
+									            console.log('Timeout cleared');
+									        }
+									        timeoutId = setTimeout(function() {
+									            $.ajax({
+									                dataType: "json",
+									                url: "/motedata/" + moteid,
+									                success: updateForData,
+									                error: errorOnAjax
+									            });
+									        }, 1000);
+									    }
+									    
+									    function errorOnAjax(jqxhr, status, errorstr) {
+									        var errText = (errorstr == null)
+									                ? '' : ', error: ' + errorstr;
+									        console.log('Ajax error: ' + status + errText);
+									    }
+								    </script>
+	                            </div>
+	                        
+	                        </div>
+	                    </div>
+	                	
+	                </div>  
+	            </div>
+	        </div>
+	    </div>
+	</body>
+</html>

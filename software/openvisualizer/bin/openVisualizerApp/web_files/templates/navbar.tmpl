@@ -1,0 +1,91 @@
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation" style="margin-bottom: 0">
+    <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".sidebar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+        </button>
+    </div>
+    
+    <!-- User/Account tab content -->
+    <!--
+    <ul class="nav navbar-top-links navbar-right">
+        <li class="dropdown">
+            <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                <i class="fa fa-user fa-fw"></i>  <i class="fa fa-caret-down"></i>
+            </a>
+            <ul class="dropdown-menu dropdown-user">
+                <li><a href="#"><i class="fa fa-user fa-fw"></i> User Profile</a>
+                </li>
+                <li><a href="#"><i class="fa fa-gear fa-fw"></i> Settings</a>
+                </li>
+                <li class="divider"></li>
+                <li><a href="#"><i class="fa fa-sign-out fa-fw"></i> Logout</a>
+                </li>
+            </ul>
+        </li>
+    </ul>
+    -->
+    
+    <div class="navbar-default navbar-static-side" role="navigation">
+        <div id="logo">
+            <img src="/static/images/openwsn_logo.png" class="logo-img">
+        </div>
+        <div class="sidebar-collapse">
+            <ul class="nav" id="side-menu">
+                <!-- LAN select -->
+                <!--
+                <li class="sidebar-search">
+                    <div class="form-group">
+                        <label>Select LAN</label>
+                        <select class="form-control">
+                            <option>1</option>
+                            <option>2</option>
+                            <option>3</option>
+                            <option>4</option>
+                            <option>5</option>
+                        </select>
+                    </div>    
+                </li>
+                -->
+
+                <li><a id="moteview_link" href="/moteview"><i class="fa fa-th-large"></i><span class="hidden-tablet"> Motes</span></a></li>
+
+                <li><a href="/eventBus"><i class="fa fa-retweet"></i><span class="hidden-tablet"> Event Bus</span></a></li>
+
+                <li><a href="/topology"><i class="fa fa-tasks"></i><span class="hidden-tablet"> Topology</span></a></li>
+
+                <li><a href="/routing"><i class="fa fa-sitemap"></i><span class="hidden-tablet"> Routing</span></a></li>
+
+                <li><a href="http://www.openwsn.org/" target="_blank"><i class="fa fa-book"></i><span class="hidden-tablet"> Documentation</span></a></li>
+                
+                <li><span class="ovVersion">version {{ ovVersion }}</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // Use last mode ID for moteview if available
+        var moteid = decodeURIComponent(getCookies()["selected_mote"]);
+        if (moteid == null || moteid == undefined || moteid == 'none') {
+            $("#moteview_link").attr("href", "/moteview");
+        } else {
+            $("#moteview_link").attr("href", "/moteview/" + moteid);
+        }
+    </script>
+
+    <script>
+        // Set active class to current tab
+        $(function() {
+            if (location.pathname == "/"){
+                $('nav li a[href^="/moteview"]').addClass('active');
+            }
+            else { 
+                $('nav li a[href^="/' + location.pathname.split("/")[1] + '"]').addClass('active');
+            }
+        });
+
+    </script>
+
+</nav>
