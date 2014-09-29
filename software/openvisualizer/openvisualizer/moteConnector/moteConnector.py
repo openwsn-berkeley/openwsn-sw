@@ -87,17 +87,10 @@ class moteConnector(eventBusClient.eventBusClient):
     def _cmdToMote_handler(self,sender,signal,data):
         if  data['serialPort']==self.serialport:
             if data['action']==moteState.moteState.TRIGGER_DAGROOT:
-                # toggle the DAGroot status
+                # toggle the DAGroot and bridge status
                 self._sendToMoteProbe(
                     dataToSend = [
-                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETROOT,
-                        OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
-                    ],
-                )
-                # toggle the bridge status
-                self._sendToMoteProbe(
-                    dataToSend = [
-                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETBRIDGE,
+                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETROOTBRIDGE,
                         OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
                     ],
                 )
