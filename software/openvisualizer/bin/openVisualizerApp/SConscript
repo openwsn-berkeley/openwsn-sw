@@ -11,6 +11,7 @@ Provides rungui, runcli, and runweb targets.
 import os
 import subprocess
 import sconsUtils
+import signal
 
 Import('env')
 
@@ -67,6 +68,10 @@ def uiRunner(target, source, env):
             # Must wait for CLI program that uses raw_input(); otherwise
             # SCons exits and standard input is sent to shell.
             result = p.wait()
+            if (result == -signal.SIGTERM):
+                # Likely from console; not an error
+                print 'Terminated by SIGTERM'
+                result = 0
         else:
             # Display PID to make it easier to kill if necessary.
             print 'Child PID is {0}'.format(p.pid)
@@ -156,6 +161,7 @@ cliEnv['HOSTOPT']    = None
 cliEnv['PORTOPT']    = None
 Alias('runcli', setupUiRunner(cliEnv, 'openVisualizerCli.py', []))
 
-webEnv  = env.Clone()
-webdirs = ['web_files']
+webEnv               = env.Clone()
+webdirs              = ['web_files']
+webEnv['WAIT_ON_UI'] = True
 Alias('runweb', setupUiRunner(webEnv, 'openVisualizerWeb.py', webdirs))

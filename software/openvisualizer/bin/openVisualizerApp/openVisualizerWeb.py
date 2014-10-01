@@ -402,4 +402,5 @@ if __name__=="__main__":
         input = raw_input('> ')
         if input=='q':
             print 'bye bye.'
+            app.close()
             os.kill(os.getpid(), signal.SIGTERM)
