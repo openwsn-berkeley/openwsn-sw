@@ -72,7 +72,6 @@ def uiRunner(target, source, env):
             if (os.name == 'posix' and result == -signal.SIGTERM) \
                     or (os.name != 'posix' and result == signal.SIGTERM):
                 # Likely from console; not an error
-                print 'Terminated by SIGTERM'
                 result = 0
         else:
             # Display PID to make it easier to kill if necessary.
