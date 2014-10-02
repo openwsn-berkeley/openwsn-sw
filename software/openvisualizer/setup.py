@@ -16,7 +16,7 @@ In contrast to the native setup, the installer is free to relocate the tree
 of directories with install options for setup.py.
 
 This implementation is based on setuptools, and builds the list of module
-dependencies by reading 'requirements.pip'.
+dependencies by reading 'requirements.txt'.
 '''
 
 VERSION   = '.'.join([str(v) for v in ovVersion.VERSION])
@@ -31,7 +31,7 @@ with open('README.txt') as f:
 # which is Unix only.
 # Assumes requirements file contains only module lines and comments.
 deplist = []
-with open(os.path.join('openvisualizer', 'data', 'requirements.pip')) as f:
+with open(os.path.join('openvisualizer', 'data', 'requirements.txt')) as f:
     for line in f:
         if not line.startswith('#'):
             deplist.append(line)
@@ -86,11 +86,13 @@ setup(
     # Copy simdata files by extension so don't copy .gitignore in that directory.
     package_data     = {'openvisualizer': [
                         'data/*.conf',
-                        'data/requirements.pip',
-                        '/'.join([webstatic, '*.css']), 
-                        '/'.join([webstatic, '*.js']), 
-                        '/'.join([webstatic, '*.png']),
+                        'data/requirements.txt',
+                        '/'.join([webstatic, 'css', '*']), 
+                        '/'.join([webstatic, 'font-awesome', 'css', '*']), 
+                        '/'.join([webstatic, 'font-awesome', 'fonts', '*']), 
                         '/'.join([webstatic, 'images', '*']), 
+                        '/'.join([webstatic, 'js', '*.js']), 
+                        '/'.join([webstatic, 'js', 'plugins', 'metisMenu', '*']), 
                         '/'.join([webtmpl, '*']), 
                         '/'.join([simdata, 'windows', '*.pyd']), 
                         '/'.join([simdata, 'linux',   '*.so']), 
