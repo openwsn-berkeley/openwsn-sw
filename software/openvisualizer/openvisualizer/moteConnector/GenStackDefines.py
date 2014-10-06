@@ -26,7 +26,7 @@ import time
 
 #============================ defines =========================================
 
-INPUT_FILE    = os.path.join('..','..','..','..','..','openwsn-fw','firmware','openos','openwsn','openwsn.h')
+INPUT_FILE    = os.path.join('..','..','..','..','..','openwsn-fw','inc','opendefs.h')
 OUTPUT_FILE   = 'StackDefines.py'
 
 #============================ helpers =========================================

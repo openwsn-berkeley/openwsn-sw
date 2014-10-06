@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Sun, 03 Aug 2014 01:26:03
+# on Sun, 05 Oct 2014 18:39:53
 #
 
 components = {
@@ -30,33 +30,15 @@ components = {
   23: "OPENTCP",
   24: "OPENUDP",
   25: "OPENCOAP",
-  26: "TCPECHO",
-  27: "TCPINJECT",
-  28: "TCPPRINT",
-  29: "UDPECHO",
-  30: "UDPINJECT",
-  31: "UDPPRINT",
-  32: "RSVP",
-  33: "OHLONE",
-  34: "HELI",
-  35: "IMU",
-  36: "RLEDS",
-  37: "RREG",
-  38: "RWELLKNOWN",
-  39: "RT",
-  40: "REX",
-  41: "RXL1",
-  42: "RINFO",
-  43: "RHELI",
-  44: "RRUBE",
-  45: "LAYERDEBUG",
-  46: "UDPRAND",
-  47: "UDPSTORM",
-  48: "UDPLATENCY",
-  49: "TEST",
-  50: "R6T",
-  51: "SWARMBAND",
-  52: "RRT",
+  26: "C6T",
+  27: "CEXAMPLE",
+  28: "CINFO",
+  29: "CLEDS",
+  30: "CSTORM",
+  31: "CWELLKNOWN",
+  32: "TECHO",
+  33: "TOHLONE",
+  34: "UECHO",
 }
 
 errorDescriptions = {
