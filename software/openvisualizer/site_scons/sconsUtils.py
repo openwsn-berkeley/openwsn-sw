@@ -23,9 +23,9 @@ def copySimfw(env, target):
                    the copy.
     '''
     # in openwsn-fw, directory containing 'openwsnmodule_obj.h'
-    incdir    = os.path.join(env['FW_DIR'], 'firmware','openos','bsp','boards','python')
+    incdir    = os.path.join(env['FW_DIR'], 'bsp','boards','python')
     # in openwsn-fw, directory containing extension library
-    libdir    = os.path.join(env['FW_DIR'], 'firmware','openos','projects','common')
+    libdir    = os.path.join(env['FW_DIR'], 'projects','common')
 
     # Build source and destination pathnames.
     archAndOs = env['SIMHOSTOPT'].split('-')

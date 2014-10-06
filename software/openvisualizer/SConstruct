@@ -6,8 +6,7 @@
 
 import os
 import platform
-import subprocess
-import sys
+
 import SCons
 import sconsUtils
 
@@ -114,7 +113,6 @@ def default(env,target,source):
     
 Default(env.Command('default', None, default))
 
-
 # Define environment and options common to all run... targets
 runnerEnv = env.Clone()
 
@@ -153,7 +151,6 @@ AddOption('--ovdebug',
     default   = False,
     action    = 'store_true')
 runnerEnv['DEBUGOPT'] = GetOption('debugOpt')
-
 
 # These options are used only by the web runner. We define them here for
 # simplicity, but they must be removed from non-web use in the runner 
@@ -303,7 +300,7 @@ Alias(
 )
 
 #===== docs
-    
+
 SConscript(
     os.path.join('docs', 'SConscript'),
     exports = {"env": env},
