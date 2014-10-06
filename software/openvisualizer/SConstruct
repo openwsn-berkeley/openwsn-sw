@@ -232,8 +232,8 @@ def makeTreeSdist(env, target):
     cmdlist.append(Delete('openVisualizer.egg-info'))
     
     cmdlist.append(Mkdir(datadir))
-    cmdlist.append(Copy(os.path.join(datadir, 'requirements.pip'), 
-                        os.path.join(topdir, 'requirements.pip')))
+    cmdlist.append(Copy(os.path.join(datadir, 'requirements.txt'), 
+                        os.path.join(topdir, 'requirements.txt')))
     for conf in env['CONF_FILES']:
         cmdlist.append(Copy(os.path.join(datadir, conf), os.path.join(appdir, conf)))
     for data in env['DATA_DIRS']:
