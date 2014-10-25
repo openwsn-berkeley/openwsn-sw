@@ -42,7 +42,7 @@
 		                       <option>{{mote}}</option>
 		                    % end
 		                </select>
-		                <button id="toggle_btn" type="button" class="btn btn-default btn-xs">Toggle</button>
+		                <button id="toggle_btn" type="button" class="btn btn-default btn-xs">Toggle DAGroot state</button>
 		                <script>
 		                    $("#mote_select").change(function() {
 		                        moteid =  $(this).val()
@@ -78,7 +78,7 @@
 			                        console.log('Toggling root for mote ' + moteid);
 			                        $.ajax({
 			                            dataType: "json",
-			                            url: "/toggle_root/" + moteid,
+			                            url: "/toggleDAGroot/" + moteid,
 			                            success: updateForToggle,
 			                            error: errorOnAjax
 			                        });
@@ -110,11 +110,6 @@
 	                        <a class="list-group-item">
 	                            <i class="fa fa-shopping-cart fa-fw"></i> DAG Root?
 	                            <span class="pull-right text-muted small" id="dagroot_fld"><em>No</em>
-	                            </span>
-	                        </a>
-	                        <a class="list-group-item">
-	                            <i class="fa fa-money fa-fw"></i> Bridge mode?
-	                            <span class="pull-right text-muted small" id="bridge_fld"><em>No</em>
 	                            </span>
 	                        </a>
 	                    </div>
