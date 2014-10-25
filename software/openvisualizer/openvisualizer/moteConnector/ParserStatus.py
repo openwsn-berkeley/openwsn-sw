@@ -53,22 +53,29 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     1,
                                     'IdManager',
-                                    '<BBBQQBQQBQQBQQ',
+                                    '<BBBBBBBBBBBBBBBBBBBBB',
                                     [
                                         'isDAGroot',                 # B
-                                        'isBridge',                  # B
-                                        'my16bID_type',              # B
-                                        'my16bID_bodyH',             # Q
-                                        'my16bID_bodyL',             # Q
-                                        'my64bID_type',              # B
-                                        'my64bID_bodyH',             # Q
-                                        'my64bID_bodyL',             # Q
-                                        'myPANID_type',              # B
-                                        'myPANID_bodyH',             # Q
-                                        'myPANID_bodyL',             # Q
-                                        'myPrefix_type',             # B
-                                        'myPrefix_bodyH',            # Q
-                                        'myPrefix_bodyL',            # Q
+                                        'myPANID_0',                 # B
+                                        'myPANID_1',                 # B
+                                        'my16bID_0',                 # B
+                                        'my16bID_1',                 # B
+                                        'my64bID_0',                 # B
+                                        'my64bID_1',                 # B
+                                        'my64bID_2',                 # B
+                                        'my64bID_3',                 # B
+                                        'my64bID_4',                 # B
+                                        'my64bID_5',                 # B
+                                        'my64bID_6',                 # B
+                                        'my64bID_7',                 # B
+                                        'myPrefix_0',                # B
+                                        'myPrefix_1',                # B
+                                        'myPrefix_2',                # B
+                                        'myPrefix_3',                # B
+                                        'myPrefix_4',                # B
+                                        'myPrefix_5',                # B
+                                        'myPrefix_6',                # B
+                                        'myPrefix_7',                # B
                                     ],
                                 )
         self._addFieldsParser   (   

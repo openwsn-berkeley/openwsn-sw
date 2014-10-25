@@ -285,28 +285,52 @@ class StateIdManager(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
+        
         self.data[0]['isDAGroot']           = notif.isDAGroot
-        self.data[0]['isBridge']            = notif.isBridge
-        if 'my16bID' not in self.data[0]:
-            self.data[0]['my16bID']         = typeAddr.typeAddr()
-        self.data[0]['my16bID'].update(notif.my16bID_type,
-                                       notif.my16bID_bodyH,
-                                       notif.my16bID_bodyL)
-        if 'my64bID' not in self.data[0]:
-            self.data[0]['my64bID']         = typeAddr.typeAddr()
-        self.data[0]['my64bID'].update(notif.my64bID_type,
-                                       notif.my64bID_bodyH,
-                                       notif.my64bID_bodyL)
-        if 'myPANID' not in self.data[0]:
+        
+        if 'myPANID' not  in self.data[0]:
             self.data[0]['myPANID']         = typeAddr.typeAddr()
-        self.data[0]['myPANID'].update(notif.myPANID_type,
-                                       notif.myPANID_bodyH,
-                                       notif.myPANID_bodyL)
-        if 'myPrefix' not in self.data[0]:
+            self.data[0]['myPANID'].desc    = 'panId'
+        self.data[0]['myPANID'].addr        = [
+            notif.myPANID_0,
+            notif.myPANID_1,
+        ]
+        
+        if 'my16bID' not  in self.data[0]:
+            self.data[0]['my16bID']         = typeAddr.typeAddr()
+            self.data[0]['my16bID'].desc    = '16b'
+        self.data[0]['my16bID'].addr        = [
+            notif.my16bID_0,
+            notif.my16bID_1,
+        ]
+        
+        if 'my64bID' not  in self.data[0]:
+            self.data[0]['my64bID']         = typeAddr.typeAddr()
+            self.data[0]['my64bID'].desc    = '64b'
+        self.data[0]['my64bID'].addr        = [
+            notif.my64bID_0,
+            notif.my64bID_1,
+            notif.my64bID_2,
+            notif.my64bID_3,
+            notif.my64bID_4,
+            notif.my64bID_5,
+            notif.my64bID_6,
+            notif.my64bID_7
+        ]
+        
+        if 'myPrefix' not  in self.data[0]:
             self.data[0]['myPrefix']        = typeAddr.typeAddr()
-        self.data[0]['myPrefix'].update(notif.myPrefix_type,
-                                        notif.myPrefix_bodyH,
-                                        notif.myPrefix_bodyL)
+            self.data[0]['myPrefix'].desc   = 'prefix'
+        self.data[0]['myPrefix'].addr       = [
+            notif.myPrefix_0,
+            notif.myPrefix_1,
+            notif.myPrefix_2,
+            notif.myPrefix_3,
+            notif.myPrefix_4,
+            notif.myPrefix_5,
+            notif.myPrefix_6,
+            notif.myPrefix_7,
+        ]
         
         # announce information about the DAG root to the eventBus
         if  self.isDAGroot!=self.data[0]['isDAGroot']:

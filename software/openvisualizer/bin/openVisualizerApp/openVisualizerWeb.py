@@ -90,7 +90,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/moteview',                               callback=self._showMoteview)
         self.websrv.route(path='/moteview/:moteid',                       callback=self._showMoteview)
         self.websrv.route(path='/motedata/:moteid',                       callback=self._getMoteData)
-        self.websrv.route(path='/toggle_root/:moteid',                    callback=self._toggleRoot)
+        self.websrv.route(path='/toggleDAGroot/:moteid',                  callback=self._toggleDAGroot)
         self.websrv.route(path='/eventBus',                               callback=self._showEventBus)
         self.websrv.route(path='/routing',                                callback=self._showRouting)
         self.websrv.route(path='/routing/dag',                            callback=self._showDAG)
@@ -133,10 +133,10 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         return bottle.static_file(filepath, 
                                   root='{0}/web_files/static/'.format(self.app.datadir))
     
-    def _toggleRoot(self, moteid):
+    def _toggleDAGroot(self, moteid):
         '''
-        Triggers toggle of DAGroot and bridge states, via moteState. No
-        real response. Page is updated when next retrieve mote data.
+        Triggers toggle DAGroot state, via moteState. No real response. Page is
+        updated when next retrieve mote data.
         
         :param moteid: 16-bit ID of mote
         '''

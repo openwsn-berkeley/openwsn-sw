@@ -124,7 +124,7 @@ class OpenVisualizerGui(object):
                             callparams      = (stateOrTrigger,),
                             guiParent       = tempRowFrame,
                             frameName       = stateOrTrigger,
-                            buttonText      = 'toggle',
+                            buttonText      = 'Toggle DAG root state',
                             row             = 0,
                             column          = column,
                         )
