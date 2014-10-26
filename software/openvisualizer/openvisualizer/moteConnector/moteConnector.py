@@ -99,35 +99,35 @@ class moteConnector(eventBusClient.eventBusClient):
     
     def _infoDagRoot_handler(self,sender,signal,data):
         
-        if  data['serialPort']==self.serialport and data['isDAGroot']==1:
+        # I only care about "infoDagRoot" notifications about my mote
+        if not data['serialPort']==self.serialport:
+            return 
+        
+        if   data['isDAGroot']==1 and (not self._subcribedDataForDagRoot):
             # this moteConnector is connected to a DAGroot
             
-            if not self._subcribedDataForDagRoot:
-                
-                # connect to dispatcher
-                self.register(
-                    sender   = self.WILDCARD,
-                    signal   = 'bytesToMesh',
-                    callback = self._bytesToMesh_handler,
-                )
-                
-                # remember I'm subscribed
-                self._subcribedDataForDagRoot = True
+            # connect to dispatcher
+            self.register(
+                sender   = self.WILDCARD,
+                signal   = 'bytesToMesh',
+                callback = self._bytesToMesh_handler,
+            )
             
-        else:
+            # remember I'm subscribed
+            self._subcribedDataForDagRoot = True
+            
+        elif data['isDAGroot']==0 and self._subcribedDataForDagRoot:
             # this moteConnector is *not* connected to a DAGroot
             
-            if self._subcribedDataForDagRoot:
-                
-                # disconnect from dispatcher
-                self.unregister(
-                    sender   = self.WILDCARD,
-                    signal   = 'bytesToMesh',
-                    callback = self._bytesToMesh_handler,
-                )
-                
-                # remember I'm not subscribed
-                self._subcribedDataForDagRoot = False
+            # disconnect from dispatcher
+            self.unregister(
+                sender   = self.WILDCARD,
+                signal   = 'bytesToMesh',
+                callback = self._bytesToMesh_handler,
+            )
+            
+            # remember I'm not subscribed
+            self._subcribedDataForDagRoot = False
     
     def _bytesToMesh_handler(self,sender,signal,data):
         assert type(data)==tuple

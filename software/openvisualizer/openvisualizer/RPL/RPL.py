@@ -111,19 +111,27 @@ class RPL(eventBusClient.eventBusClient):
         Record the DAGroot's EUI64 address.
         '''
         
-        eui64 = data['eui64'][:]
+        # stop of we don't have a networkPrefix assigned yet
+        if not self.networkPrefix:
+            log.error("infoDagRoot signal received while not have been assigned a networkPrefix yet")
+            return
         
-        # register if DAGroot
-        if data['isDAGroot']==1 and self.networkPrefix:
+        newDagRootEui64 = data['eui64'][:]
+        
+        with self.stateLock:
+           sameDAGroot = (self.dagRootEui64==newDagRootEui64)
+        
+        # register the DAGroot
+        if data['isDAGroot']==1 and (not sameDAGroot):
             
             # log
-            log.info("registering to DAGroot {0}".format(u.formatAddr(eui64)))
+            log.info("registering DAGroot {0}".format(u.formatAddr(newDagRootEui64)))
             
             # register
             self.register(
                 sender            = self.WILDCARD,
                 signal            = (
-                    tuple(self.networkPrefix + eui64),
+                    tuple(self.networkPrefix + newDagRootEui64),
                     self.PROTO_ICMPv6,
                     self.IANA_ICMPv6_RPL_TYPE
                 ),
@@ -132,19 +140,19 @@ class RPL(eventBusClient.eventBusClient):
             
             # store DAGroot
             with self.stateLock:
-                self.dagRootEui64 = data['eui64'][:]
+                self.dagRootEui64 = newDagRootEui64
         
-        # unregister if not DAGroot
-        if data['isDAGroot']==0:
+        # unregister the DAGroot
+        if data['isDAGroot']==0 and sameDAGroot:
             
             # log
-            log.info("unregistering from DAGroot {0}".format(u.formatAddr(eui64)))
+            log.info("unregistering DAGroot {0}".format(u.formatAddr(newDagRootEui64)))
             
             # unregister from old DAGroot
             self.unregister(
                 sender            = self.WILDCARD,
                 signal            = (
-                    tuple(self.networkPrefix + eui64),
+                    tuple(self.networkPrefix + newDagRootEui64),
                     self.PROTO_ICMPv6,
                     self.IANA_ICMPv6_RPL_TYPE
                 ),

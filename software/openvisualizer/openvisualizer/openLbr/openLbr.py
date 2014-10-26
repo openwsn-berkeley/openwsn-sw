@@ -675,7 +675,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         if data['isDAGroot']==1:
             with self.stateLock:
-                self.dagRootEui64     = [int(b) for b in data['eui64']]
+                self.dagRootEui64     = data['eui64'][:]
 
 #===== formatting
     
