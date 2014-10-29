@@ -49,7 +49,13 @@ class OpenVisualizerApp(object):
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
-        self.openTun              = openTun.create() # call last since indicates prefix
+        # create openTun call last since indicates prefix
+        try:
+            self.openTun          = openTun.create() 
+        except IOError as err:
+            # happens on Linux when not root and opening tun interface
+            print 'WARNING: could not created tun interface. Are you root?\n{0}'.format(err)
+            self.openTun          = None
         if self.simulatorMode:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             
@@ -113,7 +119,8 @@ class OpenVisualizerApp(object):
         '''Closes all thread-based components'''
         
         log.info('Closing OpenVisualizer')
-        self.openTun.close()
+        if self.openTun:
+            self.openTun.close()
         self.rpl.close()
         for probe in self.moteProbes:
             probe.close()
