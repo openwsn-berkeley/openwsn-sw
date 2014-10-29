@@ -16,6 +16,7 @@ elif os.name=='posix':  # Linux
 import threading
 
 import serial
+import socket
 import time
 import sys
 
@@ -77,7 +78,6 @@ class moteProbe(threading.Thread):
     ]
     
     def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None):
-        assert bool(serialport) != bool(emulatedMote)
         
         # verify params
         if   serialport:
@@ -97,7 +97,6 @@ class moteProbe(threading.Thread):
         
         # store params
         if   self.mode==self.MODE_SERIAL:
-            import serial
             self.serialport       = serialport[0]
             self.baudrate         = serialport[1]
             self.portname         = self.serialport
@@ -105,7 +104,6 @@ class moteProbe(threading.Thread):
             self.emulatedMote     = emulatedMote
             self.portname         = 'emulated{0}'.format(self.emulatedMote.getId())
         elif self.mode==self.MODE_IOTLAB:
-            import socket
             self.iotlabmote       = iotlabmote
             self.portname         = 'IoT-LAB{0}'.format(iotlabmote)
         else:
