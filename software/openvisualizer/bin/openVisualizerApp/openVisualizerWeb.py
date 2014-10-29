@@ -381,10 +381,10 @@ if __name__=="__main__":
     webthread = threading.Thread(
         target = websrv.run,
         kwargs = {
-            'host'  : argspace.host,
-            'port'  : argspace.port,
-            'quiet' : not app.debug,
-            'debug' : app.debug,
+            'host'          : argspace.host,
+            'port'          : argspace.port,
+            'quiet'         : not app.debug,
+            'debug'         : app.debug,
         }
     )
     webthread.start()

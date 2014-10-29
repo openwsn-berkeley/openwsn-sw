@@ -32,7 +32,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes):
         
         # store params
         self.confdir              = confdir
@@ -42,6 +42,7 @@ class OpenVisualizerApp(object):
         self.numMotes             = numMotes
         self.trace                = trace
         self.debug                = debug
+        self.iotlabmotes          = iotlabmotes
         
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -63,13 +64,7 @@ class OpenVisualizerApp(object):
             self.simengine.start()
         
         # create a moteProbe for each mote
-        if not self.simulatorMode:
-            # in "hardware" mode, motes are connected to the serial port
-            
-            self.moteProbes       = [
-                moteProbe.moteProbe(serialport=sp) for sp in moteProbe.findSerialPorts()
-            ]
-        else:
+        if self.simulatorMode:
             # in "simulator" mode, motes are emulated
             sys.path.append(os.path.join(self.datadir, 'sim_files'))
             import oos_openwsn
@@ -80,10 +75,23 @@ class OpenVisualizerApp(object):
                 moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                 self.simengine.indicateNewMote(moteHandler)
                 self.moteProbes  += [moteProbe.moteProbe(emulatedMote=moteHandler)]
+        elif self.iotlabmotes:
+            # in "IoT-LAB" mode, motes are connected to TCP ports
+            
+            self.moteProbes       = [
+                moteProbe.moteProbe(iotlabmote=p) for p in self.iotlabmotes.split(',')
+            ]
+            
+        else:
+            # in "hardware" mode, motes are connected to the serial port
+            
+            self.moteProbes       = [
+                moteProbe.moteProbe(serialport=p) for p in moteProbe.findSerialPorts()
+            ]
         
         # create a moteConnector for each moteProbe
         self.moteConnectors       = [
-            moteConnector.moteConnector(mp.getSerialPortName()) for mp in self.moteProbes
+            moteConnector.moteConnector(mp.getPortName()) for mp in self.moteProbes
         ]
         
         # create a moteState for each moteConnector
@@ -200,6 +208,7 @@ def main(parser=None):
         trace           = argspace.trace,
         debug           = argspace.debug,
         simTopology     = argspace.simTopology,
+        iotlabmotes     = argspace.iotlabmotes,
     )
 
 def _addParserArgs(parser):
@@ -238,6 +247,12 @@ def _addParserArgs(parser):
         default    = False,
         action     = 'store_true',
         help       = 'enables application debugging'
+    )
+    parser.add_argument('-iotm', '--iotlabmotes',
+        dest       = 'iotlabmotes',
+        default    = '',
+        action     = 'store',
+        help       = 'comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
     )
     
 def _forceSlashSep(ospath, debug):
