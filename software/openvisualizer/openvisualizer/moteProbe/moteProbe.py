@@ -67,41 +67,55 @@ def findSerialPorts():
 
 class moteProbe(threading.Thread):
     
-    def __init__(self,serialport=None,emulatedMote=None):
+    MODE_SERIAL    = 'serial'
+    MODE_EMULATED  = 'emulated'
+    MODE_IOTLAB    = 'IoT-LAB'
+    MODE_ALL       = [
+        MODE_SERIAL,
+        MODE_EMULATED,
+        MODE_IOTLAB,
+    ]
+    
+    def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None):
         assert bool(serialport) != bool(emulatedMote)
         
-        if serialport:
+        # verify params
+        if   serialport:
             assert not emulatedMote
-            self.realserial       = True
-        else:
+            assert not iotlabmote
+            self.mode             = self.MODE_SERIAL
+        elif emulatedMote:
             assert not serialport
-            self.realserial       = False
+            assert not iotlabmote
+            self.mode             = self.MODE_EMULATED
+        elif iotlabmote:
+            assert not serialport
+            assert not emulatedMote
+            self.mode             = self.MODE_IOTLAB
+        else:
+            raise SystemError()
         
         # store params
-        if self.realserial:
-            # import pyserial module (needs to be installed)
+        if   self.mode==self.MODE_SERIAL:
             import serial
-            
-            # store params
             self.serialport       = serialport[0]
             self.baudrate         = serialport[1]
-            
-            # log
-            log.info("creating moteProbe attaching to serialport {0}@{1}".format(
-                    self.serialport,
-                    self.baudrate,
-                )
-            )
-        else:
-            # store params
+            self.portname         = self.serialport
+        elif self.mode==self.MODE_EMULATED:
             self.emulatedMote     = emulatedMote
-            self.serialport       = 'emulated{0}'.format(self.emulatedMote.getId())
-            
-            # log
-            log.info("creating moteProbe attaching to emulated mote {0}".format(
-                    self.serialport,
-                )
+            self.portname         = 'emulated{0}'.format(self.emulatedMote.getId())
+        elif self.mode==self.MODE_IOTLAB:
+            import socket
+            self.iotlabmote       = iotlabmote
+            self.portname         = 'IoT-LAB{0}'.format(iotlabmote)
+        else:
+            raise SystemError()
+        
+        # log
+        log.info("creating moteProbe attaching to {0}".format(
+                self.portname,
             )
+        )
         
         # local variables
         self.hdlc                 = OpenHdlc.OpenHdlc()
@@ -118,9 +132,9 @@ class moteProbe(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name                 = 'moteProbe@'+self.serialport
+        self.name                 = 'moteProbe@'+self.portname
         
-        if not self.realserial:
+        if self.mode in [self.MODE_EMULATED,self.MODE_IOTLAB]:
             # Non-daemonized moteProbe does not consistently die on close(),
             # so ensure moteProbe does not persist.
             self.daemon           = True
@@ -128,7 +142,7 @@ class moteProbe(threading.Thread):
         # connect to dispatcher
         dispatcher.connect(
             self._bufferDataToSend,
-            signal = 'fromMoteConnector@'+self.serialport,
+            signal = 'fromMoteConnector@'+self.portname,
         )
     
         # start myself
@@ -142,18 +156,30 @@ class moteProbe(threading.Thread):
             log.info("start running")
         
             while self.goOn:     # open serial port
-                if self.realserial:
-                    log.info("open serial port {0}@{1}".format(self.serialport,self.baudrate))
+                
+                # log 
+                log.info("open port {0}".format(self.portname))
+                
+                if   self.mode==self.MODE_SERIAL:
                     self.serial = serial.Serial(self.serialport,self.baudrate)
-                else:
-                    log.info("use emulated serial port {0}".format(self.serialport))
+                elif self.mode==self.MODE_EMULATED:
                     self.serial = self.emulatedMote.bspUart
+                elif self.mode==self.MODE_IOTLAB:
+                    self.serial = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                    self.serial.connect((self.iotlabmote,20000))
+                else:
+                    raise SystemError()
+                
                 while self.goOn: # read bytes from serial port
                     try:
-                        if self.realserial:
+                        if   self.mode==self.MODE_SERIAL:
                             rxBytes = self.serial.read(1)
-                        else:
+                        elif self.mode==self.MODE_EMULATED:
                             rxBytes = self.serial.read()
+                        elif self.mode==self.MODE_IOTLAB:
+                            rxBytes = self.serial.recv(1024)
+                        else:
+                            raise SystemError()
                     except Exception as err:
                         print err
                         log.warning(err)
@@ -206,14 +232,14 @@ class moteProbe(threading.Thread):
                                         # dispatch
                                         dispatcher.send(
                                             sender        = self.name,
-                                            signal        = 'fromMoteProbe@'+self.serialport,
+                                            signal        = 'fromMoteProbe@'+self.portname,
                                             data          = [ord(c) for c in self.inputBuf],
                                         )
                             
                             self.lastRxByte = rxByte
                         
-                    if not self.realserial:
-                        rxByte = self.serial.doneReading()
+                    if self.mode==self.MODE_EMULATED:
+                        self.serial.doneReading()
         except Exception as err:
             errMsg=u.formatCrashMessage(self.name,err)
             print errMsg
@@ -222,9 +248,9 @@ class moteProbe(threading.Thread):
     
     #======================== public ==========================================
     
-    def getSerialPortName(self):
+    def getPortName(self):
         with self.dataLock:
-            return self.serialport
+            return self.portname
     
     def getSerialPortBaudrate(self):
         with self.dataLock:

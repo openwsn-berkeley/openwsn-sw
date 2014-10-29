@@ -39,7 +39,7 @@ class moteProbeCli(OpenCli):
         
         for mp in self.moteProbe_handlers:
             output += [' - serial port {0}@{1} presented on TCP port {2}'.format(
-                            mp.getSerialPortName(),
+                            mp.getPortName(),
                             mp.getSerialPortBaudrate(),
                             mp.getTcpPort())]
         
