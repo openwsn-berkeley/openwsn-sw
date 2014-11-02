@@ -161,8 +161,6 @@ class OpenTunLinux(openTun.OpenTun):
             read/write operations.
         '''
         
-        returnVal = None
-        
         try:
             #=====
             log.info("opening tun interface")
@@ -202,6 +200,7 @@ class OpenTunLinux(openTun.OpenTun):
         except IOError as err:
             # happens when not root
             print 'WARNING: could not created tun interface. Are you root? ({0})'.format(err)
+            returnVal = None
         
         return returnVal
          
