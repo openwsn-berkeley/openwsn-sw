@@ -62,10 +62,15 @@ class OpenTun(eventBusClient.eventBusClient):
             name                  = 'OpenTun',
             registrations         = [
                 {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : 'getNetworkPrefix',
+                    'callback'    : self._getNetworkPrefix_notif,
+                },
+                {
                     'sender'   : self.WILDCARD,
                     'signal'   : 'v6ToInternet',
                     'callback' : self._v6ToInternet_notif
-                }
+                },
             ]
         )
         
@@ -83,7 +88,6 @@ class OpenTun(eventBusClient.eventBusClient):
             signal        = 'networkPrefix',
             data          = IPV6PREFIX
         )
-        
     
     #======================== public ==========================================
     
@@ -121,6 +125,9 @@ class OpenTun(eventBusClient.eventBusClient):
         Read from tun interface and forward to 6lowPAN
         '''
         raise NotImplementedError('subclass must implement')
+    
+    def _getNetworkPrefix_notif(self,sender,signal,data):
+        return IPV6PREFIX
     
     def _v6ToMesh_notif(self,data):
         '''

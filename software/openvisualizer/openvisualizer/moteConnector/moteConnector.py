@@ -34,6 +34,8 @@ class moteConnector(eventBusClient.eventBusClient):
         
         # local variables
         self.parser                    = OpenParser.OpenParser()
+        self.stateLock                 = threading.Lock()
+        self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False
               
         # give this thread a name
@@ -56,7 +58,7 @@ class moteConnector(eventBusClient.eventBusClient):
             ]
         )
         
-          # subscribe to dispatcher
+        # subscribe to dispatcher
         dispatcher.connect(
             self._sendToParser,
             signal = 'fromMoteProbe@'+self.serialport,
@@ -82,20 +84,7 @@ class moteConnector(eventBusClient.eventBusClient):
             # dispatch
             self.dispatch('fromMote.'+eventSubType,parsedNotif)
         
-    #======================== public ==========================================
-    
-    def _cmdToMote_handler(self,sender,signal,data):
-        if  data['serialPort']==self.serialport:
-            if data['action']==moteState.moteState.TRIGGER_DAGROOT:
-                # toggle the DAGroot state
-                self._sendToMoteProbe(
-                    dataToSend = [
-                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETDAGROOT,
-                        OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
-                    ],
-                )
-            else:
-                raise SystemError('unexpected action={0}'.format(data['action']))
+    #======================== eventBus interaction ============================
     
     def _infoDagRoot_handler(self,sender,signal,data):
         
@@ -103,31 +92,60 @@ class moteConnector(eventBusClient.eventBusClient):
         if not data['serialPort']==self.serialport:
             return 
         
-        if   data['isDAGroot']==1 and (not self._subcribedDataForDagRoot):
-            # this moteConnector is connected to a DAGroot
-            
-            # connect to dispatcher
-            self.register(
-                sender   = self.WILDCARD,
-                signal   = 'bytesToMesh',
-                callback = self._bytesToMesh_handler,
-            )
-            
-            # remember I'm subscribed
-            self._subcribedDataForDagRoot = True
-            
-        elif data['isDAGroot']==0 and self._subcribedDataForDagRoot:
-            # this moteConnector is *not* connected to a DAGroot
-            
-            # disconnect from dispatcher
-            self.unregister(
-                sender   = self.WILDCARD,
-                signal   = 'bytesToMesh',
-                callback = self._bytesToMesh_handler,
-            )
-            
-            # remember I'm not subscribed
-            self._subcribedDataForDagRoot = False
+        with self.stateLock:
+        
+            if   data['isDAGroot']==1 and (not self._subcribedDataForDagRoot):
+                # this moteConnector is connected to a DAGroot
+                
+                # connect to dispatcher
+                self.register(
+                    sender   = self.WILDCARD,
+                    signal   = 'bytesToMesh',
+                    callback = self._bytesToMesh_handler,
+                )
+                
+                # remember I'm subscribed
+                self._subcribedDataForDagRoot = True
+                
+            elif data['isDAGroot']==0 and self._subcribedDataForDagRoot:
+                # this moteConnector is *not* connected to a DAGroot
+                
+                # disconnect from dispatcher
+                self.unregister(
+                    sender   = self.WILDCARD,
+                    signal   = 'bytesToMesh',
+                    callback = self._bytesToMesh_handler,
+                )
+                
+                # remember I'm not subscribed
+                self._subcribedDataForDagRoot = False
+    
+    def _cmdToMote_handler(self,sender,signal,data):
+        if  data['serialPort']==self.serialport:
+            if data['action']==moteState.moteState.TRIGGER_DAGROOT:
+                
+                # retrieve the prefix of the network
+                with self.stateLock:
+                    if not self.networkPrefix:
+                        networkPrefix = self._dispatchAndGetResult(
+                            signal       = 'getNetworkPrefix',
+                            data         = [],
+                        )
+                        self.networkPrefix = networkPrefix
+                
+                # create data to send
+                with self.stateLock:
+                    dataToSend = [
+                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETDAGROOT,
+                        OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
+                    ]+self.networkPrefix
+                
+                # toggle the DAGroot state
+                self._sendToMoteProbe(
+                    dataToSend = dataToSend,
+                )
+            else:
+                raise SystemError('unexpected action={0}'.format(data['action']))
     
     def _bytesToMesh_handler(self,sender,signal,data):
         assert type(data)==tuple
@@ -138,6 +156,8 @@ class moteConnector(eventBusClient.eventBusClient):
         self._sendToMoteProbe(
             dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_DATA]+nextHop+lowpan,
         )
+    
+    #======================== public ==========================================
     
     def quit(self):
         raise NotImplementedError()

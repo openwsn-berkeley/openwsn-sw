@@ -654,7 +654,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     
     def _getSourceRoute(self,destination):
         returnVal = self._dispatchAndGetResult(
-            signal       = 'getSourceRoute', 
+            signal       = 'getSourceRoute',
             data         = destination,
         )
         return returnVal
