@@ -73,6 +73,8 @@ class OpenTun(eventBusClient.eventBusClient):
         self.tunIf                = self._createTunIf()
         if self.tunIf:
             self.tunReadThread    = self._createTunReadThread()
+        else:
+            self.tunReadThread    = None
         
         # TODO: retrieve network prefix from interface settings
         
@@ -86,25 +88,28 @@ class OpenTun(eventBusClient.eventBusClient):
     #======================== public ==========================================
     
     def close(self):
-        self.tunReadThread.close()
         
-        # Send a packet to openTun interface to break out of blocking read.
-        attempts = 0
-        while self.tunReadThread.isAlive() and attempts < 3:
-            attempts += 1
-            try:
-                log.info('Sending UDP packet to close openTun')
-                sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-                # Destination must route through the TUN host, but not be the host itself.
-                # OK if host does not really exist.
-                dst      = IPV6PREFIX + IPV6HOST
-                dst[15] += 1
-                # Payload and destination port are arbitrary
-                sock.sendto('stop', (u.formatIPv6Addr(dst),18004))
-                # Give thread some time to exit
-                time.sleep(0.05)
-            except Exception as err:
-                log.error('Unable to send UDP to close tunReadThread: {0}'.join(err))
+        if self.tunReadThread:
+            
+            self.tunReadThread.close()
+            
+            # Send a packet to openTun interface to break out of blocking read.
+            attempts = 0
+            while self.tunReadThread.isAlive() and attempts < 3:
+                attempts += 1
+                try:
+                    log.info('Sending UDP packet to close openTun')
+                    sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+                    # Destination must route through the TUN host, but not be the host itself.
+                    # OK if host does not really exist.
+                    dst      = IPV6PREFIX + IPV6HOST
+                    dst[15] += 1
+                    # Payload and destination port are arbitrary
+                    sock.sendto('stop', (u.formatIPv6Addr(dst),18004))
+                    # Give thread some time to exit
+                    time.sleep(0.05)
+                except Exception as err:
+                    log.error('Unable to send UDP to close tunReadThread: {0}'.join(err))
     
     #======================== private =========================================
     

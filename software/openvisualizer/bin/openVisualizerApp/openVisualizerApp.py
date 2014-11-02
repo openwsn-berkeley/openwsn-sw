@@ -122,8 +122,7 @@ class OpenVisualizerApp(object):
         '''Closes all thread-based components'''
         
         log.info('Closing OpenVisualizer')
-        if self.openTun:
-            self.openTun.close()
+        self.openTun.close()
         self.rpl.close()
         for probe in self.moteProbes:
             probe.close()
