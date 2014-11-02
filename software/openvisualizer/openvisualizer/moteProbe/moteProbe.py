@@ -261,6 +261,10 @@ class moteProbe(threading.Thread):
     
     def _bufferDataToSend(self,data):
         
+        # abort for IoT-LAB
+        if self.mode==self.MODE_IOTLAB:
+            return
+        
         # frame with HDLC
         hdlcData = self.hdlc.hdlcify(data)
         
