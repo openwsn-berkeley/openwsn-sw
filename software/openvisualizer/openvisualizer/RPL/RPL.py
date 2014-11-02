@@ -85,9 +85,6 @@ class RPL(eventBusClient.eventBusClient):
         self.dagRootEui64         = None
         self.sourceRoute          = SourceRoute.SourceRoute()
         self.latencyStats         = {}
-        
-        # send a DIO periodically
-        self._scheduleSendDIO(self.DIO_PERIOD) 
     
     #======================== public ==========================================
     
@@ -175,117 +172,9 @@ class RPL(eventBusClient.eventBusClient):
         destination = data
         return self.sourceRoute.getSourceRoute(destination)
     
-    #===== send DIO
+    #===== receive DAO
     
-    def _scheduleSendDIO(self,interval):
-        '''
-        Schedule to send a DIO sometime in the future.
-        
-        :param interval: [in] In how many seconds the DIO is scheduled to be
-            sent.
-        '''
-        self.timer      = threading.Timer(interval,self._cycleDIO)
-        self.timer.name = 'DIO Timer'
-        self.timer.start()
-        
-    def _cycleDIO(self):
-        '''
-        Send DIO and schedule next send.
-        '''
-        try:
-            self._sendDIO()
-        except Exception as err:
-            errMsg=u.formatCriticalMessage(err)
-            print errMsg
-            log.critical(errMsg)
-        finally:
-            # Must ensure next send is scheduled
-            self._scheduleSendDIO(self.DIO_PERIOD)
-    
-    def _sendDIO(self):
-        '''
-        Send a DIO.
-        '''
-        
-        # don't send DIO if I didn't discover the DAGroot's EUI64
-        if not self.dagRootEui64:
-            return
-        
-        # the list of bytes to be sent to the DAGroot.
-        # - [8B]       destination MAC address
-        # - [variable] IPHC+ header
-        dio                  = []
-        
-        # next hop: broadcast address
-        nextHop              = [0xff]*8
-        
-        # IPHC header
-        dio                 += [0x78]        # dispatch byte
-        dio                 += [0x33]        # dam sam
-        idxNH                = len(dio)
-        dio                 += [0x3A]        # next header (0x3A=ICMPv6)
-        dio                 += [0x00]        # HLIM
-        
-        # ICMPv6 header
-        idxICMPv6            = len(dio)      # remember where ICMPv6 starts
-        dio                 += [155]         # ICMPv6 type (155=RPL)
-        dio                 += [0x01]        # ICMPv6 CODE (for RPL 0x01=DIO)
-        idxICMPv6CS          = len(dio)      # remember where ICMPv6 checksum starts
-        dio                 += [0x00,0x00]   # placeholder for checksum (filled out later)
-        
-        # DIO header
-        dio                 += [0x00]        # instance ID
-        dio                 += [0x00]        # version number
-        dio                 += [0x00,0x00]   # rank
-        dio                 += [
-                                  self.DIO_OPT_GROUNDED |
-                                  self.MOP_DIO_A        |
-                                  self.MOP_DIO_B        |
-                                  self.MOP_DIO_C
-                               ]             # options: G | 0 | MOP | Prf
-        dio                 += [0x00]        # DTSN
-        dio                 += [0x00]        # flags
-        dio                 += [0x00]        # reserved
-        
-        # DODAGID
-        with self.stateLock:
-            idxSrc           = len(dio) # this is a little hack as the source is the dodag
-            dio             += self.networkPrefix
-            dio             += self.dagRootEui64
-        
-        # wireshark calculates the IPv6 source and destination from the 
-        # 6LoWPAN header. It is lot aware of the network prefix and uses
-        # link-local addresses. We do the same in this implementation to avoid
-        # checksum errors in Wireshark.
-        wiresharkSrc         = [0xfe,0x80]+[0x00]*6+[dio[idxSrc+8]|0x02]+dio[idxSrc+9:idxSrc+16]
-        wiresharkDst         = [
-            0xfe,0x80,0x00,0x00,0x00,0x00,0x00,0x00,
-            0x00,0x00,0x00,0xff,0xfe,0x00,0xff,0xff,
-        ]
-        
-        # calculate ICMPv6 checksum over ICMPv6header+ (RFC4443)
-        checksum             = u.calculatePseudoHeaderCRC(
-            src              = wiresharkSrc,
-            dst              = wiresharkDst,
-            length           = [0x00,0x00,0x00,len(dio[idxICMPv6:])],
-            nh               = [0x00]+dio[idxNH:idxNH+1],
-            payload          = dio[idxICMPv6:],
-        )
-        
-        dio[idxICMPv6CS  ]   = checksum[0]
-        dio[idxICMPv6CS+1]   = checksum[1]
-        
-        # log
-        if log.isEnabledFor(logging.DEBUG):
-            log.debug('sending DIO {0}'.format(u.formatBuf(dio)))
-
-        # dispatch
-        self.dispatch(
-            signal           = 'bytesToMesh',
-            data             = (nextHop,dio)
-        )
-    
-    def _indicateDAO(self,tup):    
+    def _indicateDAO(self,tup):
         '''
         Indicate a new DAO was received.
         
@@ -385,4 +274,3 @@ class RPL(eventBusClient.eventBusClient):
         
         #with self.dataLock:
         #    self.parents.update({tuple(source):parents})
-   
