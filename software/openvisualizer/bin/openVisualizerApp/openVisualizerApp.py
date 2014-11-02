@@ -51,12 +51,7 @@ class OpenVisualizerApp(object):
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
         # create openTun call last since indicates prefix
-        try:
-            self.openTun          = openTun.create() 
-        except IOError as err:
-            # happens on Linux when not root and opening tun interface
-            print 'WARNING: could not created tun interface. Are you root?\n{0}'.format(err)
-            self.openTun          = None
+        self.openTun              = openTun.create() 
         if self.simulatorMode:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             

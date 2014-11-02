@@ -133,7 +133,12 @@ class OpenTunLinux(openTun.OpenTun):
         Read from tun interface and forward to 6lowPAN
         '''
         
-        data = VIRTUALTUNID + data
+        # abort if not tun interface
+        if not self.tunIf:
+            return
+        
+        # add tun header
+        data  = VIRTUALTUNID + data
         
         # convert data to string
         data  = ''.join([chr(b) for b in data])
@@ -155,42 +160,50 @@ class OpenTunLinux(openTun.OpenTun):
         :returns: The handler of the interface, which can be used for later
             read/write operations.
         '''
-        #=====
-        log.info("opening tun interface")
-        f=os.open("/dev/net/tun", os.O_RDWR)
-        ifs=ioctl(f,TUNSETIFF,struct.pack("16sH","tun%d",IFF_TUN)) 
-        ifname=ifs[:16].strip("\x00")
         
-        #=====
-        log.info("configuring IPv6 address...")
-        prefixStr = u.formatIPv6Addr(openTun.IPV6PREFIX)
-        hostStr   = u.formatIPv6Addr(openTun.IPV6HOST)
+        returnVal = None
         
-        v = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
-        v = os.system('ip link set ' + ifname + ' up')
-        v = os.system('ip -6 addr add ' + prefixStr + ':' + hostStr + '/64 dev ' + ifname)
-        v = os.system('ip -6 addr add fe80::' + hostStr + '/64 dev ' + ifname)
+        try:
+            #=====
+            log.info("opening tun interface")
+            returnVal=os.open("/dev/net/tun", os.O_RDWR)
+            ifs=ioctl(returnVal,TUNSETIFF,struct.pack("16sH","tun%d",IFF_TUN)) 
+            ifname=ifs[:16].strip("\x00")
+            
+            #=====
+            log.info("configuring IPv6 address...")
+            prefixStr = u.formatIPv6Addr(openTun.IPV6PREFIX)
+            hostStr   = u.formatIPv6Addr(openTun.IPV6HOST)
+            
+            v = os.system('ip tuntap add dev ' + ifname + ' mode tun user root')
+            v = os.system('ip link set ' + ifname + ' up')
+            v = os.system('ip -6 addr add ' + prefixStr + ':' + hostStr + '/64 dev ' + ifname)
+            v = os.system('ip -6 addr add fe80::' + hostStr + '/64 dev ' + ifname)
+            
+            #=====
+            log.info("adding static route route...")
+            # added 'metric 1' for router-compatibility constraint 
+            # (show ping packet on wireshark but don't send to mote at all)
+            os.system('ip -6 route add ' + prefixStr + ':1415:9200::/96 dev ' + ifname + ' metric 1') 
+            # trying to set a gateway for this route
+            #os.system('ip -6 route add ' + prefixStr + '::/64 via ' + IPv6Prefix + ':' + hostStr + '/64') 
+            
+            #=====
+            log.info("enabling IPv6 forwarding...")
+            os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')
+            
+            #=====
+            print('\ncreated following virtual interface:')
+            os.system('ip addr show ' + ifname)
+            
+            #=====start radvd
+            #os.system('radvd start')
         
-        #=====
-        log.info("adding static route route...")
-        # added 'metric 1' for router-compatibility constraint 
-        # (show ping packet on wireshark but don't send to mote at all)
-        os.system('ip -6 route add ' + prefixStr + ':1415:9200::/96 dev ' + ifname + ' metric 1') 
-        # trying to set a gateway for this route
-        #os.system('ip -6 route add ' + prefixStr + '::/64 via ' + IPv6Prefix + ':' + hostStr + '/64') 
+        except IOError as err:
+            # happens when not root
+            print 'WARNING: could not created tun interface. Are you root? ({0})'.format(err)
         
-        #=====
-        log.info("enabling IPv6 forwarding...")
-        os.system('echo 1 > /proc/sys/net/ipv6/conf/all/forwarding')
-        
-        #=====
-        print('\ncreated following virtual interface:')
-        os.system('ip addr show ' + ifname)
-        
-        #=====start radvd
-        #os.system('radvd start')
-        
-        return f
+        return returnVal
          
     def _createTunReadThread(self):
         '''

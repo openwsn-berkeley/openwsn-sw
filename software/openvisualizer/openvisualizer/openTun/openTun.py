@@ -41,7 +41,6 @@ def create():
         
     else:
         raise NotImplementedError('Platform {0} not supported'.format(sys.platform))
-        
 
 class OpenTun(eventBusClient.eventBusClient):
     '''
@@ -72,7 +71,8 @@ class OpenTun(eventBusClient.eventBusClient):
         
         # local variables
         self.tunIf                = self._createTunIf()
-        self.tunReadThread        = self._createTunReadThread()
+        if self.tunIf:
+            self.tunReadThread    = self._createTunReadThread()
         
         # TODO: retrieve network prefix from interface settings
         
