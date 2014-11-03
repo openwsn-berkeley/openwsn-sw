@@ -89,7 +89,8 @@ class RPL(eventBusClient.eventBusClient):
     #======================== public ==========================================
     
     def close(self):
-        self.timer.cancel()
+        # nothing to do
+        pass
     
     #======================== private =========================================
     
