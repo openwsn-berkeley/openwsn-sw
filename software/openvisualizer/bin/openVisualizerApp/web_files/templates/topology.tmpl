@@ -25,6 +25,9 @@
                 border            : 1px solid yellow;
                 white-space       : nowrap;
             }
+            #topology-options {
+                margin-bottom     : 10px;
+            }
         </style>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
         <script src="/static/js/markerwithlabel.js"></script>
@@ -616,7 +619,16 @@
 	                    <h1 class="page-header">Topology</h1>
 	                </div>
 	            </div>
-
+                <div id= "topology-options">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h4>Topology options</h3>
+                            <a href="#"><button id="toggle_btn" type="button" class="btn btn-default btn-xs">Save topology</button></a>
+                            <a href="#"><button id="toggle_btn" type="button" class="btn btn-default btn-xs">Load topology</button></a>
+                        </div>
+                    </div>
+                </div>
+                    
 	            <div class="row">
 	                <div class="col-lg-12">
 	                	<div id="map-canvas"/>

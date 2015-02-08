@@ -104,6 +104,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/topology/connections',   method='POST',  callback=self._topologyConnectionsUpdate)
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
+        self.websrv.route(path='/topology/create',                        callback=self._topologyCreate)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
     
     @view('moteview.tmpl')
@@ -324,7 +325,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         }
         
         return data
-    
+
+    @view('create.tmpl')
+    def _topologyCreate(self):
+
+        print "coucou"
+  
     def _getEventData(self):
         response = {
             'isDebugPkts' : 'true' if self.app.eventBusMonitor.wiresharkDebugEnabled else 'false',
