@@ -105,6 +105,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/topology/create',                        callback=self._topologyCreate)
+        self.websrv.route(path='/topology/create',        method='POST',  callback=self._topologyCreate)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
     
     @view('moteview.tmpl')
@@ -255,11 +256,18 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     def _topologyMotesUpdate(self):
         
         motesTemp = {}
+        print bottle.request.forms.items()
         for (k,v) in bottle.request.forms.items():
             m = re.match("motes\[(\w+)\]\[(\w+)\]", k)
+            print k
+            print m
             assert m
             index  = int(m.group(1))
             param  =     m.group(2)
+            print "index"
+            print index
+            print "param"
+            print param
             try:
                 v  = int(v)
             except ValueError:
@@ -329,8 +337,33 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     @view('create.tmpl')
     def _topologyCreate(self):
 
-        print "coucou"
-  
+        data = bottle.request.files.get('data')
+        
+        if data is not None:
+            raw = data.file.read()
+            
+            try:   
+                data_json = json.loads(raw)
+                motes = data_json['motes']
+                
+                for mote in motes:
+                    print 'lat :'
+                    print mote['lat']
+                    print 'long :'
+                    print mote['lon']
+
+            
+                return {"result" : "Your file is loading "}
+            
+            except (ValueError, KeyError, TypeError):
+                print "JSON format error"
+                return {"result" : "Your JSON file is not well formated"}
+        
+        else :
+            return {"result" : "please, select a file"}
+
+
+
     def _getEventData(self):
         response = {
             'isDebugPkts' : 'true' if self.app.eventBusMonitor.wiresharkDebugEnabled else 'false',
