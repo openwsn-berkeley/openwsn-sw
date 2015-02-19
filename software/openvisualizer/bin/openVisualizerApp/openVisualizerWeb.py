@@ -383,9 +383,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     @view('create.tmpl')
     def _topologyCreate(self):
 
-<<<<<<< HEAD
-        print "coucou"
-=======
         data = bottle.request.files.get('data')
         
         if data is not None:
@@ -411,8 +408,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         else :
             return {"result" : "please, select a file"}
 
-
->>>>>>> d22f5b557ed1e2f8f12801451f028ab8f1eed0e8
 
     def _getEventData(self):
         response = {
