@@ -340,13 +340,25 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         data = bottle.request.files.get('data')
         
         if data is not None:
+            from openvisualizer.SimEngine import SimEngine, MoteHandler
+            from openvisualizer.moteProbe     import moteProbe
+            import oos_openwsn
             raw = data.file.read()
             
             try:   
                 data_json = json.loads(raw)
                 motes = data_json['motes']
-                
+                sys.path.append(os.path.join(self.app.datadir, 'sim_files'))
+                MoteHandler.readNotifIds(os.path.join(self.app.datadir, 'sim_files', 'openwsnmodule_obj.h'))
+                self.app.moteProbes       = []
+
                 for mote in motes:
+
+                    moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
+                    self.app.simengine.indicateNewMote(moteHandler)
+                    self.app.moteProbes  += [moteProbe.moteProbe(emulatedMote=moteHandler)]
+                    #moteHandler = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
+                    #app.simengine.indicateNewMote(moteHandler) 
                     print 'lat :'
                     print mote['lat']
                     print 'long :'
