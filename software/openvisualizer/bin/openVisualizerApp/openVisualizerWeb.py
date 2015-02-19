@@ -388,8 +388,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         if data is not None:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             from openvisualizer.moteProbe     import moteProbe
+            from openvisualizer.moteConnector import moteConnector
+            from openvisualizer.moteState     import moteState
             import oos_openwsn
             raw = data.file.read()
+            print self.engine.moteHandlers
             
             try:   
                 data_json = json.loads(raw)
@@ -397,8 +400,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                 sys.path.append(os.path.join(self.app.datadir, 'sim_files'))
                 MoteHandler.readNotifIds(os.path.join(self.app.datadir, 'sim_files', 'openwsnmodule_obj.h'))
                 self.app.moteProbes       = []
+            
+                self.app.simengine        = SimEngine.SimEngine(self.app.simTopology)
+                self.app.simengine.start()
 
                 for mote in motes:
+
 
                     moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                     self.app.simengine.indicateNewMote(moteHandler)
@@ -409,6 +416,26 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                     print mote['lat']
                     print 'long :'
                     print mote['lon']
+                # create a moteConnector for each moteProbe
+                self.app.moteConnectors       = [
+                moteConnector.moteConnector(mp.getPortName()) for mp in self.app.moteProbes
+                    ]
+        
+                # create a moteState for each moteConnector
+                self.app.moteStates           = [
+                moteState.moteState(mc) for mc in self.app.moteConnectors
+                    ]
+                self.app.simengine.pause()
+                now = self.app.simengine.timeline.getCurrentTime()
+                for rank in range(self.app.simengine.getNumMotes()):
+                    moteHandler = self.app.simengine.getMoteHandler(rank)
+                    self.app.simengine.timeline.scheduleEvent(
+                        now,
+                        moteHandler.getId(),
+                        moteHandler.hwSupply.switchOn,
+                        moteHandler.hwSupply.INTR_SWITCHON
+                        )
+                self.app.simengine.resume()
 
             
                 return {"result" : "Your file is loading "}
