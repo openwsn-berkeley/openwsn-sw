@@ -80,7 +80,7 @@ class Propagation(eventBusClient.eventBusClient):
                 # (latFrom,lonFrom) = mhFrom.getLocation()
                 # mhTo              = self.engine.getMoteHandlerById(toMote)
                 # (latTo,lonTo)     = mhTo.getLocation()
-              
+    
                 # # compute distance
                 # lonFrom, latFrom, lonTo, latTo = map(radians, [lonFrom, latFrom, lonTo, latTo])
                 # dlon             = lonTo - lonFrom 
