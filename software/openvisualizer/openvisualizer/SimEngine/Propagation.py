@@ -76,18 +76,11 @@ class Propagation(eventBusClient.eventBusClient):
                 #===== Pister-hack model
                 
                 # retrieve position
-<<<<<<< HEAD
+
                 # mhFrom            = self.engine.getMoteHandlerById(fromMote)
                 # (latFrom,lonFrom) = mhFrom.getLocation()
                 # mhTo              = self.engine.getMoteHandlerById(toMote)
                 # (latTo,lonTo)     = mhTo.getLocation()
-   
-=======
-                mhFrom            = self.engine.getMoteHandlerById(fromMote)
-                (latFrom,lonFrom) = mhFrom.getLocation()
-                mhTo              = self.engine.getMoteHandlerById(toMote)
-                (latTo,lonTo)     = mhTo.getLocation()
->>>>>>> a6ee91b01073c25c951d7a6d48abe99b0afcb724
                 
                 # # compute distance
                 # lonFrom, latFrom, lonTo, latTo = map(radians, [lonFrom, latFrom, lonTo, latTo])
