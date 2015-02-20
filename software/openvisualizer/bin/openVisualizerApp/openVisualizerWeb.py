@@ -389,7 +389,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             from openvisualizer.moteProbe     import moteProbe
             from openvisualizer.moteConnector import moteConnector
-            from openvisualizer.moteState     import moteState
             import oos_openwsn
             raw = data.file.read()
             print self.engine.moteHandlers
@@ -400,12 +399,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                 sys.path.append(os.path.join(self.app.datadir, 'sim_files'))
                 MoteHandler.readNotifIds(os.path.join(self.app.datadir, 'sim_files', 'openwsnmodule_obj.h'))
                 self.app.moteProbes       = []
-            
-                self.app.simengine        = SimEngine.SimEngine(self.app.simTopology)
-                self.app.simengine.start()
 
                 for mote in motes:
-
 
                     moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                     self.app.simengine.indicateNewMote(moteHandler)

@@ -50,7 +50,6 @@ class OpenVisualizerApp(object):
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
-        self.simTopology          = simTopology
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
         if self.simulatorMode:
