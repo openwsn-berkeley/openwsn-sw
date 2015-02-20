@@ -382,36 +382,86 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
     @view('create.tmpl')
     def _topologyCreate(self):
-
+        '''
+            import new topology from json file
+        '''
         data = bottle.request.files.get('data')
         
         if data is not None:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             from openvisualizer.moteProbe     import moteProbe
+            from openvisualizer.moteConnector import moteConnector
+
             import oos_openwsn
+
+            #Reading the json file
             raw = data.file.read()
             
-            try:   
+            try:
+                #Parse the json content   
                 data_json = json.loads(raw)
                 motes = data_json['motes']
+
+                #Motes creations
+                print "Mote creations"
                 sys.path.append(os.path.join(self.app.datadir, 'sim_files'))
                 MoteHandler.readNotifIds(os.path.join(self.app.datadir, 'sim_files', 'openwsnmodule_obj.h'))
                 self.app.moteProbes       = []
-
                 for mote in motes:
 
                     moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                     self.app.simengine.indicateNewMote(moteHandler)
                     self.app.moteProbes  += [moteProbe.moteProbe(emulatedMote=moteHandler)]
+
                     #moteHandler = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                     #app.simengine.indicateNewMote(moteHandler) 
                     print 'lat :'
                     print mote['lat']
                     print 'long :'
                     print mote['lon']
+                    
+                # create a moteConnector for each moteProbe
+                self.app.moteConnectors       = [
+                moteConnector.moteConnector(mp.getPortName()) for mp in self.app.moteProbes
+                    ]
+        
+                # create a moteState for each moteConnector
+                self.app.moteStates           = [
+                moteState.moteState(mc) for mc in self.app.moteConnectors
+                    ]
+                self.app.simengine.pause()
+                now = self.app.simengine.timeline.getCurrentTime()
+                for rank in range(self.app.simengine.getNumMotes()):
+                    moteHandler = self.app.simengine.getMoteHandler(rank)
+                    self.app.simengine.timeline.scheduleEvent(
+                        now,
+                        moteHandler.getId(),
+                        moteHandler.hwSupply.switchOn,
+                        moteHandler.hwSupply.INTR_SWITCHON
+                        )
+                self.app.simengine.resume()
 
-            
-                return {"result" : "Your file is loading "}
+
+                #Delete each connections established during motes creation
+                print "deleteConnection"
+                ConnectionsToDelete = self.engine.propagation.retrieveConnections()
+                for co in ConnectionsToDelete :
+                    fromMote = int(co['fromMote'])
+                    toMote = int(co['toMote'])
+                    self.engine.propagation.deleteConnection(fromMote,toMote)
+
+                #Implements new connections
+                print "create connections"
+                connections = data_json['connections']
+                print connections
+                for co in connections:
+                    print "fromMote"
+                    fromMote = int(co['fromMote'])
+                    print fromMote
+                    toMote = int(co['toMote'])
+                    self.engine.propagation.createConnection(fromMote,toMote)
+                
+                return {"result" : "Your topology has been loaded "}
             
             except (ValueError, KeyError, TypeError):
                 print "JSON format error"
