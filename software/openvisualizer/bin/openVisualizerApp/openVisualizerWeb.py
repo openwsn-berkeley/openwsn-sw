@@ -258,18 +258,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     def _topologyMotesUpdate(self):
 
         motesTemp = {}
-        print bottle.request.forms.items()
         for (k,v) in bottle.request.forms.items():
             m = re.match("motes\[(\w+)\]\[(\w+)\]", k)
-            print k
-            print m
+           
             assert m
             index  = int(m.group(1))
             param  =     m.group(2)
-            print "index"
-            print index
-            print "param"
-            print param
             try:
                 v  = int(v)
             except ValueError:
@@ -403,7 +397,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                 motes = data_json['motes']
 
                 #Motes creations
-                print "Mote creations"
+                
                 sys.path.append(os.path.join(self.app.datadir, 'sim_files'))
                 MoteHandler.readNotifIds(os.path.join(self.app.datadir, 'sim_files', 'openwsnmodule_obj.h'))
                 self.app.moteProbes       = []
@@ -435,7 +429,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                 self.app.simengine.resume()
 
                 #Delete each connections established during motes creation
-                print "deleteConnection"
+            
                 ConnectionsToDelete = self.engine.propagation.retrieveConnections()
                 for co in ConnectionsToDelete :
                     fromMote = int(co['fromMote'])
@@ -443,13 +437,10 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                     self.engine.propagation.deleteConnection(fromMote,toMote)
 
                 #Implements new connections
-                print "create connections"
-                connections = data_json['connections']
-                print connections
-                for co in connections:
-                    print "fromMote"
+           
+                connect = data_json['connections']
+                for co in connect:
                     fromMote = int(co['fromMote'])
-                    print fromMote
                     toMote = int(co['toMote'])
                     self.engine.propagation.createConnection(fromMote,toMote)
                 
