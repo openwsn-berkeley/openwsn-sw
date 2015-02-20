@@ -50,7 +50,6 @@ class OpenVisualizerApp(object):
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
-        self.simTopology          = simTopology
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
         if self.simulatorMode:
@@ -173,7 +172,7 @@ def main(parser=None):
         {'logDir': _forceSlashSep(logdir, argspace.debug)}
     )
 
-    if argspace.numMotes >= 0:
+    if argspace.numMotes > 0:
         # --simCount implies --sim
         argspace.simulatorMode = True
     elif argspace.simulatorMode == True:
