@@ -385,11 +385,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             from openvisualizer.moteProbe     import moteProbe
             from openvisualizer.moteConnector import moteConnector
+
             import oos_openwsn
 
             #Reading the json file
             raw = data.file.read()
-    
             
             try:
                 #Parse the json content   
@@ -406,6 +406,13 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                     moteHandler       = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
                     self.app.simengine.indicateNewMote(moteHandler)
                     self.app.moteProbes  += [moteProbe.moteProbe(emulatedMote=moteHandler)]
+
+                    #moteHandler = MoteHandler.MoteHandler(oos_openwsn.OpenMote())
+                    #app.simengine.indicateNewMote(moteHandler) 
+                    print 'lat :'
+                    print mote['lat']
+                    print 'long :'
+                    print mote['lon']
                     
                 # create a moteConnector for each moteProbe
                 self.app.moteConnectors       = [
@@ -427,6 +434,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                         moteHandler.hwSupply.INTR_SWITCHON
                         )
                 self.app.simengine.resume()
+
 
                 #Delete each connections established during motes creation
             

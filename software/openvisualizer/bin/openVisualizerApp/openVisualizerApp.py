@@ -172,7 +172,7 @@ def main(parser=None):
         {'logDir': _forceSlashSep(logdir, argspace.debug)}
     )
 
-    if argspace.numMotes >= 0:
+    if argspace.numMotes > 0:
         # --simCount implies --sim
         argspace.simulatorMode = True
     elif argspace.simulatorMode == True:
