@@ -32,7 +32,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes, importTopo):
         
         # store params
         self.confdir              = confdir
@@ -43,6 +43,7 @@ class OpenVisualizerApp(object):
         self.trace                = trace
         self.debug                = debug
         self.iotlabmotes          = iotlabmotes
+        self.importTopo           = importTopo
         
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -52,6 +53,7 @@ class OpenVisualizerApp(object):
         self.udpLatency           = UDPLatency.UDPLatency()
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
+        print "creation"
         if self.simulatorMode:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             
@@ -172,9 +174,14 @@ def main(parser=None):
         {'logDir': _forceSlashSep(logdir, argspace.debug)}
     )
 
-    if argspace.numMotes >= 0:
+    if argspace.importTopo == True and argspace.simulatorMode == True:
+        argspace.numMotes = 0
+        print "yolo"
+        # --importTopo
+    elif argspace.numMotes > 0:
         # --simCount implies --sim
         argspace.simulatorMode = True
+        print "coucou"
     elif argspace.simulatorMode == True:
         # default count when --simCount not provided
         argspace.numMotes = DEFAULT_MOTE_COUNT
@@ -203,6 +210,7 @@ def main(parser=None):
         debug           = argspace.debug,
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
+        importTopo      = argspace.importTopo,
     )
 
 def _addParserArgs(parser):
@@ -247,6 +255,12 @@ def _addParserArgs(parser):
         default    = '',
         action     = 'store',
         help       = 'comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
+    )
+    parser.add_argument('-i', '--importTopo', 
+        dest       = 'importTopo',
+        default    = False,
+        action     = 'store_true',
+        help       = 'No mote is emulated, a topology can be load from a json file'
     )
     
 def _forceSlashSep(ospath, debug):

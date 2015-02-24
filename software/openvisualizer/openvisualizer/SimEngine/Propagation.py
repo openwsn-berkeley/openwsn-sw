@@ -72,35 +72,34 @@ class Propagation(eventBusClient.eventBusClient):
             
             if not self.simTopology:
                 
-                
                 #===== Pister-hack model
                 
                 # retrieve position
-                # mhFrom            = self.engine.getMoteHandlerById(fromMote)
-                # (latFrom,lonFrom) = mhFrom.getLocation()
-                # mhTo              = self.engine.getMoteHandlerById(toMote)
-                # (latTo,lonTo)     = mhTo.getLocation()
+                mhFrom            = self.engine.getMoteHandlerById(fromMote)
+                (latFrom,lonFrom) = mhFrom.getLocation()
+                mhTo              = self.engine.getMoteHandlerById(toMote)
+                (latTo,lonTo)     = mhTo.getLocation()
     
-                # # compute distance
-                # lonFrom, latFrom, lonTo, latTo = map(radians, [lonFrom, latFrom, lonTo, latTo])
-                # dlon             = lonTo - lonFrom 
-                # dlat             = latTo - latFrom 
-                # a                = sin(dlat/2)**2 + cos(latFrom) * cos(latTo) * sin(dlon/2)**2
-                # c                = 2 * asin(sqrt(a)) 
-                # d_km                = 6367 * c
+                # compute distance
+                lonFrom, latFrom, lonTo, latTo = map(radians, [lonFrom, latFrom, lonTo, latTo])
+                dlon             = lonTo - lonFrom 
+                dlat             = latTo - latFrom 
+                a                = sin(dlat/2)**2 + cos(latFrom) * cos(latTo) * sin(dlon/2)**2
+                c                = 2 * asin(sqrt(a)) 
+                d_km                = 6367 * c
                 
-                # # compute reception power (first Friis, then apply Pister-hack)
-                # Prx              = TX_POWER_dBm - (20*log10(d_km) + 20*log10(FREQUENCY_GHz) + 92.45)
-                # Prx             -= PISTER_HACK_LOSS*random.random()
+                # compute reception power (first Friis, then apply Pister-hack)
+                Prx              = TX_POWER_dBm - (20*log10(d_km) + 20*log10(FREQUENCY_GHz) + 92.45)
+                Prx             -= PISTER_HACK_LOSS*random.random()
                
-                # turn into PDR
-                # if   Prx<SENSITIVITY_dBm:
-                #     pdr          = 0.0
-                # elif Prx>SENSITIVITY_dBm+GREY_AREA_dB:
-                #     pdr          = 1.0
-                # else:
-                #     pdr          = (Prx-SENSITIVITY_dBm)/GREY_AREA_dB
-                pdr = 1
+                #turn into PDR
+                if   Prx<SENSITIVITY_dBm:
+                    pdr          = 0.0
+                elif Prx>SENSITIVITY_dBm+GREY_AREA_dB:
+                    pdr          = 1.0
+                else:
+                    pdr          = (Prx-SENSITIVITY_dBm)/GREY_AREA_dB
+            #pdr = 1
             elif self.simTopology=='linear':
                 
                 # linear network

@@ -335,35 +335,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
         Retrieve the topology data, in JSON format, and download it.
         '''
-
-        # motes
-        motes = []
-        rank  = 0
-        while True:
-            try:
-                mh            = self.engine.getMoteHandler(rank)
-                id            = mh.getId()
-                (lat,lon)     = mh.getLocation()
-                motes += [
-                    {
-                        'id':    id,
-                        'lat':   lat,
-                        'lon':   lon,
-                    }
-                ]
-                rank+=1
-            except IndexError:
-               break
-
-        # connections
-        connections = self.engine.propagation.retrieveConnections()
-
-        data = {
-            'motes'          : motes,
-            'connections'    : connections,
-        }
-        
-        #file
+        data = self._topologyData()
         now = datetime.datetime.now()
 
         response.headers['Content-disposition']='attachement; filename=topology_data_'+now.strftime("%d-%m-%y_%Hh%M")+'.json'
@@ -515,6 +487,7 @@ if __name__=="__main__":
     webapp   = OpenVisualizerWeb(app, websrv)
 
     # start web interface in a separate thread
+    print "hey"
     webthread = threading.Thread(
         target = websrv.run,
         kwargs = {
