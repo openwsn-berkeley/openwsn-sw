@@ -335,6 +335,15 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
         data = self._topologyData()
         now = datetime.datetime.now()
+        DAGrootList=[]
+
+        for ms in self.app.moteStates:
+            if(ms.getStateElem(moteState.moteState.ST_IDMANAGER).isDAGroot):
+                DAGrootList.append(ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()[1])
+
+        data['DAGrootList']=DAGrootList
+
+        
 
         response.headers['Content-disposition']='attachement; filename=topology_data_'+now.strftime("%d-%m-%y_%Hh%M")+'.json'
         response.headers['filename']='test.json'
