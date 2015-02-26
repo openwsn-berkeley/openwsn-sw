@@ -11,6 +11,7 @@ top-level UI module.  See main() for startup use.
 import sys
 import os
 import logging
+import json
 log = logging.getLogger('openVisualizerApp')
 
 from openvisualizer.eventBus      import eventBusMonitor
@@ -32,7 +33,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes, importTopo):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes, pathTopo):
         
         # store params
         self.confdir              = confdir
@@ -43,7 +44,7 @@ class OpenVisualizerApp(object):
         self.trace                = trace
         self.debug                = debug
         self.iotlabmotes          = iotlabmotes
-        self.importTopo           = importTopo
+        self.pathTopo             = pathTopo
         
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -53,12 +54,17 @@ class OpenVisualizerApp(object):
         self.udpLatency           = UDPLatency.UDPLatency()
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
-        print "creation"
         if self.simulatorMode:
             from openvisualizer.SimEngine import SimEngine, MoteHandler
             
             self.simengine        = SimEngine.SimEngine(simTopology)
             self.simengine.start()
+
+        if self.pathTopo != '.' and self.simulatorMode == True and os.path.exists(pathTopo):
+            topoConfig = open(pathTopo)
+            topo = json.load(topoConfig)
+            self.numMotes = len(topo['motes'])
+
         
         # create a moteProbe for each mote
         if self.simulatorMode:
@@ -109,6 +115,32 @@ class OpenVisualizerApp(object):
                     moteHandler.hwSupply.INTR_SWITCHON
                 )
             self.simengine.resume()
+
+        if self.pathTopo != '.' and self.simulatorMode == True and os.path.exists(pathTopo):
+            
+            #Delete each connections established during motes creation
+            ConnectionsToDelete = self.simengine.propagation.retrieveConnections()
+            for co in ConnectionsToDelete :
+                fromMote = int(co['fromMote'])
+                toMote = int(co['toMote'])
+                self.simengine.propagation.deleteConnection(fromMote,toMote)
+
+            motes = topo['motes']
+            for mote in motes :
+                mh = self.simengine.getMoteHandlerById(mote['id'])
+                mh.setLocation(mote['lat'], mote['lon'])
+            
+            #Implements new connections
+            connect = topo['connections']
+            for co in connect:
+                fromMote = int(co['fromMote'])
+                toMote = int(co['toMote'])
+                pdr = float(co['pdr'])
+                print type(pdr)
+                self.simengine.propagation.createConnection(fromMote,toMote)
+                self.simengine.propagation.updateConnection(fromMote,toMote,pdr)
+
+
         
         # start tracing threads
         if self.trace:
@@ -174,14 +206,14 @@ def main(parser=None):
         {'logDir': _forceSlashSep(logdir, argspace.debug)}
     )
 
-    if argspace.importTopo == True and argspace.simulatorMode == True:
+    if argspace.pathTopo != ".":
+        argspace.simulatorMode = True
         argspace.numMotes = 0
-        print "yolo"
+        print argspace.pathTopo
         # --importTopo
     elif argspace.numMotes > 0:
         # --simCount implies --sim
         argspace.simulatorMode = True
-        print "coucou"
     elif argspace.simulatorMode == True:
         # default count when --simCount not provided
         argspace.numMotes = DEFAULT_MOTE_COUNT
@@ -210,7 +242,7 @@ def main(parser=None):
         debug           = argspace.debug,
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
-        importTopo      = argspace.importTopo,
+        pathTopo        = argspace.pathTopo,
     )
 
 def _addParserArgs(parser):
@@ -257,9 +289,9 @@ def _addParserArgs(parser):
         help       = 'comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
     )
     parser.add_argument('-i', '--importTopo', 
-        dest       = 'importTopo',
-        default    = False,
-        action     = 'store_true',
+        dest       = 'pathTopo',
+        default    = '.',
+        action     = 'store',
         help       = 'No mote is emulated, a topology can be load from a json file'
     )
     

@@ -76,8 +76,10 @@ class Propagation(eventBusClient.eventBusClient):
                 
                 # retrieve position
                 mhFrom            = self.engine.getMoteHandlerById(fromMote)
+                print mhFrom
                 (latFrom,lonFrom) = mhFrom.getLocation()
                 mhTo              = self.engine.getMoteHandlerById(toMote)
+                print mhTo
                 (latTo,lonTo)     = mhTo.getLocation()
     
                 # compute distance
@@ -99,7 +101,11 @@ class Propagation(eventBusClient.eventBusClient):
                     pdr          = 1.0
                 else:
                     pdr          = (Prx-SENSITIVITY_dBm)/GREY_AREA_dB
-            #pdr = 1
+                
+                if pdr <= 0 :
+                    pdr = 1
+
+          
             elif self.simTopology=='linear':
                 
                 # linear network
