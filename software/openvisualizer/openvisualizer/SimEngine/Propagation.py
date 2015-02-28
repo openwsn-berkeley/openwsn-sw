@@ -102,8 +102,8 @@ class Propagation(eventBusClient.eventBusClient):
                 else:
                     pdr          = (Prx-SENSITIVITY_dBm)/GREY_AREA_dB
                 
-                if pdr <= 0 :
-                    pdr = 1
+                # if pdr <= 0 :
+                #     pdr = 1
 
           
             elif self.simTopology=='linear':

@@ -116,6 +116,8 @@ class OpenVisualizerApp(object):
                 )
             self.simengine.resume()
 
+       
+
         if self.pathTopo != '.' and self.simulatorMode == True and os.path.exists(pathTopo):
             
             #Delete each connections established during motes creation
@@ -139,6 +141,27 @@ class OpenVisualizerApp(object):
                 print type(pdr)
                 self.simengine.propagation.createConnection(fromMote,toMote)
                 self.simengine.propagation.updateConnection(fromMote,toMote,pdr)
+            DAGrootList = topo['DAGrootList']
+            print DAGrootList
+            for DAGroot in DAGrootList :
+                hexaDAGroot = hex(DAGroot)
+                hexaDAGroot = hexaDAGroot[2:]
+                prefixLen = 4 - len(hexaDAGroot)
+                
+                prefix =""
+                for i in range(prefixLen):
+                    prefix += "0"
+                moteid = prefix+hexaDAGroot
+                print moteid
+                ms = self.getMoteState(moteid)
+                print self.moteStates
+                print ms
+                if ms:
+                    print 'if'
+                    log.debug('Found mote {0} in moteStates'.format(moteid))
+                    ms.triggerAction(ms.TRIGGER_DAGROOT)
+                else:
+                    log.debug('Mote {0} not found in moteStates'.format(moteid))
 
 
         
@@ -170,6 +193,7 @@ class OpenVisualizerApp(object):
         '''
         for ms in self.moteStates:
             idManager = ms.getStateElem(ms.ST_IDMANAGER)
+            print idManager
             if idManager and idManager.get16bAddr():
                 addr = ''.join(['%02x'%b for b in idManager.get16bAddr()])
                 if addr == moteid:
@@ -209,6 +233,7 @@ def main(parser=None):
     if argspace.pathTopo != ".":
         argspace.simulatorMode = True
         argspace.numMotes = 0
+        argspace.simTopology = "fully-meshed"
         print argspace.pathTopo
         # --importTopo
     elif argspace.numMotes > 0:

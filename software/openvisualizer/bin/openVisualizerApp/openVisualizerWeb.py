@@ -142,9 +142,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         :param moteid: 16-bit ID of mote
         '''
+        print moteid
+        print type(moteid)
         log.info('Toggle root status for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:
+            print 'ok'
             log.debug('Found mote {0} in moteStates'.format(moteid))
             ms.triggerAction(ms.TRIGGER_DAGROOT)
             return '{"result" : "success"}'
