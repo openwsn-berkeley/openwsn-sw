@@ -292,7 +292,7 @@ def _addParserArgs(parser):
         dest       = 'pathTopo',
         default    = '.',
         action     = 'store',
-        help       = 'No mote is emulated, a topology can be load from a json file'
+        help       = 'No mote is emulated, a topology can be loaded from a json file'
     )
     
 def _forceSlashSep(ospath, debug):
