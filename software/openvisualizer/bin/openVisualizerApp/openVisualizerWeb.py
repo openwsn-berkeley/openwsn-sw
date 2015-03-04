@@ -78,6 +78,14 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             registrations         =  [],
         )
 
+        if len(app.DAGrootList)>0:
+            print "hello"
+            for moteid in app.DAGrootList:
+                self._showMoteview(moteid)
+                self._getMoteData(moteid)
+                self._toggleDAGroot(moteid)
+
+
     #======================== public ==========================================
 
     #======================== private =========================================
@@ -115,6 +123,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         :param moteid: 16-bit ID of mote (optional)
         '''
+        print "show moteview"
+        print moteid
         log.debug("moteview moteid parameter is {0}".format(moteid));
 
         motelist = []
@@ -136,12 +146,14 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                                   root='{0}/web_files/static/'.format(self.app.datadir))
 
     def _toggleDAGroot(self, moteid):
+        print "toggle DAG root"
         '''
         Triggers toggle DAGroot state, via moteState. No real response. Page is
         updated when next retrieve mote data.
 
         :param moteid: 16-bit ID of mote
         '''
+        print "moteid"
         print moteid
         print type(moteid)
         log.info('Toggle root status for moteid {0}'.format(moteid))
@@ -156,11 +168,15 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             return '{"result" : "fail"}'
 
     def _getMoteData(self, moteid):
+        print "get mote data"
+        print moteid
         '''
         Collects data for the provided mote.
 
         :param moteid: 16-bit ID of mote
         '''
+        print moteid
+        print type(moteid)
         log.debug('Get JSON data for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:
@@ -406,6 +422,8 @@ if __name__=="__main__":
     websrv   = bottle.Bottle()
     webapp   = OpenVisualizerWeb(app, websrv)
 
+    
+
     # start web interface in a separate thread
     print "hey"
     webthread = threading.Thread(
@@ -419,6 +437,7 @@ if __name__=="__main__":
     )
     webthread.start()
 
+    
     #===== add a cli (minimal) interface
 
     banner  = []

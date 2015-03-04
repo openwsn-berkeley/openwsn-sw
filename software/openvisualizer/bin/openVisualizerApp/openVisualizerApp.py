@@ -52,6 +52,7 @@ class OpenVisualizerApp(object):
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
+        self.DAGrootList          = []
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
         if self.simulatorMode:
@@ -59,6 +60,7 @@ class OpenVisualizerApp(object):
             
             self.simengine        = SimEngine.SimEngine(simTopology)
             self.simengine.start()
+        
 
         if self.pathTopo != '.' and self.simulatorMode == True and os.path.exists(pathTopo):
             topoConfig = open(pathTopo)
@@ -141,9 +143,10 @@ class OpenVisualizerApp(object):
                 print type(pdr)
                 self.simengine.propagation.createConnection(fromMote,toMote)
                 self.simengine.propagation.updateConnection(fromMote,toMote,pdr)
-            DAGrootList = topo['DAGrootList']
-            print DAGrootList
-            for DAGroot in DAGrootList :
+            
+            #store DAGrot moteids
+            DAGrootL = topo['DAGrootList']
+            for DAGroot in DAGrootL :
                 hexaDAGroot = hex(DAGroot)
                 hexaDAGroot = hexaDAGroot[2:]
                 prefixLen = 4 - len(hexaDAGroot)
@@ -152,16 +155,7 @@ class OpenVisualizerApp(object):
                 for i in range(prefixLen):
                     prefix += "0"
                 moteid = prefix+hexaDAGroot
-                print moteid
-                ms = self.getMoteState(moteid)
-                print self.moteStates
-                print ms
-                if ms:
-                    print 'if'
-                    log.debug('Found mote {0} in moteStates'.format(moteid))
-                    ms.triggerAction(ms.TRIGGER_DAGROOT)
-                else:
-                    log.debug('Mote {0} not found in moteStates'.format(moteid))
+                self.DAGrootList.append(moteid)
 
 
         
@@ -193,6 +187,7 @@ class OpenVisualizerApp(object):
         '''
         for ms in self.moteStates:
             idManager = ms.getStateElem(ms.ST_IDMANAGER)
+            print "id idManager"
             print idManager
             if idManager and idManager.get16bAddr():
                 addr = ''.join(['%02x'%b for b in idManager.get16bAddr()])
