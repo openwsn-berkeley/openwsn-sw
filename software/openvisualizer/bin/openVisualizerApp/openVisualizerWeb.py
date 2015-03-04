@@ -6,6 +6,7 @@
 # http://opensource.org/licenses/BSD-2-Clause
 import sys
 import os
+import time
 
 if __name__=="__main__":
     # Update pythonpath if running in in-tree development mode
@@ -77,6 +78,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             name                  = 'OpenVisualizerWeb',
             registrations         =  [],
         )
+
+        time.sleep(1)
 
         if len(app.DAGrootList)>0:
             print "hello"
