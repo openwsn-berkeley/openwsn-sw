@@ -101,11 +101,7 @@ class Propagation(eventBusClient.eventBusClient):
                     pdr          = 1.0
                 else:
                     pdr          = (Prx-SENSITIVITY_dBm)/GREY_AREA_dB
-                
-                # if pdr <= 0 :
-                #     pdr = 1
 
-          
             elif self.simTopology=='linear':
                 
                 # linear network

@@ -61,7 +61,7 @@ class OpenVisualizerApp(object):
             self.simengine        = SimEngine.SimEngine(simTopology)
             self.simengine.start()
         
-
+        # import the number of motes from json file given by user (if the importTopo option is enabled)
         if self.pathTopo != '.' and self.simulatorMode == True and os.path.exists(pathTopo):
             topoConfig = open(pathTopo)
             topo = json.load(topoConfig)
@@ -119,10 +119,10 @@ class OpenVisualizerApp(object):
             self.simengine.resume()
 
        
-
+        # import the topology from the json file
         if self.pathTopo != '.' and self.simulatorMode == True and os.path.exists(pathTopo):
             
-            #Delete each connections established during motes creation
+            # delete each connections automatically established during motes creation
             ConnectionsToDelete = self.simengine.propagation.retrieveConnections()
             for co in ConnectionsToDelete :
                 fromMote = int(co['fromMote'])
@@ -134,17 +134,16 @@ class OpenVisualizerApp(object):
                 mh = self.simengine.getMoteHandlerById(mote['id'])
                 mh.setLocation(mote['lat'], mote['lon'])
             
-            #Implements new connections
+            # implements new connections
             connect = topo['connections']
             for co in connect:
                 fromMote = int(co['fromMote'])
                 toMote = int(co['toMote'])
                 pdr = float(co['pdr'])
-                print type(pdr)
                 self.simengine.propagation.createConnection(fromMote,toMote)
                 self.simengine.propagation.updateConnection(fromMote,toMote,pdr)
             
-            #store DAGrot moteids
+            # store DAGroot moteids in DAGrootList
             DAGrootL = topo['DAGrootList']
             for DAGroot in DAGrootL :
                 hexaDAGroot = hex(DAGroot)
@@ -156,8 +155,6 @@ class OpenVisualizerApp(object):
                     prefix += "0"
                 moteid = prefix+hexaDAGroot
                 self.DAGrootList.append(moteid)
-
-
         
         # start tracing threads
         if self.trace:
@@ -187,8 +184,6 @@ class OpenVisualizerApp(object):
         '''
         for ms in self.moteStates:
             idManager = ms.getStateElem(ms.ST_IDMANAGER)
-            print "id idManager"
-            print idManager
             if idManager and idManager.get16bAddr():
                 addr = ''.join(['%02x'%b for b in idManager.get16bAddr()])
                 if addr == moteid:
@@ -229,7 +224,6 @@ def main(parser=None):
         argspace.simulatorMode = True
         argspace.numMotes = 0
         argspace.simTopology = "fully-meshed"
-        print argspace.pathTopo
         # --importTopo
     elif argspace.numMotes > 0:
         # --simCount implies --sim
@@ -312,7 +306,7 @@ def _addParserArgs(parser):
         dest       = 'pathTopo',
         default    = '.',
         action     = 'store',
-        help       = 'No mote is emulated, a topology can be loaded from a json file'
+        help       = 'a topology can be loaded from a json file'
     )
     
 def _forceSlashSep(ospath, debug):

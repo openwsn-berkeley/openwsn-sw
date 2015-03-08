@@ -79,10 +79,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             registrations         =  [],
         )
 
+
         time.sleep(1)
 
+        # Set DAGroots imported
         if len(app.DAGrootList)>0:
-            print "hello"
             for moteid in app.DAGrootList:
                 self._showMoteview(moteid)
                 self._getMoteData(moteid)
@@ -126,8 +127,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         :param moteid: 16-bit ID of mote (optional)
         '''
-        print "show moteview"
-        print moteid
         log.debug("moteview moteid parameter is {0}".format(moteid));
 
         motelist = []
@@ -149,20 +148,15 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                                   root='{0}/web_files/static/'.format(self.app.datadir))
 
     def _toggleDAGroot(self, moteid):
-        print "toggle DAG root"
         '''
         Triggers toggle DAGroot state, via moteState. No real response. Page is
         updated when next retrieve mote data.
 
         :param moteid: 16-bit ID of mote
         '''
-        print "moteid"
-        print moteid
-        print type(moteid)
         log.info('Toggle root status for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:
-            print 'ok'
             log.debug('Found mote {0} in moteStates'.format(moteid))
             ms.triggerAction(ms.TRIGGER_DAGROOT)
             return '{"result" : "success"}'
@@ -171,15 +165,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             return '{"result" : "fail"}'
 
     def _getMoteData(self, moteid):
-        print "get mote data"
-        print moteid
         '''
         Collects data for the provided mote.
 
         :param moteid: 16-bit ID of mote
         '''
-        print moteid
-        print type(moteid)
         log.debug('Get JSON data for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:
@@ -365,8 +355,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         data['DAGrootList']=DAGrootList
 
-        
-
         response.headers['Content-disposition']='attachement; filename=topology_data_'+now.strftime("%d-%m-%y_%Hh%M")+'.json'
         response.headers['filename']='test.json'
         response.headers['Content-type']= 'application/json'
@@ -428,7 +416,6 @@ if __name__=="__main__":
     
 
     # start web interface in a separate thread
-    print "hey"
     webthread = threading.Thread(
         target = websrv.run,
         kwargs = {
