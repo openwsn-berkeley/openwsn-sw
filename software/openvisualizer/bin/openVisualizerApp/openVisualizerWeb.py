@@ -80,10 +80,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         )
 
 
-        time.sleep(1)
+        
 
         # Set DAGroots imported
         if len(app.DAGrootList)>0:
+            #Wait the end of the mote threads creation
+            time.sleep(1)
             for moteid in app.DAGrootList:
                 self._showMoteview(moteid)
                 self._getMoteData(moteid)
