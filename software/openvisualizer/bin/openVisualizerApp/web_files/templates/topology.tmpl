@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		%include head.tmpl
-		<style type="text/css">
+    <head>
+        %include head.tmpl
+        <style type="text/css">
             #map-canvas {
                 height            : 600px;
                 display           : block;
@@ -608,17 +608,17 @@
 
             google.maps.event.addDomListener(window, 'load', initialize);
         </script>
-	</head>
-	<body>
-		<div id="wrapper">
-			%include navbar.tmpl ovVersion=ovVersion
+    </head>
+    <body>
+        <div id="wrapper">
+            %include navbar.tmpl ovVersion=ovVersion
 
-			<div id="page-wrapper">
-	            <div class="row">
-	                <div class="col-lg-12">
-	                    <h1 class="page-header">Topology</h1>
-	                </div>
-	            </div>
+            <div id="page-wrapper">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">Topology</h1>
+                    </div>
+                </div>
                 <div id= "topology-options">
                     <div class="row">
                         <div class="col-lg-12">
@@ -629,12 +629,12 @@
                     </div>
                 </div>
 
-	            <div class="row">
-	                <div class="col-lg-12">
-	                	<div id="map-canvas"/>
-	                </div>
-	            </div>
-	        </div>
-	    </div>
-	</body>
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div id="map-canvas"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>
