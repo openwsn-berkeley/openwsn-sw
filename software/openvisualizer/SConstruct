@@ -140,7 +140,7 @@ AddOption('--importTopo',
     dest      = 'pathTopo',
     default   = '.',
     action    = 'store')
-runnerEnv['PATHTOPO'] = GetOption('pathTopo')
+runnerEnv['IMPORTTOPO'] = GetOption('pathTopo')
 
 AddOption('--nosimcopy',
     dest      = 'simcopyOpt',
