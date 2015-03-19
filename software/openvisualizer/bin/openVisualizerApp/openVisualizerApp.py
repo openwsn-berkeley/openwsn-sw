@@ -120,7 +120,7 @@ class OpenVisualizerApp(object):
 
        
         # import the topology from the json file
-        if self.pathTopo != '.' and self.simulatorMode == True and os.path.exists(pathTopo):
+        if self.pathTopo and self.simulatorMode and os.path.exists(pathTopo):
             
             # delete each connections automatically established during motes creation
             ConnectionsToDelete = self.simengine.propagation.retrieveConnections()
@@ -304,7 +304,7 @@ def _addParserArgs(parser):
     )
     parser.add_argument('-i', '--importTopo', 
         dest       = 'pathTopo',
-        default    = '.',
+        default    = '',
         action     = 'store',
         help       = 'a topology can be loaded from a json file'
     )
