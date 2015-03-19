@@ -134,19 +134,6 @@ class typeComponent(openType.openType):
         elif type==self.COMPONENT_OPENCOAP:
             self.desc = 'OPENCOAP'
         
-        COMPONENT_C6T                       = 0x1a
-    COMPONENT_CEXAMPLE                  = 0x1b
-    COMPONENT_CINFO                     = 0x1c
-    COMPONENT_CLEDS                     = 0x1d
-    COMPONENT_CSENSORS                  = 0x1e
-    COMPONENT_CSTORM                    = 0x1f
-    COMPONENT_CWELLKNOWN                = 0x20
-    COMPONENT_TECHO                     = 0x21
-    COMPONENT_TOHLONE                   = 0x22
-    COMPONENT_UECHO                     = 0x23
-    COMPONENT_RRT                       = 0x24
-        
-        
         elif type==self.COMPONENT_C6T:
             self.desc = 'C6T'
         elif type==self.COMPONENT_CEXAMPLE:
