@@ -62,10 +62,13 @@ class OpenVisualizerApp(object):
             self.simengine.start()
         
         # import the number of motes from json file given by user (if the importTopo option is enabled)
-        if self.pathTopo != '.' and self.simulatorMode == True and os.path.exists(pathTopo):
-            topoConfig = open(pathTopo)
-            topo = json.load(topoConfig)
-            self.numMotes = len(topo['motes'])
+        if self.pathTopo and self.simulatorMode and os.path.exists(pathTopo):
+            try:
+                topoConfig = open(pathTopo)
+                topo = json.load(topoConfig)
+                self.numMotes = len(topo['motes'])
+            except Exception as err:
+                print err
 
         
         # create a moteProbe for each mote
