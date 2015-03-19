@@ -13,12 +13,11 @@ import openType
 class typeCellType(openType.openType):
     
     CELLTYPE_OFF             = 0
-    CELLTYPE_ADV             = 1
-    CELLTYPE_TX              = 2
-    CELLTYPE_RX              = 3
-    CELLTYPE_TXRX            = 4
-    CELLTYPE_SERIALRX        = 5
-    CELLTYPE_MORESERIALRX    = 6
+    CELLTYPE_TX              = 1
+    CELLTYPE_RX              = 2
+    CELLTYPE_TXRX            = 3
+    CELLTYPE_SERIALRX        = 4
+    CELLTYPE_MORESERIALRX    = 5
     
     def __init__(self):
         # log
@@ -36,8 +35,6 @@ class typeCellType(openType.openType):
         self.type = type
         if   type==self.CELLTYPE_OFF:
             self.desc = 'OFF'
-        elif type==self.CELLTYPE_ADV:
-            self.desc = 'ADV'
         elif type==self.CELLTYPE_TX:
             self.desc = 'TX'
         elif type==self.CELLTYPE_RX:
