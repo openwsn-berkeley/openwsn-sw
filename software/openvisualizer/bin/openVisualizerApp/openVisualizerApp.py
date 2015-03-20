@@ -61,7 +61,7 @@ class OpenVisualizerApp(object):
             self.simengine        = SimEngine.SimEngine(simTopology)
             self.simengine.start()
         
-        # import the number of motes from json file given by user (if the importTopo option is enabled)
+        # import the number of motes from json file given by user (if the pathTopo option is enabled)
         if self.pathTopo and self.simulatorMode:
             try:
                 topoConfig = open(pathTopo)
@@ -229,7 +229,7 @@ def main(parser=None):
         argspace.simulatorMode = True
         argspace.numMotes = 0
         argspace.simTopology = "fully-meshed"
-        # --importTopo
+        # --pathTopo
     elif argspace.numMotes > 0:
         # --simCount implies --sim
         argspace.simulatorMode = True
