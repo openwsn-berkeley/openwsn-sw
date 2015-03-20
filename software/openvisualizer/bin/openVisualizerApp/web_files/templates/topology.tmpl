@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html>
-	<head>
-		%include head.tmpl
-		<style type="text/css">
+    <head>
+        %include head.tmpl
+        <style type="text/css">
             #map-canvas {
                 height            : 600px;
                 display           : block;
@@ -25,6 +25,9 @@
                 border            : 1px solid yellow;
                 white-space       : nowrap;
             }
+            #topology-options {
+                margin-bottom     : 10px;
+            }
         </style>
         <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false"></script>
         <script src="/static/js/markerwithlabel.js"></script>
@@ -39,12 +42,12 @@
             var DATA_LOAD_PERIOD       = 5000;
             var mapLock                = false;
             var busyDrawingConnection  = false;
-            
+
             /**
             \brief Initialize the topology display
             */
             function initialize() {
-                
+
                 // map
                 var mapOptions = {
                     center:    new google.maps.LatLng(37.875095,-122.257473),
@@ -55,7 +58,7 @@
                     document.getElementById("map-canvas"),
                     mapOptions
                 );
-                
+
                 // connectioninfo
                 connectioninfo = new google.maps.InfoWindow();
                 google.maps.event.addListener(
@@ -63,7 +66,7 @@
                     'closeclick',
                     clearMapLock
                 );
-                
+
                 // newConnection
                 newConnection = {
                     'fromMote':  null,
@@ -75,7 +78,7 @@
                         }
                     )
                 }
-                
+
                 // routeLine
                 routeLine = new google.maps.Polyline(
                     {
@@ -83,19 +86,19 @@
                         strokeOpacity: 0.8,
                         strokeWeight:  5,
                         strokeColor:   '#0000ff'
-                        
+
                     }
                 )
-                
+
                 // load mote data
                 getTopologyData();
             }
-            
+
             /**
             \brief Retrieve the topology data from the server.
             */
             function getTopologyData() {
-                
+
                 if (mapLock==false) {
                     $.ajax({
                         type:    "GET",
@@ -106,10 +109,10 @@
                         console.log("ERROR: could not GET topology data");
                     });
                 }
-                
+
                 window.setTimeout(getTopologyData,DATA_LOAD_PERIOD);
             }
-            
+
             /**
             \brief Update the topology using the new data.
             */
@@ -117,30 +120,30 @@
                 var i;
                 var title;
                 var marker;
-                
+
                 // mark all motes for deletion
                 for (id in motes) {
                     motes[id].deleteMe      = true;
                 }
-                
+
                 // mark all connections for deletion
                 for (i=0; i<connections.length; i++) {
                     connections[i].deleteMe     = true;
                 }
-                
+
                 // create/update motes
                 var id;
                 var lat;
                 var lon;
                 for (i=0; i<newData.motes.length; i++) {
-                    
+
                     id       = newData.motes[i].id;
                     lat      = newData.motes[i].lat;
                     lon      = newData.motes[i].lon;
-                    
+
                     if (!(id in motes)) {
                         // new mote
-                        
+
                         // create mote
                         motes[id] = {
                             'lat':      lat,
@@ -155,7 +158,7 @@
                                             labelStyle:    {opacity: 0.75},
                                         })
                         }
-                        
+
                         // add listeners
                         google.maps.event.addListener(
                             motes[id].marker,
@@ -175,18 +178,18 @@
                         attachMouseoverMarker(id);
                         attachRightClickCreateConnection(id);
                     }
-                    
+
                     // update mote
                     motes[id].lat = lat;
                     motes[id].lon = lon;
                     motes[id].marker.setPosition(
                         new google.maps.LatLng(lat,lon)
                     );
-                    
+
                     // don't delete this mote
                     motes[id].deleteMe      = false;
                 }
-                
+
                 // create/update connections
                 var fromMote;
                 var toMote;
@@ -194,16 +197,16 @@
                 var connectionIdx;
                 var connectionColor;
                 for (i=0; i<newData.connections.length; i++) {
-                    
+
                     fromMote = newData.connections[i].fromMote;
                     toMote   = newData.connections[i].toMote;
                     pdr      = newData.connections[i].pdr;
-                    
+
                     connectionIdx = getConnectionIdx(fromMote,toMote);
-                    
+
                     if (connectionIdx==null) {
                         // new connection
-                        
+
                         connections.push(
                             {
                                 'fromMote':    fromMote,
@@ -219,12 +222,12 @@
                                 ),
                             }
                         );
-                        
+
                         connectionIdx = connections.length-1;
-                        
+
                         attachPdrInfoWindow(connectionIdx);
                     }
-                    
+
                     // update connection
                     connections[connectionIdx].line.setPath(
                         [
@@ -247,11 +250,11 @@
                         connectionColor = '#ff0000';
                     }
                     connections[connectionIdx].line.setOptions({strokeColor: connectionColor});
-                    
+
                     // don't delete this connection
                     connections[connectionIdx].deleteMe  = false;
                 }
-                
+
                 // delete all connections still marked for deletion
                 for (i=0; i<connections.length; i++) {
                     if (connections[i].deleteMe==true) {
@@ -260,7 +263,7 @@
                         i--;
                     }
                 }
-                
+
                 // delete all motes still marked for deletion
                 for (id in motes) {
                     if (motes[id].deleteMe==true) {
@@ -270,7 +273,7 @@
                     }
                 }
             }
-            
+
             function getConnectionIdx(fromMote,toMote) {
                 for (var i=0; i<connections.length; i++) {
                     if  (
@@ -282,7 +285,7 @@
                 }
                 return null;
             }
-            
+
             function attachMouseoverMarker(id) {
                 google.maps.event.addListener(
                     motes[id].marker,
@@ -292,7 +295,7 @@
                     }
                 );
             }
-            
+
             function attachRightClickCreateConnection(id) {
                 google.maps.event.addListener(
                     motes[id].marker,
@@ -302,12 +305,12 @@
                     }
                 );
             }
-            
+
             function attachPdrInfoWindow(connectionIdx) {
                 var fromMote = connections[connectionIdx].fromMote;
                 var toMote   = connections[connectionIdx].toMote;
                 var pdr      = connections[connectionIdx].pdr;
-                
+
                 google.maps.event.addListener(
                     connections[connectionIdx].line,
                     'click',
@@ -317,20 +320,20 @@
                     }
                 );
             }
-            
+
             //=============== GUI events ======================================
-            
+
             function setMapLock() {
                 mapLock = true;
             }
             function clearMapLock() {
                 mapLock = false;
             }
-            
+
             function moteMoved() {
                 var tempMotes;
                 var moteId;
-                
+
                 tempMotes = []
                 for (moteId in motes) {
                     tempMotes.push({
@@ -339,7 +342,7 @@
                         'lon':    motes[moteId].marker.getPosition().lng()
                     })
                 }
-                
+
                 $.ajax({
                     type:    "POST",
                     url:     "/topology/motes",
@@ -354,7 +357,7 @@
                     console.log("ERROR: could not POST updated topology data.");
                 })
                 .always(function() {
-                    
+
                     // get new data from server
                     $.ajax({
                         type:    "GET",
@@ -365,13 +368,13 @@
                         console.log("ERROR: could not GET topology data");
                     })
                     .always(function() {
-                        
+
                         // resume automated update
                         clearMapLock();
                     });
                 })
             }
-            
+
             function getRoute(id) {
                 $.ajax({
                     type:    "GET",
@@ -385,11 +388,11 @@
                     console.log("ERROR: could not GET route from server.");
                 })
             }
-            
+
             function handleRoute(routeData) {
-                
+
                 var routePath = [];
-                
+
                 for (i=0; i<routeData.route.length; i++) {
                     routePath.push(
                         new google.maps.LatLng(
@@ -398,56 +401,56 @@
                         )
                     )
                 }
-                
+
                 routeLine.setPath(routePath);
                 routeLine.setMap(map);
             }
-            
+
             function hideRoute() {
                 routeLine.setMap(null);
             }
-            
+
             function connectionCreationStep(id) {
-                
+
                 if (busyDrawingConnection==false) {
                     // start
-                    
+
                     console.log('start at '+id);
-                    
+
                     // lock the automatic refresh of the map
                     setMapLock();
-                    
+
                     // remember I'm busy drawing now
                     busyDrawingConnection = true;
-                    
+
                     // start the line
                     newConnection.fromMote = id;
-                    
+
                     // listen to mouse moving
                     google.maps.event.addListener(
                         map,
                         'mousemove',
                         connectionCreationMoved
                     );
-                    
+
                 } else {
                     // stop
-                    
+
                     console.log('stop at '+id);
-                    
+
                     // stop listening to mouse moving
                     google.maps.event.clearListeners(
                         map,
                         'mousemove'
                     );
-                    
+
                     // send new connection to server
                     connectionCreated(newConnection.fromMote,id);
                 }
             }
-            
+
             function connectionCreationMoved(pt) {
-                
+
                 newConnection.line.setPath(
                     [
                         new google.maps.LatLng(
@@ -459,9 +462,9 @@
                 )
                 newConnection.line.setMap(map);
             }
-            
+
             function connectionCreated(fromMote,toMote) {
-                
+
                 $.ajax({
                     type:    "PUT",
                     url:     "/topology/connections",
@@ -477,7 +480,7 @@
                     console.log("ERROR: could not PUT new connection to server.");
                 })
                 .always(function() {
-                    
+
                     // get new data from server
                     $.ajax({
                         type:     "GET",
@@ -488,42 +491,42 @@
                         console.log("ERROR: could not GET topology data");
                     })
                     .always(function() {
-                        
+
                         // hide line
                         newConnection.line.setMap(null);
-                        
+
                         // I'm not draing a new connection anymore
                         busyDrawingConnection = false;
-                        
+
                         // resume automated update
                         clearMapLock();
                     });
                 })
             }
-            
+
             function connectionClicked(fromMote,toMote,latlon) {
                 var connectionIdx;
                 var content;
-                
+
                 connectionIdx = getConnectionIdx(fromMote,toMote);
-                
+
                 content  = ''
                 content += fromMote+'-'+toMote+':<br/>'
                 content += '<input size="10" id="newPDR" value="'+connections[connectionIdx].pdr+'">'
                 content += '<button onclick="connectionUpdated('+fromMote+','+toMote+')">set PDR</button><br/>'
                 content += '<button onclick="connectionDeleted('+fromMote+','+toMote+')">delete connection</button>'
-            
+
                 connectioninfo.setContent(content);
                 connectioninfo.setPosition(latlon);
                 connectioninfo.open(map);
             }
-            
+
             function connectionUpdated(fromMote,toMote) {
                 var newPDR;
-                
+
                 // retrieve new PDR from form
                 newPDR = $("#newPDR").val();
-                
+
                 // send to server
                 $.ajax({
                     type:    "POST",
@@ -541,7 +544,7 @@
                     console.log("ERROR: could not POST new PDR.");
                 })
                 .always(function() {
-                    
+
                     // get new data from server
                     $.ajax({
                         type:     "GET",
@@ -552,18 +555,18 @@
                         console.log("ERROR: could not GET topology data");
                     })
                     .always(function() {
-                        
+
                         // close info window
                         connectioninfo.close();
-                        
+
                         // resume automated update
                         clearMapLock();
                     });
                 })
             }
-            
+
             function connectionDeleted(fromMote,toMote) {
-                
+
                 // send to server
                 $.ajax({
                     type:    "DELETE",
@@ -580,7 +583,7 @@
                     console.log("ERROR: could not DELETE connection.");
                 })
                 .always(function() {
-                    
+
                     // get new data from server
                     $.ajax({
                         type:     "GET",
@@ -591,38 +594,47 @@
                         console.log("ERROR: could not GET topology data");
                     })
                     .always(function() {
-                        
+
                         // close info window
                         connectioninfo.close();
-                        
+
                         // resume automated update
                         clearMapLock();
                     });
                 })
             }
-            
-            //=============== main ============================================
-            
-            google.maps.event.addDomListener(window, 'load', initialize);  
-        </script>
-	</head>
-	<body>
-		<div id="wrapper">
-			%include navbar.tmpl ovVersion=ovVersion
-			
-			<div id="page-wrapper">
-	            <div class="row">
-	                <div class="col-lg-12">
-	                    <h1 class="page-header">Topology</h1>
-	                </div>
-	            </div>
 
-	            <div class="row">
-	                <div class="col-lg-12">
-	                	<div id="map-canvas"/>
-	                </div>
-	            </div>
-	        </div>
-	    </div>
-	</body>
+            //=============== main ============================================
+
+            google.maps.event.addDomListener(window, 'load', initialize);
+        </script>
+    </head>
+    <body>
+        <div id="wrapper">
+            %include navbar.tmpl ovVersion=ovVersion
+
+            <div id="page-wrapper">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">Topology</h1>
+                    </div>
+                </div>
+                <div id= "topology-options">
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <h4>Topology options</h3>
+
+                            <a href="topology/download"><button id="topology_download_btn" type="button" class="btn btn-default btn-xs">Save topology</button></a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <div id="map-canvas"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
 </html>

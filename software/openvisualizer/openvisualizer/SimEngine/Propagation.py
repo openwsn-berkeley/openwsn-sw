@@ -60,6 +60,7 @@ class Propagation(eventBusClient.eventBusClient):
     #======================== public ==========================================
     
     def createConnection(self,fromMote,toMote):
+  
         
         FREQUENCY_GHz        =    2.4
         TX_POWER_dBm         =    0.0
@@ -78,7 +79,7 @@ class Propagation(eventBusClient.eventBusClient):
                 (latFrom,lonFrom) = mhFrom.getLocation()
                 mhTo              = self.engine.getMoteHandlerById(toMote)
                 (latTo,lonTo)     = mhTo.getLocation()
-                
+    
                 # compute distance
                 lonFrom, latFrom, lonTo, latTo = map(radians, [lonFrom, latFrom, lonTo, latTo])
                 dlon             = lonTo - lonFrom 
@@ -90,15 +91,15 @@ class Propagation(eventBusClient.eventBusClient):
                 # compute reception power (first Friis, then apply Pister-hack)
                 Prx              = TX_POWER_dBm - (20*log10(d_km) + 20*log10(FREQUENCY_GHz) + 92.45)
                 Prx             -= PISTER_HACK_LOSS*random.random()
-                
-                # turn into PDR
+               
+                #turn into PDR
                 if   Prx<SENSITIVITY_dBm:
                     pdr          = 0.0
                 elif Prx>SENSITIVITY_dBm+GREY_AREA_dB:
                     pdr          = 1.0
                 else:
                     pdr          = (Prx-SENSITIVITY_dBm)/GREY_AREA_dB
-                
+
             elif self.simTopology=='linear':
                 
                 # linear network

@@ -45,6 +45,8 @@ Targets:
         Options
           --sim         Run in simulator mode with default count of motes.
           --simCount=n  Run in simulator mode with 'n' motes.
+          --pathTopo  Run in simulator mode with data imported from a previous
+            topology saved in a json file.
           --simTopology=<linear|fully-meshed>
                         Force a certain topology for simulation.
           --nosimcopy   Skips copying simulation firmware at startup from the
@@ -133,6 +135,12 @@ AddOption('--simTopology',
     default   = '',
     type      = 'string')
 runnerEnv['SIMTOPOLOGY'] = GetOption('simTopology')
+
+AddOption('--pathTopo',
+    dest      = 'pathTopo',
+    default   = '',
+    action    = 'store')
+runnerEnv['PATHTOPO'] = GetOption('pathTopo')
 
 AddOption('--nosimcopy',
     dest      = 'simcopyOpt',

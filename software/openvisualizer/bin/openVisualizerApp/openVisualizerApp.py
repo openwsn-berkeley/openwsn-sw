@@ -11,6 +11,7 @@ top-level UI module.  See main() for startup use.
 import sys
 import os
 import logging
+import json
 log = logging.getLogger('openVisualizerApp')
 
 from openvisualizer.eventBus      import eventBusMonitor
@@ -32,7 +33,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes, pathTopo):
         
         # store params
         self.confdir              = confdir
@@ -43,6 +44,7 @@ class OpenVisualizerApp(object):
         self.trace                = trace
         self.debug                = debug
         self.iotlabmotes          = iotlabmotes
+        self.pathTopo             = pathTopo
         
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -50,6 +52,7 @@ class OpenVisualizerApp(object):
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
+        self.DAGrootList          = []
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
         if self.simulatorMode:
@@ -57,6 +60,18 @@ class OpenVisualizerApp(object):
             
             self.simengine        = SimEngine.SimEngine(simTopology)
             self.simengine.start()
+        
+        # import the number of motes from json file given by user (if the pathTopo option is enabled)
+        if self.pathTopo and self.simulatorMode:
+            try:
+                topoConfig = open(pathTopo)
+                topo = json.load(topoConfig)
+                self.numMotes = len(topo['motes'])
+            except Exception as err:
+                print err
+                app.close()
+                os.kill(os.getpid(), signal.SIGTERM)
+
         
         # create a moteProbe for each mote
         if self.simulatorMode:
@@ -107,6 +122,44 @@ class OpenVisualizerApp(object):
                     moteHandler.hwSupply.INTR_SWITCHON
                 )
             self.simengine.resume()
+
+       
+        # import the topology from the json file
+        if self.pathTopo and self.simulatorMode:
+            
+            # delete each connections automatically established during motes creation
+            ConnectionsToDelete = self.simengine.propagation.retrieveConnections()
+            for co in ConnectionsToDelete :
+                fromMote = int(co['fromMote'])
+                toMote = int(co['toMote'])
+                self.simengine.propagation.deleteConnection(fromMote,toMote)
+
+            motes = topo['motes']
+            for mote in motes :
+                mh = self.simengine.getMoteHandlerById(mote['id'])
+                mh.setLocation(mote['lat'], mote['lon'])
+            
+            # implements new connections
+            connect = topo['connections']
+            for co in connect:
+                fromMote = int(co['fromMote'])
+                toMote = int(co['toMote'])
+                pdr = float(co['pdr'])
+                self.simengine.propagation.createConnection(fromMote,toMote)
+                self.simengine.propagation.updateConnection(fromMote,toMote,pdr)
+            
+            # store DAGroot moteids in DAGrootList
+            DAGrootL = topo['DAGrootList']
+            for DAGroot in DAGrootL :
+                hexaDAGroot = hex(DAGroot)
+                hexaDAGroot = hexaDAGroot[2:]
+                prefixLen = 4 - len(hexaDAGroot)
+                
+                prefix =""
+                for i in range(prefixLen):
+                    prefix += "0"
+                moteid = prefix+hexaDAGroot
+                self.DAGrootList.append(moteid)
         
         # start tracing threads
         if self.trace:
@@ -172,7 +225,12 @@ def main(parser=None):
         {'logDir': _forceSlashSep(logdir, argspace.debug)}
     )
 
-    if argspace.numMotes > 0:
+    if not argspace.pathTopo:
+        argspace.simulatorMode = True
+        argspace.numMotes = 0
+        argspace.simTopology = "fully-meshed"
+        # --pathTopo
+    elif argspace.numMotes > 0:
         # --simCount implies --sim
         argspace.simulatorMode = True
     elif argspace.simulatorMode == True:
@@ -203,6 +261,7 @@ def main(parser=None):
         debug           = argspace.debug,
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
+        pathTopo        = argspace.pathTopo,
     )
 
 def _addParserArgs(parser):
@@ -247,6 +306,12 @@ def _addParserArgs(parser):
         default    = '',
         action     = 'store',
         help       = 'comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
+    )
+    parser.add_argument('-i', '--pathTopo', 
+        dest       = 'pathTopo',
+        default    = '',
+        action     = 'store',
+        help       = 'a topology can be loaded from a json file'
     )
     
 def _forceSlashSep(ospath, debug):

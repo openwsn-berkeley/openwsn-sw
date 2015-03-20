@@ -49,7 +49,10 @@ def uiRunner(target, source, env):
     
     if env['SIMTOPOLOGY']:
         argList.append('--simTopology={0}'.format(env['SIMTOPOLOGY']))
-    
+   
+    if env['PATHTOPO']:
+        argList.append('--pathTopo={0}'.format(env['PATHTOPO']))
+ 
     if env['TRACEOPT']:
         argList.append('--trace')
     if env['DEBUGOPT']:
