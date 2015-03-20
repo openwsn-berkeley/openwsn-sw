@@ -76,10 +76,8 @@ class Propagation(eventBusClient.eventBusClient):
                 
                 # retrieve position
                 mhFrom            = self.engine.getMoteHandlerById(fromMote)
-                print mhFrom
                 (latFrom,lonFrom) = mhFrom.getLocation()
                 mhTo              = self.engine.getMoteHandlerById(toMote)
-                print mhTo
                 (latTo,lonTo)     = mhTo.getLocation()
     
                 # compute distance

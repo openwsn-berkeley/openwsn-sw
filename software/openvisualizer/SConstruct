@@ -136,11 +136,11 @@ AddOption('--simTopology',
     type      = 'string')
 runnerEnv['SIMTOPOLOGY'] = GetOption('simTopology')
 
-AddOption('--importTopo',
+AddOption('--pathTopo',
     dest      = 'pathTopo',
-    default   = '.',
+    default   = '',
     action    = 'store')
-runnerEnv['IMPORTTOPO'] = GetOption('pathTopo')
+runnerEnv['PATHTOPO'] = GetOption('pathTopo')
 
 AddOption('--nosimcopy',
     dest      = 'simcopyOpt',

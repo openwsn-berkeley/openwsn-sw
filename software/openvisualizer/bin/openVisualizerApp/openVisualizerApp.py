@@ -62,13 +62,15 @@ class OpenVisualizerApp(object):
             self.simengine.start()
         
         # import the number of motes from json file given by user (if the importTopo option is enabled)
-        if self.pathTopo and self.simulatorMode and os.path.exists(pathTopo):
+        if self.pathTopo and self.simulatorMode:
             try:
                 topoConfig = open(pathTopo)
                 topo = json.load(topoConfig)
                 self.numMotes = len(topo['motes'])
             except Exception as err:
                 print err
+                app.close()
+                os.kill(os.getpid(), signal.SIGTERM)
 
         
         # create a moteProbe for each mote
@@ -123,7 +125,7 @@ class OpenVisualizerApp(object):
 
        
         # import the topology from the json file
-        if self.pathTopo and self.simulatorMode and os.path.exists(pathTopo):
+        if self.pathTopo and self.simulatorMode:
             
             # delete each connections automatically established during motes creation
             ConnectionsToDelete = self.simengine.propagation.retrieveConnections()
@@ -223,7 +225,7 @@ def main(parser=None):
         {'logDir': _forceSlashSep(logdir, argspace.debug)}
     )
 
-    if argspace.pathTopo != ".":
+    if not argspace.pathTopo:
         argspace.simulatorMode = True
         argspace.numMotes = 0
         argspace.simTopology = "fully-meshed"
@@ -305,7 +307,7 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'comma-separated list of IoT-LAB motes (e.g. "wsn430-9,wsn430-34,wsn430-3")'
     )
-    parser.add_argument('-i', '--importTopo', 
+    parser.add_argument('-i', '--pathTopo', 
         dest       = 'pathTopo',
         default    = '',
         action     = 'store',

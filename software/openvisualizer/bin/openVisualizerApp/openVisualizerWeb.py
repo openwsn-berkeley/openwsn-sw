@@ -79,9 +79,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             registrations         =  [],
         )
 
-
-        
-
         # Set DAGroots imported
         if app.DAGrootList:
             #Wait the end of the mote threads creation
@@ -342,7 +339,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         return data
 
-    #@view('download.tmpl')
     def _topologyDownload(self):
         '''
         Retrieve the topology data, in JSON format, and download it.
@@ -410,7 +406,7 @@ if __name__=="__main__":
 
     #===== start the app
     app      = openVisualizerApp.main(parser)
-
+    
     #===== add a web interface
     websrv   = bottle.Bottle()
     webapp   = OpenVisualizerWeb(app, websrv)
