@@ -225,7 +225,7 @@ def main(parser=None):
         {'logDir': _forceSlashSep(logdir, argspace.debug)}
     )
 
-    if not argspace.pathTopo:
+    if argspace.pathTopo:
         argspace.simulatorMode = True
         argspace.numMotes = 0
         argspace.simTopology = "fully-meshed"
