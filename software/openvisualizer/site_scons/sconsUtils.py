@@ -23,9 +23,9 @@ def copySimfw(env, target):
                    the copy.
     '''
     # in openwsn-fw, directory containing 'openwsnmodule_obj.h'
-    incdir    = os.path.join(env['FW_DIR'], 'bsp','boards','python')
+    incdir    = os.path.join(env['FW_DIR'],'bsp','boards','python')
     # in openwsn-fw, directory containing extension library
-    libdir    = os.path.join(env['FW_DIR'], 'projects','common')
+    libdir    = os.path.join(env['FW_DIR'],'build','python_gcc','projects','common')
 
     # Build source and destination pathnames.
     archAndOs = env['SIMHOSTOPT'].split('-')
@@ -36,10 +36,10 @@ def copySimfw(env, target):
     destdir   = os.path.join(simdir, archAndOs[1])
     
     cmdlist   = [
-                Copy(simdir, os.path.join(incdir, 'openwsnmodule_obj.h')),
-                Mkdir(os.path.join(destdir)),
-                Copy(os.path.join(destdir, destname), os.path.join(libdir, srcname)),
-                ]
+        Copy(simdir, os.path.join(incdir, 'openwsnmodule_obj.h')),
+        Mkdir(os.path.join(destdir)),
+        Copy(os.path.join(destdir, destname), os.path.join(libdir, srcname)),
+    ]
                 
     # Copy the module directly to sim_files directory if it matches this host.
     if archAndOs[0] == 'amd64':
