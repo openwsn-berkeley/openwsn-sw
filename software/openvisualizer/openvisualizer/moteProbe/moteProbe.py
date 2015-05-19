@@ -13,6 +13,7 @@ if os.name=='nt':       # Windows
    import _winreg as winreg
 elif os.name=='posix':  # Linux
    import glob
+   import platform      # To recognize MAC OS X
 import threading
 
 import serial
@@ -57,7 +58,11 @@ def findSerialPorts():
                 elif val[0].find('ProlificSerial')>-1:
                     serialports.append( (str(val[1]),BAUDRATE_WSN430) )
     elif os.name=='posix':
-        serialports = [(s,BAUDRATE_GINA) for s in glob.glob('/dev/ttyUSB*')]
+        if platform.system() == 'Darwin':
+            portMask = '/dev/tty.usbserial-*'
+        else:
+            portMask = '/dev/ttyUSB*'
+        serialports = [(s,BAUDRATE_GINA) for s in glob.glob(portMask)]
     
     # log
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in serialports]))
