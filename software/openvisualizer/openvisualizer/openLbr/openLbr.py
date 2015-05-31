@@ -86,6 +86,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
     NHC_DISPATCH             = 0x0E
     
+    NHC_EID_MASK             = 0x0E
     NHC_EID_HOPBYHOP         = 0
     NHC_EID_ROUTING          = 1
     NHC_EID_IPV6             = 7
@@ -739,7 +740,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         if (nh == self.IPHC_NH_COMPRESSED):
             if (((pkt_lowpan[ptr] >> 4) & 0x0f) == self.NHC_DISPATCH):
-                eid = (pkt_lowpan[ptr] >> 1) & 0x05
+                eid = (pkt_lowpan[ptr] & self.NHC_EID_MASK) >> 1
                 if (eid == self.NHC_EID_HOPBYHOP):
                     pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
                 elif (eid == self.NHC_EID_IPV6):
