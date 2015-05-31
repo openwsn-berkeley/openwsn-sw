@@ -164,7 +164,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             
             # turn raw byte into dictionary of fields
             ipv6             = self.disassemble_ipv6(ipv6_bytes)
-            
+
              # filter out multicast packets
             if ipv6['dst_addr'][0]==0xff:
                 return
@@ -437,26 +437,6 @@ class OpenLbr(eventBusClient.eventBusClient):
         # ===================== 1. IPHC outer header ==========================
 
         # Byte1: 011(3b) TF(2b) NH(1b) HLIM(2b)
-        # if len(lowpan['tf'])==0:
-        #     tf               = self.IPHC_TF_ELIDED
-        # else:
-        #     raise NotImplementedError()
-        # if len(lowpan['nh'])==1:
-        #     nh               = self.IPHC_NH_INLINE
-        # else:
-        #     nh               = self.IPHC_NH_COMPRESSED
-        # if   lowpan['hlim']==1:
-        #     hlim             = self.IPHC_HLIM_1
-        #     lowpan['hlim'] = []
-        # elif lowpan['hlim']==64:
-        #     hlim             = self.IPHC_HLIM_64
-        #     lowpan['hlim'] = []
-        # elif lowpan['hlim']==255:
-        #     hlim             = self.IPHC_HLIM_255
-        #     lowpan['hlim'] = []
-        # else:
-        #     hlim             = self.IPHC_HLIM_INLINE
-        # returnVal           += [(self.IPHC_DISPATCH<<5) + (tf<<3) + (nh<<2) + (hlim<<0)]
         if len(lowpan['tf'])==0:
             tf               = self.IPHC_TF_ELIDED
         else:
@@ -505,34 +485,16 @@ class OpenLbr(eventBusClient.eventBusClient):
         else:
             raise SystemError()
         returnVal           += [(cid << 7) + (sac << 6) + (sam << 4) + (m << 3) + (dac << 2) + (dam << 0)]
-        # if len(lowpan['cid'])==0:
-        #     cid              = self.IPHC_CID_NO
-        # else:
-        #     cid              = self.IPHC_CID_YES
-        # sac                  = self.IPHC_SAC_STATELESS
-        # sam                  = self.IPHC_SAM_ELIDED
-        # dac                  = self.IPHC_DAC_STATELESS
-        # m                    = self.IPHC_M_NO
-        # dam                  = self.IPHC_DAM_ELIDED
-        # returnVal           += [(cid << 7) + (sac << 6) + (sam << 4) + (m << 3) + (dac << 2) + (dam << 0)]
 
         # tf
         returnVal           += lowpan['tf']
-        
-        # # nh
-        # if len(lowpan['route'])==1:
-        #     # destination is next hop
-        #     returnVal       += lowpan['nh']
-        # else:
-        #     # source route needed
-        #     returnVal       += [self.IANA_PROTOCOL_IPv6ROUTE]
         
         # hlim
         returnVal           += lowpan['hlim']
         
         # cid
         returnVal           += lowpan['cid']
-        
+
         # src_addr
         returnVal           += lowpan['src_addr']
         
@@ -542,31 +504,23 @@ class OpenLbr(eventBusClient.eventBusClient):
                 prefix=lowpan['dst_addr'][:8]
                     
             returnVal       += prefix + lowpan['nextHop']                # dest address is next hop in source routing -- poipoi xv prefix needs to be removed once hc works well
-        #     returnVal       += lowpan['nh']                     # Next Header
-        #     returnVal       += [len(lowpan['route'])-1]           # Hdr Ext Len. -1 to remove last element
-        #     returnVal       += [self.SR_FIR_TYPE]               # Routing Type. 3 for source routing
-        #     returnVal       += [len(lowpan['route'])-1]           # Segments Left. -1 because the first hop goes to the ipv6 destination address.
-        #     returnVal       += [0x08 << 4 | 0x08]               # CmprI | CmprE. All prefixes elided.
-        #     returnVal       += [0x00,0x00,0x00]                 # padding (4b) + reserved (20b)
-        #     for hop in lowpan['route'][:len(lowpan['route'])-1]:  #skip first hop as it is in the destination address
-        #        returnVal    += hop
+            # ========================= 2. ipv6 routing header ====================
+            # RPL Routing Header (RFC6554: https://tools.ietf.org/html/rfc6554#page-6)  
+            returnVal       += [(self.NHC_DISPATCH << 4) + (self.NHC_EID_ROUTING << 1) + (self.NHC_NH_COMPRESSED << 0)]
+            returnVal       += [8*(len(lowpan['route'])-1)+6]     # Hdr Ext Len. -1 to remove last element. 6 to the length following content until address field
+            returnVal       += [self.SR_FIR_TYPE]               # Routing Type. 3 for source routing
+            returnVal       += [len(lowpan['route'])-1]           # Segments Left. -1 because the first hop goes to the ipv6 destination address.
+            returnVal       += [0x08 << 4 | 0x08]               # CmprI | CmprE. All prefixes elided.
+            returnVal       += [0x00,0x00,0x00]                 # padding (4b) + reserved (20b)
+            for hop in lowpan['route'][:len(lowpan['route'])-1]:  #skip first hop as it is in the destination address
+               returnVal    += hop
         
         else:# in case of 1hop destination address is the same as ipv6 destination address
             # dst_addr
             returnVal           += lowpan['dst_addr']
-        # ========================= 2. ipv6 routing header ====================
-        # RPL Routing Header (RFC6554: https://tools.ietf.org/html/rfc6554#page-6)
-        returnVal           += [(self.NHC_DISPATCH << 4) + (self.NHC_EID_ROUTING << 1) + (self.NHC_NH_COMPRESSED << 0)]
-        returnVal           += [len(lowpan['route'])-1]           # Hdr Ext Len. -1 to remove last element
-        returnVal           += [self.SR_FIR_TYPE]               # Routing Type. 3 for source routing
-        returnVal           += [len(lowpan['route'])-1]           # Segments Left. -1 because the first hop goes to the ipv6 destination address.
-        returnVal           += [0x08 << 4 | 0x08]               # CmprI | CmprE. All prefixes elided.
-        returnVal           += [0x00,0x00,0x00]                 # padding (4b) + reserved (20b)
-        for hop in lowpan['route'][:len(lowpan['route'])-1]:  #skip first hop as it is in the destination address
-           returnVal        += hop
         # ========================= 3. Ipv6 header ============================ 
         # IPv6 Header (RFC6554: https://tools.ietf.org/html/rfc6554#page-6)
-        returnVal           += [(self.NHC_DISPATCH << 4) + (self.NHC_IPV6_EID << 1) + (self.NHC_NH_INLINE << 0)]
+        returnVal           += [(self.NHC_DISPATCH << 4) + (self.NHC_EID_IPV6 << 1) + (self.NHC_NH_INLINE << 0)]
         # ========================= 4. IPHC inner header ======================
         # Byte1: 011(3b) TF(2b) NH(1b) HLIM(2b)
         if len(lowpan['tf'])==0:
@@ -596,28 +550,10 @@ class OpenLbr(eventBusClient.eventBusClient):
         else:
             cid              = self.IPHC_CID_YES
         sac                  = self.IPHC_SAC_STATELESS
-        if   len(lowpan['src_addr'])==128/8:
-            sam              = self.IPHC_SAM_128B
-        elif len(lowpan['src_addr'])==64/8:
-            sam              = IPHC_SAM_64B
-        elif len(lowpan['src_addr'])==16/8:
-            sam              = self.IPHC_SAM_16B
-        elif len(lowpan['src_addr'])==0:
-            sam              = self.IPHC_SAM_ELIDED
-        else:
-            raise SystemError()
+        sam                  = self.IPHC_SAM_ELIDED
         dac                  = self.IPHC_DAC_STATELESS
         m                    = self.IPHC_M_NO
-        if   len(lowpan['dst_addr'])==128/8:
-            dam              = self.IPHC_DAM_128B
-        elif len(lowpan['dst_addr'])==64/8:
-            dam              = self.IPHC_DAM_64B
-        elif len(lowpan['dst_addr'])==16/8:
-            dam              = self.IPHC_DAM_16B
-        elif len(lowpan['dst_addr'])==0:
-            dam              = self.IPHC_DAM_ELIDED
-        else:
-            raise SystemError()
+        dam                  = self.IPHC_DAM_ELIDED
         returnVal           += [(cid << 7) + (sac << 6) + (sam << 4) + (m << 3) + (dac << 2) + (dam << 0)]
         
         # tf
@@ -631,15 +567,9 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         # cid
         returnVal           += lowpan['cid']
-        
-        # src_addr
-        returnVal           += lowpan['src_addr']
-        
-        # dst_addr
-        returnVal           += lowpan['dst_addr']
 
         # payload
-        returnVal += lowpan['payload']
+        returnVal           += lowpan['payload']
         
         return returnVal
     
