@@ -253,10 +253,14 @@ class OpenLbr(eventBusClient.eventBusClient):
             #===================================================================
 
             if (ipv6dic['next_header']==self.IPV6_HEADER):
-                #ipv6 header
+                #ipv6 header (inner)
+                ipv6dic_inner = {}
                 ipv6dic['payload'] = ipv6dic['payload'][1:]
                 ipv6dic['payload_length'] -= 1
-                ipv6dic = self.lowpan_to_ipv6([ipv6dic['pre_hop'],ipv6dic['payload']])
+                # prasing the iphc inner header and get the next_header
+                ipv6dic_inner = self.lowpan_to_ipv6([ipv6dic['pre_hop'],ipv6dic['payload']])
+                ipv6dic['next_header'] = ipv6dic_inner['next_header']
+                ipv6dic['payload'] = ipv6dic_inner['payload']
 
                 
             if (ipv6dic['next_header']==self.IANA_ICMPv6):
@@ -271,6 +275,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ipv6dic['icmpv6_code']=ipv6dic['payload'][1]
                 ipv6dic['icmpv6_checksum']=ipv6dic['payload'][2:4]
                 ipv6dic['app_payload']=ipv6dic['payload'][4:]
+
                 
                 #this function does the job
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
@@ -706,7 +711,6 @@ class OpenLbr(eventBusClient.eventBusClient):
              if ((pkt_ipv6['hop_nhc'] & 0x01) == 1):
                  if (((pkt_lowpan[ptr]>>1) & 0x07) == self.NHC_EID_IPV6):
                      pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
-
 
         # payload
         pkt_ipv6['version']        = 6
