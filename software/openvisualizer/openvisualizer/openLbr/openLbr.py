@@ -261,6 +261,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ipv6dic_inner = self.lowpan_to_ipv6([ipv6dic['pre_hop'],ipv6dic['payload']])
                 ipv6dic['next_header'] = ipv6dic_inner['next_header']
                 ipv6dic['payload'] = ipv6dic_inner['payload']
+                ipv6dic['payload_length'] = ipv6dic_inner['payload_length']
 
                 
             if (ipv6dic['next_header']==self.IANA_ICMPv6):
