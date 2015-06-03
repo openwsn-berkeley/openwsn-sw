@@ -518,7 +518,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             returnVal       += [len(lowpan['route'])-1]           # Segments Left. -1 because the first hop goes to the ipv6 destination address.
             returnVal       += [0x08 << 4 | 0x08]               # CmprI | CmprE. All prefixes elided.
             returnVal       += [0x00,0x00,0x00]                 # padding (4b) + reserved (20b)
-            for hop in lowpan['route'][:len(lowpan['route'])-1]:  #skip first hop as it is in the destination address
+            for hop in list(reversed(lowpan['route'][:len(lowpan['route'])-1])):  #skip first hop as it is in the destination address
                returnVal    += hop
         
         else:# in case of 1hop destination address is the same as ipv6 destination address
