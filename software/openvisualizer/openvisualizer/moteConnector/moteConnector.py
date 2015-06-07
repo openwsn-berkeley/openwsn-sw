@@ -152,7 +152,7 @@ class moteConnector(eventBusClient.eventBusClient):
                 if success == False:
                     return
 
-                print dataToSend
+                # print dataToSend
                 # send command to GD image
                 self._sendToMoteProbe(
                     dataToSend = dataToSend,
