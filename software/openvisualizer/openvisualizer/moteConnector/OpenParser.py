@@ -28,6 +28,7 @@ class OpenParser(Parser.Parser):
     SERFRAME_PC2MOTE_SETDAGROOT        = ord('R')
     SERFRAME_PC2MOTE_DATA              = ord('D')
     SERFRAME_PC2MOTE_TRIGGERSERIALECHO = ord('S')
+    SERFRAME_PC2MOTE_COMMAND_GD        = ord('G')
     
     SERFRAME_ACTION_YES                = ord('Y')
     SERFRAME_ACTION_NO                 = ord('N')

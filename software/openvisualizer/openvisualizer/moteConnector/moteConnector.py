@@ -144,9 +144,73 @@ class moteConnector(eventBusClient.eventBusClient):
                 self._sendToMoteProbe(
                     dataToSend = dataToSend,
                 )
+            elif data['action'][0]==moteState.moteState.SET_COMMAND:
+                # this is command for golden image
+                with self.stateLock:
+                    [success,dataToSend] = self._GDcommandToBytes(data['action'][1:])
+
+                if success == False:
+                    return
+
+                print dataToSend
+                # send command to GD image
+                self._sendToMoteProbe(
+                    dataToSend = dataToSend,
+                )
             else:
                 raise SystemError('unexpected action={0}'.format(data['action']))
     
+    def _GDcommandToBytes(self,data):
+        
+        SUCCESS    = False
+        dataToSend = []
+
+        # get imageId
+        if data[0] == 'image1':
+            imageId  = 1
+        elif data[1] == 'image2':
+            iamgeId = 2
+        else:
+            print "Wrong Image ({0})! (Available: image1 OR image2)\n".format(data[0])
+            return [SUCCESS,dataToSend]
+        
+        # get commandId
+        commandIndex = 0
+        for cmd in moteState.moteState.COMMAND_ALL:
+            if data[1] == cmd[0]:
+                commandId  = cmd[1]
+                commandLen = cmd[2]
+                break
+            else:
+                commandIndex += 1
+
+        # check avaliability of command
+        if commandIndex == len(moteState.moteState.COMMAND_ALL):
+            print "Wrong Command ID ! (Available: 0~9)\n"
+            return [SUCCESS,dataToSend]
+        
+        # get parameter
+        parameter = int(data[2])
+        if parameter <= 0xffff:
+            parameter  = [(parameter & 0xff),((parameter >> 8) & 0xff)]
+            dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND_GD,
+                1, # version
+                imageId,
+                commandId,
+                commandLen, # length 
+                parameter[0],
+                parameter[1]
+            ]
+        else:
+            # more than two bytes parameter, error
+            print "Paramter Wrong! (Available: 0x0000~0xffff)\n"
+            return [SUCCESS,dataToSend]
+
+        # the command is legal if I got here
+        SUCCESS = True
+        return [SUCCESS,dataToSend]
+
+
     def _bytesToMesh_handler(self,sender,signal,data):
         assert type(data)==tuple
         assert len(data)==2
