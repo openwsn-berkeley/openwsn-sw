@@ -99,4 +99,5 @@ errorDescriptions = {
   55: "invalid packet frome radio, length {1} (code location {0})",
   56: "busy receiving when stop of serial activity, buffer input length {1} (code location {0})",
   57: "wrong CRC in input Buffer (input length {0})",
+  58: "Synchronized at asn {0} with timeCorrection of {1}",
 }
