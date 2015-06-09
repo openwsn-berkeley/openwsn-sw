@@ -81,6 +81,8 @@ class moteConnector(eventBusClient.eventBusClient):
             log.error(str(err))
             pass
         else:
+            if eventSubType == 'packet':
+                print "I got a packet from Mote!\n"
             # dispatch
             self.dispatch('fromMote.'+eventSubType,parsedNotif)
         
