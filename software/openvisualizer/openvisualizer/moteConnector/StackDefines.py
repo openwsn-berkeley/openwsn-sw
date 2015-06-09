@@ -34,11 +34,15 @@ components = {
   27: "CEXAMPLE",
   28: "CINFO",
   29: "CLEDS",
-  30: "CSTORM",
-  31: "CWELLKNOWN",
-  32: "TECHO",
-  33: "TOHLONE",
-  34: "UECHO",
+  30: "CSENSORS",
+  31: "CSTORM",
+  32: "CWELLKNOWN",
+  33: "TECHO",
+  34: "TOHLONE",
+  35: "UECHO",
+  36: "UINJECT",
+  37: "RRT",
+  38: "SECURITY",
 }
 
 errorDescriptions = {
