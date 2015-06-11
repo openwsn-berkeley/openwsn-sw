@@ -140,9 +140,6 @@ class eventBusMonitor(object):
                         lowpan       = lowpan,
                     )
                     self._dispatchMeshDebugPacket(zep)
-
-                if signal=='fromMote.packet':
-                    print data
                     
                 if signal=='bytesToMesh':
                     # Forwards a copy of the 6LoWPAN packet destined for the mesh 
