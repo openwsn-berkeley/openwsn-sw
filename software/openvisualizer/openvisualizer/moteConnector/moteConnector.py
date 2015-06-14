@@ -168,8 +168,8 @@ class moteConnector(eventBusClient.eventBusClient):
         # get imageId
         if data[0] == 'image1':
             imageId  = 1
-        elif data[1] == 'image2':
-            iamgeId = 2
+        elif data[0] == 'image2':
+            imageId = 2
         else:
             print "Wrong Image ({0})! (Available: image1 OR image2)\n".format(data[0])
             return [SUCCESS,dataToSend]
