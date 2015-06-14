@@ -24,7 +24,6 @@ from openvisualizer.openTun       import openTun
 from openvisualizer.RPL           import UDPLatency
 from openvisualizer.RPL           import topology
 from openvisualizer               import appdirs
-from openvisualizer.openSniffer   import openSniffer
 
 import openvisualizer.openvisualizer_utils as u
     
@@ -53,7 +52,6 @@ class OpenVisualizerApp(object):
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpLatency           = UDPLatency.UDPLatency()
-        self.openSniffer          = openSniffer.OpenSniffer()
         self.DAGrootList          = []
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 

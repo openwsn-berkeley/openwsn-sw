@@ -176,5 +176,6 @@ class OpenVisualizerCli(Cmd):
 
 if __name__=="__main__":
     app = openVisualizerApp.main()
+    app.eventBusMonitor.setWiresharkDebug(True)
     cli = OpenVisualizerCli(app)
     cli.cmdloop()
