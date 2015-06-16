@@ -120,29 +120,6 @@ class OpenVisualizerCli(Cmd):
             except ValueError as err:
                 print "{0}:{1}".format(type(err),err)
 
-    def do_ping(self,arg):
-        """
-        Sets mote with parameters
-        Usag
-        """
-        if not arg:
-            self.stdout.write('Available ports:')
-            if self.app.moteStates:
-                for ms in self.app.moteStates:
-                    self.stdout.write('  {0}'.format(ms.moteConnector.serialport))
-            else:
-                self.stdout.write('  <none>')
-            self.stdout.write('\n')
-        else:
-            try:
-                if sys.platform.startswith('win32'):
-                    pingComand = 'ping -6 ' + arg + ' -n 1 -l 1'
-                elif sys.platform.startswith('linux'):
-                    pingComand = 'ping6 ' + arg + ' -n 1 -l 1'
-                os.system(pingComand)
-            except ValueError as err:
-                self.stdout.write(err)
-
     def help_all(self):
         """Lists first line of help for all documented commands"""
         names = self.get_names()
