@@ -58,7 +58,8 @@ class typeComponent(openType.openType):
     COMPONENT_TECHO                     = 0x21
     COMPONENT_TOHLONE                   = 0x22
     COMPONENT_UECHO                     = 0x23
-    COMPONENT_RRT                       = 0x24
+    COMPONENT_UINJECT                   = 0x24
+    COMPONENT_RRT                       = 0x25
     
     def __init__(self):
         # log

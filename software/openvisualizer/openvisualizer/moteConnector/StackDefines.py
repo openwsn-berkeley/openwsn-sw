@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Sun, 05 Oct 2014 18:39:53
+# on Thu, 18 Jun 2015 23:18:40
 #
 
 components = {
@@ -50,7 +50,7 @@ errorDescriptions = {
    2: "received an echo reply",
    3: "getData asks for too few bytes, maxNumBytes={0}, fill level={1}",
    4: "the input buffer has overflown",
-   5: "the command is not allowerd, command = {0}",
+   5: "the command is not allowed, command = {0}",
    6: "unknown transport protocol {0} (code location {1})",
    7: "wrong TCP state {0} (code location {1})",
    8: "TCP reset while in state {0} (code location {1})",
@@ -95,7 +95,7 @@ errorDescriptions = {
   47: "unsupported command {0}",
   48: "unknown message type {0}",
   49: "wrong address type {0} (code location {1})",
-  50: "isBridge mismatch (code location {0})",
+  50: "bridge mismatch (code location {0})",
   51: "header too long, length {1} (code location {0})",
   52: "input length problem, length={0}",
   53: "booted",
