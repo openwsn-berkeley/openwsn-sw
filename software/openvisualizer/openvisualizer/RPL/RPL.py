@@ -40,10 +40,12 @@ class RPL(eventBusClient.eventBusClient):
     IANA_ICMPv6_RPL_TYPE               = 155
     
     # RPL DIO (RFC6550)
-    DIO_OPT_GROUNDED                   = 1<<7
-    MOP_DIO_A                          = 1<<5
-    MOP_DIO_B                          = 1<<4
+    DIO_OPT_GROUNDED                   = 1<<7 # Grounded
+    # Non-Storing Mode of Operation (1)
+    MOP_DIO_A                          = 0<<5
+    MOP_DIO_B                          = 0<<4
     MOP_DIO_C                          = 1<<3
+    # most preferred (7) as I am DAGRoot
     PRF_DIO_A                          = 1<<2
     PRF_DIO_B                          = 1<<1
     PRF_DIO_C                          = 1<<0
