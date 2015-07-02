@@ -162,7 +162,7 @@ class moteConnector(eventBusClient.eventBusClient):
     
     def _GDcommandToBytes(self,data):
         
-        SUCCESS    = False
+        outcome    = False
         dataToSend = []
 
         # get imageId
@@ -172,7 +172,7 @@ class moteConnector(eventBusClient.eventBusClient):
             imageId = 2
         else:
             print "Wrong Image ({0})! (Available: image1 OR image2)\n".format(data[0])
-            return [SUCCESS,dataToSend]
+            return [outcome,dataToSend]
         
         # get commandId
         commandIndex = 0
@@ -187,7 +187,7 @@ class moteConnector(eventBusClient.eventBusClient):
         # check avaliability of command
         if commandIndex == len(moteState.moteState.COMMAND_ALL):
             print "Wrong Command ID ! (Available: 0~9)\n"
-            return [SUCCESS,dataToSend]
+            return [outcome,dataToSend]
         
         # get parameter
         parameter = int(data[2])
@@ -204,11 +204,11 @@ class moteConnector(eventBusClient.eventBusClient):
         else:
             # more than two bytes parameter, error
             print "Paramter Wrong! (Available: 0x0000~0xffff)\n"
-            return [SUCCESS,dataToSend]
+            return [outcome,dataToSend]
 
         # the command is legal if I got here
-        SUCCESS = True
-        return [SUCCESS,dataToSend]
+        outcome = True
+        return [outcome,dataToSend]
 
 
     def _bytesToMesh_handler(self,sender,signal,data):
