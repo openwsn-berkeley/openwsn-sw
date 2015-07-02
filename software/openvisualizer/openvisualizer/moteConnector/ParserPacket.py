@@ -53,7 +53,7 @@ class ParserPacket(Parser.Parser):
         
           
        
-        eventType='packet'
+        eventType='snifferedPacket'
         # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header
         return (eventType,input)
 
