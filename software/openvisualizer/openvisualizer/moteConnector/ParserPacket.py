@@ -19,10 +19,8 @@ class ParserPacket(Parser.Parser):
     
     HEADER_LENGTH  = 2
     MSPERSLOT      = 15 #ms per slot.
-    
     IPHC_SAM       = 4
     IPHC_DAM       = 0
-    
      
     def __init__(self):
         
@@ -31,7 +29,6 @@ class ParserPacket(Parser.Parser):
         
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)
-    
     
     #======================== public ==========================================
     
@@ -50,8 +47,6 @@ class ParserPacket(Parser.Parser):
         
         if log.isEnabledFor(logging.DEBUG):
             log.debug("packet without header {0}".format(input))
-        
-          
        
         eventType='sniffedPacket'
         # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header
