@@ -166,12 +166,12 @@ class moteConnector(eventBusClient.eventBusClient):
         dataToSend = []
 
         # get imageId
-        if data[0] == 'image1':
+        if data[0] == 'gd_root':
             imageId  = 1
-        elif data[0] == 'image2':
+        elif data[0] == 'gd_sniffer':
             imageId = 2
         else:
-            print "Wrong Image ({0})! (Available: image1 OR image2)\n".format(data[0])
+            print "Wrong Image ({0})! (Available: gd_root OR gd_sniffer)\n".format(data[0])
             return [outcome,dataToSend]
         
         # get commandId
