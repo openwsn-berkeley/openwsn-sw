@@ -141,7 +141,7 @@ class eventBusMonitor(object):
                     )
                     self._dispatchMeshDebugPacket(zep)
 
-                if signal=='fromMote.snifferedPacket':
+                if signal=='fromMote.sniffedPacket':
                     body      = data[0:-3]
                     crc       = data[-3:-1]
                     frequency = data[-1]
