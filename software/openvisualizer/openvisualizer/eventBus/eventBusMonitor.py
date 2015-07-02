@@ -140,6 +140,15 @@ class eventBusMonitor(object):
                         lowpan       = lowpan,
                     )
                     self._dispatchMeshDebugPacket(zep)
+
+                if signal=='fromMote.sniffedPacket':
+                    body      = data[0:-3]
+                    crc       = data[-3:-1]
+                    frequency = data[-1]
+
+                    # wrap with zep header
+                    zep   = self._wrapZepCrc(body,frequency)
+                    self._dispatchMeshDebugPacket(zep)
                     
                 if signal=='bytesToMesh':
                     # Forwards a copy of the 6LoWPAN packet destined for the mesh 

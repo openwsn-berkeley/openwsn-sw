@@ -94,7 +94,32 @@ class OpenVisualizerCli(Cmd):
                         ms.triggerAction(moteState.moteState.TRIGGER_DAGROOT)
                 except ValueError as err:
                     self.stdout.write(err)
-                
+    
+    def do_set(self,arg):
+        """
+        Sets mote with parameters
+        Usag
+        """
+        if not arg:
+            self.stdout.write('Available ports:')
+            if self.app.moteStates:
+                for ms in self.app.moteStates:
+                    self.stdout.write('  {0}'.format(ms.moteConnector.serialport))
+            else:
+                self.stdout.write('  <none>')
+            self.stdout.write('\n')
+        else:
+            try:
+                [port,image,command,parameter] = arg.split(' ')
+                for ms in self.app.moteStates:
+                    try:
+                        if (ms.moteConnector.serialport==port):
+                            ms.triggerAction([moteState.moteState.SET_COMMAND,image,command,parameter])
+                    except ValueError as err:
+                        self.stdout.write(err)
+            except ValueError as err:
+                print "{0}:{1}".format(type(err),err)
+
     def help_all(self):
         """Lists first line of help for all documented commands"""
         names = self.get_names()
@@ -128,5 +153,6 @@ class OpenVisualizerCli(Cmd):
 
 if __name__=="__main__":
     app = openVisualizerApp.main()
+    app.eventBusMonitor.setWiresharkDebug(True)
     cli = OpenVisualizerCli(app)
     cli.cmdloop()

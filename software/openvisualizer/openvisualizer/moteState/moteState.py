@@ -410,6 +410,32 @@ class moteState(eventBusClient.eventBusClient):
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
+    SET_COMMAND         = 'imageCommand'
+
+    # command for golen image:        command,       id length
+    COMMAND_SET_EBPERIOD          =  ['ebPeriod',    0, 1]
+    COMMAND_SET_CHANNEL           =  ['channel',     1, 1]
+    COMMAND_SET_KAPERIOD          =  ['kaPeriod',    2, 2]
+    COMMAND_SET_DIOPERIOD         =  ['dioPeriod',   3, 2]
+    COMMAND_SET_DAOPERIOD         =  ['daoPeriod',   4, 2]
+    COMMAND_PING_MOTE             =  ['ping',        5, 8]
+    COMMAND_SET_DAGRANK           =  ['dagrank',     6, 2]
+    COMMAND_SET_SECURITY_STATUS   =  ['security',    7, 1]
+    COMMAND_SET_FRAMELENGTH       =  ['frameLength', 8, 2]
+    COMMAND_SET_ACK_STATUS        =  ['ackReply',    9, 1]
+    COMMAND_ALL                   = [
+        COMMAND_SET_EBPERIOD ,
+        COMMAND_SET_CHANNEL,
+        COMMAND_SET_KAPERIOD,
+        COMMAND_SET_DIOPERIOD,
+        COMMAND_SET_DAOPERIOD,
+        COMMAND_PING_MOTE,
+        COMMAND_SET_DAGRANK,
+        COMMAND_SET_SECURITY_STATUS,
+        COMMAND_SET_FRAMELENGTH,
+        COMMAND_SET_ACK_STATUS,
+    ]
+
     TRIGGER_ALL         = [
         TRIGGER_DAGROOT,
     ]

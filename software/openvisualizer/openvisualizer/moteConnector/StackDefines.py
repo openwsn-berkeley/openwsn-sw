@@ -42,6 +42,7 @@ components = {
   35: "UECHO",
   36: "UINJECT",
   37: "RRT",
+  38: "SECURITY",
 }
 
 errorDescriptions = {
@@ -49,7 +50,7 @@ errorDescriptions = {
    2: "received an echo reply",
    3: "getData asks for too few bytes, maxNumBytes={0}, fill level={1}",
    4: "the input buffer has overflown",
-   5: "the command is not allowerd, command = {0}",
+   5: "the command is not allowed, command = {0}",
    6: "unknown transport protocol {0} (code location {1})",
    7: "wrong TCP state {0} (code location {1})",
    8: "TCP reset while in state {0} (code location {1})",
@@ -102,4 +103,6 @@ errorDescriptions = {
   55: "invalid packet frome radio, length {1} (code location {0})",
   56: "busy receiving when stop of serial activity, buffer input length {1} (code location {0})",
   57: "wrong CRC in input Buffer (input length {0})",
+  58: "frame received at asn {0} with timeCorrection of {1}",
+  59: "security error on frameType {0}, code location {1}"
 }
