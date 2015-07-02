@@ -171,6 +171,7 @@ class moteConnector(eventBusClient.eventBusClient):
         elif data[0] == 'gd_sniffer':
             imageId = 2
         else:
+            print "============================================="
             print "Wrong Image ({0})! (Available: gd_root OR gd_sniffer)\n".format(data[0])
             return [outcome,dataToSend]
         
@@ -186,7 +187,11 @@ class moteConnector(eventBusClient.eventBusClient):
 
         # check avaliability of command
         if commandIndex == len(moteState.moteState.COMMAND_ALL):
-            print "Wrong Command ID ! (Available: 0~9)\n"
+            print "============================================="
+            print "Wrong Command Type! Available Command Type: {"
+            for cmd in moteState.moteState.COMMAND_ALL:
+                print " {0}".format(cmd[0])
+            print " }"
             return [outcome,dataToSend]
         
         # get parameter
@@ -203,6 +208,7 @@ class moteConnector(eventBusClient.eventBusClient):
             ]
         else:
             # more than two bytes parameter, error
+            print "============================================="
             print "Paramter Wrong! (Available: 0x0000~0xffff)\n"
             return [outcome,dataToSend]
 
