@@ -103,10 +103,24 @@ class Propagation(eventBusClient.eventBusClient):
             elif self.simTopology=='linear':
                 
                 # linear network
-                if fromMote==toMote+1:
-                    pdr          = 1.0
+                # if fromMote==toMote+1:
+                    # pdr          = 1.0
+                # else:
+                    # pdr          = 0.0
+                    
+                if (fromMote==1 and toMote==2)  or (fromMote==2 and toMote==1)  or \
+                   (fromMote==1 and toMote==3)  or (fromMote==3 and toMote==1)  or \
+                   (fromMote==2 and toMote==3)  or (fromMote==3 and toMote==2)  or \
+                   (fromMote==2 and toMote==4)  or (fromMote==4 and toMote==2)  or \
+                   (fromMote==3 and toMote==5)  or (fromMote==5 and toMote==3)  or \
+                   (fromMote==4 and toMote==5)  or (fromMote==5 and toMote==4)  or \
+                   (fromMote==4 and toMote==6)  or (fromMote==6 and toMote==4)  or \
+                   (fromMote==4 and toMote==7)  or (fromMote==7 and toMote==4)  or \
+                   (fromMote==5 and toMote==8)  or (fromMote==8 and toMote==5)  or \
+                   (fromMote==5 and toMote==9)  or (fromMote==9 and toMote==5):
+                    pdr = 1.0
                 else:
-                    pdr          = 0.0
+                    pdr = 0.0
             
             elif self.simTopology=='fully-meshed':
                 
