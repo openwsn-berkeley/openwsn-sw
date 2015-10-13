@@ -77,17 +77,20 @@ class ParserData(Parser.Parser):
         input = input[23:]
 
         if input[-7:] == [ord(self.cstorm_payload[i]) for i in range(len(self.cstorm_payload))]:
-            initasn = struct.unpack('<BHH',''.join([chr(c) for c in input[-12:-7]]))
+            initasn = struct.unpack('<HHB',''.join([chr(c) for c in input[-14:-9]]))
             if input[3:10] == [0x14,0x15,0x92,0xcc,0x00,0x00,0x00]:
                 moteId = input[10]
             else:
                 moteId = input[18]
-            '''
-            print 'CSTORM of Mote {0}'.format(moteId)
-            print 'sent at {0} ; received at {1}'.format(initasn,self._asn)
-            print 'The latency is {0} (counted by slots)\n'.format(self._asndiference(input[-12:-7],asnbytes))
-            '''
-            self.dataLatency.write('mote {0:2} latency {1:4}\n'.format(moteId,self._asndiference(input[-12:-7],asnbytes)))
+            # print 'CSTORM of Mote {0}'.format(moteId)
+            # print 'sent at {0} ; received at {1}'.format(initasn,self._asn)
+            # print 'The latency is {0} (counted by slots)\n'.format(self._asndiference(input[-12:-7],asnbytes))
+            asnend  = struct.unpack('<HHB',''.join([chr(c) for c in asnbytes]))
+            self.dataLatency.write('mote {0:2} latency {1:4} initasn {2:6} packetId {3:3} asnend {4:6}\n'.format(moteId,
+              self._asndiference(input[-14:-9],asnbytes),
+              initasn[1]*65536+initasn[0],
+              str(int(input[-9])*256+int(input[-8])),
+              asnend[1]*65536+asnend[0]))
             self.dataLatency.flush()
             
         
