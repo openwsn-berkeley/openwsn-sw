@@ -245,6 +245,24 @@ class ParserStatus(Parser.Parser):
         # jump the header bytes
         input = input[3:]
         
+        if statusElem == 12:
+            #print "moteId={0:>2} Status={1:>2} {2}".format(moteId >> 8,statusElem,input)
+            # length | moteId
+            output = struct.unpack('>BH',''.join([chr(c) for c in input[:3]]))
+
+            if len(input)>3:
+                input = input[3:]
+                # slotoffset | numberOfTx | number of TxACK
+                while len(input)>=5:
+                    output += struct.unpack('>BHH',''.join([chr(c) for c in input[:5]]))
+                    if len(input)>5:
+                        input = input[5:]
+                    elif len(input)==5:
+                        break
+                    else:
+                        print "SHould never Happen!\n"
+            print output
+
         # call the next header parser
         for key in self.fieldsParsingKeys:
             if statusElem==key.val:
