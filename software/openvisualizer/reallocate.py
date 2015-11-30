@@ -3,6 +3,9 @@ import threading
 import struct
 import binascii
 import os
+import socket
+
+IOT_LAB = ['m3-359','m3-360','m3-361','m3-362','m3-363','m3-364']
 
 if os.name=='nt':       # Windows
    import _winreg as winreg
@@ -128,10 +131,11 @@ class moteProbe(threading.Thread):
     CMD_SET_DAGROOT = '7e5259bbbb0000000000000c347e'
     CMD_SEND_DATA   = '7e44141592000012e63b78001180bbbb0000000000000000000000000001bbbb000000000000141592000012e63b07d007d0000ea30d706f69706f697a837e'
     
-    def __init__(self,serialport=None,dagroot=None):
+    def __init__(self,serialport=None,dagroot=None,iotlabmote=None):
         
         # store params
         self.serialport           = serialport
+        self.iotlabmote           = iotlabmote
         
         # local variables
         self.hdlc                 = OpenHdlc()
@@ -168,72 +172,80 @@ class moteProbe(threading.Thread):
             
             while self.goOn:     # open serial port
                 
-                self.serial = serial.Serial(self.serialport,'115200')
-                self.serial.setDTR(0)
-                self.serial.setRTS(0)
+                if self.iotlabmote:
+                    self.serial = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+                    self.serial.connect((self.serialport,20000))
+                else:
+                    self.serial = serial.Serial(self.serialport,'115200')
+                    self.serial.setDTR(0)
+                    self.serial.setRTS(0)
                 while self.goOn: # read bytes from serial port
                     try:
-                        rxByte = self.serial.read(1)
+                        if self.iotlabmote:
+                            rxBytes = self.serial.recv(1024)
+                        else:
+                            rxBytes = self.serial.read(1)
                     except Exception as err:
                         print err
                         time.sleep(1)
                         break
                     else:
-                        if      (
-                                    (not self.busyReceiving)             and 
-                                    self.lastRxByte==self.hdlc.HDLC_FLAG and
-                                    rxByte!=self.hdlc.HDLC_FLAG
-                                ):
-                            # start of frame
-                            self.busyReceiving       = True
-                            self.inputBuf            = self.hdlc.HDLC_FLAG
-                            self.inputBuf           += rxByte
-                        elif    (
-                                    self.busyReceiving                   and
-                                    rxByte!=self.hdlc.HDLC_FLAG
-                                ):
-                            # middle of frame
-                            
-                            self.inputBuf           += rxByte
-                        elif    (
-                                    self.busyReceiving                   and
-                                    rxByte==self.hdlc.HDLC_FLAG
-                                ):
-                            # end of frame
-                            self.busyReceiving       = False
-                            self.inputBuf           += rxByte
-                            
-                            try:
-                                tempBuf              = self.inputBuf
-                                self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
-                            except Exception as err:
-                                print '{0}: invalid serial frame: {2} {1}'.format(self.name, err, tempBuf)
-                            else:
-                                if   self.inputBuf==[ord('R')]:
-                                    with self.outputBufLock:
-                                        if self.outputBuf:
-                                            outputToWrite = self.outputBuf.pop(0)
-                                            #print ''.join(['{0:02x}'.format(ord(b)) for b in outputToWrite])
-                                            self.serial.write(outputToWrite)
-                                elif self.inputBuf[0]==ord('S'):
-                                    if len(self.inputBuf)>3 and self.inputBuf[3]==12:
-                                        self.inputBuf = self.inputBuf[4:]
-                                        output = struct.unpack('>BH',''.join([chr(c) for c in self.inputBuf[:3]]))
+                        for rxByte in rxBytes:
+                            if      (
+                                        (not self.busyReceiving)             and 
+                                        self.lastRxByte==self.hdlc.HDLC_FLAG and
+                                        rxByte!=self.hdlc.HDLC_FLAG
+                                    ):
+                                # start of frame
+                                self.busyReceiving       = True
+                                self.inputBuf            = self.hdlc.HDLC_FLAG
+                                self.inputBuf           += rxByte
+                            elif    (
+                                        self.busyReceiving                   and
+                                        rxByte!=self.hdlc.HDLC_FLAG
+                                    ):
+                                # middle of frame
+                                
+                                self.inputBuf           += rxByte
+                            elif    (
+                                        self.busyReceiving                   and
+                                        rxByte==self.hdlc.HDLC_FLAG
+                                    ):
+                                # end of frame
+                                self.busyReceiving       = False
+                                self.inputBuf           += rxByte
+                                
+                                try:
+                                    tempBuf              = self.inputBuf
+                                    self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
+                                except Exception as err:
+                                    print '{0}: invalid serial frame: {2} {1}'.format(self.name, err, tempBuf)
+                                else:
+                                    if   self.inputBuf==[ord('R')]:
+                                        with self.outputBufLock:
+                                            if self.outputBuf:
+                                                outputToWrite = self.outputBuf.pop(0)
+                                                #print ''.join(['{0:02x}'.format(ord(b)) for b in outputToWrite])
+                                                self.serial.write(outputToWrite)
+                                    elif self.inputBuf[0]==ord('S'):
+                                        if len(self.inputBuf)>3 and self.inputBuf[3]==12:
+                                            self.inputBuf = self.inputBuf[4:]
+                                            output = struct.unpack('>BH',''.join([chr(c) for c in self.inputBuf[:3]]))
 
-                                        if len(self.inputBuf)>3:
-                                            self.inputBuf = self.inputBuf[3:]
-                                            # slotoffset | numberOfTx | number of TxACK
-                                            while len(self.inputBuf)>=5:
-                                                output += struct.unpack('>BHH',''.join([chr(c) for c in self.inputBuf[:5]]))
-                                                if len(self.inputBuf)>5:
-                                                    self.inputBuf = self.inputBuf[5:]
-                                                elif len(self.inputBuf)==5:
-                                                    break
-                                                else:
-                                                    print "SHould never Happen!\n"
-                                            self.resultFile.write(str(output))
-                                        print output
-                        self.lastRxByte = rxByte
+                                            if len(self.inputBuf)>3:
+                                                self.inputBuf = self.inputBuf[3:]
+                                                # slotoffset | numberOfTx | number of TxACK
+                                                while len(self.inputBuf)>=5:
+                                                    output += struct.unpack('>BHH',''.join([chr(c) for c in self.inputBuf[:5]]))
+                                                    if len(self.inputBuf)>5:
+                                                        self.inputBuf = self.inputBuf[5:]
+                                                    elif len(self.inputBuf)==5:
+                                                        break
+                                                    else:
+                                                        print "SHould never Happen!\n"
+                                                self.resultFile.write(str(output))
+                                            print output
+                            self.lastRxByte = rxByte
                     
         except Exception as err:
             print err
@@ -272,9 +284,10 @@ def main():
     print 'poipoi'
 
 if __name__=="__main__":
-    serialPort = serialPortScan()
-    for port in serialPort:
-        if port == serialPort[0]:
-            moteProbe(port,True)
-        else:
-            moteProbe(port,False)
+    if IOT_LAB:
+        for port in IOT_LAB:
+            moteProbe(port,False,True)
+    else:
+        serialPort = serialPortScan()
+        for port in serialPort:
+            moteProbe(port,False,False)
