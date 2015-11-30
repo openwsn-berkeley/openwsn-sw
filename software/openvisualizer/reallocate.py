@@ -150,9 +150,6 @@ class moteProbe(threading.Thread):
         self.outputBufLock        = threading.RLock()
         self.dataLock             = threading.Lock()
         
-        # data collect
-        self.resultFile           = open('result.txt','w')
-        
         # flag to permit exit from read loop
         self.goOn                 = True
         
@@ -162,6 +159,9 @@ class moteProbe(threading.Thread):
         # give this thread a name
         self.name                 = 'moteProbe@'+self.serialport
         
+        # data collect
+        self.resultFile           = open(self.name+'.txt','w') 
+
         # start myself
         self.start()
     
@@ -219,7 +219,8 @@ class moteProbe(threading.Thread):
                                     tempBuf              = self.inputBuf
                                     self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
                                 except Exception as err:
-                                    print '{0}: invalid serial frame: {2} {1}'.format(self.name, err, tempBuf)
+                                    #print '{0}: invalid serial frame: {2} {1}'.format(self.name, err, tempBuf)
+                                    pass
                                 else:
                                     if   self.inputBuf==[ord('R')]:
                                         with self.outputBufLock:
@@ -231,6 +232,7 @@ class moteProbe(threading.Thread):
                                         if len(self.inputBuf)>3 and self.inputBuf[3]==12:
                                             self.inputBuf = self.inputBuf[4:]
                                             output = struct.unpack('>BH',''.join([chr(c) for c in self.inputBuf[:3]]))
+                                            print hex(output[-1])
 
                                             if len(self.inputBuf)>3:
                                                 self.inputBuf = self.inputBuf[3:]
@@ -243,7 +245,9 @@ class moteProbe(threading.Thread):
                                                         break
                                                     else:
                                                         print "SHould never Happen!\n"
-                                                self.resultFile.write(str(output))
+                                                self.resultFile.write(str(output)+'\n')
+                                                self.resultFile.flush()
+                                                os.fsync(self.resultFile)
                                             print output
                             self.lastRxByte = rxByte
                     
