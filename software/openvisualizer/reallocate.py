@@ -5,7 +5,7 @@ import binascii
 import os
 import socket
 
-IOT_LAB = ['m3-359','m3-360','m3-361','m3-362','m3-363','m3-364']
+IOT_LAB = ['m3-205','m3-206','m3-207','m3-208','m3-209','m3-210','m3-211']
 
 if os.name=='nt':       # Windows
    import _winreg as winreg
