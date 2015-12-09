@@ -157,7 +157,7 @@ class moteProbe(threading.Thread):
         threading.Thread.__init__(self)
         
         # give this thread a name
-        self.name                 = 'moteProbe@'+self.serialport
+        self.name                 = 'collision@'+self.serialport
         
         # data collect
         self.resultFile           = open(self.name+'.txt','w') 
@@ -230,7 +230,12 @@ class moteProbe(threading.Thread):
                                                 self.serial.write(outputToWrite)
                                     elif self.inputBuf[0]==ord('S'):
                                         if len(self.inputBuf)>3 and self.inputBuf[3]==12:
-                                            print output
+                                            self.inputBuf = self.inputBuf[4:]
+					    print hex(int(self.inputBuf[-2]))
+					    print self.inputBuf
+					    self.resultFile.write(str(self.inputBuf)+'\n')
+					    self.resultFile.flush()
+					    os.fsync(self.resultFile)
                             self.lastRxByte = rxByte
                     
         except Exception as err:
