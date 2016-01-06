@@ -92,6 +92,12 @@ class OpenLbr(eventBusClient.eventBusClient):
 
     NHC_NH_INLINE            = 0
     NHC_NH_COMPRESSED        = 1
+
+    PAGE_ONE_DISPATCH        = 0xF1
+    ELECTIVE_6LoRH           = 5
+    CRITICAL_6LoRH           = 4
+
+    TYPE_6LoRH_IP_IN_IP      = 6
     
     #=== RPL source routing header (RFC6554)
     SR_FIR_TYPE              = 0x03
@@ -196,6 +202,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             lowpan['nextHop'] = lowpan['route'][len(lowpan['route'])-1] #get next hop as this has to be the destination address, this is the last element on the list
             # turn dictionary of fields into raw bytes
             lowpan_bytes     = self.reassemble_lowpan(lowpan)
+
             #print lowpan_bytes
             # log
             if log.isEnabledFor(logging.DEBUG):
@@ -421,16 +428,120 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         :returns: A list of bytes representing the 6LoWPAN packet.
         '''
+        print lowpan
         returnVal            = []
 
         # the 6lowpan packet contains 4 parts
-        # 1. IPHC outer header
-        # 2. extention header (except ipv6 header)
-        # 3. ipv6 header
+        # 1. Page Dispatch (page 1)
+        # 2. IPinIP 6LoRH
+        # 3. RH3 6LoRH(s)
         # 4. IPHC inner header
         
-        # ===================== 1. IPHC outer header ==========================
+        # ===================== 1. Page Dispatch (page 1) =====================
 
+        returnVal += [self.PAGE_ONE_DISPATCH]
+
+        # ===================== 2. IPinIP 6LoRH ===============================
+
+        # length at least is one
+        l = 1
+
+        # source address
+        if lowpan['src_addr'] != [187, 187, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]:
+            l += len(lowpan['src_addr'])
+ 
+        returnVal += [(self.ELECTIVE_6LoRH<<5) + l,self.TYPE_6LoRH_IP_IN_IP]
+
+        returnVal += lowpan['hlim']
+
+        # source address is root of dagroot
+        if l>1:
+            returnVal += lowpan['src_addr']
+
+        # destination address
+        if len(lowpan['route'])>1:
+            # source route needed
+            if (len(lowpan['dst_addr'])==16): #this is a hack by now as the src routing table is only 8B and not 128, so I need to get the prefix from the destination address as I know are the same.
+                prefix=lowpan['dst_addr'][:8]
+
+            if lowpan['dst_addr'] == prefix + lowpan['route'][0]:
+                # the destination is elided
+                pass
+            else:    
+                returnVal       += prefix + lowpan['nextHop']                # dest address is next hop in source routing -- poipoi xv prefix needs to be removed once hc works well
+            # =======================3. RH3 6LoRH(s) ==============================
+            # RPL Routing Header (RFC6554: https://tools.ietf.org/html/rfc6554#page-6)  
+            sizeUnitType = 0xff
+            size     = 0
+            hopList  = []
+            for hop in list(reversed(lowpan['route'][:len(lowpan['route'])-1])):
+                size += 1
+                if lowpan['dst_addr'][-8:-2] == hop[-8:-2]:
+                    if sizeUnitType != 0xff:
+                        if  sizeUnit != 0:
+                            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+                            returnVal += hopList
+                            size = 0
+                            sizeUnitType = 0
+                            hopList += [hop[-1]]
+                        else:
+                            hopList += hop
+                    else:
+                        sizeUnitType = 0
+                        hopList += [hop[-1]]
+                elif lowpan['dst_addr'][-8:-3] == hop[-8:-3]:
+                    if sizeUnitType != 0xff:
+                        if  sizeUnit != 1:
+                            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+                            returnVal += hopList
+                            size = 0
+                            sizeUnitType = 1
+                            hopList += hop[-2:]
+                        else:
+                            hopList += hop
+                            sizeUnitType = 1
+                    else:
+                        sizeUnitType = 1
+                        hopList += hop[-2:]
+                elif lowpan['dst_addr'][-8:-5] == hop[-8:-5]:
+                    if sizeUnitType != 0xff:
+                        if  sizeUnit != 2:
+                            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+                            returnVal += hopList
+                            size = 0
+                            sizeUnitType = 2
+                            hopList += hop[-4:]
+                        else:
+                            hopList += hop
+                            sizeUnitType = 2
+                    else:
+                        sizeUnitType = 2
+                        hopList += hop[-4:]
+                else:
+                    if sizeUnitType != 0xff:
+                        if  sizeUnit != 3:
+                            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+                            returnVal += hopList
+                            size = 0
+                            sizeUnitType = 3
+                            hopList = []
+                        else:
+                            hopList += hop
+                            sizeUnitType = 3
+                    else:
+                        sizeUnitType = 2
+                        hopList += hop
+
+            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+            returnVal += hopList
+        else:# in case of 1hop destination address is the same as ipv6 destination address
+            if lowpan['dst_addr'] == prefix + lowpan['route'][0]:
+                # the destination is elided
+                pass
+            else:
+                returnVal       += lowpan['dst_addr']
+ 
+        # ========================= 4. IPHC inner header ======================
         # Byte1: 011(3b) TF(2b) NH(1b) HLIM(2b)
         if len(lowpan['tf'])==0:
             tf               = self.IPHC_TF_ELIDED
@@ -483,6 +594,9 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         # tf
         returnVal           += lowpan['tf']
+
+        # nh
+        returnVal           += lowpan['nh']
         
         # hlim
         returnVal           += lowpan['hlim']
@@ -493,79 +607,16 @@ class OpenLbr(eventBusClient.eventBusClient):
         # src_addr
         returnVal           += lowpan['src_addr']
         
-        if len(lowpan['route'])>1:
-            # source route needed
-            if (len(lowpan['dst_addr'])==16): #this is a hack by now as the src routing table is only 8B and not 128, so I need to get the prefix from the destination address as I know are the same.
-                prefix=lowpan['dst_addr'][:8]
-                    
-            returnVal       += prefix + lowpan['nextHop']                # dest address is next hop in source routing -- poipoi xv prefix needs to be removed once hc works well
-            # ========================= 2. ipv6 routing header ====================
-            # RPL Routing Header (RFC6554: https://tools.ietf.org/html/rfc6554#page-6)  
-            returnVal       += [(self.NHC_DISPATCH << 4) + (self.NHC_EID_ROUTING << 1) + (self.NHC_NH_COMPRESSED << 0)]
-            returnVal       += [8*(len(lowpan['route'])-1)+6]     # Hdr Ext Len. -1 to remove last element. 6 to the length following content until address field
-            returnVal       += [self.SR_FIR_TYPE]               # Routing Type. 3 for source routing
-            returnVal       += [len(lowpan['route'])-1]           # Segments Left. -1 because the first hop goes to the ipv6 destination address.
-            returnVal       += [0x08 << 4 | 0x08]               # CmprI | CmprE. All prefixes elided.
-            returnVal       += [0x00,0x00,0x00]                 # padding (4b) + reserved (20b)
-            for hop in list(reversed(lowpan['route'][:len(lowpan['route'])-1])):  #skip first hop as it is in the destination address
-               returnVal    += hop
-        
-        else:# in case of 1hop destination address is the same as ipv6 destination address
-            # dst_addr
-            returnVal           += lowpan['dst_addr']
-        # ========================= 3. Ipv6 header ============================ 
-        # IPv6 Header (RFC6554: https://tools.ietf.org/html/rfc6554#page-6)
-        returnVal           += [(self.NHC_DISPATCH << 4) + (self.NHC_EID_IPV6 << 1) + (self.NHC_NH_INLINE << 0)]
-        # ========================= 4. IPHC inner header ======================
-        # Byte1: 011(3b) TF(2b) NH(1b) HLIM(2b)
-        if len(lowpan['tf'])==0:
-            tf               = self.IPHC_TF_ELIDED
-        else:
-            raise NotImplementedError()
-        if len(lowpan['nh'])==1:
-            nh               = self.IPHC_NH_INLINE
-        else:
-            nh               = self.IPHC_NH_COMPRESSED
-        if   lowpan['hlim']==1:
-            hlim             = self.IPHC_HLIM_1
-            lowpan['hlim'] = []
-        elif lowpan['hlim']==64:
-            hlim             = self.IPHC_HLIM_64
-            lowpan['hlim'] = []
-        elif lowpan['hlim']==255:
-            hlim             = self.IPHC_HLIM_255
-            lowpan['hlim'] = []
-        else:
-            hlim             = self.IPHC_HLIM_INLINE
-        returnVal           += [(self.IPHC_DISPATCH<<5) + (tf<<3) + (nh<<2) + (hlim<<0)]
-
-        # Byte2: CID(1b) SAC(1b) SAM(2b) M(1b) DAC(2b) DAM(2b)
-        if len(lowpan['cid'])==0:
-            cid              = self.IPHC_CID_NO
-        else:
-            cid              = self.IPHC_CID_YES
-        sac                  = self.IPHC_SAC_STATELESS
-        sam                  = self.IPHC_SAM_ELIDED
-        dac                  = self.IPHC_DAC_STATELESS
-        m                    = self.IPHC_M_NO
-        dam                  = self.IPHC_DAM_ELIDED
-        returnVal           += [(cid << 7) + (sac << 6) + (sam << 4) + (m << 3) + (dac << 2) + (dam << 0)]
-        
-        # tf
-        returnVal           += lowpan['tf']
-        
-        # nh
-        returnVal           += lowpan['nh']
-        
-        # hlim
-        returnVal           += lowpan['hlim']
-        
-        # cid
-        returnVal           += lowpan['cid']
+        # dst_addr
+        returnVal           += lowpan['dst_addr']
 
         # payload
         returnVal           += lowpan['payload']
-        
+
+        output = ''
+        for i in returnVal:
+            output += hex(i)+' '
+        print output
         return returnVal
     
     #===== 6LoWPAN -> IPv6
