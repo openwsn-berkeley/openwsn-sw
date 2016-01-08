@@ -39,9 +39,12 @@ class OpenLbr(eventBusClient.eventBusClient):
     IPV6_HEADER              = 0xEE #https://tools.ietf.org/html/rfc6282#section-4.2
     
     #hop header flags
-    O_FLAG                   = 0x80
-    R_FLAG                   = 0x40
-    F_FLAG                   = 0x20
+    O_FLAG                   = 0x10
+    R_FLAG                   = 0x08
+    F_FLAG                   = 0x04
+    I_FLAG                   = 0x02
+    K_FLAG                   = 0x01
+    FLAG_MASK                = 0x1C
     
     # Number of bytes in an IPv6 header.
     IPv6_HEADER_LEN          = 40
@@ -251,8 +254,11 @@ class OpenLbr(eventBusClient.eventBusClient):
             if (ipv6dic['next_header']==self.IPV6_HEADER):
                 #ipv6 header (inner)
                 ipv6dic_inner = {}
-                ipv6dic['payload'] = ipv6dic['payload'][1:]
-                ipv6dic['payload_length'] -= 1
+                if ipv6dic['payload'][1] & 0xe0 == 0x60:
+                    pass
+                elif ipv6dic['payload'][1] == 0xe1:
+                    ipv6dic['payload'] = ipv6dic['payload'][1:]
+                    ipv6dic['payload_length'] -= 1
                 # prasing the iphc inner header and get the next_header
                 ipv6dic_inner = self.lowpan_to_ipv6([ipv6dic['pre_hop'],ipv6dic['payload']])
                 ipv6dic['next_header'] = ipv6dic_inner['next_header']
@@ -626,126 +632,174 @@ class OpenLbr(eventBusClient.eventBusClient):
         pkt_ipv6 = {}
         mac_prev_hop=data[0]
         pkt_lowpan=data[1]
-        ptr = 2
-        if ((pkt_lowpan[0] >> 5) != 0x003):
-            log.error("ERROR not a 6LowPAN packet")
-            return   
-        
-        # tf
-        tf = ((pkt_lowpan[0]) >> 3) & 0x03
-        if (tf == self.IPHC_TF_3B):
-            pkt_ipv6['flow_label'] = ((pkt_lowpan[ptr]) << 16) + ((pkt_lowpan[ptr+1]) << 8) + ((pkt_lowpan[ptr+2]) << 0)
-            ptr = ptr + 3
-        elif (tf == self.IPHC_TF_ELIDED):
-            pkt_ipv6['flow_label'] = 0
-        else:
-            log.error("Unsupported or wrong tf")
-        # nh
-        nh = ((pkt_lowpan[0]) >> 2) & 0x01
-        if (nh == self.IPHC_NH_INLINE):
-            pkt_ipv6['next_header'] = (pkt_lowpan[ptr])
-            ptr = ptr+1
-        elif (nh == self.IPHC_NH_COMPRESSED):
-            # log.error("unsupported nh==IPHC_NH_COMPRESSED")
-            # the next header will be retrieved later
-            pass
-        else:
-            log.error("wrong nh field nh="+str(nh))
-            
-        # hlim
-        hlim = (pkt_lowpan[0]) & 0x03
-        if (hlim == self.IPHC_HLIM_INLINE):
-            pkt_ipv6['hop_limit'] = (pkt_lowpan[ptr])
-            ptr = ptr+1
-        elif (hlim == self.IPHC_HLIM_1):
-            pkt_ipv6['hop_limit'] = 1
-        elif (hlim == self.IPHC_HLIM_64):
-            pkt_ipv6['hop_limit'] = 64
-        elif (hlim == self.IPHC_HLIM_255):
-            pkt_ipv6['hop_limit'] = 255
-        else:
-            log.error("wrong hlim=="+str(hlim))
-        # sam
-        sam = ((pkt_lowpan[1]) >> 4) & 0x03
-        if (sam == self.IPHC_SAM_ELIDED):
-            #pkt from the previous hop
-            pkt_ipv6['src_addr'] = self.networkPrefix + mac_prev_hop
-            
-        elif (sam == self.IPHC_SAM_16B):
-            a1 = pkt_lowpan[ptr]
-            a2 = pkt_lowpan[ptr+1]
-            ptr = ptr+2
-            s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
-            pkt_ipv6['src_addr'] = self.networkPrefix+s
-    
-        elif (sam == self.IPHC_SAM_64B):
-            pkt_ipv6['src_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
-            ptr = ptr + 8
-        elif (sam == self.IPHC_SAM_128B):
-            pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
-            ptr = ptr + 16
-        else:
-            log.error("wrong sam=="+str(sam))
-            
-        # dam
-        dam = ((pkt_lowpan[1]) & 0x03)
-        if (dam == self.IPHC_DAM_ELIDED):
-            if log.isEnabledFor(logging.DEBUG):
-                log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
-            pkt_ipv6['dst_addr'] = self.networkPrefix+self.dagRootEui64
-        elif (dam == self.IPHC_DAM_16B):
-            a1 = pkt_lowpan[ptr]
-            a2 = pkt_lowpan[ptr+1]
-            ptr = ptr+2
-            s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
-            pkt_ipv6['dst_addr'] = self.networPrefix+s
-        elif (dam == self.IPHC_DAM_64B):
-            pkt_ipv6['dst_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
-            ptr = ptr + 8
-        elif (dam == self.IPHC_DAM_128B):
-            pkt_ipv6['dst_addr'] = pkt_lowpan[ptr:ptr+16]
-            ptr = ptr + 16
-        else:
-            log.error("wrong dam=="+str(dam))
 
-        if (nh == self.IPHC_NH_COMPRESSED):
-            if (((pkt_lowpan[ptr] >> 4) & 0x0f) == self.NHC_DISPATCH):
-                eid = (pkt_lowpan[ptr] & self.NHC_EID_MASK) >> 1
-                if (eid == self.NHC_EID_HOPBYHOP):
-                    pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
-                elif (eid == self.NHC_EID_IPV6):
-                    pkt_ipv6['next_header'] = self.IPV6_HEADER
+        if pkt_lowpan[0]==self.PAGE_ONE_DISPATCH:
+            ptr = 1
+            if pkt_lowpan[ptr] & 0xE0 == 0xA0 and pkt_lowpan[ptr+1] == 0x06:
+                # ip in ip encapsulation
+                length = pkt_lowpan[ptr] & 0x1C
+                hlim = pkt_lowpan[ptr+2]
+                ptr += 3
+                if length == 1:
+                    pkt_ipv6['src_addr'] = [0xbb,0xbb,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01]
+                    ptr += 1
+                elif length == 9:
+                    pkt_ipv6['src_addr'] = self.networkPrefix + pkt_lowpan[ptr:ptr+8]
+                    ptr += 8
+                elif length == 17:
+                    pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
+                    ptr += 16
                 else:
-                    log.error("wrong NH_EID=="+str(eid))
+                    log.error("ERROR wrong length of encapsulate")
+                # end of ip in ip, check what follows
+                if pkt_lowpan[ptr] & 0xE0 == 0x80 and pkt_lowpan[ptr+1] < 0x05:
+                    pkt_ipv6['next_header'] = self.IANA_IP_SRH3
+                    # to do 
+                elif pkt_lowpan[ptr] & 0xE0 == 0x80 and pkt_lowpan[ptr+1] == 0x05:
+                    # next header is RPI (hop by hop)
+                    pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
+                    pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & FLAG_MASK
+                    ptr = ptr+1
+
+                    if pkt_ipv6['hop_flags'] & I_FLAG==0:
+                        pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
+                        ptr += 1
+                    else:
+                        pkt_ipv6['hop_rplInstanceID'] = 1
+                   
+                    if pkt_ipv6['hop_flags'] & K_FLAG==0:
+                        pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
+                        ptr += 2
+                    else
+                        pkt_ipv6['hop_senderRank'] = (pkt_lowpan[ptr]) << 8)
+                        ptr += 1
+
+                    ipv6dic['hop_next_header'] = self.IPV6_HEADER
+
+            elif pkt_lowpan[0] & 0xE0 == 0x80:
+                # TBD
+                log.error("ERROR no support this type of 6LoRH yet")
+        else:
+            ptr = 2
+            if ((pkt_lowpan[0] >> 5) != 0x003):
+                log.error("ERROR not a 6LowPAN packet")
+                return   
         
-        #hop by hop header 
-        #composed of NHC, NextHeader,Len + Rpl Option
-        if  (pkt_ipv6['next_header'] == self.IANA_IPv6HOPHEADER) : 
-             pkt_ipv6['hop_nhc'] = pkt_lowpan[ptr]
-             ptr = ptr+1
-             if ((pkt_ipv6['hop_nhc'] & 0x01) == 0):
-                pkt_ipv6['hop_next_header'] = pkt_lowpan[ptr]
+            # tf
+            tf = ((pkt_lowpan[0]) >> 3) & 0x03
+            if (tf == self.IPHC_TF_3B):
+                pkt_ipv6['flow_label'] = ((pkt_lowpan[ptr]) << 16) + ((pkt_lowpan[ptr+1]) << 8) + ((pkt_lowpan[ptr+2]) << 0)
+                ptr = ptr + 3
+            elif (tf == self.IPHC_TF_ELIDED):
+                pkt_ipv6['flow_label'] = 0
+            else:
+                log.error("Unsupported or wrong tf")
+            # nh
+            nh = ((pkt_lowpan[0]) >> 2) & 0x01
+            if (nh == self.IPHC_NH_INLINE):
+                pkt_ipv6['next_header'] = (pkt_lowpan[ptr])
                 ptr = ptr+1
-             else :
-                # the next header filed will be elided
+            elif (nh == self.IPHC_NH_COMPRESSED):
+                # log.error("unsupported nh==IPHC_NH_COMPRESSED")
+                # the next header will be retrieved later
                 pass
-             pkt_ipv6['hop_hdr_len'] = pkt_lowpan[ptr]
-             ptr = ptr+1
-             #start of RPL Option
-             pkt_ipv6['hop_optionType'] = pkt_lowpan[ptr]
-             ptr = ptr+1
-             pkt_ipv6['hop_optionLen'] = pkt_lowpan[ptr]
-             ptr = ptr+1
-             pkt_ipv6['hop_flags'] = pkt_lowpan[ptr]
-             ptr = ptr+1
-             pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
-             ptr = ptr+1
-             pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
-             ptr = ptr+2
-             #end RPL option
-             if ((pkt_ipv6['hop_nhc'] & 0x01) == 1):
-                 if (((pkt_lowpan[ptr]>>1) & 0x07) == self.NHC_EID_IPV6):
-                     pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
+            else:
+                log.error("wrong nh field nh="+str(nh))
+                
+            # hlim
+            hlim = (pkt_lowpan[0]) & 0x03
+            if (hlim == self.IPHC_HLIM_INLINE):
+                pkt_ipv6['hop_limit'] = (pkt_lowpan[ptr])
+                ptr = ptr+1
+            elif (hlim == self.IPHC_HLIM_1):
+                pkt_ipv6['hop_limit'] = 1
+            elif (hlim == self.IPHC_HLIM_64):
+                pkt_ipv6['hop_limit'] = 64
+            elif (hlim == self.IPHC_HLIM_255):
+                pkt_ipv6['hop_limit'] = 255
+            else:
+                log.error("wrong hlim=="+str(hlim))
+            # sam
+            sam = ((pkt_lowpan[1]) >> 4) & 0x03
+            if (sam == self.IPHC_SAM_ELIDED):
+                #pkt from the previous hop
+                pkt_ipv6['src_addr'] = self.networkPrefix + mac_prev_hop
+                
+            elif (sam == self.IPHC_SAM_16B):
+                a1 = pkt_lowpan[ptr]
+                a2 = pkt_lowpan[ptr+1]
+                ptr = ptr+2
+                s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
+                pkt_ipv6['src_addr'] = self.networkPrefix+s
+        
+            elif (sam == self.IPHC_SAM_64B):
+                pkt_ipv6['src_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
+                ptr = ptr + 8
+            elif (sam == self.IPHC_SAM_128B):
+                pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
+                ptr = ptr + 16
+            else:
+                log.error("wrong sam=="+str(sam))
+                
+            # dam
+            dam = ((pkt_lowpan[1]) & 0x03)
+            if (dam == self.IPHC_DAM_ELIDED):
+                if log.isEnabledFor(logging.DEBUG):
+                    log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
+                pkt_ipv6['dst_addr'] = self.networkPrefix+self.dagRootEui64
+            elif (dam == self.IPHC_DAM_16B):
+                a1 = pkt_lowpan[ptr]
+                a2 = pkt_lowpan[ptr+1]
+                ptr = ptr+2
+                s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
+                pkt_ipv6['dst_addr'] = self.networPrefix+s
+            elif (dam == self.IPHC_DAM_64B):
+                pkt_ipv6['dst_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
+                ptr = ptr + 8
+            elif (dam == self.IPHC_DAM_128B):
+                pkt_ipv6['dst_addr'] = pkt_lowpan[ptr:ptr+16]
+                ptr = ptr + 16
+            else:
+                log.error("wrong dam=="+str(dam))
+
+            if (nh == self.IPHC_NH_COMPRESSED):
+                if (((pkt_lowpan[ptr] >> 4) & 0x0f) == self.NHC_DISPATCH):
+                    eid = (pkt_lowpan[ptr] & self.NHC_EID_MASK) >> 1
+                    if (eid == self.NHC_EID_HOPBYHOP):
+                        pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
+                    elif (eid == self.NHC_EID_IPV6):
+                        pkt_ipv6['next_header'] = self.IPV6_HEADER
+                    else:
+                        log.error("wrong NH_EID=="+str(eid))
+            
+            #hop by hop header 
+            #composed of NHC, NextHeader,Len + Rpl Option
+            if  (pkt_ipv6['next_header'] == self.IANA_IPv6HOPHEADER) : 
+                 pkt_ipv6['hop_nhc'] = pkt_lowpan[ptr]
+                 ptr = ptr+1
+                 if ((pkt_ipv6['hop_nhc'] & 0x01) == 0):
+                    pkt_ipv6['hop_next_header'] = pkt_lowpan[ptr]
+                    ptr = ptr+1
+                 else :
+                    # the next header filed will be elided
+                    pass
+                 pkt_ipv6['hop_hdr_len'] = pkt_lowpan[ptr]
+                 ptr = ptr+1
+                 #start of RPL Option
+                 pkt_ipv6['hop_optionType'] = pkt_lowpan[ptr]
+                 ptr = ptr+1
+                 pkt_ipv6['hop_optionLen'] = pkt_lowpan[ptr]
+                 ptr = ptr+1
+                 pkt_ipv6['hop_flags'] = pkt_lowpan[ptr]
+                 ptr = ptr+1
+                 pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
+                 ptr = ptr+1
+                 pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
+                 ptr = ptr+2
+                 #end RPL option
+                 if ((pkt_ipv6['hop_nhc'] & 0x01) == 1):
+                     if (((pkt_lowpan[ptr]>>1) & 0x07) == self.NHC_EID_IPV6):
+                         pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
 
         # payload
         pkt_ipv6['version']        = 6
