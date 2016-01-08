@@ -670,8 +670,8 @@ class OpenLbr(eventBusClient.eventBusClient):
                     if pkt_ipv6['hop_flags'] & K_FLAG==0:
                         pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
                         ptr += 2
-                    else
-                        pkt_ipv6['hop_senderRank'] = (pkt_lowpan[ptr]) << 8)
+                    else:
+                        pkt_ipv6['hop_senderRank'] = (pkt_lowpan[ptr]) << 8
                         ptr += 1
 
                     ipv6dic['hop_next_header'] = self.IPV6_HEADER
