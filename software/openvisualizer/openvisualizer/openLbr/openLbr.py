@@ -206,7 +206,12 @@ class OpenLbr(eventBusClient.eventBusClient):
             # turn dictionary of fields into raw bytes
             lowpan_bytes     = self.reassemble_lowpan(lowpan)
 
-            #print lowpan_bytes
+
+            output = ''
+            for i in lowpan_bytes:
+                output += hex(i)+' '
+            print output
+            
             # log
             if log.isEnabledFor(logging.DEBUG):
                 log.debug(self._format_lowpan(lowpan,lowpan_bytes))
@@ -265,6 +270,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ipv6dic['payload'] = ipv6dic_inner['payload']
                 ipv6dic['payload_length'] = ipv6dic_inner['payload_length']
                 ipv6dic['dst_addr'] = ipv6dic_inner['dst_addr']
+                ipv6dic['flow_label'] = ipv6dic_inner['flow_label']
 
                 
             if (ipv6dic['next_header']==self.IANA_ICMPv6):
@@ -434,8 +440,9 @@ class OpenLbr(eventBusClient.eventBusClient):
         
         :returns: A list of bytes representing the 6LoWPAN packet.
         '''
-        print lowpan
         returnVal            = []
+
+        print lowpan
 
         # the 6lowpan packet contains 4 parts
         # 1. Page Dispatch (page 1)
@@ -480,57 +487,57 @@ class OpenLbr(eventBusClient.eventBusClient):
             sizeUnitType = 0xff
             size     = 0
             hopList  = []
-            for hop in list(reversed(lowpan['route'][:len(lowpan['route'])-1])):
+            for hop in list(reversed(lowpan['route'][1:])):
                 size += 1
                 if lowpan['dst_addr'][-8:-2] == hop[-8:-2]:
                     if sizeUnitType != 0xff:
-                        if  sizeUnit != 0:
+                        if  sizeUnitType != 0:
                             returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
                             returnVal += hopList
                             size = 0
                             sizeUnitType = 0
-                            hopList += [hop[-1]]
+                            hopList = [hop[-1]]
                         else:
-                            hopList += hop
+                            hopList += [hop[-1]]
                     else:
                         sizeUnitType = 0
                         hopList += [hop[-1]]
                 elif lowpan['dst_addr'][-8:-3] == hop[-8:-3]:
                     if sizeUnitType != 0xff:
-                        if  sizeUnit != 1:
+                        if  sizeUnitType != 1:
                             returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
                             returnVal += hopList
                             size = 0
                             sizeUnitType = 1
                             hopList += hop[-2:]
                         else:
-                            hopList += hop
+                            hopList += hop[-2:]
                             sizeUnitType = 1
                     else:
                         sizeUnitType = 1
                         hopList += hop[-2:]
                 elif lowpan['dst_addr'][-8:-5] == hop[-8:-5]:
                     if sizeUnitType != 0xff:
-                        if  sizeUnit != 2:
+                        if  sizeUnitType != 2:
                             returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
                             returnVal += hopList
                             size = 0
                             sizeUnitType = 2
                             hopList += hop[-4:]
                         else:
-                            hopList += hop
+                            hopList += hop[-4:]
                             sizeUnitType = 2
                     else:
                         sizeUnitType = 2
                         hopList += hop[-4:]
                 else:
                     if sizeUnitType != 0xff:
-                        if  sizeUnit != 3:
+                        if  sizeUnitType != 3:
                             returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
                             returnVal += hopList
                             size = 0
                             sizeUnitType = 3
-                            hopList = []
+                            hopList = hop
                         else:
                             hopList += hop
                             sizeUnitType = 3
@@ -541,6 +548,8 @@ class OpenLbr(eventBusClient.eventBusClient):
             returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
             returnVal += hopList
         else:# in case of 1hop destination address is the same as ipv6 destination address
+            if (len(lowpan['dst_addr'])==16): #this is a hack by now as the src routing table is only 8B and not 128, so I need to get the prefix from the destination address as I know are the same.
+                prefix=lowpan['dst_addr'][:8]
             if lowpan['dst_addr'] == prefix + lowpan['route'][0]:
                 # the destination is elided
                 pass
@@ -554,7 +563,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         else:
             raise NotImplementedError()
         # next header is in NHC format
-        nh               = self.IPHC_NH_COMPRESSED
+        nh               = self.IPHC_NH_INLINE
         if   lowpan['hlim']==1:
             hlim             = self.IPHC_HLIM_1
             lowpan['hlim'] = []
@@ -634,7 +643,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             if pkt_lowpan[ptr] & 0xE0 == 0xA0 and pkt_lowpan[ptr+1] == 0x06:
                 # ip in ip encapsulation
                 length = pkt_lowpan[ptr] & 0x1F
-                hlim = pkt_lowpan[ptr+2]
+                pkt_ipv6['hop_limit'] = pkt_lowpan[ptr+2]
                 ptr += 3
                 if length == 1:
                     pkt_ipv6['src_addr'] = [0xbb,0xbb,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01]
@@ -676,7 +685,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 log.error("ERROR no support this type of 6LoRH yet")
         else:
             ptr = 2
-            if ((pkt_lowpan[0] >> 5) != 0x003):
+            if ((pkt_lowpan[0] >> 5) != 0x03):
                 log.error("ERROR not a 6LowPAN packet")
                 return   
         
