@@ -44,7 +44,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     F_FLAG                   = 0x04
     I_FLAG                   = 0x02
     K_FLAG                   = 0x01
-    FLAG_MASK                = 0x1C
+    FLAG_MASK                = 0x1F
     
     # Number of bytes in an IPv6 header.
     IPv6_HEADER_LEN          = 40
@@ -254,9 +254,9 @@ class OpenLbr(eventBusClient.eventBusClient):
             if (ipv6dic['next_header']==self.IPV6_HEADER):
                 #ipv6 header (inner)
                 ipv6dic_inner = {}
-                if ipv6dic['payload'][1] & 0xe0 == 0x60:
+                if ipv6dic['payload'][0] & 0xe0 == 0x60:
                     pass
-                elif ipv6dic['payload'][1] == 0xe1:
+                elif ipv6dic['payload'][0] == 0xe1:
                     ipv6dic['payload'] = ipv6dic['payload'][1:]
                     ipv6dic['payload_length'] -= 1
                 # prasing the iphc inner header and get the next_header
@@ -264,6 +264,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ipv6dic['next_header'] = ipv6dic_inner['next_header']
                 ipv6dic['payload'] = ipv6dic_inner['payload']
                 ipv6dic['payload_length'] = ipv6dic_inner['payload_length']
+                ipv6dic['dst_addr'] = ipv6dic_inner['dst_addr']
 
                 
             if (ipv6dic['next_header']==self.IANA_ICMPv6):
@@ -278,7 +279,6 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ipv6dic['icmpv6_code']=ipv6dic['payload'][1]
                 ipv6dic['icmpv6_checksum']=ipv6dic['payload'][2:4]
                 ipv6dic['app_payload']=ipv6dic['payload'][4:]
-
                 
                 #this function does the job
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
@@ -619,10 +619,6 @@ class OpenLbr(eventBusClient.eventBusClient):
         # payload
         returnVal           += lowpan['payload']
 
-        output = ''
-        for i in returnVal:
-            output += hex(i)+' '
-        print output
         return returnVal
     
     #===== 6LoWPAN -> IPv6
@@ -637,12 +633,11 @@ class OpenLbr(eventBusClient.eventBusClient):
             ptr = 1
             if pkt_lowpan[ptr] & 0xE0 == 0xA0 and pkt_lowpan[ptr+1] == 0x06:
                 # ip in ip encapsulation
-                length = pkt_lowpan[ptr] & 0x1C
+                length = pkt_lowpan[ptr] & 0x1F
                 hlim = pkt_lowpan[ptr+2]
                 ptr += 3
                 if length == 1:
                     pkt_ipv6['src_addr'] = [0xbb,0xbb,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01]
-                    ptr += 1
                 elif length == 9:
                     pkt_ipv6['src_addr'] = self.networkPrefix + pkt_lowpan[ptr:ptr+8]
                     ptr += 8
@@ -658,23 +653,23 @@ class OpenLbr(eventBusClient.eventBusClient):
                 elif pkt_lowpan[ptr] & 0xE0 == 0x80 and pkt_lowpan[ptr+1] == 0x05:
                     # next header is RPI (hop by hop)
                     pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
-                    pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & FLAG_MASK
-                    ptr = ptr+1
+                    pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & self.FLAG_MASK
+                    ptr = ptr+2
 
-                    if pkt_ipv6['hop_flags'] & I_FLAG==0:
+                    if pkt_ipv6['hop_flags'] & self.I_FLAG==0:
                         pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
                         ptr += 1
                     else:
-                        pkt_ipv6['hop_rplInstanceID'] = 1
+                        pkt_ipv6['hop_rplInstanceID'] = 0
                    
-                    if pkt_ipv6['hop_flags'] & K_FLAG==0:
+                    if pkt_ipv6['hop_flags'] & self.K_FLAG==0:
                         pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
                         ptr += 2
                     else:
                         pkt_ipv6['hop_senderRank'] = (pkt_lowpan[ptr]) << 8
                         ptr += 1
 
-                    ipv6dic['hop_next_header'] = self.IPV6_HEADER
+                    pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
 
             elif pkt_lowpan[0] & 0xE0 == 0x80:
                 # TBD
@@ -805,6 +800,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         pkt_ipv6['version']        = 6
         pkt_ipv6['traffic_class']  = 0
         pkt_ipv6['payload']        = pkt_lowpan[ptr:len(pkt_lowpan)]
+
         pkt_ipv6['payload_length'] = len(pkt_ipv6['payload'])
         pkt_ipv6['pre_hop']        = mac_prev_hop
         return pkt_ipv6
