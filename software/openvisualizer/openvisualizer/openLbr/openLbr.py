@@ -205,12 +205,6 @@ class OpenLbr(eventBusClient.eventBusClient):
             lowpan['nextHop'] = lowpan['route'][len(lowpan['route'])-1] #get next hop as this has to be the destination address, this is the last element on the list
             # turn dictionary of fields into raw bytes
             lowpan_bytes     = self.reassemble_lowpan(lowpan)
-
-
-            output = ''
-            for i in lowpan_bytes:
-                output += hex(i)+' '
-            print output
             
             # log
             if log.isEnabledFor(logging.DEBUG):
@@ -441,8 +435,6 @@ class OpenLbr(eventBusClient.eventBusClient):
         :returns: A list of bytes representing the 6LoWPAN packet.
         '''
         returnVal            = []
-
-        print lowpan
 
         # the 6lowpan packet contains 4 parts
         # 1. Page Dispatch (page 1)
