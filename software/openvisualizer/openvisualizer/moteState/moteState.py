@@ -423,6 +423,11 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_SECURITY_STATUS   =  ['security',    7, 1]
     COMMAND_SET_FRAMELENGTH       =  ['frameLength', 8, 2]
     COMMAND_SET_ACK_STATUS        =  ['ackReply',    9, 1]
+    COMMAND_SET_6P_ADD            =  ['6pAdd',      10, 3]
+    COMMAND_SET_6P_DELETE         =  ['6pDelete',   11, 3]
+    COMMAND_SET_6P_COUNT          =  ['6pCount',    12, 0]
+    COMMAND_SET_6P_LIST           =  ['6pList',     13, 0]
+    COMMAND_SET_6P_CLEAR          =  ['6pClear',    14, 0]
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,
@@ -434,6 +439,11 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_SECURITY_STATUS,
         COMMAND_SET_FRAMELENGTH,
         COMMAND_SET_ACK_STATUS,
+        COMMAND_SET_6P_ADD,
+        COMMAND_SET_6P_DELETE,
+        COMMAND_SET_6P_COUNT,
+        COMMAND_SET_6P_LIST,
+        COMMAND_SET_6P_CLEAR
     ]
 
     TRIGGER_ALL         = [
