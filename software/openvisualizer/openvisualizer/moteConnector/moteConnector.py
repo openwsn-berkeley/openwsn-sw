@@ -200,15 +200,15 @@ class moteConnector(eventBusClient.eventBusClient):
                     2, # version
                     imageId,
                     commandId,
-                    len(data[2].split(','))
+                    len(data[2][1:-1].split(','))
                 ]
                 if data[1] == '6pAdd' or data[1] == '6pDelete':
-                    if len(data[2].split(','))>0:
-                        dataToSend += [int(i) for i in data[2].split(',')] # celllist
+                    if len(data[2][1:-1].split(','))>0:
+                        dataToSend += [int(i) for i in data[2][1:-1].split(',')] # celllist
             except:
                 print "============================================="
-                print "Wrong 6p parameter format! split the slot by "
-                print "comma. e.g. 6,7. Maxium 3"
+                print "Wrong 6p parameter format {0}. Split the slot by".format(data[2])
+                print "comma. e.g. 6,7. (up to 3)"
                 return [outcome,dataToSend]
         else:
             parameter = int(data[2])
@@ -227,7 +227,6 @@ class moteConnector(eventBusClient.eventBusClient):
                 print "============================================="
                 print "Paramter Wrong! (Available: 0x0000~0xffff)\n"
                 return [outcome,dataToSend]
-
 
         # the command is legal if I got here
         outcome = True

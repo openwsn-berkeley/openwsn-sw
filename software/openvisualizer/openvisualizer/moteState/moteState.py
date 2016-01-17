@@ -418,23 +418,21 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_KAPERIOD          =  ['kaPeriod',    2, 2]
     COMMAND_SET_DIOPERIOD         =  ['dioPeriod',   3, 2]
     COMMAND_SET_DAOPERIOD         =  ['daoPeriod',   4, 2]
-    COMMAND_PING_MOTE             =  ['ping',        5, 8]
-    COMMAND_SET_DAGRANK           =  ['dagrank',     6, 2]
-    COMMAND_SET_SECURITY_STATUS   =  ['security',    7, 1]
-    COMMAND_SET_FRAMELENGTH       =  ['frameLength', 8, 2]
-    COMMAND_SET_ACK_STATUS        =  ['ackReply',    9, 1]
-    COMMAND_SET_6P_ADD            =  ['6pAdd',      10, 3]
-    COMMAND_SET_6P_DELETE         =  ['6pDelete',   11, 3]
-    COMMAND_SET_6P_COUNT          =  ['6pCount',    12, 0]
-    COMMAND_SET_6P_LIST           =  ['6pList',     13, 0]
-    COMMAND_SET_6P_CLEAR          =  ['6pClear',    14, 0]
+    COMMAND_SET_DAGRANK           =  ['dagrank',     5, 2]
+    COMMAND_SET_SECURITY_STATUS   =  ['security',    6, 1]
+    COMMAND_SET_FRAMELENGTH       =  ['frameLength', 7, 2]
+    COMMAND_SET_ACK_STATUS        =  ['ackReply',    8, 1]
+    COMMAND_SET_6P_ADD            =  ['6pAdd',       9, 3]
+    COMMAND_SET_6P_DELETE         =  ['6pDelete',   10, 3]
+    COMMAND_SET_6P_COUNT          =  ['6pCount',    11, 0]
+    COMMAND_SET_6P_LIST           =  ['6pList',     12, 0]
+    COMMAND_SET_6P_CLEAR          =  ['6pClear',    13, 0]
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,
         COMMAND_SET_KAPERIOD,
         COMMAND_SET_DIOPERIOD,
         COMMAND_SET_DAOPERIOD,
-        COMMAND_PING_MOTE,
         COMMAND_SET_DAGRANK,
         COMMAND_SET_SECURITY_STATUS,
         COMMAND_SET_FRAMELENGTH,
