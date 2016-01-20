@@ -263,9 +263,12 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ipv6dic['next_header'] = ipv6dic_inner['next_header']
                 ipv6dic['payload'] = ipv6dic_inner['payload']
                 ipv6dic['payload_length'] = ipv6dic_inner['payload_length']
+                if not ipv6dic.has_key('src_addr'):
+                    ipv6dic['src_addr'] = ipv6dic_inner['src_addr']
+                if not ipv6dic.has_key('hop_limit'):
+                    ipv6dic['hop_limit'] = ipv6dic_inner['hop_limit']
                 ipv6dic['dst_addr'] = ipv6dic_inner['dst_addr']
                 ipv6dic['flow_label'] = ipv6dic_inner['flow_label']
-
                 
             if (ipv6dic['next_header']==self.IANA_ICMPv6):
                 #icmp header
@@ -672,9 +675,28 @@ class OpenLbr(eventBusClient.eventBusClient):
 
                     pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
 
-            elif pkt_lowpan[0] & 0xE0 == 0x80:
-                # TBD
-                log.error("ERROR no support this type of 6LoRH yet")
+            elif pkt_lowpan[ptr] & 0xE0 == 0x80 and pkt_lowpan[ptr+1] == 0x05:
+				# next header is RPI (hop by hop)
+				pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
+				pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & self.FLAG_MASK
+				ptr = ptr+2
+
+				if pkt_ipv6['hop_flags'] & self.I_FLAG==0:
+					pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
+					ptr += 1
+				else:
+					pkt_ipv6['hop_rplInstanceID'] = 0
+			   
+				if pkt_ipv6['hop_flags'] & self.K_FLAG==0:
+					pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
+					ptr += 2
+				else:
+					pkt_ipv6['hop_senderRank'] = (pkt_lowpan[ptr]) << 8
+					ptr += 1
+
+				pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
+            else:
+				log.error("ERROR no support this type of 6LoRH yet")
         else:
             ptr = 2
             if ((pkt_lowpan[0] >> 5) != 0x03):
