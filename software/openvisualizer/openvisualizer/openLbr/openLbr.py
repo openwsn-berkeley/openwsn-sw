@@ -451,43 +451,43 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         # ===================== 2. IPinIP 6LoRH ===============================
 
-        # length at least is one
-        l = 1
+        if lowpan['src_addr'][:8] != [187, 187, 0, 0, 0, 0, 0, 0]:
+            # ip in ip 6lorh
+            l = 1
+     
+            returnVal += [(self.ELECTIVE_6LoRH<<5) + l,self.TYPE_6LoRH_IP_IN_IP]
 
-        # source address
-        if lowpan['src_addr'] != [187, 187, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]:
-            l += len(lowpan['src_addr'])
- 
-        returnVal += [(self.ELECTIVE_6LoRH<<5) + l,self.TYPE_6LoRH_IP_IN_IP]
+            returnVal += lowpan['hlim']
 
-        returnVal += lowpan['hlim']
+            # normally this would not happen
+            if l>1:
+                returnVal += lowpan['src_addr']
 
-        # source address is root of dagroot
-        if l>1:
-            returnVal += lowpan['src_addr']
+            compressReference = [187, 187, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+        else:
+            compressReference = lowpan['src_addr']
 
         # destination address
         if len(lowpan['route'])>1:
-            # source route needed
-            if (len(lowpan['dst_addr'])==16): #this is a hack by now as the src routing table is only 8B and not 128, so I need to get the prefix from the destination address as I know are the same.
-                prefix=lowpan['dst_addr'][:8]
+            # source route needed, get prefix from compression Reference
+            if (len(compressReference)==16): 
+                prefix=compressReference[:8]
 
-            if lowpan['dst_addr'] == prefix + lowpan['route'][0]:
-                # the destination is elided
-                pass
-            else:    
-                returnVal       += prefix + lowpan['nextHop']                # dest address is next hop in source routing -- poipoi xv prefix needs to be removed once hc works well
-            # =======================3. RH3 6LoRH(s) ==============================
-            # RPL Routing Header (RFC6554: https://tools.ietf.org/html/rfc6554#page-6)  
+            # =======================3. RH3 6LoRH(s) ============================== 
             sizeUnitType = 0xff
             size     = 0
             hopList  = []
-            for hop in list(reversed(lowpan['route'][1:])):
+
+            # add first full address into RH3
+            returnVal += [(self.CRITICAL_6LoRH<<5)+0,4]                 
+            returnVal += prefix + lowpan['nextHop']
+
+            for hop in list(reversed(lowpan['route'][1:-1])):
                 size += 1
-                if lowpan['dst_addr'][-8:-2] == hop[-8:-2]:
+                if compressReference[-8:-2] == hop[-8:-2]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != 0:
-                            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+                            returnVal += [(self.CRITICAL_6LoRH<<5)+size-1,sizeUnitType]
                             returnVal += hopList
                             size = 0
                             sizeUnitType = 0
@@ -497,10 +497,10 @@ class OpenLbr(eventBusClient.eventBusClient):
                     else:
                         sizeUnitType = 0
                         hopList += [hop[-1]]
-                elif lowpan['dst_addr'][-8:-3] == hop[-8:-3]:
+                elif compressReference[-8:-3] == hop[-8:-3]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != 1:
-                            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+                            returnVal += [(self.CRITICAL_6LoRH<<5)+size-1,sizeUnitType]
                             returnVal += hopList
                             size = 0
                             sizeUnitType = 1
@@ -511,10 +511,10 @@ class OpenLbr(eventBusClient.eventBusClient):
                     else:
                         sizeUnitType = 1
                         hopList += hop[-2:]
-                elif lowpan['dst_addr'][-8:-5] == hop[-8:-5]:
+                elif compressReference[-8:-5] == hop[-8:-5]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != 2:
-                            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+                            returnVal += [(self.CRITICAL_6LoRH<<5)+size-1,sizeUnitType]
                             returnVal += hopList
                             size = 0
                             sizeUnitType = 2
@@ -528,7 +528,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 else:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != 3:
-                            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+                            returnVal += [(self.CRITICAL_6LoRH<<5)+size-1,sizeUnitType]
                             returnVal += hopList
                             size = 0
                             sizeUnitType = 3
@@ -537,19 +537,11 @@ class OpenLbr(eventBusClient.eventBusClient):
                             hopList += hop
                             sizeUnitType = 3
                     else:
-                        sizeUnitType = 2
+                        sizeUnitType = 3
                         hopList += hop
 
-            returnVal += [(self.CRITICAL_6LoRH<<5)+size,sizeUnitType]
+            returnVal += [(self.CRITICAL_6LoRH<<5)+size-1,sizeUnitType]
             returnVal += hopList
-        else:# in case of 1hop destination address is the same as ipv6 destination address
-            if (len(lowpan['dst_addr'])==16): #this is a hack by now as the src routing table is only 8B and not 128, so I need to get the prefix from the destination address as I know are the same.
-                prefix=lowpan['dst_addr'][:8]
-            if lowpan['dst_addr'] == prefix + lowpan['route'][0]:
-                # the destination is elided
-                pass
-            else:
-                returnVal       += lowpan['dst_addr']
  
         # ========================= 4. IPHC inner header ======================
         # Byte1: 011(3b) TF(2b) NH(1b) HLIM(2b)
