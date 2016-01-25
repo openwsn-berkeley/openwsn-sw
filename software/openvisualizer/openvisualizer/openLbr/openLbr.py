@@ -482,65 +482,65 @@ class OpenLbr(eventBusClient.eventBusClient):
             hopList  = []
 
             # add first full address into RH3
-            returnVal += [self.CRITICAL_6LoRH|0,TYPE_6LoRH_RH3_4]                 
+            returnVal += [self.CRITICAL_6LoRH|0,self.TYPE_6LoRH_RH3_4]                 
             returnVal += prefix + lowpan['nextHop']
 
             for hop in list(reversed(lowpan['route'][1:-1])):
                 size += 1
                 if compressReference[-8:-2] == hop[-8:-2]:
                     if sizeUnitType != 0xff:
-                        if  sizeUnitType != TYPE_6LoRH_RH3_0:
+                        if  sizeUnitType != self.TYPE_6LoRH_RH3_0:
                             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
                             returnVal += hopList
                             size = 0
-                            sizeUnitType = TYPE_6LoRH_RH3_0
+                            sizeUnitType = self.TYPE_6LoRH_RH3_0
                             hopList = [hop[-1]]
                         else:
                             hopList += [hop[-1]]
                     else:
-                        sizeUnitType = TYPE_6LoRH_RH3_0
+                        sizeUnitType = self.TYPE_6LoRH_RH3_0
                         hopList += [hop[-1]]
                 elif compressReference[-8:-3] == hop[-8:-3]:
                     if sizeUnitType != 0xff:
-                        if  sizeUnitType != TYPE_6LoRH_RH3_1:
+                        if  sizeUnitType != self.TYPE_6LoRH_RH3_1:
                             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
                             returnVal += hopList
                             size = 0
-                            sizeUnitType = TYPE_6LoRH_RH3_1
+                            sizeUnitType = self.TYPE_6LoRH_RH3_1
                             hopList += hop[-2:]
                         else:
                             hopList += hop[-2:]
-                            sizeUnitType = TYPE_6LoRH_RH3_1
+                            sizeUnitType = self.TYPE_6LoRH_RH3_1
                     else:
-                        sizeUnitType = TYPE_6LoRH_RH3_1
+                        sizeUnitType = self.TYPE_6LoRH_RH3_1
                         hopList += hop[-2:]
                 elif compressReference[-8:-5] == hop[-8:-5]:
                     if sizeUnitType != 0xff:
-                        if  sizeUnitType != TYPE_6LoRH_RH3_2:
+                        if  sizeUnitType != self.TYPE_6LoRH_RH3_2:
                             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
                             returnVal += hopList
                             size = 0
-                            sizeUnitType = TYPE_6LoRH_RH3_2
+                            sizeUnitType = self.TYPE_6LoRH_RH3_2
                             hopList += hop[-4:]
                         else:
                             hopList += hop[-4:]
-                            sizeUnitType = TYPE_6LoRH_RH3_2
+                            sizeUnitType = self.TYPE_6LoRH_RH3_2
                     else:
-                        sizeUnitType = TYPE_6LoRH_RH3_2
+                        sizeUnitType = self.TYPE_6LoRH_RH3_2
                         hopList += hop[-4:]
                 else:
                     if sizeUnitType != 0xff:
-                        if  sizeUnitType != TYPE_6LoRH_RH3_3:
+                        if  sizeUnitType != self.TYPE_6LoRH_RH3_3:
                             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
                             returnVal += hopList
                             size = 0
-                            sizeUnitType = TYPE_6LoRH_RH3_3
+                            sizeUnitType = self.TYPE_6LoRH_RH3_3
                             hopList = hop
                         else:
                             hopList += hop
-                            sizeUnitType = TYPE_6LoRH_RH3_3
+                            sizeUnitType = self.TYPE_6LoRH_RH3_3
                     else:
-                        sizeUnitType = TYPE_6LoRH_RH3_3
+                        sizeUnitType = self.TYPE_6LoRH_RH3_3
                         hopList += hop
 
             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
@@ -630,7 +630,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         if pkt_lowpan[0]==self.PAGE_ONE_DISPATCH:
             ptr = 1
-            if pkt_lowpan[ptr] & MASK_6LoRH == ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == TYPE_6LoRH_IP_IN_IP:
+            if pkt_lowpan[ptr] & self.MASK_6LoRH == self.ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == TYPE_6LoRH_IP_IN_IP:
                 # ip in ip encapsulation
                 length = pkt_lowpan[ptr] & MASK_LENGTH_6LoRH_IPINIP
                 pkt_ipv6['hop_limit'] = pkt_lowpan[ptr+2]
@@ -646,10 +646,10 @@ class OpenLbr(eventBusClient.eventBusClient):
                 else:
                     log.error("ERROR wrong length of encapsulate")
                 # end of ip in ip, check what follows
-                if pkt_lowpan[ptr] & MASK_6LoRH == CRITICAL_6LoRH and pkt_lowpan[ptr+1] < TYPE_6LoRH_RPI:
+                if pkt_lowpan[ptr] & self.MASK_6LoRH == self.CRITICAL_6LoRH and pkt_lowpan[ptr+1] < self.TYPE_6LoRH_RPI:
                     pkt_ipv6['next_header'] = self.IANA_IP_SRH3
                     # to do 
-                elif pkt_lowpan[ptr] & MASK_6LoRH == CRITICAL_6LoRH and pkt_lowpan[ptr+1] == TYPE_6LoRH_RPI:
+                elif pkt_lowpan[ptr] & self.MASK_6LoRH == self.CRITICAL_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_RPI:
                     # next header is RPI (hop by hop)
                     pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
                     pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & self.FLAG_MASK
@@ -670,28 +670,28 @@ class OpenLbr(eventBusClient.eventBusClient):
 
                     pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
 
-            elif pkt_lowpan[ptr] & MASK_6LoRH == CRITICAL_6LoRH and pkt_lowpan[ptr+1] == TYPE_6LoRH_RPI:
-				# next header is RPI (hop by hop)
-				pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
-				pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & self.FLAG_MASK
-				ptr = ptr+2
+            elif pkt_lowpan[ptr] & self.MASK_6LoRH == self.CRITICAL_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_RPI:
+                # next header is RPI (hop by hop)
+                pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
+                pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & self.FLAG_MASK
+                ptr = ptr+2
 
-				if pkt_ipv6['hop_flags'] & self.I_FLAG==0:
-					pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
-					ptr += 1
-				else:
-					pkt_ipv6['hop_rplInstanceID'] = 0
-			   
-				if pkt_ipv6['hop_flags'] & self.K_FLAG==0:
-					pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
-					ptr += 2
-				else:
-					pkt_ipv6['hop_senderRank'] = (pkt_lowpan[ptr]) << 8
-					ptr += 1
+                if pkt_ipv6['hop_flags'] & self.I_FLAG==0:
+                    pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
+                    ptr += 1
+                else:
+                    pkt_ipv6['hop_rplInstanceID'] = 0
+               
+                if pkt_ipv6['hop_flags'] & self.K_FLAG==0:
+                    pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
+                    ptr += 2
+                else:
+                    pkt_ipv6['hop_senderRank'] = (pkt_lowpan[ptr]) << 8
+                    ptr += 1
                 # iphc is following after hopbyhop header
-				pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
+                pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
             else:
-				log.error("ERROR no support this type of 6LoRH yet")
+                log.error("ERROR no support this type of 6LoRH yet")
         else:
             ptr = 2
             if ((pkt_lowpan[0] >> 5) != 0x03):
