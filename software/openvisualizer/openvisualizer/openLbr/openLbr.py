@@ -630,47 +630,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         if pkt_lowpan[0]==self.PAGE_ONE_DISPATCH:
             ptr = 1
-            if pkt_lowpan[ptr] & self.MASK_6LoRH == self.ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == TYPE_6LoRH_IP_IN_IP:
-                # ip in ip encapsulation
-                length = pkt_lowpan[ptr] & MASK_LENGTH_6LoRH_IPINIP
-                pkt_ipv6['hop_limit'] = pkt_lowpan[ptr+2]
-                ptr += 3
-                if length == 1:
-                    pkt_ipv6['src_addr'] = [0xbb,0xbb,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01]
-                elif length == 9:
-                    pkt_ipv6['src_addr'] = self.networkPrefix + pkt_lowpan[ptr:ptr+8]
-                    ptr += 8
-                elif length == 17:
-                    pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
-                    ptr += 16
-                else:
-                    log.error("ERROR wrong length of encapsulate")
-                # end of ip in ip, check what follows
-                if pkt_lowpan[ptr] & self.MASK_6LoRH == self.CRITICAL_6LoRH and pkt_lowpan[ptr+1] < self.TYPE_6LoRH_RPI:
-                    pkt_ipv6['next_header'] = self.IANA_IP_SRH3
-                    # to do 
-                elif pkt_lowpan[ptr] & self.MASK_6LoRH == self.CRITICAL_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_RPI:
-                    # next header is RPI (hop by hop)
-                    pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
-                    pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & self.FLAG_MASK
-                    ptr = ptr+2
-
-                    if pkt_ipv6['hop_flags'] & self.I_FLAG==0:
-                        pkt_ipv6['hop_rplInstanceID'] = pkt_lowpan[ptr]
-                        ptr += 1
-                    else:
-                        pkt_ipv6['hop_rplInstanceID'] = 0
-                   
-                    if pkt_ipv6['hop_flags'] & self.K_FLAG==0:
-                        pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
-                        ptr += 2
-                    else:
-                        pkt_ipv6['hop_senderRank'] = (pkt_lowpan[ptr]) << 8
-                        ptr += 1
-
-                    pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
-
-            elif pkt_lowpan[ptr] & self.MASK_6LoRH == self.CRITICAL_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_RPI:
+            if pkt_lowpan[ptr] & self.MASK_6LoRH == self.CRITICAL_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_RPI:
                 # next header is RPI (hop by hop)
                 pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
                 pkt_ipv6['hop_flags'] = pkt_lowpan[ptr] & self.FLAG_MASK
@@ -690,6 +650,22 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ptr += 1
                 # iphc is following after hopbyhop header
                 pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
+
+                if pkt_lowpan[ptr] & self.MASK_6LoRH == self.ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == TYPE_6LoRH_IP_IN_IP:
+                    # ip in ip encapsulation
+                    length = pkt_lowpan[ptr] & MASK_LENGTH_6LoRH_IPINIP
+                    pkt_ipv6['hop_limit'] = pkt_lowpan[ptr+2]
+                    ptr += 3
+                    if length == 1:
+                        pkt_ipv6['src_addr'] = [0xbb,0xbb,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01]
+                    elif length == 9:
+                        pkt_ipv6['src_addr'] = self.networkPrefix + pkt_lowpan[ptr:ptr+8]
+                        ptr += 8
+                    elif length == 17:
+                        pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
+                        ptr += 16
+                    else:
+                        log.error("ERROR wrong length of encapsulate")
             else:
                 log.error("ERROR no support this type of 6LoRH yet")
         else:
