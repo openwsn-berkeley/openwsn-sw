@@ -444,31 +444,20 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         # the 6lowpan packet contains 4 parts
         # 1. Page Dispatch (page 1)
-        # 2. IPinIP 6LoRH
-        # 3. RH3 6LoRH(s)
-        # 4. IPHC inner header
+        # 2. RH3 6LoRH(s)
+        # 3. RPI 6LoRH (maybe elided)
+        # 4. IPinIP 6LoRH (maybe elided)
+        # 5. IPHC inner header
         
         # ===================== 1. Page Dispatch (page 1) =====================
 
         returnVal += [self.PAGE_ONE_DISPATCH]
 
-        # ===================== 2. IPinIP 6LoRH ===============================
-
         if lowpan['src_addr'][:8] != [187, 187, 0, 0, 0, 0, 0, 0]:
-            # ip in ip 6lorh
-            l = 1
-     
-            returnVal += [self.ELECTIVE_6LoRH | l,self.TYPE_6LoRH_IP_IN_IP]
-
-            returnVal += lowpan['hlim']
-
-            # normally this would not happen
-            if l>1:
-                returnVal += lowpan['src_addr']
-
             compressReference = [187, 187, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
         else:
             compressReference = lowpan['src_addr']
+
 
         # destination address
         if len(lowpan['route'])>1:
@@ -481,13 +470,9 @@ class OpenLbr(eventBusClient.eventBusClient):
             size     = 0
             hopList  = []
 
-            # add first full address into RH3
-            returnVal += [self.CRITICAL_6LoRH|0,self.TYPE_6LoRH_RH3_4]                 
-            returnVal += prefix + lowpan['nextHop']
-
             for hop in list(reversed(lowpan['route'][1:-1])):
                 size += 1
-                if compressReference[-8:-2] == hop[-8:-2]:
+                if compressReference[-8:-1] == hop[-8:-1]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != self.TYPE_6LoRH_RH3_0:
                             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
@@ -500,7 +485,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     else:
                         sizeUnitType = self.TYPE_6LoRH_RH3_0
                         hopList += [hop[-1]]
-                elif compressReference[-8:-3] == hop[-8:-3]:
+                elif compressReference[-8:-2] == hop[-8:-2]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != self.TYPE_6LoRH_RH3_1:
                             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
@@ -514,7 +499,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     else:
                         sizeUnitType = self.TYPE_6LoRH_RH3_1
                         hopList += hop[-2:]
-                elif compressReference[-8:-5] == hop[-8:-5]:
+                elif compressReference[-8:-4] == hop[-8:-4]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != self.TYPE_6LoRH_RH3_2:
                             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
@@ -545,6 +530,21 @@ class OpenLbr(eventBusClient.eventBusClient):
 
             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
             returnVal += hopList
+
+        # ===================== 2. IPinIP 6LoRH ===============================
+
+        if lowpan['src_addr'][:8] != [187, 187, 0, 0, 0, 0, 0, 0]:
+            # add RPI 
+            # TBD
+
+            # ip in ip 6lorh
+            l = 1
+            returnVal += [self.ELECTIVE_6LoRH | l,self.TYPE_6LoRH_IP_IN_IP]
+            returnVal += lowpan['hlim']
+
+            compressReference = [187, 187, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
+        else:
+            compressReference = lowpan['src_addr']
  
         # ========================= 4. IPHC inner header ======================
         # Byte1: 011(3b) TF(2b) NH(1b) HLIM(2b)
