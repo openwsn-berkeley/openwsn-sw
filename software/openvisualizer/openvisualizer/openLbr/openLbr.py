@@ -470,7 +470,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             size     = 0
             hopList  = []
 
-            for hop in list(reversed(lowpan['route'][1:-1])):
+            for hop in list(reversed(lowpan['route'][1:])):
                 size += 1
                 if compressReference[-8:-1] == hop[-8:-1]:
                     if sizeUnitType != 0xff:
