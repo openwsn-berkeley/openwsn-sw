@@ -536,7 +536,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         if lowpan['src_addr'][:8] != [187, 187, 0, 0, 0, 0, 0, 0]:
             # add RPI 
             # TBD
-            flag = O_FLAG | I_FLAG | K_FLAG
+            flag = self.O_FLAG | self.I_FLAG | self.K_FLAG
             senderRank = 0 # rank of dagroot
             returnVal += [self.CRITICAL_6LoRH | flag,self.TYPE_6LoRH_RPI,senderRank]
             # ip in ip 6lorh
@@ -653,9 +653,9 @@ class OpenLbr(eventBusClient.eventBusClient):
                 # iphc is following after hopbyhop header
                 pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
 
-                if pkt_lowpan[ptr] & self.MASK_6LoRH == self.ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == TYPE_6LoRH_IP_IN_IP:
+                if pkt_lowpan[ptr] & self.MASK_6LoRH == self.ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_IP_IN_IP:
                     # ip in ip encapsulation
-                    length = pkt_lowpan[ptr] & MASK_LENGTH_6LoRH_IPINIP
+                    length = pkt_lowpan[ptr] & self.MASK_LENGTH_6LoRH_IPINIP
                     pkt_ipv6['hop_limit'] = pkt_lowpan[ptr+2]
                     ptr += 3
                     if length == 1:
