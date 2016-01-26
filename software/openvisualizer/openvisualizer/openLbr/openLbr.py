@@ -475,58 +475,67 @@ class OpenLbr(eventBusClient.eventBusClient):
                 if compressReference[-8:-1] == hop[-8:-1]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != self.TYPE_6LoRH_RH3_0:
-                            returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
+                            returnVal += [self.CRITICAL_6LoRH|(size-2),sizeUnitType]
                             returnVal += hopList
-                            size = 0
+                            size = 1
                             sizeUnitType = self.TYPE_6LoRH_RH3_0
                             hopList = [hop[-1]]
+                            compressReference = hop
                         else:
                             hopList += [hop[-1]]
+                            compressReference = hop
                     else:
                         sizeUnitType = self.TYPE_6LoRH_RH3_0
                         hopList += [hop[-1]]
+                        compressReference = hop
                 elif compressReference[-8:-2] == hop[-8:-2]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != self.TYPE_6LoRH_RH3_1:
-                            returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
+                            returnVal += [self.CRITICAL_6LoRH|(size-2),sizeUnitType]
                             returnVal += hopList
-                            size = 0
+                            size = 1
                             sizeUnitType = self.TYPE_6LoRH_RH3_1
                             hopList += hop[-2:]
+                            compressReference = hop
                         else:
                             hopList += hop[-2:]
-                            sizeUnitType = self.TYPE_6LoRH_RH3_1
+                            compressReference = hop
                     else:
                         sizeUnitType = self.TYPE_6LoRH_RH3_1
                         hopList += hop[-2:]
+                        compressReference = hop
                 elif compressReference[-8:-4] == hop[-8:-4]:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != self.TYPE_6LoRH_RH3_2:
-                            returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
+                            returnVal += [self.CRITICAL_6LoRH|(size-2),sizeUnitType]
                             returnVal += hopList
-                            size = 0
+                            size = 1
                             sizeUnitType = self.TYPE_6LoRH_RH3_2
                             hopList += hop[-4:]
+                            compressReference = hop
                         else:
                             hopList += hop[-4:]
-                            sizeUnitType = self.TYPE_6LoRH_RH3_2
+                            compressReference = hop
                     else:
                         sizeUnitType = self.TYPE_6LoRH_RH3_2
                         hopList += hop[-4:]
+                        compressReference = hop
                 else:
                     if sizeUnitType != 0xff:
                         if  sizeUnitType != self.TYPE_6LoRH_RH3_3:
-                            returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
+                            returnVal += [self.CRITICAL_6LoRH|(size-2),sizeUnitType]
                             returnVal += hopList
-                            size = 0
+                            size = 1
                             sizeUnitType = self.TYPE_6LoRH_RH3_3
                             hopList = hop
+                            compressReference = hop
                         else:
                             hopList += hop
-                            sizeUnitType = self.TYPE_6LoRH_RH3_3
+                            compressReference = hop
                     else:
                         sizeUnitType = self.TYPE_6LoRH_RH3_3
                         hopList += hop
+                        compressReference = hop
 
             returnVal += [self.CRITICAL_6LoRH|(size-1),sizeUnitType]
             returnVal += hopList
