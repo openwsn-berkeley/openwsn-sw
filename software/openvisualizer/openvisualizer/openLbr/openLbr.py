@@ -536,7 +536,9 @@ class OpenLbr(eventBusClient.eventBusClient):
         if lowpan['src_addr'][:8] != [187, 187, 0, 0, 0, 0, 0, 0]:
             # add RPI 
             # TBD
-
+            flag = O_FLAG | I_FLAG | K_FLAG
+            senderRank = 0 # rank of dagroot
+            returnVal += [self.CRITICAL_6LoRH | flag,self.TYPE_6LoRH_RPI,senderRank]
             # ip in ip 6lorh
             l = 1
             returnVal += [self.ELECTIVE_6LoRH | l,self.TYPE_6LoRH_IP_IN_IP]
