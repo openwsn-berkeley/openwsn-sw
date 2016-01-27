@@ -413,20 +413,21 @@ class moteState(eventBusClient.eventBusClient):
     SET_COMMAND         = 'imageCommand'
 
     # command for golen image:        command,       id length
-    COMMAND_SET_EBPERIOD          =  ['ebPeriod',    0, 1]
-    COMMAND_SET_CHANNEL           =  ['channel',     1, 1]
-    COMMAND_SET_KAPERIOD          =  ['kaPeriod',    2, 2]
-    COMMAND_SET_DIOPERIOD         =  ['dioPeriod',   3, 2]
-    COMMAND_SET_DAOPERIOD         =  ['daoPeriod',   4, 2]
-    COMMAND_SET_DAGRANK           =  ['dagrank',     5, 2]
-    COMMAND_SET_SECURITY_STATUS   =  ['security',    6, 1]
-    COMMAND_SET_FRAMELENGTH       =  ['frameLength', 7, 2]
-    COMMAND_SET_ACK_STATUS        =  ['ackReply',    8, 1]
-    COMMAND_SET_6P_ADD            =  ['6pAdd',       9, 3]
-    COMMAND_SET_6P_DELETE         =  ['6pDelete',   10, 3]
-    COMMAND_SET_6P_COUNT          =  ['6pCount',    11, 0]
-    COMMAND_SET_6P_LIST           =  ['6pList',     12, 0]
-    COMMAND_SET_6P_CLEAR          =  ['6pClear',    13, 0]
+    COMMAND_SET_EBPERIOD          =  ['ebPeriod',     0, 1]
+    COMMAND_SET_CHANNEL           =  ['channel',      1, 1]
+    COMMAND_SET_KAPERIOD          =  ['kaPeriod',     2, 2]
+    COMMAND_SET_DIOPERIOD         =  ['dioPeriod',    3, 2]
+    COMMAND_SET_DAOPERIOD         =  ['daoPeriod',    4, 2]
+    COMMAND_SET_DAGRANK           =  ['dagrank',      5, 2]
+    COMMAND_SET_SECURITY_STATUS   =  ['security',     6, 1]
+    COMMAND_SET_FRAMELENGTH       =  ['frameLength',  7, 2]
+    COMMAND_SET_ACK_STATUS        =  ['ackReply',     8, 1]
+    COMMAND_SET_6P_ADD            =  ['6pAdd',        9, 3]
+    COMMAND_SET_6P_DELETE         =  ['6pDelete',    10, 3]
+    COMMAND_SET_6P_COUNT          =  ['6pCount',     11, 0]
+    COMMAND_SET_6P_LIST           =  ['6pList',      12, 0]
+    COMMAND_SET_6P_CLEAR          =  ['6pClear',     13, 0]
+    COMMAND_SET_SLOTDURATION      =  ['slotDuration',14, 2]
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,
@@ -441,7 +442,8 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_6P_DELETE,
         COMMAND_SET_6P_COUNT,
         COMMAND_SET_6P_LIST,
-        COMMAND_SET_6P_CLEAR
+        COMMAND_SET_6P_CLEAR,
+        COMMAND_SET_SLOTDURATION
     ]
 
     TRIGGER_ALL         = [
