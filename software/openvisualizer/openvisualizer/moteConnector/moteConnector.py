@@ -174,7 +174,7 @@ class moteConnector(eventBusClient.eventBusClient):
             print "============================================="
             print "Wrong Image ({0})! (Available: gd_root OR gd_sniffer)\n".format(data[0])
             return [outcome,dataToSend]
-        
+
         # get commandId
         commandIndex = 0
         for cmd in moteState.moteState.COMMAND_ALL:
@@ -193,24 +193,40 @@ class moteConnector(eventBusClient.eventBusClient):
                 print " {0}".format(cmd[0])
             print " }"
             return [outcome,dataToSend]
-        
-        # get parameter
-        parameter = int(data[2])
-        if parameter <= 0xffff:
-            parameter  = [(parameter & 0xff),((parameter >> 8) & 0xff)]
-            dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND_GD,
-                1, # version
-                imageId,
-                commandId,
-                commandLen, # length 
-                parameter[0],
-                parameter[1]
-            ]
+
+        if data[1][:2] == '6p':
+            try:
+                dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND_GD,
+                    2, # version
+                    imageId,
+                    commandId,
+                    len(data[2][1:-1].split(','))
+                ]
+                if data[1] == '6pAdd' or data[1] == '6pDelete':
+                    if len(data[2][1:-1].split(','))>0:
+                        dataToSend += [int(i) for i in data[2][1:-1].split(',')] # celllist
+            except:
+                print "============================================="
+                print "Wrong 6p parameter format {0}. Split the slot by".format(data[2])
+                print "comma. e.g. 6,7. (up to 3)"
+                return [outcome,dataToSend]
         else:
-            # more than two bytes parameter, error
-            print "============================================="
-            print "Paramter Wrong! (Available: 0x0000~0xffff)\n"
-            return [outcome,dataToSend]
+            parameter = int(data[2])
+            if parameter <= 0xffff:
+                parameter  = [(parameter & 0xff),((parameter >> 8) & 0xff)]
+                dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND_GD,
+                    2, # version
+                    imageId,
+                    commandId,
+                    commandLen, # length 
+                    parameter[0],
+                    parameter[1]
+                ]
+            else:
+                # more than two bytes parameter, error
+                print "============================================="
+                print "Paramter Wrong! (Available: 0x0000~0xffff)\n"
+                return [outcome,dataToSend]
 
         # the command is legal if I got here
         outcome = True
