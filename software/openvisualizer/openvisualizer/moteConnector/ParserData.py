@@ -9,6 +9,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import struct
+import os
 
 from pydispatch import dispatcher
 
@@ -38,7 +39,7 @@ class ParserData(Parser.Parser):
          ]
 
         self.cstorm_payload = 'OpenWSN'
-        self.dataLatency = open('latency.dat','w')
+        self.dataLatency = open('latency.txt','a')
     
     
     #======================== public ==========================================
@@ -92,6 +93,8 @@ class ParserData(Parser.Parser):
               str(int(input[-9])*256+int(input[-8])),
               asnend[1]*65536+asnend[0]))
             self.dataLatency.flush()
+            self.dataLatency.close()
+            os.system('taskkill /F /im python.exe')
             
         
         if log.isEnabledFor(logging.DEBUG):
