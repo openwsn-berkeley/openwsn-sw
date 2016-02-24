@@ -7,6 +7,9 @@
 
 import sys
 import os
+import time
+import random
+import datetime
 
 if __name__=="__main__":
     # Update pythonpath if running in in-tree development mode
@@ -155,4 +158,8 @@ if __name__=="__main__":
     app = openVisualizerApp.main()
     app.eventBusMonitor.setWiresharkDebug(True)
     cli = OpenVisualizerCli(app)
+    random.seed(datetime.datetime.now())
+    time.sleep(10*random.random())
+    cli.do_root('emulated1')
     cli.cmdloop()
+

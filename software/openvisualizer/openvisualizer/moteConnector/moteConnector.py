@@ -81,8 +81,11 @@ class moteConnector(eventBusClient.eventBusClient):
             log.error(str(err))
             pass
         else:
-            # dispatch
-            self.dispatch('fromMote.'+eventSubType,parsedNotif)
+            if eventSubType == 'data' and parsedNotif[0] == 0 and len(parsedNotif[1]) == 5:  
+                pass
+            else:
+                # dispatch
+                self.dispatch('fromMote.'+eventSubType,parsedNotif)
         
     #======================== eventBus interaction ============================
     

@@ -39,7 +39,7 @@ class ParserData(Parser.Parser):
          ]
 
         self.cstorm_payload = 'OpenWSN'
-        self.dataLatency = open('latency.txt','a')
+        self.dataLatency = open('C:/Users/Tengfei/Desktop/openwsn/paper/151215_chang16llsf/data/latency_67_llsf.txt','a')
     
     
     #======================== public ==========================================
@@ -57,6 +57,16 @@ class ParserData(Parser.Parser):
         
         asnbytes=input[2:7]
         (self._asn) = struct.unpack('<BHH',''.join([chr(c) for c in asnbytes]))
+
+        if len(input[7:])==5:
+            input = input[7:]
+            moteId = input[0]
+            packetId = struct.unpack('>H',''.join([chr(c) for c in input[1:3]]))
+            hopasn = struct.unpack('<H',''.join([chr(c) for c in input[3:]]))
+            self.dataLatency.write('mote {0:2} packetId {1:3} hopasn {2:6}\n'.format(moteId,packetId,hopasn))
+            self.dataLatency.flush()
+            eventType='data'
+            return (eventType,(0,input))
         
         #source and destination of the message
         dest = input[7:15]
@@ -95,8 +105,8 @@ class ParserData(Parser.Parser):
             self.dataLatency.flush()
             self.dataLatency.close()
             os.system('taskkill /F /im python.exe')
-            
-        
+
+
         if log.isEnabledFor(logging.DEBUG):
             log.debug("packet without source,dest and asn {0}".format(input))
         
