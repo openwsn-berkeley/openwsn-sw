@@ -46,6 +46,8 @@ def TAP_CONTROL_CODE(request, method):
 TAP_IOCTL_SET_MEDIA_STATUS        = TAP_CONTROL_CODE( 6, 0)
 TAP_IOCTL_CONFIG_TUN              = TAP_CONTROL_CODE(10, 0)
 
+MIN_DEVICEIO_BUFFER_SIZE          = 1
+
 #============================ helper classes ==================================
 
 class TunReadThread(threading.Thread):
@@ -194,7 +196,7 @@ class OpenTunWindows(openTun.OpenTun):
             tunIf,
             TAP_IOCTL_SET_MEDIA_STATUS,
             '\x01\x00\x00\x00',
-            None
+            MIN_DEVICEIO_BUFFER_SIZE
         )
         
         # prepare the parameter passed to the TAP_IOCTL_CONFIG_TUN commmand.
@@ -213,7 +215,7 @@ class OpenTunWindows(openTun.OpenTun):
             tunIf,
             TAP_IOCTL_CONFIG_TUN,
             configTunParam,
-            None
+            MIN_DEVICEIO_BUFFER_SIZE
         )
         
         # return the handler of the TUN interface
