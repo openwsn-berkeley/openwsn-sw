@@ -129,7 +129,7 @@ class SimCli(threading.Thread):
                     command['callback'](params[1:])
                     break
             
-            if found==False:
+            if not found:
                 print ' unknown command or alias \''+params[0]+'\''
     
     #======================== private =========================================

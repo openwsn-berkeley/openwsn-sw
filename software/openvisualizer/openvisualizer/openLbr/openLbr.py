@@ -339,7 +339,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             
             success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
             
-            if success == True:
+            if success:
                 return
             
             # assemble the packet and dispatch it again as nobody answer 
@@ -923,7 +923,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 # print the bytes
                 this_line        += [' %02x'%b]
                 # gather the end_chars
-                if b>32 and b<127:
+                if 32 < b < 127:
                     end_chars    += [chr(b)]
                 else:
                     end_chars    += ['.']

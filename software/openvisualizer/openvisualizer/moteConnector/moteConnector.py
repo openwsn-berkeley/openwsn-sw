@@ -149,7 +149,7 @@ class moteConnector(eventBusClient.eventBusClient):
                 with self.stateLock:
                     [success,dataToSend] = self._GDcommandToBytes(data['action'][1:])
 
-                if success == False:
+                if not success:
                     return
 
                 # print dataToSend

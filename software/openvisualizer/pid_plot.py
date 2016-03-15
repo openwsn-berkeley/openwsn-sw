@@ -21,7 +21,7 @@ error   = []
 output = open('output.txt','r')
 line = output.readline()
 while line != '':
-    if line[0]>='0' and line[0]<='9':
+    if '0' <= line[0] <= '9':
         data = line.split(',')
         try:
             slotframe.append(int(data[0]))

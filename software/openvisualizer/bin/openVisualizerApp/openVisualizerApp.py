@@ -233,7 +233,7 @@ def main(parser=None):
     elif argspace.numMotes > 0:
         # --simCount implies --sim
         argspace.simulatorMode = True
-    elif argspace.simulatorMode == True:
+    elif argspace.simulatorMode:
         # default count when --simCount not provided
         argspace.numMotes = DEFAULT_MOTE_COUNT
 
