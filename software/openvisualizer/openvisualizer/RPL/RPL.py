@@ -223,7 +223,7 @@ class RPL(eventBusClient.eventBusClient):
             parents                         = []
             children                        = []
                           
-            while (len(dao)>0):  
+            while len(dao)>0:
                 if   dao[0]==self._TRANSIT_INFORMATION_TYPE: 
                     # transit information option
                     dao_transit_information['Transit_information_type']             = dao[0]

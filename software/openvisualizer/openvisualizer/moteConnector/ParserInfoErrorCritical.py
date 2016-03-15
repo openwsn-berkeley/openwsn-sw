@@ -73,7 +73,7 @@ class ParserInfoErrorCritical(Parser.Parser):
         else:
             raise SystemError("unexpected severity={0}".format(self.severity))
         
-        return ('error',input)
+        return 'error', input
     
     #======================== private =========================================
     

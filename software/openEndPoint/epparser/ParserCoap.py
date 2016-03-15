@@ -62,7 +62,7 @@ class ParserCoap(Parser.Parser):
         for i in range(0, header.getOption()):
             optionDelta = int(((data[option_pointer]) & 0b11110000) >> 4)
             optionNumber = optionDelta
-            if (i > 0):
+            if i > 0:
                 optionNumber = optionDelta + optionList[i - 1][0]
             length = int((data[option_pointer]) & 0b00001111)
             #print data[option_pointer+1:option_pointer+length+1]

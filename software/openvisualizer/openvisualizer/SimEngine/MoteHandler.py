@@ -235,7 +235,7 @@ class MoteHandler(threading.Thread):
         # switch on the mote
         self.hwSupply.switchOn()
         
-        assert(0)
+        assert 0
         
     #======================== public ==========================================
     

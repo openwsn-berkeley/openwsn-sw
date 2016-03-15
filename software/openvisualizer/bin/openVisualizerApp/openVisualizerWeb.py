@@ -348,7 +348,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         DAGrootList=[]
 
         for ms in self.app.moteStates:
-            if(ms.getStateElem(moteState.moteState.ST_IDMANAGER).isDAGroot):
+            if ms.getStateElem(moteState.moteState.ST_IDMANAGER).isDAGroot:
                 DAGrootList.append(ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()[1])
 
         data['DAGrootList']=DAGrootList

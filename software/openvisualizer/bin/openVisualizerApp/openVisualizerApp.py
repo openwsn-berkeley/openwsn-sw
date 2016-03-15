@@ -211,7 +211,7 @@ def main(parser=None):
                     to allow that module to pre-parse specific arguments
     :rtype:         openVisualizerApp object
     '''
-    if (parser == None):
+    if parser == None:
         parser = ArgumentParser()
         
     _addParserArgs(parser)
@@ -362,13 +362,13 @@ def _initExternalDirs(appdir, debug):
             raise RuntimeError('Config file not in expected directory: {0}'.format(appdir))
         if debug:
             print 'App data found via appdir'
-        return (appdir, appdir, appdir)
+        return appdir, appdir, appdir
     
     filedir = os.path.dirname(__file__)
     if _verifyConfpath(filedir):
         if debug:
             print 'App data found via openVisualizerApp.py'
-        return (filedir, filedir, filedir)
+        return filedir, filedir, filedir
         
     confdir      = appdirs.site_config_dir('openvisualizer', 'OpenWSN')
     # Must use system log dir on Linux since running as superuser.
@@ -384,7 +384,7 @@ def _initExternalDirs(appdir, debug):
                 os.mkdir(logdir)
             if debug:
                 print 'App data found via native OS'
-            return (confdir, datadir, logdir)
+            return confdir, datadir, logdir
         else:
             raise RuntimeError('Cannot find expected data directory: {0}'.format(datadir))
 
@@ -400,7 +400,7 @@ def _initExternalDirs(appdir, debug):
         if debug:
             print 'App data found via openvisualizer package'
             
-        return (datadir, datadir, logdir)
+        return datadir, datadir, logdir
     else:
         raise RuntimeError('Cannot find expected data directory: {0}'.format(datadir))
                     

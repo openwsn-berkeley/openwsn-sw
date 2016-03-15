@@ -191,7 +191,7 @@ class SimCli(threading.Thread):
     
     def _handleBoot(self,params):
         # usage
-        if (len(params)!=1 and len(params)!=2):
+        if len(params)!=1 and len(params)!=2:
             self._printUsageFromName('boot')
             return
         

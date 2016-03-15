@@ -33,8 +33,8 @@ class ListenerTestPeriod(Listener.Listener):
         if not self.goOn:
             raise TearDownError()
         
-        return (time.time(),                                   # timestampe
-                ('testHarness'),                               # source
+        return (time.time(),  # timestampe
+                'testHarness',  # source
                 [random.randint(0,255) for b in range(2)])     # data
     
     def stop(self):

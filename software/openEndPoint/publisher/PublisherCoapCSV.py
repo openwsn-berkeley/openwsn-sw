@@ -47,7 +47,7 @@ class PublisherCoapCSV(Publisher.Publisher):
         for h in root.handlers:
             if isinstance(h, FileHandler):
                 name=h.get_name()
-                if (name in (s+strname) ):#already exists
+                if name in (s+strname):#already exists
                     pass
                 else:#create the new filehandler
                     if not os.path.exists(os.path.curdir +"/"+ s):
@@ -61,7 +61,7 @@ class PublisherCoapCSV(Publisher.Publisher):
                  pass
                     
         #the first time will be added here
-        if (len(root.handlers)==0):
+        if len(root.handlers)==0:
             
             if not os.path.exists(os.path.curdir +"/"+ s):
                 os.makedirs(os.path.curdir +"/" + s)    
