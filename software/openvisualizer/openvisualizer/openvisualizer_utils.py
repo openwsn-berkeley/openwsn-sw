@@ -82,12 +82,12 @@ def calculateCRC(payload):
     
     checksum       = _oneComplementSum(payload,checksum)
     
-    checksum[0]   ^= 0xFF;
-    checksum[1]   ^= 0xFF;
-    
-    checksum[0]   = int(checksum[0]);
-    checksum[1]   = int(checksum[1]);
-    
+    checksum[0]   ^= 0xFF
+    checksum[1]   ^= 0xFF
+
+    checksum[0]   = int(checksum[0])
+    checksum[1]   = int(checksum[1])
+
     return checksum
 
 def calculatePseudoHeaderCRC(src,dst,length,nh,payload):
@@ -108,12 +108,12 @@ def calculatePseudoHeaderCRC(src,dst,length,nh,payload):
     checksum       = _oneComplementSum(nh,checksum)
     checksum       = _oneComplementSum(payload,checksum)
     
-    checksum[0]   ^= 0xFF;
-    checksum[1]   ^= 0xFF;
-    
-    checksum[0]   = int(checksum[0]);
-    checksum[1]   = int(checksum[1]);
-    
+    checksum[0]   ^= 0xFF
+    checksum[1]   ^= 0xFF
+
+    checksum[0]   = int(checksum[0])
+    checksum[1]   = int(checksum[1])
+
     return checksum
 
 def _oneComplementSum(field,checksum):

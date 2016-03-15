@@ -126,7 +126,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         :param moteid: 16-bit ID of mote (optional)
         '''
-        log.debug("moteview moteid parameter is {0}".format(moteid));
+        log.debug("moteview moteid parameter is {0}".format(moteid))
 
         motelist = []
         for ms in self.app.moteStates:

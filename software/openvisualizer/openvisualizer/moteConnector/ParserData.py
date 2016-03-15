@@ -130,13 +130,13 @@ class ParserData(Parser.Parser):
        else:
            pass
        
-       diff = 0;
+       diff = 0
        if asnend[1] == asninit[1]:#'bytes2and3'
           return asnend[0]-asninit[0]#'bytes0and1'
        else:
           if asnend[1]-asninit[1]==1:##'bytes2and3'              diff  = asnend[0]#'bytes0and1'
               diff += 0xffff-asninit[0]#'bytes0and1'
-              diff += 1;
+              diff += 1
           else:   
               diff = 0xFFFFFFFF
        
