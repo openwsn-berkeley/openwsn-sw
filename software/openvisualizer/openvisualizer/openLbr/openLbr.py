@@ -811,15 +811,14 @@ class OpenLbr(eventBusClient.eventBusClient):
         return pkt_ipv6
     
     def reassemble_ipv6_packet(self, pkt):
-        pktw = []
-        pktw.append(((6 << 4) + (pkt['traffic_class'] >> 4)))
-        pktw.append(( ((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16) ))
-        pktw.append(( (pkt['flow_label'] >> 8) & 0x00FF ))
-        pktw.append(( pkt['flow_label'] & 0x0000FF ))
-        pktw.append(( pkt['payload_length'] >> 8 ))
-        pktw.append(( pkt['payload_length'] & 0x00FF ))
-        pktw.append(( pkt['next_header'] ))
-        pktw.append(( pkt['hop_limit'] ))
+        pktw = [((6 << 4) + (pkt['traffic_class'] >> 4)),
+                (((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16)),
+                ((pkt['flow_label'] >> 8) & 0x00FF),
+                (pkt['flow_label'] & 0x0000FF),
+                (pkt['payload_length'] >> 8),
+                (pkt['payload_length'] & 0x00FF),
+                (pkt['next_header']),
+                (pkt['hop_limit'])]
         for i in range(0,16):
             pktw.append( (pkt['src_addr'][i]) )
         for i in range(0,16):
