@@ -86,8 +86,8 @@ class HwCrystal(HwModule.HwModule):
         '''
         
         # make sure crystal has been started
-        assert self.tsTick!=None
-        
+        assert self.tsTick is not None
+
         currentTime          = self.timeline.getCurrentTime()
         timeSinceLast        = currentTime-self.tsTick
         period               = self._getPeriod()
@@ -124,7 +124,7 @@ class HwCrystal(HwModule.HwModule):
         '''
         
         # make sure crystal has been started
-        assert self.tsTick!=None
+        assert self.tsTick is not None
         assert numticks>=0
         
         timeLastTick         = self.getTimeLastTick()
@@ -155,8 +155,8 @@ class HwCrystal(HwModule.HwModule):
         '''
         
         # make sure crystal has been started
-        assert self.tsTick!=None
-        
+        assert self.tsTick is not None
+
         # get the current time
         currentTime          = self.timeline.getCurrentTime()
         
@@ -179,7 +179,7 @@ class HwCrystal(HwModule.HwModule):
     
     def _getPeriod(self):
         
-        if self._period==None:
+        if self._period is None:
             self._period  = float(1)/float(self.frequency)                     # nominal period
             self._period += float(self.drift/1000000.0)*float(self._period)    # apply drift
         

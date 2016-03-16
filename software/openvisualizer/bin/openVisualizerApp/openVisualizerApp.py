@@ -211,7 +211,7 @@ def main(parser=None):
                     to allow that module to pre-parse specific arguments
     :rtype:         openVisualizerApp object
     '''
-    if parser == None:
+    if parser is None:
         parser = ArgumentParser()
         
     _addParserArgs(parser)

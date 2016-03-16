@@ -14,9 +14,9 @@ class ParsingKey(object):
     
     def __init__(self,index,val,parser):
         
-        assert(index!=None)
-        assert(val!=None)
-        assert(parser!=None)
+        assert(index is not None)
+        assert(val is not None)
+        assert(parser is not None)
         
         self.index      = index
         self.val        = val

@@ -161,7 +161,7 @@ class eventBusClient(object):
               data         = data,
         )
         for (function,returnVal) in temp:
-            if returnVal!=None:
+            if returnVal is not None:
                 if log.isEnabledFor(logging.DEBUG):
                     log.debug("returning true is subscribed to signal {0}, {1}".format(signal,returnVal))
                 return True
@@ -177,7 +177,7 @@ class eventBusClient(object):
             data         = data,
         )
         for (function,returnVal) in temp:
-            if returnVal!=None:
+            if returnVal is not None:
                 return returnVal
         raise SystemError('No answer to signal _dispatchAndGetResult')
     

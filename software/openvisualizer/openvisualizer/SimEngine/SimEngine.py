@@ -141,13 +141,13 @@ class SimEngine(object):
                 self.log.debug('pauseOrDelay: delay {0}'.format(self.delay))
             time.sleep(self.delay)
             
-        if self.stopAfterSteps!=None:
+        if self.stopAfterSteps is not None:
             if self.stopAfterSteps>0:
                 self.stopAfterSteps -= 1
             if self.stopAfterSteps==0:
                 self.pause()
         
-        assert(self.stopAfterSteps==None or self.stopAfterSteps>=0)
+        assert(self.stopAfterSteps is None or self.stopAfterSteps >= 0)
     
     def isRunning(self):
         return not self.isPaused

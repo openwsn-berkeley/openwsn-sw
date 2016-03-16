@@ -96,7 +96,7 @@ class SerialTester(eventBusClient.eventBusClient):
             self.timeout     = newTimeout
     
     def setTrace(self,newTraceCb):
-        assert (callable(newTraceCb)) or (newTraceCb==None)
+        assert (callable(newTraceCb)) or (newTraceCb is None)
         with self.dataLock:
             self.traceCb     = newTraceCb
     
