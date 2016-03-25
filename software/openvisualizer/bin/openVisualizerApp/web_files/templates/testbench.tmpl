@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		%include head.tmpl
+	</head>
+	<body>
+	    <script>
+		    var roverIP;
+		    var moteID;
+        </script>
+		<div id="wrapper">
+			%include navbar.tmpl ovVersion=ovVersion, roverMode=roverMode
+
+			<div id="page-wrapper">
+	            <div class="row">
+	                <div class="col-lg-12">
+	                    <h1 class="page-header">Testbench</h1>
+	                </div>
+	            </div>
+
+	            <div class="row">
+                	<div class="col-lg-12">
+                	    <button id="discover_btn" type="button" class="btn btn-default btn-xs">Discover CoAP devices</button>
+		                <select class="rel_value_fld" id="rover_select" size="1">
+		                    <option value="none">Select rover...</option>
+		                    % for rover in roverlist:
+		                       <option>{{rover}}</option>
+		                    % end
+		                </select>
+
+		                <script>
+			                $( "#discover_btn" )
+			                    .button()
+			                    .click(function( event ) {
+                                    $.ajax({
+			                            dataType: "json",
+			                            url: "/coapdiscovery",
+			                            success: updateRoverList,
+			                            error: errorOnAjax
+			                        });
+			                        console.log('Trying CoAP discovery');
+			                    });
+		                </script>
+
+		                <script>
+		                    $("#rover_select").change(function() {
+		                        roverIP =  $(this).val()
+		                        
+		                         console.log('Update for rover selection: ' + roverIP);
+		                         // Store to allow automatically selecting this rover.
+		                         setCookie("selected_roverIP", roverIP);
+		                        
+		                        // Don't allow to reselect null option.
+		                        //$("#rover_select option[value='none']").remove();
+		                    });
+		                </script>
+
+                	</div>
+                </div>
+	            <div class="row">
+                	<div class="col-lg-12">
+                	    <button id="motes_btn" type="button" class="btn btn-default btn-xs">Discover motes on selected rover</button>
+		                <select class="rel_value_fld" id="mote_select" size="1">
+		                    <option value="none">Select mote...</option>
+		                </select>
+		                <script>
+			                $( "#motes_btn" )
+			                    .button()
+			                    .click(function( event ) {
+			                        if(roverIP != null && roverIP != undefined && roverIP != 'none'){
+                                        $.ajax({
+			                                dataType: "json",
+			                                url: "/motesdiscovery/" + roverIP,
+			                                success: updateMotesList,
+			                                error: errorOnAjax
+			                            });
+			                            console.log('Discovering motes on rover '+ roverIP);
+			                        }
+			                    });
+		                </script>
+		                
+		                <script>
+		                    $("#mote_select").change(function() {
+		                        moteID =  $(this).val()
+		                        
+		                        if (moteID != null && moteID != undefined && moteID != 'none') {
+		                            console.log('Update for mote selection: ' + moteID);
+		                            // Store to allow automatically selecting this mote.
+		                            setCookie("selected_moteID", moteID);
+		                            $("#testbench_link").attr("href", "/testbench/" + moteID);
+		                        } else {
+		                            console.log('Update for mote selection: ' + moteID);
+		                            // Store to allow automatically selecting this mote.
+		                            setCookie("selected_moteID", moteID);
+		                            $("#testbench_link").attr("href", "/testbench");
+		                        }
+
+		                        // Don't allow to reselect null option.
+		                        //$("#mote_select option[value='none']").remove();
+		                    });
+		                </script>
+
+
+
+                        <script>
+						    function updateRoverList(json) {
+						        console.log('success');
+						    }
+
+						    function updateMotesList(json) {
+						        var selectBox = document.getElementById('mote_select')
+						        //remove everything from list
+						        while ( selectBox.firstChild ) {
+                                    selectBox.removeChild( selectBox.firstChild )
+                                }
+                                //get new list from json :
+                                $('#mote_select').append($('<option/>').attr("value", 'none').text('Select mote...'));
+                                $.each(json, function(i, option) {
+                                    $('#mote_select').append($('<option/>').attr("value", option.port).text(option.id));
+                                });
+						        console.log('success');
+						    }
+
+						    function errorOnAjax(jqxhr, status, errorstr) {
+						        var errText = (errorstr == null)
+						                ? '' : ', error: ' + errorstr;
+						        console.log('Ajax error: ' + status + errText);
+						    }
+						</script>
+		            </div>
+		        </div>
+	        </div>
+	    </div>
+	</body>
+</html>

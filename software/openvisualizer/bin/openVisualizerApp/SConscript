@@ -62,6 +62,8 @@ def uiRunner(target, source, env):
         argList.append('-H {0}'.format(env['HOSTOPT']))
     if env['PORTOPT']:
         argList.append('-p {0}'.format(env['PORTOPT']))
+    if env['ROVEROPT']:
+        argList.append('--rover')
     
     result = 0
     try:
@@ -154,15 +156,17 @@ env['DATA_FILES']  = []
 
 # Customize environment for each target. Must remove 'host' and 'port' 
 # options for GUI and CLI because they are not defined in those scripts.
-guiEnv            = env.Clone()
-guiEnv['HOSTOPT'] = None
-guiEnv['PORTOPT'] = None
+guiEnv             = env.Clone()
+guiEnv['HOSTOPT']  = None
+guiEnv['PORTOPT']  = None
+guiEnv['ROVEROPT'] = None
 Alias('rungui', setupUiRunner(guiEnv, 'openVisualizerGui.py', []))
 
 cliEnv               = env.Clone()
 cliEnv['WAIT_ON_UI'] = True
 cliEnv['HOSTOPT']    = None
 cliEnv['PORTOPT']    = None
+guiEnv['ROVEROPT']   = None
 Alias('runcli', setupUiRunner(cliEnv, 'openVisualizerCli.py', []))
 
 webEnv               = env.Clone()

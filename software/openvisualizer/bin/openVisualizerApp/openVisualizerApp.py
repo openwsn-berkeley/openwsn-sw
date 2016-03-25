@@ -45,7 +45,7 @@ class OpenVisualizerApp(object):
         self.debug                = debug
         self.iotlabmotes          = iotlabmotes
         self.pathTopo             = pathTopo
-        
+
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
         self.openLbr              = openLbr.OpenLbr()
@@ -195,7 +195,25 @@ class OpenVisualizerApp(object):
                     return ms
         else:
             return None
-        
+
+    def refreshMotes(self, roverMotes):
+        '''Connect the list of roverMotes to openvisualiser.
+
+        :param roverMotes : list of the roverMotes to add
+        '''
+        #TODO : quit every previous moteProbe, moteConnectors, MoteStates...
+        # in "hardware" mode, motes are connected to the serial port
+        self.moteProbes       = [
+            moteProbe.moteProbe(roverMote=m) for m in roverMotes
+        ]
+        # create a moteConnector for each moteProbe
+        self.moteConnectors       = [
+            moteConnector.moteConnector(mp.getPortName()) for mp in self.moteProbes
+        ]
+        # create a moteState for each moteConnector
+        self.moteStates           = [
+            moteState.moteState(mc) for mc in self.moteConnectors
+        ]
 
 #============================ main ============================================
 import logging.config
@@ -313,7 +331,8 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'a topology can be loaded from a json file'
     )
-    
+
+
 def _forceSlashSep(ospath, debug):
     '''
     Converts a Windows-based path to use '/' as the path element separator.

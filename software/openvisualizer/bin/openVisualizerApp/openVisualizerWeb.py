@@ -7,6 +7,7 @@
 import sys
 import os
 import time
+import glob, subprocess
 
 if __name__=="__main__":
     # Update pythonpath if running in in-tree development mode
@@ -35,6 +36,7 @@ import signal
 import functools
 import datetime
 from bottle        import view, response
+from coapthon.client.helperclient import HelperClient
 
 import openVisualizerApp
 import openvisualizer.openvisualizer_utils as u
@@ -43,6 +45,7 @@ from openvisualizer.SimEngine     import SimEngine
 from openvisualizer.BspEmulator   import VcdLogger
 from openvisualizer import ovVersion
 
+import time
 
 from pydispatch import dispatcher
 
@@ -55,7 +58,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     server.
     '''
 
-    def __init__(self,app,websrv):
+    def __init__(self,app,websrv,roverMode):
         '''
         :param app:    OpenVisualizerApp
         :param websrv: Web server
@@ -66,6 +69,10 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.app             = app
         self.engine          = SimEngine.SimEngine()
         self.websrv          = websrv
+        self.roverMode       = roverMode
+
+        #used for remote motes :
+        self.roverMotes    = {}
 
         self._defineRoutes()
 
@@ -118,6 +125,45 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
+        if self.roverMode :
+            self.websrv.route(path='/testbench',                              callback=self._showTestbench)
+            self.websrv.route(path='/coapdiscovery',                          callback=self._coapDiscovery)
+            self.websrv.route(path='/motesdiscovery/:roverip',                callback=self._motesDiscovery)
+
+
+    @view('testbench.tmpl')
+    def _showTestbench(self):
+        '''
+        Handles the discovery and connection to remote motes
+        '''
+        roverlist = ['10.228.40.65', '10.228.40.73']
+        tmplData = {
+            'roverlist' : roverlist,
+            'roverMode' : self.roverMode,
+        }
+        return tmplData
+
+    def _coapDiscovery(self):
+        '''
+        Handles the CoAP devices discovery
+        '''
+        #TODO : implement it
+        return '{"result" : "fail"}'
+
+    def _motesDiscovery(self, roverip):
+        '''
+        Collects the list of motes available on the rover and connects them to oV
+
+        :param roverIP: IP of the rover
+        '''
+        client = HelperClient(server=(roverip, 5683))
+        response = client.get('/motes')
+        self.roverMotes[roverip]=json.loads(response.payload)
+        motes = []
+        for ip in self.roverMotes.keys() :
+            motes.extend([ip+':'+m['port'] for m in self.roverMotes[ip]])
+        app.refreshMotes(motes)
+        return response.payload
 
     @view('moteview.tmpl')
     def _showMoteview(self, moteid=None):
@@ -139,6 +185,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         tmplData = {
             'motelist'       : motelist,
             'requested_mote' : moteid if moteid else 'none',
+            'roverMode'      : self.roverMode,
         }
         return tmplData
 
@@ -212,7 +259,9 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         Simple page; data for the page template is identical to the data
         for periodic updates of event list.
         '''
-        return self._getEventData()
+        tmplData = self._getEventData().copy()
+        tmplData['roverMode'] = self.roverMode
+        return tmplData
 
     def _showDAG(self):
         states,edges = self.app.topology.getDAG()
@@ -220,7 +269,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
     @view('routing.tmpl')
     def _showRouting(self):
-        return {}
+        return {'roverMode' : self.roverMode}
 
     @view('topology.tmpl')
     def _topologyPage(self):
@@ -228,7 +277,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         Retrieve the HTML/JS page.
         '''
 
-        return {}
+        return {'roverMode' : self.roverMode}
 
     def _topologyData(self):
         '''
@@ -385,6 +434,12 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'port number'
     )
+    parser.add_argument('-r', '--rover',
+        dest       = 'roverMode',
+        default    = False,
+        action     = 'store_true',
+        help       = 'rover mode, to access motes connected on rovers'
+    )
 
 webapp = None
 if __name__=="__main__":
@@ -409,7 +464,7 @@ if __name__=="__main__":
     
     #===== add a web interface
     websrv   = bottle.Bottle()
-    webapp   = OpenVisualizerWeb(app, websrv)
+    webapp   = OpenVisualizerWeb(app, websrv, argspace.roverMode)
 
     
 
