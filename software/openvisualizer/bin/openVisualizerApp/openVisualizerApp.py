@@ -12,6 +12,9 @@ import sys
 import os
 import logging
 import json
+
+from openvisualizer.OVtracer import OVtracer
+
 log = logging.getLogger('openVisualizerApp')
 
 from openvisualizer.eventBus      import eventBusMonitor
