@@ -14,16 +14,13 @@ import traceback
 import sys
 import openvisualizer.openvisualizer_utils as u
 import zmq
-
-from pydispatch import dispatcher
+import time
 
 from openvisualizer.eventBus      import eventBusClient
 from openvisualizer.moteState     import moteState
 
-import OpenParser
-import ParserException
 
-class moteConnector(eventBusClient.eventBusClient):
+class remoteConnector(eventBusClient.eventBusClient):
     
     def __init__(self, iplist=[]):
         
@@ -36,8 +33,8 @@ class moteConnector(eventBusClient.eventBusClient):
         self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False
         self.iplist = iplist
-        self.context = zmq.Context()
 
+        self.context = zmq.Context()
         self.publisher = self.context.socket(zmq.PUB)
         self.publisher.bind("tcp://*:50000")
 
@@ -132,45 +129,7 @@ class moteConnector(eventBusClient.eventBusClient):
         #         # remember I'm not subscribed
         #         self._subcribedDataForDagRoot = False
     
-    def _cmdToMote_handler(self,sender,signal,data):
-        if  data['serialPort']==self.serialport:
-            if data['action']==moteState.moteState.TRIGGER_DAGROOT:
-                
-                # retrieve the prefix of the network
-                with self.stateLock:
-                    if not self.networkPrefix:
-                        networkPrefix = self._dispatchAndGetResult(
-                            signal       = 'getNetworkPrefix',
-                            data         = [],
-                        )
-                        self.networkPrefix = networkPrefix
-                
-                # create data to send
-                with self.stateLock:
-                    dataToSend = [
-                        OpenParser.OpenParser.SERFRAME_PC2MOTE_SETDAGROOT,
-                        OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
-                    ]+self.networkPrefix
-                
-                # toggle the DAGroot state
-                self._sendToMoteProbe(
-                    dataToSend = dataToSend,
-                )
-            elif data['action'][0]==moteState.moteState.SET_COMMAND:
-                # this is command for golden image
-                with self.stateLock:
-                    [success,dataToSend] = self._GDcommandToBytes(data['action'][1:])
 
-                if success == False:
-                    return
-
-                # print dataToSend
-                # send command to GD image
-                self._sendToMoteProbe(
-                    dataToSend = dataToSend,
-                )
-            else:
-                raise SystemError('unexpected action={0}'.format(data['action']))
     
     # def _GDcommandToBytes(self,data):
     #
@@ -262,17 +221,3 @@ class moteConnector(eventBusClient.eventBusClient):
 
     def addRaspi(self, ip):
         self.iplist.append(ip)
-    
-    #======================== private =========================================
-    
-    def _sendToMoteProbe(self,dataToSend):
-        try:
-             dispatcher.send(
-                      sender        = self.name,
-                      signal        = 'fromMoteConnector@'+self.serialport,
-                      data          = ''.join([chr(c) for c in dataToSend])
-                      )
-            
-        except socket.error as err:
-            log.error(err)
-            pass

@@ -17,16 +17,17 @@ from openvisualizer.OVtracer import OVtracer
 
 log = logging.getLogger('openVisualizerApp')
 
-from openvisualizer.eventBus      import eventBusMonitor
-from openvisualizer.moteProbe     import moteProbe
-from openvisualizer.moteConnector import moteConnector
-from openvisualizer.moteState     import moteState
-from openvisualizer.RPL           import RPL
-from openvisualizer.openLbr       import openLbr
-from openvisualizer.openTun       import openTun
-from openvisualizer.RPL           import UDPLatency
-from openvisualizer.RPL           import topology
-from openvisualizer               import appdirs
+from openvisualizer.eventBus        import eventBusMonitor
+from openvisualizer.moteProbe       import moteProbe
+from openvisualizer.moteConnector   import moteConnector
+from openvisualizer.moteState       import moteState
+from openvisualizer.RPL             import RPL
+from openvisualizer.openLbr         import openLbr
+from openvisualizer.openTun         import openTun
+from openvisualizer.RPL             import UDPLatency
+from openvisualizer.RPL             import topology
+from openvisualizer                 import appdirs
+from openvisualizer.remoteConnector   import remoteConnector
 
 import openvisualizer.openvisualizer_utils as u
     
@@ -217,6 +218,8 @@ class OpenVisualizerApp(object):
         self.moteStates           = [
             moteState.moteState(mc) for mc in self.moteConnectors
         ]
+
+        self.remoteConnector = remoteConnector.remoteConnector()
 
 #============================ main ============================================
 import logging.config
