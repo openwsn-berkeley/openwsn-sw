@@ -8,7 +8,7 @@
 __pycache__
 .sconsign.dblite
 test_report_*.xml
-
+.ideai/*
 
 *.vcd
 /software/openApps/ietf90client/*.config

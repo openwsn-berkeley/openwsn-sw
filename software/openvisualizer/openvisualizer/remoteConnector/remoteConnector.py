@@ -37,7 +37,7 @@ class remoteConnector(eventBusClient.eventBusClient):
         self.publisher = self.context.socket(zmq.PUB)
         self.publisher.bind("tcp://*:50000")
         self.publisher.send('')
-
+        print 'publisher started'
 
 
         # give this thread a name
@@ -95,9 +95,9 @@ class remoteConnector(eventBusClient.eventBusClient):
     
     def _sendToRemote_handler(self,sender,signal,data):
 
-        self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data':data}, 90)
-        log.info('msg sent')
-        
+        self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data':data})
+        print 'msg sent'
+
         # # I only care about "infoDagRoot" notifications about my mote
         # if not data['serialPort']==self.roverMote:
         #     return

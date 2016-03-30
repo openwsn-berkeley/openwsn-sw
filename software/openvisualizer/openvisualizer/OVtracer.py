@@ -10,7 +10,6 @@ log.addHandler(logging.NullHandler())
 
 
 import threading
-import yappi
 
 class OVtracer(object):
     TRACING_INTERVAL = 30
