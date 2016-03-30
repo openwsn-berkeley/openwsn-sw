@@ -112,7 +112,9 @@ class OpenVisualizerApp(object):
         self.moteStates           = [
             moteState.moteState(mc) for mc in self.moteConnectors
         ]
-        
+        self.remoteConnector = remoteConnector.remoteConnector()
+
+
         # boot all emulated motes, if applicable
         if self.simulatorMode:
             self.simengine.pause()
@@ -218,8 +220,6 @@ class OpenVisualizerApp(object):
         self.moteStates           = [
             moteState.moteState(mc) for mc in self.moteConnectors
         ]
-
-        self.remoteConnector = remoteConnector.remoteConnector()
 
 #============================ main ============================================
 import logging.config

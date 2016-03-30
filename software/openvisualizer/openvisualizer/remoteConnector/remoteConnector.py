@@ -28,7 +28,6 @@ class remoteConnector(eventBusClient.eventBusClient):
         log.info("creating instance")
 
         # local variables
-        self.parser                    = OpenParser.OpenParser()
         self.stateLock                 = threading.Lock()
         self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False
@@ -37,11 +36,12 @@ class remoteConnector(eventBusClient.eventBusClient):
         self.context = zmq.Context()
         self.publisher = self.context.socket(zmq.PUB)
         self.publisher.bind("tcp://*:50000")
+        self.publisher.send('')
 
 
 
         # give this thread a name
-        self.name = 'remoteConnector@{0}'.format(self.roverMote)
+        self.name = 'remoteConnector'
        
         eventBusClient.eventBusClient.__init__(
             self,
@@ -95,7 +95,8 @@ class remoteConnector(eventBusClient.eventBusClient):
     
     def _sendToRemote_handler(self,sender,signal,data):
 
-        self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data':data})
+        self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data':data}, 90)
+        log.info('msg sent')
         
         # # I only care about "infoDagRoot" notifications about my mote
         # if not data['serialPort']==self.roverMote:
