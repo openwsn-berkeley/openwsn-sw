@@ -75,6 +75,8 @@ class remoteConnector(eventBusClient.eventBusClient):
                     'signal'   : 'bytesToMesh',
                     'callback' : self._sendToRemote_handler,
                 },
+
+                #for test
                 {
                     'sender'   : self.WILDCARD,
                     'signal'   : 'dispatchtest',
@@ -102,6 +104,7 @@ class remoteConnector(eventBusClient.eventBusClient):
            print "\nReceived remote event\n"+json.dumps(event)+"\nDispatching to event bus\n"
            self.dispatch('dispatchtest', event['data'])
 
+    #for test
     def _dispatchtest(self,sender,signal,data):
         print '\n\nDispatch Test succeed, received dispatched event from evenbus:\n'
         print 'sender: ' + sender, 'signal:' + signal, 'data: '+str(data)
