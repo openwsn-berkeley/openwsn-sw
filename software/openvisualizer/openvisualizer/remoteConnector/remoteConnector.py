@@ -52,8 +52,6 @@ class remoteConnector(eventBusClient.eventBusClient):
         for roverIP in roverlist:
             self.subscriber.connect("tcp://%s:%s" % (roverIP, roverPort))
         self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
-        print 'subscriber started'
-
 
         # give this thread a name
         self.name = 'remoteConnector'
@@ -76,6 +74,11 @@ class remoteConnector(eventBusClient.eventBusClient):
                     'sender'   : self.WILDCARD,
                     'signal'   : 'bytesToMesh',
                     'callback' : self._sendToRemote_handler,
+                },
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'dispatchtest',
+                    'callback' : self._dispatchtest,
                 }
             ]
         )
@@ -85,20 +88,23 @@ class remoteConnector(eventBusClient.eventBusClient):
         t = threading.Thread(target=self._recvdFromRemote)
         t.setDaemon(True)
         t.start()
+        print 'subscriber started'
         
     #======================== eventBus interaction ============================
     
     def _sendToRemote_handler(self,sender,signal,data):
-
         self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data':data})
         print 'msg sent'
 
-    def _recvdFromRemote(self, ):
+    def _recvdFromRemote(self):
         while True:
            event = self.subscriber.recv_json()
-           print "Received remote event"+json.dumps(event)
-           self.dispatch(event['signal'], event['data'])
-           print "Dispatched to event bus"
+           print "\nReceived remote event\n"+json.dumps(event)+"\nDispatching to event bus\n"
+           self.dispatch('dispatchtest', event['data'])
+
+    def _dispatchtest(self,sender,signal,data):
+        print '\n\nDispatch Test succeed, received dispatched event from evenbus:\n'
+        print 'sender: ' + sender, 'signal:' + signal, 'data: '+str(data)
 
     
     #======================== public ==========================================
