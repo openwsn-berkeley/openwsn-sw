@@ -8,6 +8,7 @@ import sys
 import os
 import time
 import glob, subprocess
+import netifaces as ni
 
 if __name__=="__main__":
     # Update pythonpath if running in in-tree development mode
@@ -44,6 +45,7 @@ from openvisualizer.eventBus      import eventBusClient
 from openvisualizer.SimEngine     import SimEngine
 from openvisualizer.BspEmulator   import VcdLogger
 from openvisualizer import ovVersion
+from openvisualizer.remoteConnector import remoteConnector
 
 import time
 
@@ -134,9 +136,9 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     @view('testbench.tmpl')
     def _showTestbench(self):
         '''
-        Handles the discovery and connection to remote motes
+        Handles the discovery and connection to remote motes using remoteConnector component
         '''
-        roverlist = ['10.228.40.65', '10.228.40.73']
+        roverlist = ['10.228.40.84',]
         tmplData = {
             'roverlist' : roverlist,
             'roverMode' : self.roverMode,
@@ -156,13 +158,16 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         :param roverIP: IP of the rover
         '''
+
         client = HelperClient(server=(roverip, 5683))
-        response = client.get('/motes')
+        ni.ifaddresses('eth0')
+        myip = ni.ifaddresses('eth0')[2][0]['addr']
+        print '====Communicating to CoAP server:' + '/pcinfo', myip +':50000:'+roverip
+        response = client.put('/pcinfo', myip +':50000:'+roverip)
         self.roverMotes[roverip]=json.loads(response.payload)
-        motes = []
-        for ip in self.roverMotes.keys() :
-            motes.extend([ip+':'+m['port'] for m in self.roverMotes[ip]])
-        app.refreshMotes(motes)
+        self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
+        app.refreshMotes(self.roverMotes)
+        print "====Rover responds with available motes: "+response.payload
         return response.payload
 
     @view('moteview.tmpl')

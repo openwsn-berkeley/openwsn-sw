@@ -13,101 +13,63 @@ import socket
 import traceback
 import sys
 import json
-import openvisualizer.openvisualizer_utils as u
 import zmq
 import time
 
 from pydispatch import dispatcher
-from openvisualizer.eventBus      import eventBusClient
-from openvisualizer.moteState     import moteState
 
 
-class remoteConnector(eventBusClient.eventBusClient):
+class remoteConnector():
 
-    def __init__(self, roverlist=[], PUBport=50000):
+    def __init__(self, zmqport=50000):
         
         # log
         log.info("creating instance")
 
         # local variables
+        self.zmqport                   = zmqport
         self.stateLock                 = threading.Lock()
         self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False
 
-        self.roverlist = roverlist
-        self.SUBport = PUBport
-
-        context = zmq.Context()
-        self.publisher = context.socket(zmq.PUB)
-        self.publisher.bind("tcp://*:%d" % PUBport)
-        print 'publisher started'
-
-
-        self.subscriber = context.socket(zmq.SUB)
-
-        #For test
-        roverPort = 50000
-        self.addRover('localhost')
-
-        for roverIP in roverlist:
-            self.subscriber.connect("tcp://%s:%s" % (roverIP, roverPort))
-        self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
-
         # give this thread a name
         self.name = 'remoteConnector'
-       
-        eventBusClient.eventBusClient.__init__(
-            self,
-            name             = self.name,
-            registrations =  [
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'infoDagRoot',
-                    'callback' : self._sendToRemote_handler,
-                },
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'cmdToMote',
-                    'callback' : self._sendToRemote_handler,
-                },
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'bytesToMesh',
-                    'callback' : self._sendToRemote_handler,
-                },
 
-                #for test
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'dispatchtest',
-                    'callback' : self._dispatchtest,
-                }
-            ]
-        )
-
-        # subscribe to dispatcher
+        # initiate ZeroMQ connection
+        context = zmq.Context()
+        self.publisher = context.socket(zmq.PUB)
+        self.publisher.bind("tcp://*:%d" % self.zmqport)
+        self.subscriber = context.socket(zmq.SUB)
+        print '====Publisher started'
 
         t = threading.Thread(target=self._recvdFromRemote)
         t.setDaemon(True)
         t.start()
-        print 'subscriber started'
+        print '====Subscriber started'
+
         
     #======================== eventBus interaction ============================
     
-    def _sendToRemote_handler(self,sender,signal,data):
-        self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data':data})
+    def _sendToRemote_handler(self,sender, signal, data):
+        print 'sender: ' + sender, 'signal: ' + signal, 'data: '+ data.encode('hex')
+        self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data': data.encode('hex')})
         print 'msg sent'
 
-    def _recvdFromRemote(self):
-        while True:
-           event = self.subscriber.recv_json()
-           print "\nReceived remote event\n"+json.dumps(event)+"\nDispatching to event bus\n"
-           self.dispatch('dispatchtest', event['data'])
 
-    #for test
-    def _dispatchtest(self,sender,signal,data):
-        print '\n\nDispatch Test succeed, received dispatched event from evenbus:\n'
-        print 'sender: ' + sender, 'signal:' + signal, 'data: '+str(data)
+    def _recvdFromRemote(self):
+        count=0
+        while True:
+            event = self.subscriber.recv_json()
+            if count > 10:
+                print "\nReceived remote event\n"+json.dumps(event)+"\nDispatching to event bus\n"
+                count=0
+            dispatcher.send(
+                sender  =  event['sender'].encode("utf8"),
+                signal  =  event['signal'].encode("utf8"),
+                data    =  event['data']
+            )
+            count+=1
+
 
     
     #======================== public ==========================================
@@ -115,5 +77,20 @@ class remoteConnector(eventBusClient.eventBusClient):
     def quit(self):
         raise NotImplementedError()
 
-    def addRover(self, roverIP):
-        self.roverlist.append(roverIP)
+    def initRoverConn(self, roverlist = {}):
+        # clear history
+        dispatcher.disconnect(self._sendToRemote_handler)
+
+        # add new configuration
+        print '====Initiating rover connection:'+ str(roverlist)
+        for roverIP in roverlist.keys():
+            self.subscriber.connect("tcp://%s:%s" % (roverIP, self.zmqport))
+            self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
+            for serial in roverlist[roverIP]:
+                signal = 'fromMoteConnector@'+serial
+
+                dispatcher.connect(
+                    self._sendToRemote_handler,
+                    signal = signal.encode('utf8')
+                    )
+

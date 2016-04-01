@@ -27,6 +27,8 @@
 		                       <option>{{rover}}</option>
 		                    % end
 		                </select>
+                        or:
+		                <input id="rover_manual" type="text" placeholder="Set IP manually">
 
 		                <script>
 			                $( "#discover_btn" )
@@ -43,7 +45,7 @@
 		                </script>
 
 		                <script>
-		                    $("#rover_select").change(function() {
+		                    $( "#rover_select" ).change(function(){
 		                        roverIP =  $(this).val()
 		                        
 		                         console.log('Update for rover selection: ' + roverIP);
@@ -55,8 +57,20 @@
 		                    });
 		                </script>
 
+		                <script>
+		                    $( "#rover_manual" ).change(function(){
+		                        roverIP =  $(this).val()
+
+		                         console.log('Update for rover selection: ' + roverIP);
+		                         // Store to allow automatically selecting this rover.
+		                         setCookie("manual_roverIP", roverIP);
+		                    });
+		                </script>
+
                 	</div>
                 </div>
+
+                <br>
 	            <div class="row">
                 	<div class="col-lg-12">
                 	    <button id="motes_btn" type="button" class="btn btn-default btn-xs">Discover motes on selected rover</button>

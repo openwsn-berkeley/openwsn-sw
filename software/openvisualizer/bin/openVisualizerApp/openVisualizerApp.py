@@ -37,7 +37,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes, pathTopo):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes, pathTopo, roverMode):
         
         # store params
         self.confdir              = confdir
@@ -49,6 +49,7 @@ class OpenVisualizerApp(object):
         self.debug                = debug
         self.iotlabmotes          = iotlabmotes
         self.pathTopo             = pathTopo
+        self.roverMode            = roverMode
 
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -98,7 +99,7 @@ class OpenVisualizerApp(object):
             
         else:
             # in "hardware" mode, motes are connected to the serial port
-            
+
             self.moteProbes       = [
                 moteProbe.moteProbe(serialport=p) for p in moteProbe.findSerialPorts()
             ]
@@ -112,7 +113,9 @@ class OpenVisualizerApp(object):
         self.moteStates           = [
             moteState.moteState(mc) for mc in self.moteConnectors
         ]
-        self.remoteConnector = remoteConnector.remoteConnector()
+
+        if self.roverMode :
+            self.remoteConnector = remoteConnector.remoteConnector()
 
 
         # boot all emulated motes, if applicable
@@ -208,18 +211,20 @@ class OpenVisualizerApp(object):
         :param roverMotes : list of the roverMotes to add
         '''
         #TODO : quit every previous moteProbe, moteConnectors, MoteStates...
-        # in "hardware" mode, motes are connected to the serial port
-        self.moteProbes       = [
-            moteProbe.moteProbe(roverMote=m) for m in roverMotes
-        ]
-        # create a moteConnector for each moteProbe
-        self.moteConnectors       = [
-            moteConnector.moteConnector(mp.getPortName()) for mp in self.moteProbes
-        ]
+
+        # create a moteConnector for each roverMote
+        self.moteConnectors=[]
+        for roverIP in roverMotes.keys() :
+            self.moteConnectors       += [
+                moteConnector.moteConnector(rm) for rm in roverMotes[roverIP]
+            ]
         # create a moteState for each moteConnector
         self.moteStates           = [
             moteState.moteState(mc) for mc in self.moteConnectors
         ]
+        self.remoteConnector.initRoverConn(roverMotes)
+
+
 
 #============================ main ============================================
 import logging.config
@@ -286,6 +291,7 @@ def main(parser=None):
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
         pathTopo        = argspace.pathTopo,
+        roverMode       = argspace.roverMode
     )
 
 def _addParserArgs(parser):
