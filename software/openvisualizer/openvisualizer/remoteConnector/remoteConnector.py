@@ -28,6 +28,7 @@ class remoteConnector():
 
         # local variables
         self.zmqport                   = zmqport
+        self.roverlist                 = {}
         self.stateLock                 = threading.Lock()
         self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False
@@ -42,10 +43,11 @@ class remoteConnector():
         self.subscriber = context.socket(zmq.SUB)
         print '====Publisher started'
 
+        self.threads = []
         t = threading.Thread(target=self._recvdFromRemote)
         t.setDaemon(True)
         t.start()
-        print '====Subscriber started'
+        self.threads.append(t)
 
         
     #======================== eventBus interaction ============================
@@ -77,20 +79,27 @@ class remoteConnector():
     def quit(self):
         raise NotImplementedError()
 
-    def initRoverConn(self, roverlist = {}):
+    def initRoverConn(self, newroverlist):
         # clear history
         dispatcher.disconnect(self._sendToRemote_handler)
+        while len(self.roverlist)>0:
+            for oldIP in self.roverlist.keys():
+                self.subscriber.disconnect("tcp://%s:%s" % (oldIP, self.zmqport))
+                print "====Clearing historical connections: ",oldIP
+                self.roverlist.pop(oldIP)
+
 
         # add new configuration
-        print '====Initiating rover connection:'+ str(roverlist)
-        for roverIP in roverlist.keys():
+        self.roverlist = newroverlist.copy()
+        print '====Subscription thread:', str(self.threads)
+        print '    Initiating rover connection:'+ str(self.roverlist)
+        for roverIP in self.roverlist.keys():
             self.subscriber.connect("tcp://%s:%s" % (roverIP, self.zmqport))
             self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
-            for serial in roverlist[roverIP]:
+            print '    Subscriber connected to TCP://', str(roverIP) +":"+ str(self.zmqport)
+            for serial in self.roverlist[roverIP]:
                 signal = 'fromMoteConnector@'+serial
-
                 dispatcher.connect(
                     self._sendToRemote_handler,
                     signal = signal.encode('utf8')
                     )
-

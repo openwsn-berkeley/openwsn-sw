@@ -7,6 +7,7 @@
 	    <script>
 		    var roverIP;
 		    var moteID;
+		    var myintf;
         </script>
 		<div id="wrapper">
 			%include navbar.tmpl ovVersion=ovVersion, roverMode=roverMode
@@ -18,17 +19,47 @@
 	                </div>
 	            </div>
 
+
 	            <div class="row">
                 	<div class="col-lg-12">
-                	    <button id="discover_btn" type="button" class="btn btn-default btn-xs">Discover CoAP devices</button>
+		                <select class="rel_value_fld" id="myintf_select" size="1">
+		                    <option value="none">Select Interface...</option>
+		                    % for intf in myiflist:
+		                       <option>{{intf}}</option>
+		                    % end
+		                </select>
+		            </div>
+
+		            <script>
+		                $( "#myintf_select" ).change(function(){
+		                    myintf =  $(this).val();
+
+		                    console.log('Update for myintf selection: ' + myintf);
+		                    // Store to allow automatically selecting this rover.
+		                    setCookie("selected_myintf", myintf);
+
+		                    // Don't allow to reselect null option.
+		                    //$("#myintf_select option[value='none']").remove();
+		                });
+		            </script>
+
+		        </div>
+
+                <br>
+
+	            <div class="row">
+                	<div class="col-lg-12">
+                	    <input id="rover_manual" type="text" placeholder="rover IP address">
+                        <button id="addrover_btn" type="button" class="btn btn-default btn-xs">Add manually</button>
+                        &nbsp;or:&nbsp;
+		                <button id="discover_btn" type="button" class="btn btn-default btn-xs">Discover CoAP devices</button><br>
 		                <select class="rel_value_fld" id="rover_select" size="1">
 		                    <option value="none">Select rover...</option>
 		                    % for rover in roverlist:
 		                       <option>{{rover}}</option>
 		                    % end
 		                </select>
-                        or:
-		                <input id="rover_manual" type="text" placeholder="Set IP manually">
+		                <button id="delrover_btn" type="button" class="btn btn-default btn-xs">Delete rover</button>
 
 		                <script>
 			                $( "#discover_btn" )
@@ -45,25 +76,39 @@
 		                </script>
 
 		                <script>
-		                    $( "#rover_select" ).change(function(){
-		                        roverIP =  $(this).val()
-		                        
-		                         console.log('Update for rover selection: ' + roverIP);
-		                         // Store to allow automatically selecting this rover.
-		                         setCookie("selected_roverIP", roverIP);
-		                        
-		                        // Don't allow to reselect null option.
-		                        //$("#rover_select option[value='none']").remove();
+		                    $( "#addrover_btn" )
+		                        .button()
+			                    .click(function( event ) {
+                                    newRover = $("#rover_manual").val();
+                                    if(!$("#rover_select").find('option[value=\'' + newRover + '\']').length){
+		                                $('#rover_select').prepend($('<option/>')
+		                                 .attr("value", newRover)
+		                                 .attr('selected','selected')
+		                                 .text(newRover));
+		                                console.log('Update for rover manual addition: ' + newRover);
+		                                setCookie("added_rover", newRover);
+		                            }
+		                            else{
+		                                console.log('Duplicate! Rover already exists in the list: ' + newRover);
+		                            }
 		                    });
 		                </script>
 
 		                <script>
-		                    $( "#rover_manual" ).change(function(){
-		                        roverIP =  $(this).val()
+		                    $( "#delrover_btn" )
+		                        .button()
+			                    .click(function( event ) {
+			                        oldRover = $( "#rover_select" ).val();
+			                        if( oldRover != 'none' ){
+		                                $("#rover_select").find('option:selected').remove();
+                                        console.log('Update for rover deletion: ' + oldRover);
+		                                setCookie("deleted_rover", oldRover);
+		                            }
+		                            else{
+		                                console.log('Error: Cannot delete selected option: ' + oldRover);
+		                                console.log('Error: Cannot delete selected option: ' + oldRover);
+		                            }
 
-		                         console.log('Update for rover selection: ' + roverIP);
-		                         // Store to allow automatically selecting this rover.
-		                         setCookie("manual_roverIP", roverIP);
 		                    });
 		                </script>
 
@@ -81,14 +126,18 @@
 			                $( "#motes_btn" )
 			                    .button()
 			                    .click(function( event ) {
+			                        roverIP = $( "#rover_select" ).val();
 			                        if(roverIP != null && roverIP != undefined && roverIP != 'none'){
                                         $.ajax({
 			                                dataType: "json",
-			                                url: "/motesdiscovery/" + roverIP,
+			                                url: "/motesdiscovery/" + myintf+","+roverIP,
 			                                success: updateMotesList,
 			                                error: errorOnAjax
 			                            });
 			                            console.log('Discovering motes on rover '+ roverIP);
+			                        }
+			                        else{
+			                            console.log('Error: No rover IP specified: '+ roverIP);
 			                        }
 			                    });
 		                </script>
@@ -130,7 +179,7 @@
                                 //get new list from json :
                                 $('#mote_select').append($('<option/>').attr("value", 'none').text('Select mote...'));
                                 $.each(json, function(i, option) {
-                                    $('#mote_select').append($('<option/>').attr("value", option.port).text(option.id));
+                                    $('#mote_select').append($('<option/>').attr("value", option).text(option));
                                 });
 						        console.log('success');
 						    }
@@ -143,6 +192,7 @@
 						</script>
 		            </div>
 		        </div>
+
 	        </div>
 	    </div>
 	</body>

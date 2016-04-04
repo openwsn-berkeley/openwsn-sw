@@ -128,9 +128,9 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
         if self.roverMode :
-            self.websrv.route(path='/testbench',                              callback=self._showTestbench)
-            self.websrv.route(path='/coapdiscovery',                          callback=self._coapDiscovery)
-            self.websrv.route(path='/motesdiscovery/:roverip',                callback=self._motesDiscovery)
+            self.websrv.route(path='/testbench',                          callback=self._showTestbench)
+            self.websrv.route(path='/coapdiscovery',                      callback=self._coapDiscovery)
+            self.websrv.route(path='/motesdiscovery/:data',               callback=self._motesDiscovery)
 
 
     @view('testbench.tmpl')
@@ -138,8 +138,10 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
         Handles the discovery and connection to remote motes using remoteConnector component
         '''
-        roverlist = ['10.228.40.84',]
+        roverlist = []
+        myiflist = ni.interfaces()
         tmplData = {
+            'myiflist'  : myiflist,
             'roverlist' : roverlist,
             'roverMode' : self.roverMode,
         }
@@ -152,23 +154,29 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         #TODO : implement it
         return '{"result" : "fail"}'
 
-    def _motesDiscovery(self, roverip):
+    def _motesDiscovery(self, data):
         '''
         Collects the list of motes available on the rover and connects them to oV
 
         :param roverIP: IP of the rover
         '''
 
+        myintf, roverip = data.split(',')
         client = HelperClient(server=(roverip, 5683))
-        ni.ifaddresses('eth0')
-        myip = ni.ifaddresses('eth0')[2][0]['addr']
-        print '====Communicating to CoAP server:' + '/pcinfo', myip +':50000:'+roverip
-        response = client.put('/pcinfo', myip +':50000:'+roverip)
-        self.roverMotes[roverip]=json.loads(response.payload)
-        self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
-        app.refreshMotes(self.roverMotes)
-        print "====Rover responds with available motes: "+response.payload
-        return response.payload
+        ni.ifaddresses(myintf)
+        try:
+            myip = ni.ifaddresses(myintf)[2][0]['addr']
+            print '====Communicating to CoAP server', roverip, 'from', myintf, myip + '. Setting port 50000 for ZMQ connection.'
+            response = client.put('/pcinfo', myip +':50000:'+roverip)
+            self.roverMotes[roverip]=json.loads(response.payload)
+            self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
+            app.refreshMotes(self.roverMotes)
+            print "====Rover responds with available motes: "+response.payload
+            return response.payload
+        except KeyError:
+            print "Error: No ip configured on selected interface"
+
+
 
     @view('moteview.tmpl')
     def _showMoteview(self, moteid=None):
