@@ -9,12 +9,8 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import threading
-import socket
-import traceback
-import sys
 import json
 import zmq
-import time
 
 from pydispatch import dispatcher
 

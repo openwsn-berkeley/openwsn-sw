@@ -6,8 +6,6 @@
 # http://opensource.org/licenses/BSD-2-Clause
 import sys
 import os
-import time
-import glob, subprocess
 import netifaces as ni
 
 if __name__=="__main__":
@@ -30,7 +28,6 @@ except ImportError:
 
 import json
 import bottle
-import random
 import re
 import threading
 import signal
@@ -40,16 +37,13 @@ from bottle        import view, response
 from coapthon.client.helperclient import HelperClient
 
 import openVisualizerApp
-import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventBus      import eventBusClient
 from openvisualizer.SimEngine     import SimEngine
 from openvisualizer.BspEmulator   import VcdLogger
 from openvisualizer import ovVersion
-from openvisualizer.remoteConnector import remoteConnector
 
 import time
 
-from pydispatch import dispatcher
 
 # add default parameters to all bottle templates
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
@@ -139,9 +133,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         Handles the discovery and connection to remote motes using remoteConnector component
         '''
         roverlist = []
-        myiflist = ni.interfaces()
+        myifdict = {}
+        for myif in ni.interfaces():
+            myifdict[myif] = ni.ifaddresses(myif)
         tmplData = {
-            'myiflist'  : myiflist,
+            'myifdict'  : myifdict,
             'roverlist' : roverlist,
             'roverMode' : self.roverMode,
         }
@@ -161,20 +157,15 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         :param roverIP: IP of the rover
         '''
 
-        myintf, roverip = data.split(',')
+        myip, roverip = data.split(',')
         client = HelperClient(server=(roverip, 5683))
-        ni.ifaddresses(myintf)
-        try:
-            myip = ni.ifaddresses(myintf)[2][0]['addr']
-            print '====Communicating to CoAP server', roverip, 'from', myintf, myip + '. Setting port 50000 for ZMQ connection.'
-            response = client.put('/pcinfo', myip +':50000:'+roverip)
-            self.roverMotes[roverip]=json.loads(response.payload)
-            self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
-            app.refreshMotes(self.roverMotes)
-            print "====Rover responds with available motes: "+response.payload
-            return response.payload
-        except KeyError:
-            print "Error: No ip configured on selected interface"
+        print '====Communicating to CoAP server', roverip, 'from', myip + '. Setting port 50000 for ZMQ connection.'
+        response = client.put('/pcinfo', myip +':50000:'+roverip)
+        self.roverMotes[roverip]=json.loads(response.payload)
+        self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
+        app.refreshMotes(self.roverMotes)
+        print "====Rover responds with available motes: "+response.payload
+        return response.payload
 
 
 
