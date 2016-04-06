@@ -34,7 +34,6 @@ import signal
 import functools
 import datetime
 from bottle        import view, response
-from coapthon.client.helperclient import HelperClient
 
 import openVisualizerApp
 from openvisualizer.eventBus      import eventBusClient

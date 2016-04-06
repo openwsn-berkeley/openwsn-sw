@@ -49,9 +49,9 @@ class remoteConnector():
     #======================== eventBus interaction ============================
     
     def _sendToRemote_handler(self,sender, signal, data):
-        print 'sender: ' + sender, 'signal: ' + signal, 'data: '+ data.encode('hex')
+
         self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data': data.encode('hex')})
-        print 'msg sent'
+        print '\nMessage sent: sender: ' + sender, 'signal: ' + signal, 'data: '+ data.encode('hex')
 
 
     def _recvdFromRemote(self):
