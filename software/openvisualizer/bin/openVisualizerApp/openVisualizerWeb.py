@@ -160,7 +160,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         myip, roverip = data.split(',')
         client = HelperClient(server=(roverip, 5683))
         print '====Communicating to CoAP server', roverip, 'from', myip + '. Setting port 50000 for ZMQ connection.'
-        response = client.put('/pcinfo', myip +':50000:'+roverip)
+        response = client.put('/pcinfo', myip +';50000;'+roverip)
         self.roverMotes[roverip]=json.loads(response.payload)
         self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
         app.refreshMotes(self.roverMotes)

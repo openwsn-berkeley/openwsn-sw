@@ -92,7 +92,7 @@ class remoteConnector():
         for roverIP in self.roverlist.keys():
             self.subscriber.connect("tcp://%s:%s" % (roverIP, self.zmqport))
             self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
-            print '    Subscriber connected to TCP://', str(roverIP) +":"+ str(self.zmqport)
+            print '    Subscriber connected to TCP://'+ str(roverIP) +":"+ str(self.zmqport)
             for serial in self.roverlist[roverIP]:
                 signal = 'fromMoteConnector@'+serial
                 dispatcher.connect(

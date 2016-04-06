@@ -29,7 +29,7 @@
 		                            <option value={{myifdict[intf][2][0]['addr']}}>{{intf+":"+myifdict[intf][2][0]['addr']}}</option>
 		                        % end
 		                        % if myifdict[intf].has_key(10) and intf!="lo":
-		                            <option value={{myifdict[intf][10][0]['addr']}}>{{intf+":"+myifdict[intf][10][0]['addr']}}</option>
+		                            <option value={{myifdict[intf][10][0]['addr'].split('%')[0]}}>{{intf+":"+myifdict[intf][10][0]['addr'].split('%')[0]}}</option>
 		                        % end
 		                    % end
 		                </select>
