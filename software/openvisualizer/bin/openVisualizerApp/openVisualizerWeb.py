@@ -34,6 +34,7 @@ import signal
 import functools
 import datetime
 from bottle        import view, response
+from coap import coap #openwsn coap library
 
 import openVisualizerApp
 from openvisualizer.eventBus      import eventBusClient
@@ -157,14 +158,15 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
 
         myip, roverip = data.split(',')
-        client = HelperClient(server=(roverip, 5683))
+        client = coap.coap()
         print '====Communicating to CoAP server', roverip, 'from', myip + '. Setting port 50000 for ZMQ connection.'
-        response = client.put('/pcinfo', myip +';50000;'+roverip)
-        self.roverMotes[roverip]=json.loads(response.payload)
+        response = client.PUT('coap://[{0}]/test'.format(), payload=[ord(c) for c in myip +';50000;'+roverip])
+        payload = ''.join([chr(i) for i in response])
+        self.roverMotes[roverip]=json.loads(payload)
         self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
         app.refreshMotes(self.roverMotes)
-        print "====Rover responds with available motes: "+response.payload
-        return response.payload
+        print "====Rover responds with available motes: "+payload
+        return payload
 
 
 
