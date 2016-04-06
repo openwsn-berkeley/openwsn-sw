@@ -70,6 +70,9 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         #used for remote motes :
         self.roverMotes    = {}
 
+        self.client = coap.coap()
+
+
         self._defineRoutes()
 
         # To find page templates
@@ -158,9 +161,10 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
 
         myip, roverip = data.split(',')
-        client = coap.coap()
         print '====Communicating to CoAP server', roverip, 'from', myip + '. Setting port 50000 for ZMQ connection.'
-        response = client.PUT('coap://[{0}]/test'.format(), payload=[ord(c) for c in myip +';50000;'+roverip])
+        print [ord(c) for c in myip +';50000;'+roverip]
+        response = self.client.PUT('coap://[{0}]/test'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)])
+        print ''.join([chr(i) for i in response])
         payload = ''.join([chr(i) for i in response])
         self.roverMotes[roverip]=json.loads(payload)
         self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
