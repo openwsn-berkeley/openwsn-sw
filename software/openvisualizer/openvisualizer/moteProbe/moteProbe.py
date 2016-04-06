@@ -76,37 +76,27 @@ class moteProbe(threading.Thread):
     MODE_SERIAL    = 'serial'
     MODE_EMULATED  = 'emulated'
     MODE_IOTLAB    = 'IoT-LAB'
-    MODE_ROVER     = 'rover'
     MODE_ALL       = [
         MODE_SERIAL,
         MODE_EMULATED,
         MODE_IOTLAB,
-        MODE_ROVER
     ]
     
-    def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None, roverMote=None):
+    def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None):
         
         # verify params
         if   serialport:
             assert not emulatedMote
             assert not iotlabmote
-            assert not roverMote
             self.mode             = self.MODE_SERIAL
         elif emulatedMote:
             assert not serialport
             assert not iotlabmote
-            assert not roverMote
             self.mode             = self.MODE_EMULATED
         elif iotlabmote:
             assert not serialport
             assert not emulatedMote
-            assert not roverMote
             self.mode             = self.MODE_IOTLAB
-        elif roverMote :
-            assert not serialport
-            assert not emulatedMote
-            assert not iotlabmote
-            self.mode             = self.MODE_ROVER
         else:
             raise SystemError()
         
@@ -121,9 +111,6 @@ class moteProbe(threading.Thread):
         elif self.mode==self.MODE_IOTLAB:
             self.iotlabmote       = iotlabmote
             self.portname         = 'IoT-LAB{0}'.format(iotlabmote)
-        elif self.mode==self.MODE_ROVER:
-            self.roverMote        = roverMote
-            self.portname         = 'roverMote{0}'.format(roverMote)
         else:
             raise SystemError()
         
@@ -185,9 +172,6 @@ class moteProbe(threading.Thread):
                 elif self.mode==self.MODE_IOTLAB:
                     self.serial = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
                     self.serial.connect((self.iotlabmote,20000))
-                elif self.mode==self.MODE_ROVER:
-                    self.serial = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-                    self.serial.connect((self.roverMote.split(':')[0], int(self.roverMote.split(':')[1])))
                 else:
                     raise SystemError()
                 
@@ -198,8 +182,6 @@ class moteProbe(threading.Thread):
                         elif self.mode==self.MODE_EMULATED:
                             rxBytes = self.serial.read()
                         elif self.mode==self.MODE_IOTLAB:
-                            rxBytes = self.serial.recv(1024)
-                        elif self.mode==self.MODE_ROVER:
                             rxBytes = self.serial.recv(1024)
                         else:
                             raise SystemError()
@@ -286,8 +268,8 @@ class moteProbe(threading.Thread):
     
     def _bufferDataToSend(self,data):
         
-        # abort for IoT-LAB or ROVER
-        if self.mode==self.MODE_IOTLAB or self.mode==self.MODE_ROVER:
+        # abort for IoT-LAB
+        if self.mode==self.MODE_IOTLAB:
             return
         
         # frame with HDLC
