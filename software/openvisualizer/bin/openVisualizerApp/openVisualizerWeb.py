@@ -163,7 +163,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         myip, roverip = data.split(',')
         print '====Communicating to CoAP server', roverip, 'from', myip + '. Setting port 50000 for ZMQ connection.'
         print [ord(c) for c in myip +';50000;'+roverip]
-        response = self.client.PUT('coap://[{0}]/test'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)])
+        response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)],)
         print ''.join([chr(i) for i in response])
         payload = ''.join([chr(i) for i in response])
         self.roverMotes[roverip]=json.loads(payload)
