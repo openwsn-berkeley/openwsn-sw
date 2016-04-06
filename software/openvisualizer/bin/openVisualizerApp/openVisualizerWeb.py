@@ -4,9 +4,11 @@
 #
 # Released under the BSD 2-Clause license as published at the link below.
 # http://opensource.org/licenses/BSD-2-Clause
+import requests
 import sys
 import os
 import netifaces as ni
+
 
 if __name__=="__main__":
     # Update pythonpath if running in in-tree development mode
@@ -161,15 +163,13 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
 
         myip, roverip = data.split(',')
-        print '====Communicating to CoAP server', roverip, 'from', myip + '. Setting port 50000 for ZMQ connection.'
-        print [ord(c) for c in myip +';50000;'+roverip]
-        response = self.client.PUT('coap://[{0}]/test'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)])
-        print ''.join([chr(i) for i in response])
+        print requests.head("coap://"+roverip).status_code
+        #log.info('Communicating to CoAP server', roverip, 'from', myip + '. Setting port 50000 for ZMQ connection.')
+        response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)])
         payload = ''.join([chr(i) for i in response])
         self.roverMotes[roverip]=json.loads(payload)
         self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
         app.refreshMotes(self.roverMotes)
-        print "====Rover responds with available motes: "+payload
         return payload
 
 

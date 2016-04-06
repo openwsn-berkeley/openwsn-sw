@@ -37,7 +37,7 @@ class remoteConnector():
         self.publisher = context.socket(zmq.PUB)
         self.publisher.bind("tcp://*:%d" % self.zmqport)
         self.subscriber = context.socket(zmq.SUB)
-        print '====Publisher started'
+        log.info('Publisher started')
 
         self.threads = []
         t = threading.Thread(target=self._recvdFromRemote)
@@ -51,7 +51,7 @@ class remoteConnector():
     def _sendToRemote_handler(self,sender, signal, data):
 
         self.publisher.send_json({'sender' : sender, 'signal' : signal, 'data': data.encode('hex')})
-        print '\nMessage sent: sender: ' + sender, 'signal: ' + signal, 'data: '+ data.encode('hex')
+        log.info('Message sent: sender: ' + sender, 'signal: ' + signal, 'data: '+ data.encode('hex'))
 
 
     def _recvdFromRemote(self):
@@ -59,8 +59,8 @@ class remoteConnector():
         while True:
             event = self.subscriber.recv_json()
             if count > 10:
-                print "\nReceived remote event\n"+json.dumps(event)+"\nDispatching to event bus\n"
-                count=0
+                log.info("Received remote event\n"+json.dumps(event)+"\nDispatching to event bus")
+                count = 0
             dispatcher.send(
                 sender  =  event['sender'].encode("utf8"),
                 signal  =  event['signal'].encode("utf8"),
@@ -81,18 +81,15 @@ class remoteConnector():
         while len(self.roverlist)>0:
             for oldIP in self.roverlist.keys():
                 self.subscriber.disconnect("tcp://%s:%s" % (oldIP, self.zmqport))
-                print "====Clearing historical connections: ",oldIP
+                log.info("Clearing historical connections: ",oldIP)
                 self.roverlist.pop(oldIP)
-
 
         # add new configuration
         self.roverlist = newroverlist.copy()
-        print '====Subscription thread:', str(self.threads)
-        print '    Initiating rover connection:'+ str(self.roverlist)
+        log.info('Rover connection:', str(self.roverlist))
         for roverIP in self.roverlist.keys():
             self.subscriber.connect("tcp://%s:%s" % (roverIP, self.zmqport))
             self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
-            print '    Subscriber connected to TCP://'+ str(roverIP) +":"+ str(self.zmqport)
             for serial in self.roverlist[roverIP]:
                 signal = 'fromMoteConnector@'+serial
                 dispatcher.connect(
