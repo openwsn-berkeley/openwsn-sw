@@ -183,7 +183,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             print "Error on connect: %s" % e
             payload = json.dumps(['null'])
         conntest.close()
-        print self.roverMotes
         app.refreshMotes(self.roverMotes)
         return payload
 
