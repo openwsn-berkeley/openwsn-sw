@@ -4,10 +4,11 @@
 #
 # Released under the BSD 2-Clause license as published at the link below.
 # http://opensource.org/licenses/BSD-2-Clause
-import requests
+
 import sys
 import os
 import netifaces as ni
+
 
 
 if __name__=="__main__":
@@ -36,16 +37,16 @@ import signal
 import functools
 import datetime
 from bottle        import view, response
-from coap import coap #openwsn coap library
+
 
 import openVisualizerApp
 from openvisualizer.eventBus      import eventBusClient
 from openvisualizer.SimEngine     import SimEngine
 from openvisualizer.BspEmulator   import VcdLogger
 from openvisualizer import ovVersion
-
+from coap import coap
 import time
-
+import socket
 
 # add default parameters to all bottle templates
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
@@ -71,11 +72,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         #used for remote motes :
         self.roverMotes    = {}
-
-        self.client = coap.coap()
-
-
+        self.roverlist = []
         self._defineRoutes()
+        self.client = coap.coap()
+        self.client.respTimeout = 2
+        self.client.ackTimeout = 2
+
 
         # To find page templates
         bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.datadir))
@@ -128,8 +130,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
         if self.roverMode :
             self.websrv.route(path='/testbench',                          callback=self._showTestbench)
-            self.websrv.route(path='/coapdiscovery',                      callback=self._coapDiscovery)
-            self.websrv.route(path='/motesdiscovery/:data',               callback=self._motesDiscovery)
+            self.websrv.route(path='/updateroverlist/:updatemsg',         callback=self._updateRoverList)
+            self.websrv.route(path='/motesdiscovery/:srcdstip',           callback=self._motesDiscovery)
 
 
     @view('testbench.tmpl')
@@ -137,41 +139,53 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
         Handles the discovery and connection to remote motes using remoteConnector component
         '''
-        roverlist = []
+
         myifdict = {}
         for myif in ni.interfaces():
             myifdict[myif] = ni.ifaddresses(myif)
         tmplData = {
             'myifdict'  : myifdict,
-            'roverlist' : roverlist,
+            'roverlist' : self.roverlist,
             'roverMode' : self.roverMode,
         }
         return tmplData
 
-    def _coapDiscovery(self):
+    def _updateRoverList(self, updatemsg=None):
         '''
         Handles the CoAP devices discovery
         '''
-        #TODO : implement it
-        return '{"result" : "fail"}'
+        if updatemsg:
+            cmd, roverip = updatemsg.split(',')
+            if cmd == "add" and not roverip in self.roverlist:
+                self.roverlist.append(roverip)
+            elif cmd == "del":
+                self.roverlist.remove(roverip)
+                if self.roverMotes.has_key(roverip):
+                    self.roverMotes.pop(roverip)
 
-    def _motesDiscovery(self, data):
+        return json.dumps(self.roverlist)
+
+    def _motesDiscovery(self, srcdstip):
         '''
         Collects the list of motes available on the rover and connects them to oV
-
+        Use connetest to first check service availability
         :param roverIP: IP of the rover
         '''
-
-        myip, roverip = data.split(',')
-        print requests.head("coap://"+roverip).status_code
-        #log.info('Communicating to CoAP server', roverip, 'from', myip + '. Setting port 50000 for ZMQ connection.')
-        response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)])
-        payload = ''.join([chr(i) for i in response])
-        self.roverMotes[roverip]=json.loads(payload)
-        self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
+        myip, roverip = srcdstip.split(',')
+        conntest = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        try:
+            conntest.connect((roverip, 5683))
+            response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)])
+            payload = ''.join([chr(b) for b in response])
+            self.roverMotes[roverip]=json.loads(payload)
+            self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
+        except socket.error as e:
+            print "Error on connect: %s" % e
+            payload = json.dumps(['null'])
+        conntest.close()
+        print self.roverMotes
         app.refreshMotes(self.roverMotes)
         return payload
-
 
 
     @view('moteview.tmpl')
@@ -203,12 +217,13 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                                   root='{0}/web_files/static/'.format(self.app.datadir))
 
     def _toggleDAGroot(self, moteid):
+
         '''
         Triggers toggle DAGroot state, via moteState. No real response. Page is
         updated when next retrieve mote data.
-
         :param moteid: 16-bit ID of mote
         '''
+
         log.info('Toggle root status for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:

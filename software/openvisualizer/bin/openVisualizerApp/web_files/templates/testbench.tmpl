@@ -25,9 +25,6 @@
 		                <select class="rel_value_fld" id="myip_select" size="1">
 		                    <option value="none">Select Interface...</option>
 		                    % for intf in myifdict:
-		                        % if myifdict[intf].has_key(2) and intf!="lo":
-		                            <option value={{myifdict[intf][2][0]['addr']}}>{{intf+":"+myifdict[intf][2][0]['addr']}}</option>
-		                        % end
 		                        % if myifdict[intf].has_key(10) and intf!="lo":
 		                            <option value={{myifdict[intf][10][0]['addr'].split('%')[0]}}>{{intf+":"+myifdict[intf][10][0]['addr'].split('%')[0]}}</option>
 		                        % end
@@ -72,7 +69,7 @@
 			                    .click(function( event ) {
                                     $.ajax({
 			                            dataType: "json",
-			                            url: "/coapdiscovery",
+			                            url: "/updateroverlist",
 			                            success: updateRoverList,
 			                            error: errorOnAjax
 			                        });
@@ -86,10 +83,12 @@
 			                    .click(function( event ) {
                                     newRover = $("#rover_manual").val();
                                     if(!$("#rover_select").find('option[value=\'' + newRover + '\']').length){
-		                                $('#rover_select').prepend($('<option/>')
-		                                 .attr("value", newRover)
-		                                 .attr('selected','selected')
-		                                 .text(newRover));
+                                        $.ajax({
+			                                dataType: "json",
+			                                url: "/updateroverlist/"+"add,"+newRover,
+			                                success: updateRoverList,
+			                                error: errorOnAjax
+			                            });
 		                                console.log('Update for rover manual addition: ' + newRover);
 		                                setCookie("added_rover", newRover);
 		                            }
@@ -105,7 +104,13 @@
 			                    .click(function( event ) {
 			                        oldRover = $( "#rover_select" ).val();
 			                        if( oldRover != 'none' ){
-		                                $("#rover_select").find('option:selected').remove();
+			                            $.ajax({
+			                                dataType: "json",
+			                                url: "/updateroverlist/"+"del,"+oldRover,
+			                                success: updateRoverList,
+			                                error: errorOnAjax
+			                            });
+
                                         console.log('Update for rover deletion: ' + oldRover);
 		                                setCookie("deleted_rover", oldRover);
 		                            }
@@ -172,6 +177,16 @@
 
                         <script>
 						    function updateRoverList(json) {
+						        var selectBox = document.getElementById('rover_select')
+						        //remove everything from list
+						        while ( selectBox.firstChild ) {
+                                    selectBox.removeChild( selectBox.firstChild )
+                                }
+                                //get new list from json :
+                                $('#rover_select').append($('<option/>').attr("value", 'none').text('Select rover...'));
+                                $.each(json, function(i, option) {
+                                    $('#rover_select').append($('<option/>').attr("value", option).text(option));
+                                });
 						        console.log('success');
 						    }
 
@@ -183,10 +198,16 @@
                                 }
                                 //get new list from json :
                                 $('#mote_select').append($('<option/>').attr("value", 'none').text('Select mote...'));
-                                $.each(json, function(i, option) {
-                                    $('#mote_select').append($('<option/>').attr("value", option).text(option));
-                                });
-						        console.log('success');
+
+                                if(json!='null' && json!=null){
+                                    $.each(json, function(i, option) {
+                                        $('#mote_select').append($('<option/>').attr("value", option).text(option));
+                                    });
+						            console.log('success');
+                                }
+                                else{
+                                    console.log('Error: Rover not found');
+						        }
 						    }
 
 						    function errorOnAjax(jqxhr, status, errorstr) {

@@ -24,7 +24,7 @@ class remoteConnector():
 
         # local variables
         self.zmqport                   = zmqport
-        self.roverlist                 = {}
+        self.roverdict                 = {}
         self.stateLock                 = threading.Lock()
         self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False
@@ -35,8 +35,13 @@ class remoteConnector():
         # initiate ZeroMQ connection
         context = zmq.Context()
         self.publisher = context.socket(zmq.PUB)
+        self.publisher.setsockopt(zmq.IPV6,1)
+        self.publisher.setsockopt(zmq.IPV4ONLY, 0)
         self.publisher.bind("tcp://*:%d" % self.zmqport)
         self.subscriber = context.socket(zmq.SUB)
+        self.subscriber.setsockopt(zmq.IPV6,1)
+        self.subscriber.setsockopt(zmq.IPV4ONLY, 0)
+        self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
         log.info('Publisher started')
 
         self.threads = []
@@ -75,22 +80,20 @@ class remoteConnector():
     def quit(self):
         raise NotImplementedError()
 
-    def initRoverConn(self, newroverlist):
+    def initRoverConn(self, newroverdict):
         # clear history
         dispatcher.disconnect(self._sendToRemote_handler)
-        while len(self.roverlist)>0:
-            for oldIP in self.roverlist.keys():
+        while len(self.roverdict)>0:
+            for oldIP in self.roverdict.keys():
                 self.subscriber.disconnect("tcp://%s:%s" % (oldIP, self.zmqport))
-                log.info("Clearing historical connections: ",oldIP)
-                self.roverlist.pop(oldIP)
+                self.roverdict.pop(oldIP)
 
         # add new configuration
-        self.roverlist = newroverlist.copy()
-        log.info('Rover connection:', str(self.roverlist))
-        for roverIP in self.roverlist.keys():
+        self.roverdict = newroverdict.copy()
+        log.info('Rover connection:', str(self.roverdict))
+        for roverIP in self.roverdict.keys():
             self.subscriber.connect("tcp://%s:%s" % (roverIP, self.zmqport))
-            self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
-            for serial in self.roverlist[roverIP]:
+            for serial in self.roverdict[roverIP]:
                 signal = 'fromMoteConnector@'+serial
                 dispatcher.connect(
                     self._sendToRemote_handler,
