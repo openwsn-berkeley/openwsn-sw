@@ -495,7 +495,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                             returnVal += hopList
                             size = 1
                             sizeUnitType = self.TYPE_6LoRH_RH3_1
-                            hopList += hop[-2:]
+                            hopList = hop[-2:]
                             compressReference = hop
                         else:
                             hopList += hop[-2:]
@@ -511,7 +511,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                             returnVal += hopList
                             size = 1
                             sizeUnitType = self.TYPE_6LoRH_RH3_2
-                            hopList += hop[-4:]
+                            hopList = hop[-4:]
                             compressReference = hop
                         else:
                             hopList += hop[-4:]
