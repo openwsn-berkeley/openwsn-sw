@@ -137,7 +137,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     @view('testbench.tmpl')
     def _showTestbench(self):
         '''
-        Handles the discovery and connection to remote motes using remoteConnector component
+        Handles the discovery and connection to remote motes using remoteConnectorServer component
         '''
 
         myifdict = {}
@@ -152,7 +152,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
     def _updateRoverList(self, updatemsg=None):
         '''
-        Handles the CoAP devices discovery
+        Handles the devices discovery
         '''
         if updatemsg:
             cmd, roverip = updatemsg.split(',')
@@ -483,7 +483,7 @@ if __name__=="__main__":
     )
 
     #===== start the app
-    app      = openVisualizerApp.main(parser)
+    app      = openVisualizerApp.main(parser, argspace.roverMode)
     
     #===== add a web interface
     websrv   = bottle.Bottle()
