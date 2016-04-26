@@ -139,19 +139,19 @@ class eventBusClient(object):
             print output
     
     def _signalsEquivalent(self,s1,s2):
+        returnVal = True
         if type(s1)==type(s2)==str:
-            if (s1==s2) or (s1==self.WILDCARD) or (s2==self.WILDCARD):
-                return True
-            else:
-                return False
+            if (s1!=s2) and (s1!=self.WILDCARD) and (s2!=self.WILDCARD):
+                returnVal = False
         elif type(s1)==type(s2)==tuple:
             assert len(s1)==len(s2)==3
             for i in range(3):
-                if (s1[i]==s2[i]) or (s1[i]==self.WILDCARD) or (s2[i]==self.WILDCARD):
-                    return True
-                else:
-                    return False
-        return False
+                if (s1[i]!=s2[i]) and (s1[i]!=self.WILDCARD) and (s2[i]!=self.WILDCARD):
+                    returnVal = False
+        else:
+            returnVal = False
+        
+        return returnVal
     
     
     def _dispatchProtocol(self,signal,data):
