@@ -7,9 +7,6 @@
 
 import sys
 import os
-import netifaces as ni
-
-
 
 if __name__=="__main__":
     # Update pythonpath if running in in-tree development mode
@@ -74,9 +71,10 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.roverMotes    = {}
         self.roverlist = []
         self._defineRoutes()
-        self.client = coap.coap()
-        self.client.respTimeout = 2
-        self.client.ackTimeout = 2
+        if roverMode :
+            self.client = coap.coap()
+            self.client.respTimeout = 2
+            self.client.ackTimeout = 2
 
 
         # To find page templates
@@ -128,17 +126,18 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
-        if self.roverMode :
+        if self.roverMode:
             self.websrv.route(path='/testbench',                          callback=self._showTestbench)
             self.websrv.route(path='/updateroverlist/:updatemsg',         callback=self._updateRoverList)
             self.websrv.route(path='/motesdiscovery/:srcdstip',           callback=self._motesDiscovery)
-
 
     @view('testbench.tmpl')
     def _showTestbench(self):
         '''
         Handles the discovery and connection to remote motes using remoteConnectorServer component
         '''
+        if self.roverMode :
+            import netifaces as ni
 
         myifdict = {}
         for myif in ni.interfaces():
@@ -179,8 +178,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             payload = ''.join([chr(b) for b in response])
             self.roverMotes[roverip]=json.loads(payload)
             self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
-        except socket.error as e:
-            print "Error on connect: %s" % e
+        except :
+            print "Error on connect"
             payload = json.dumps(['null'])
         conntest.close()
         app.refreshMotes(self.roverMotes)
@@ -259,6 +258,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
             states = {}
+
         return states
 
     def _setWiresharkDebug(self, enabled):
