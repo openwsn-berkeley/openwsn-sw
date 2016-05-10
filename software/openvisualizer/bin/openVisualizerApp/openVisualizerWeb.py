@@ -172,6 +172,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
         myip, roverip = srcdstip.split(',')
         conntest = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+	self.roverMotes[roverip]=''
         try:
             conntest.connect((roverip, 5683))
             response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)])
