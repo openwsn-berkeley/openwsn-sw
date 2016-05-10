@@ -331,7 +331,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ipv6dic['udp_length']=ipv6dic['payload'][4:6]
                     ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
                     ipv6dic['app_payload']=ipv6dic['payload'][8:]
-                dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,tuple(ipv6dic['udp_dest_port']))
+                dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,u.buf2int(ipv6dic['udp_dest_port']))
             
             #keep payload and app_payload in case we want to assemble the message later. 
             #ass source address is being retrieved from the IPHC header, the signal includes it in case
@@ -495,7 +495,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                             returnVal += hopList
                             size = 1
                             sizeUnitType = self.TYPE_6LoRH_RH3_1
-                            hopList += hop[-2:]
+                            hopList = hop[-2:]
                             compressReference = hop
                         else:
                             hopList += hop[-2:]
@@ -511,7 +511,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                             returnVal += hopList
                             size = 1
                             sizeUnitType = self.TYPE_6LoRH_RH3_2
-                            hopList += hop[-4:]
+                            hopList = hop[-4:]
                             compressReference = hop
                         else:
                             hopList += hop[-4:]
