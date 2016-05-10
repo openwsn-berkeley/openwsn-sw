@@ -5,6 +5,15 @@ import os
 
 log = logging.getLogger('openRoverApp')
 
+if __name__=="__main__":
+    # Update pythonpath if running in in-tree development mode
+    basedir  = os.path.dirname(__file__)
+    confFile = os.path.join(basedir, "openvisualizer.conf")
+    if os.path.exists(confFile):
+        import pathHelper
+        pathHelper.updatePath()
+
+
 from openvisualizer.moteProbe     import moteProbe
 from openvisualizer.remoteConnectorRover import remoteConnectorRover
 
