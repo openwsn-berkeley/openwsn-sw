@@ -68,6 +68,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.roverMode       = roverMode
 
         #used for remote motes :
+
         if roverMode :
             self.roverMotes = {}
             self.roverlist = []
@@ -125,17 +126,18 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
-        if self.roverMode :
+        if self.roverMode:
             self.websrv.route(path='/testbench',                          callback=self._showTestbench)
             self.websrv.route(path='/updateroverlist/:updatemsg',         callback=self._updateRoverList)
             self.websrv.route(path='/motesdiscovery/:srcdstip',           callback=self._motesDiscovery)
 
-
     @view('testbench.tmpl')
     def _showTestbench(self):
         '''
-        Handles the discovery and connection to remote motes using remoteConnector component
+        Handles the discovery and connection to remote motes using remoteConnectorServer component
         '''
+        if self.roverMode :
+            import netifaces as ni
 
         myifdict = {}
         for myif in ni.interfaces():
@@ -149,7 +151,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
     def _updateRoverList(self, updatemsg=None):
         '''
-        Handles the CoAP devices discovery
+        Handles the devices discovery
         '''
         if updatemsg:
             cmd, roverip = updatemsg.split(',')
@@ -170,6 +172,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
         myip, roverip = srcdstip.split(',')
         conntest = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+	self.roverMotes[roverip]=''
         try:
             self.roverMotes[roverip] = ''
             conntest.connect((roverip, 5683))
@@ -260,6 +263,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
             states = {}
+
         return states
 
     def _setWiresharkDebug(self, enabled):
@@ -484,7 +488,7 @@ if __name__=="__main__":
     )
 
     #===== start the app
-    app      = openVisualizerApp.main(parser)
+    app      = openVisualizerApp.main(parser, argspace.roverMode)
     
     #===== add a web interface
     websrv   = bottle.Bottle()

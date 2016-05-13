@@ -59,10 +59,11 @@ def findSerialPorts():
                     serialports.append( (str(val[1]),BAUDRATE_WSN430) )
     elif os.name=='posix':
         if platform.system() == 'Darwin':
-            portMask = '/dev/tty.usbserial-*'
+            portMask = ['/dev/tty.usbserial-*']
         else:
-            portMask = '/dev/ttyUSB*'
-        serialports = [(s,BAUDRATE_GINA) for s in glob.glob(portMask)]
+            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*']
+        for mask in portMask :
+            serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
     
     # log
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in serialports]))

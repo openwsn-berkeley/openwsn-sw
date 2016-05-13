@@ -27,7 +27,7 @@ from openvisualizer.openTun         import openTun
 from openvisualizer.RPL             import UDPLatency
 from openvisualizer.RPL             import topology
 from openvisualizer                 import appdirs
-from openvisualizer.remoteConnector   import remoteConnector
+from openvisualizer.remoteConnectorServer   import remoteConnectorServer
 
 import openvisualizer.openvisualizer_utils as u
     
@@ -115,7 +115,7 @@ class OpenVisualizerApp(object):
         ]
 
         if self.roverMode :
-            self.remoteConnector = remoteConnector.remoteConnector()
+            self.remoteConnectorServer = remoteConnectorServer.remoteConnectorServer()
 
 
         # boot all emulated motes, if applicable
@@ -224,7 +224,7 @@ class OpenVisualizerApp(object):
         self.moteStates           = [
             moteState.moteState(mc) for mc in self.moteConnectors
         ]
-        self.remoteConnector.initRoverConn(roverMotes)
+        self.remoteConnectorServer.initRoverConn(roverMotes)
 
 
 #============================ main ============================================
@@ -233,7 +233,7 @@ from argparse       import ArgumentParser
 
 DEFAULT_MOTE_COUNT = 3
 
-def main(parser=None):
+def main(parser=None, roverMode=False):
     '''
     Entry point for application startup by UI. Parses common arguments.
     
@@ -292,7 +292,7 @@ def main(parser=None):
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
         pathTopo        = argspace.pathTopo,
-        roverMode       = argspace.roverMode
+        roverMode       = roverMode
     )
 
 def _addParserArgs(parser):
