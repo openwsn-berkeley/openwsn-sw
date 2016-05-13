@@ -25,8 +25,11 @@
 		                <select class="rel_value_fld" id="myip_select" size="1">
 		                    <option value="none">Select Interface...</option>
 		                    % for intf in myifdict:
+		                        % if myifdict[intf].has_key(2) and intf!="lo":
+ 		                            <option value={{myifdict[intf][2][0]['addr']}}>{{intf+": "+myifdict[intf][2][0]['addr']}}</option>
+  		                        % end
 		                        % if myifdict[intf].has_key(10) and intf!="lo":
-		                            <option value={{myifdict[intf][10][0]['addr'].split('%')[0]}}>{{intf+":"+myifdict[intf][10][0]['addr'].split('%')[0]}}</option>
+		                            <option value={{myifdict[intf][10][0]['addr'].split('%')[0]}}>{{intf+": "+myifdict[intf][10][0]['addr'].split('%')[0]}}</option>
 		                        % end
 		                    % end
 		                </select>
@@ -54,7 +57,6 @@
                 	    <input id="rover_manual" type="text" placeholder="rover IP address">
                         <button id="addrover_btn" type="button" class="btn btn-default btn-xs">Add manually</button>
                         &nbsp;or:&nbsp;
-		                <button id="discover_btn" type="button" class="btn btn-default btn-xs">Discover CoAP devices</button><br>
 		                <select class="rel_value_fld" id="rover_select" size="1">
 		                    <option value="none">Select rover...</option>
 		                    % for rover in roverlist:
@@ -62,20 +64,6 @@
 		                    % end
 		                </select>
 		                <button id="delrover_btn" type="button" class="btn btn-default btn-xs">Delete rover</button>
-
-		                <script>
-			                $( "#discover_btn" )
-			                    .button()
-			                    .click(function( event ) {
-                                    $.ajax({
-			                            dataType: "json",
-			                            url: "/updateroverlist",
-			                            success: updateRoverList,
-			                            error: errorOnAjax
-			                        });
-			                        console.log('Trying CoAP discovery');
-			                    });
-		                </script>
 
 		                <script>
 		                    $( "#addrover_btn" )

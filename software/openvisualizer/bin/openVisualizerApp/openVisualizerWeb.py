@@ -7,9 +7,6 @@
 
 import sys
 import os
-import netifaces as ni
-
-
 
 if __name__=="__main__":
     # Update pythonpath if running in in-tree development mode
@@ -71,14 +68,14 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.roverMode       = roverMode
 
         #used for remote motes :
-        self.roverMotes    = {}
-        self.roverlist = []
+        if roverMode :
+            self.roverMotes = {}
+            self.roverlist = []
+            self.client = coap.coap()
+            self.client.respTimeout = 2
+            self.client.ackTimeout = 2
+
         self._defineRoutes()
-        self.client = coap.coap()
-        self.client.respTimeout = 2
-        self.client.ackTimeout = 2
-
-
         # To find page templates
         bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.datadir))
 
@@ -174,16 +171,20 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         myip, roverip = srcdstip.split(',')
         conntest = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
         try:
+            self.roverMotes[roverip] = ''
             conntest.connect((roverip, 5683))
-            response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (myip+';50000;'+roverip)])
+            if ':' in roverip :
+                response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (myip + ';50000;' + roverip)])
+            else :
+                response = self.client.PUT('coap://{0}/pcinfo'.format(roverip), payload=[ord(c) for c in (myip + ';50000;' + roverip)])
             payload = ''.join([chr(b) for b in response])
             self.roverMotes[roverip]=json.loads(payload)
             self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
-        except socket.error as e:
-            print "Error on connect: %s" % e
+        except :
+            print "Error on connect"
             payload = json.dumps(['null'])
         conntest.close()
-        app.refreshMotes(self.roverMotes)
+        app.refreshRoverMotes(self.roverMotes)
         return payload
 
 
