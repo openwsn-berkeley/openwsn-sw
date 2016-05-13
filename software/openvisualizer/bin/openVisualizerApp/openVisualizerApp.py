@@ -205,7 +205,7 @@ class OpenVisualizerApp(object):
         else:
             return None
 
-    def refreshMotes(self, roverMotes):
+    def refreshRoverMotes(self, roverMotes):
         '''Connect the list of roverMotes to openvisualiser.
 
         :param roverMotes : list of the roverMotes to add
