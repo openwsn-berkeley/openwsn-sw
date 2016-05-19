@@ -211,19 +211,17 @@ class OpenVisualizerApp(object):
         :param roverMotes : list of the roverMotes to add
         '''
         # create a moteConnector for each roverMote
-        self.moteConnectors=[]
         for roverIP in roverMotes.keys() :
-            self.moteConnectors       += [
-                moteConnector.moteConnector(rm) for rm in roverMotes[roverIP]
-            ]
-        # Add moteConnectors for local motes too
-        self.moteConnectors += [
-            moteConnector.moteConnector(mp.getPortName()) for mp in self.moteProbes
-        ]
-        # create a moteState for each moteConnector
-        self.moteStates           = [
-            moteState.moteState(mc) for mc in self.moteConnectors
-        ]
+            for rm in roverMotes[roverIP] :
+                exist = False
+                for mc in self.moteConnectors :
+                    if mc.serialport == rm :
+                        exist = True
+                        break
+                if not exist :
+                    moc = moteConnector.moteConnector(rm)
+                    self.moteConnectors       += [moc]
+                    self.moteStates += [moteState.moteState(moc)]
         self.remoteConnectorServer.initRoverConn(roverMotes)
 
 
