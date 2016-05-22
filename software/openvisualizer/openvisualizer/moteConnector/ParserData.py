@@ -97,6 +97,7 @@ class ParserData(Parser.Parser):
             # print 'sent at {0} ; received at {1}'.format(initasn,self._asn)
             # print 'The latency is {0} (counted by slots)\n'.format(self._asndiference(input[-12:-7],asnbytes))
             asnend  = struct.unpack('<HHB',''.join([chr(c) for c in asnbytes]))
+            '''
             self.dataLatency.write('mote {0:2} latency {1:4} initasn {2:6} packetId {3:3} asnend {4:6}\n'.format(moteId,
               self._asndiference(input[-14:-9],asnbytes),
               initasn[1]*65536+initasn[0],
@@ -105,6 +106,12 @@ class ParserData(Parser.Parser):
             self.dataLatency.flush()
             self.dataLatency.close()
             os.system('taskkill /F /im python.exe')
+            '''
+            print 'mote {0:2} latency {1:4} initasn {2:6} packetId {3:3} asnend {4:6}'.format(moteId,
+              self._asndiference(input[-14:-9],asnbytes),
+              initasn[1]*65536+initasn[0],
+              str(int(input[-9])*256+int(input[-8])),
+              asnend[1]*65536+asnend[0])
 
 
         if log.isEnabledFor(logging.DEBUG):
