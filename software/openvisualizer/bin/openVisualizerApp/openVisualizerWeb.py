@@ -43,7 +43,6 @@ from openvisualizer.BspEmulator   import VcdLogger
 from openvisualizer import ovVersion
 from coap import coap
 import time
-import socket
 
 # add default parameters to all bottle templates
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
@@ -71,7 +70,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         if roverMode :
             self.roverMotes = {}
-            self.roverlist = []
             self.client = coap.coap()
             self.client.respTimeout = 2
             self.client.ackTimeout = 2
@@ -127,69 +125,80 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
         if self.roverMode:
-            self.websrv.route(path='/testbench',                          callback=self._showTestbench)
+            self.websrv.route(path='/rovers',                             callback=self._showrovers)
             self.websrv.route(path='/updateroverlist/:updatemsg',         callback=self._updateRoverList)
-            self.websrv.route(path='/motesdiscovery/:srcdstip',           callback=self._motesDiscovery)
+            self.websrv.route(path='/motesdiscovery/:srcip',              callback=self._motesDiscovery)
 
-    @view('testbench.tmpl')
-    def _showTestbench(self):
+    @view('rovers.tmpl')
+    def _showrovers(self):
         '''
         Handles the discovery and connection to remote motes using remoteConnectorServer component
         '''
-        if self.roverMode :
-            import netifaces as ni
-
+        import netifaces as ni
         myifdict = {}
         for myif in ni.interfaces():
             myifdict[myif] = ni.ifaddresses(myif)
         tmplData = {
             'myifdict'  : myifdict,
-            'roverlist' : self.roverlist,
+            'roverMotes' : self.roverMotes,
             'roverMode' : self.roverMode,
         }
         return tmplData
 
-    def _updateRoverList(self, updatemsg=None):
+    def _updateRoverList(self, updatemsg):
         '''
         Handles the devices discovery
         '''
-        if updatemsg:
-            cmd, roverip = updatemsg.split(',')
-            if cmd == "add" and not roverip in self.roverlist:
-                self.roverlist.append(roverip)
-            elif cmd == "del":
-                self.roverlist.remove(roverip)
-                if self.roverMotes.has_key(roverip):
-                    self.roverMotes.pop(roverip)
 
-        return json.dumps(self.roverlist)
+        cmd, roverData = updatemsg.split('@')
+        if cmd == "add":
+            if roverData not in self.roverMotes.keys():
+                self.roverMotes[roverData] = []
+        elif cmd == "del":
+            for roverIP in roverData.split(','):
+                if roverIP in self.roverMotes.keys() and not self.roverMotes[roverIP]:
+                    self.roverMotes.pop(roverIP)
+        elif cmd == "upload":
+            newRovers = roverData.split(",")
+            for newRover in newRovers:
+                if newRover not in self.roverMotes.keys():
+                    self.roverMotes[newRover] = []
+        elif cmd == "disconn":
+            for roverIP in roverData.split(','):
+                if roverIP in self.roverMotes.keys():
+                    self.app.removeRoverMotes(roverIP, self.roverMotes.pop(roverIP))
+        moteDict = self.app.getMoteDict()
+        for rover in self.roverMotes:
+            for i, serial in enumerate(self.roverMotes[rover]):
+                for moteID, connserial in moteDict.items():
+                    if serial == connserial:
+                        self.roverMotes[rover][i] = moteID
 
-    def _motesDiscovery(self, srcdstip):
+        return json.dumps(self.roverMotes)
+
+    def _motesDiscovery(self, srcip):
         '''
         Collects the list of motes available on the rover and connects them to oV
         Use connetest to first check service availability
         :param roverIP: IP of the rover
         '''
-        myip, roverip = srcdstip.split(',')
-        conntest = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-	self.roverMotes[roverip]=''
-        try:
-            self.roverMotes[roverip] = ''
-            conntest.connect((roverip, 5683))
-            if ':' in roverip :
-                response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (myip + ';50000;' + roverip)])
-            else :
-                response = self.client.PUT('coap://{0}/pcinfo'.format(roverip), payload=[ord(c) for c in (myip + ';50000;' + roverip)])
-            payload = ''.join([chr(b) for b in response])
-            self.roverMotes[roverip]=json.loads(payload)
-            self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
-        except :
-            print "Error on connect"
-            payload = json.dumps(['null'])
-        conntest.close()
-        app.refreshRoverMotes(self.roverMotes)
-        return payload
 
+        # conntest = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        for roverip in self.roverMotes.keys():
+            try:
+                # conntest.connect((roverip, 5683))
+                if ':' in roverip :
+                    response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
+                else :
+                    response = self.client.PUT('coap://{0}/pcinfo'.format(roverip), payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
+                payload = ''.join([chr(b) for b in response])
+                self.roverMotes[roverip]=json.loads(payload)
+                self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
+            except Exception as err:
+                self.roverMotes[roverip] = [str(err)]
+        # conntest.close()
+        self.app.refreshRoverMotes(self.roverMotes)
+        return json.dumps(self.roverMotes)
 
     @view('moteview.tmpl')
     def _showMoteview(self, moteid=None):
@@ -198,15 +207,9 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         :param moteid: 16-bit ID of mote (optional)
         '''
-        log.debug("moteview moteid parameter is {0}".format(moteid));
+        log.debug("moteview moteid parameter is {0}".format(moteid))
 
-        motelist = []
-        for ms in self.app.moteStates:
-            addr = ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()
-            if addr:
-                motelist.append( ''.join(['%02x'%b for b in addr]) )
-            else:
-                motelist.append(ms.moteConnector.serialport)
+        motelist = self.app.getMoteDict().keys()
 
         tmplData = {
             'motelist'       : motelist,
@@ -263,7 +266,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
             states = {}
-
         return states
 
     def _setWiresharkDebug(self, enabled):

@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		%include head.tmpl
+	</head>
+	<body onload="showlist()">
+	    <script>
+		    var moteID;
+		    var myip = "none";
+		    var intervalID=setInterval(showlist, 10000);
+
+		    function clearInter(){
+		        if (intervalID != null){
+		            clearInterval(intervalID);
+		            console.log("checkbox status changed: clearing interval");
+		        }
+		    }
+
+		    function showlist(){
+                $.ajax({
+                    dataType: "json",
+                    url: "/updateroverlist/"+"@",
+                    success: updateRoverList,
+                    error: errorOnAjax
+                });
+            }
+        </script>
+
+		<div id="wrapper">
+			%include navbar.tmpl ovVersion=ovVersion, roverMode=roverMode
+
+			<div id="page-wrapper">
+	            <div class="row">
+	                <div class="col-lg-12">
+	                    <h1 class="page-header">Rovers</h1>
+	                </div>
+	            </div>
+
+	            <div class="row">
+                	<div class="col-lg-12">
+		                <select class="rel_value_fld" id="myip_select" size="1">
+		                    <option value="none">Select Interface...</option>
+		                    % for intf in myifdict:
+		                        % if myifdict[intf].has_key(2) and intf!="lo":
+ 		                            <option value={{myifdict[intf][2][0]['addr']}}>{{intf+": "+myifdict[intf][2][0]['addr']}}</option>
+  		                        % end
+		                        % if myifdict[intf].has_key(10) and intf!="lo":
+		                            <option value={{myifdict[intf][10][0]['addr'].split('%')[0]}}>{{intf+": "+myifdict[intf][10][0]['addr'].split('%')[0]}}</option>
+		                        % end
+		                    % end
+		                </select>
+		            </div>
+
+		            <script>
+		                $( "#myip_select" ).change(function(){
+		                    myip =  $(this).val();
+		                    console.log('changed local IP for connection: ' + myip);
+		                    // Store to allow automatically selecting this rover.
+		                    setCookie("selected_myip", myip);
+
+		                    // Don't allow to reselect null option.
+		                    //$("#myip_select option[value='none']").remove();
+		                });
+		            </script>
+
+		        </div>
+
+                <br>
+
+	            <div class="row">
+                	<div class="col-lg-12">
+                	    <input type="file" id="upload_rovers" style="display: inline-block">
+                	    <button type="button" id="btn_upload" class="btn btn-default btn-xs" style="display: inline-block">Upload</button>
+		                <button id="motes_btn" type="button" class="btn btn-default btn-xs">Connect</button>
+		                <button id="dismotes_btn" type="button" class="btn btn-default btn-xs">Disconnect</button>
+                	    <div align="right">
+                            <input id="rover_manual" type="text" placeholder="rover IP address">
+                            <button id="addrover_btn" type="button" class="btn btn-default btn-xs">Add</button>
+                            <button id="delrover_btn" type="button" class="btn btn-default btn-xs">Delete</button>
+		                </div>
+		                <hr>
+		                <div id="rover_tb" class="table-responsive"></div>
+
+		                <script>
+                            $( "#btn_upload" )
+                                .button()
+                                .click(function( evt ) {
+                                    if (intervalID != null){
+                                        clearInterval(intervalID);
+                                    }
+                                    intervalID = setInterval(showlist, 10000);
+                                    console.log("setting interval");
+                                    var files = document.getElementById('upload_rovers').files;
+                                    if (!files.length) {
+                                      alert('Please select a file!');
+                                      return;
+                                    }
+                                    var file = files[0];
+                                    var reader = new FileReader();
+                                    reader.onloadend = function(evt) {
+                                        if (evt.target.readyState == FileReader.DONE) {
+                                            var newRoverDict = evt.target.result;
+                                            $.ajax({
+                                                dataType: "json",
+                                                url: "/updateroverlist/"+"upload@"+newRoverDict,
+                                                success: updateRoverList,
+                                                error: errorOnAjax
+                                            });
+                                            console.log('Overwritten rover list');
+                                        }
+                                    };
+                                    var scheduleFile = file.slice(0, file.size);
+                                    reader.readAsText(scheduleFile);
+                                });
+
+		                    $( "#addrover_btn" )
+		                        .button()
+			                    .click(function( event ) {
+			                        if (intervalID != null){
+                                        clearInterval(intervalID);
+                                    }
+			                        intervalID = setInterval(showlist, 10000);
+			                        console.log("setting interval");
+                                    newRover = $("#rover_manual").val();
+                                    if (newRover != ''){
+                                        $.ajax({
+                                            dataType: "json",
+                                            url: "/updateroverlist/"+"add@"+newRover,
+                                            success: updateRoverList,
+                                            error: errorOnAjax
+                                        });
+                                        console.log('Added new rover: ' + newRover);
+                                        setCookie("added_rover", newRover);
+                                    }
+		                    });
+
+		                    $( "#delrover_btn" )
+		                        .button()
+			                    .click(function( event ) {
+			                        if (intervalID != null){
+                                        clearInterval(intervalID);
+                                    }
+			                        intervalID = setInterval(showlist, 10000);
+			                        console.log("setting interval");
+			                        var rovers_del = [];
+			                        $.each($("input[name='rover_list']:checked"), function(){
+                                        rovers_del.push($(this).val());
+                                    });
+                                    $.ajax({
+                                        dataType: "json",
+                                        url: "/updateroverlist/"+"del@"+rovers_del+",",
+                                        success: updateRoverList,
+                                        error: errorOnAjax
+                                    });
+
+                                    console.log('Trying to delete rover from list: ' + rovers_del);
+                                    setCookie("deleted_rover", rovers_del);
+		                    });
+
+						    function updateRoverList(json) {
+                                var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th></th><th>Rover</th><th>Motes</th></tr></thead><tbody>";
+                                var tbl_row = "<form action=\"\" method=\"post\" id=\"rover_form\">";
+                                $.each(json, function(x , option) {
+                                    tbl_row += ("<tr class=\"odd gradeX\"><td><input type=\"checkbox\" onchange=\"clearInter()\" name=\"rover_list\" value=\"" + x + "\"></td><td>" + x + "</td><td>" + option + "</td></tr>");
+                                });
+                                tbl_body += (tbl_row + "</form></tbody></table>");
+                                $("#rover_tb").html(tbl_body).text();
+                                console.log("rover list updated");
+						    }
+
+						    function errorOnAjax(jqxhr, status, errorstr) {
+						        var errText = (errorstr == null)
+						                ? '' : ', error: ' + errorstr;
+						        console.log('Ajax error: ' + status + errText);
+						    }
+
+			                $( "#motes_btn" )
+			                    .button()
+			                    .click(function( event ) {
+			                        if (intervalID != null){
+                                        clearInterval(intervalID);
+                                    }
+                                    intervalID = setInterval(showlist, 10000);
+                                    console.log("setting interval");
+                                    if (myip == 'none') {
+                                          alert('Please select an interface!');
+                                          return;
+                                    }
+                                    console.log('Discovering motes on rovers with local IP: '+ myip);
+                                    $.ajax({
+                                        dataType: "json",
+                                        url: "/motesdiscovery/" + myip,
+                                        success: updateRoverList,
+                                        error: errorOnAjax
+                                    });
+
+			                    });
+
+			                $( "#dismotes_btn" )
+			                    .button()
+			                    .click(function( event ) {
+			                        if (intervalID != null){
+                                        clearInterval(intervalID);
+                                    }
+			                        intervalID = setInterval(showlist, 10000);
+			                        console.log("setting interval");
+			                        var rovers_dis = [];
+			                        $.each($("input[name='rover_list']:checked"), function(){
+                                        rovers_dis.push($(this).val());
+                                    });
+                                    $.ajax({
+                                        dataType: "json",
+                                        url: "/updateroverlist/" + "disconn@" + rovers_dis + ',',
+                                        success: updateRoverList,
+                                        error: errorOnAjax
+                                    });
+                                    console.log('Disconnecting rovers with IP: '+ rovers_dis);
+			                    });
+
+		                </script>
+
+                	</div>
+                </div>
+	        </div>
+	    </div>
+	</body>
+</html>
