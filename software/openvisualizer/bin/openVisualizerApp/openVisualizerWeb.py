@@ -182,20 +182,31 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         Use connetest to first check service availability
         :param roverIP: IP of the rover
         '''
-
+        coapThreads = []
         for roverip in self.roverMotes.keys():
-            try:
-                if ':' in roverip :
-                    response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
-                else :
-                    response = self.client.PUT('coap://{0}/pcinfo'.format(roverip), payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
-                payload = ''.join([chr(b) for b in response])
-                self.roverMotes[roverip]=json.loads(payload)
-                self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
-            except Exception as err:
-                self.roverMotes[roverip] = str(err)
+            t = threading.Thread(target=self._getCoapResponse, args=(srcip, roverip))
+            t.setDaemon(True)
+            t.start()
+            coapThreads.append(t)
+        for t in coapThreads:
+            t.join()
         self.app.refreshRoverMotes(self.roverMotes)
         return json.dumps(self.roverMotes)
+
+    def _getCoapResponse(self, srcip, roverip):
+        log.info("sending coap request to rover {0}".format(roverip))
+        try:
+            if ':' in roverip:
+                response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip),
+                                           payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
+            else:
+                response = self.client.PUT('coap://{0}/pcinfo'.format(roverip),
+                                           payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
+            payload = ''.join([chr(b) for b in response])
+            self.roverMotes[roverip] = json.loads(payload)
+            self.roverMotes[roverip] = [rm + '@' + roverip for rm in self.roverMotes[roverip]]
+        except Exception as err:
+            self.roverMotes[roverip] = str(err)
 
     @view('moteview.tmpl')
     def _showMoteview(self, moteid=None):
