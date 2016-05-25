@@ -211,18 +211,18 @@ class OpenVisualizerApp(object):
         :param roverMotes : list of the roverMotes to add
         '''
         # create a moteConnector for each roverMote
-        for roverIP in roverMotes.keys() :
-            for rm in roverMotes[roverIP] :
-                if "@" in rm:
-                    exist = False
-                    for mc in self.moteConnectors :
-                        if mc.serialport == rm :
-                            exist = True
-                            break
-                    if not exist :
-                        moc = moteConnector.moteConnector(rm)
-                        self.moteConnectors       += [moc]
-                        self.moteStates += [moteState.moteState(moc)]
+        for roverIP, value in roverMotes.items() :
+            if not isinstance(value , str):
+                for rm in roverMotes[roverIP] :
+                        exist = False
+                        for mc in self.moteConnectors :
+                            if mc.serialport == rm :
+                                exist = True
+                                break
+                        if not exist :
+                            moc = moteConnector.moteConnector(rm)
+                            self.moteConnectors       += [moc]
+                            self.moteStates += [moteState.moteState(moc)]
         self.remoteConnectorServer.initRoverConn(roverMotes)
 
     def removeRoverMotes(self, roverIP, moteList):

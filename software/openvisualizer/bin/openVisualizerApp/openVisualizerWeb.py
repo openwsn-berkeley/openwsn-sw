@@ -183,10 +183,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         :param roverIP: IP of the rover
         '''
 
-        # conntest = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
         for roverip in self.roverMotes.keys():
             try:
-                # conntest.connect((roverip, 5683))
                 if ':' in roverip :
                     response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip), payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
                 else :
@@ -195,8 +193,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                 self.roverMotes[roverip]=json.loads(payload)
                 self.roverMotes[roverip] = [rm+'@'+roverip for rm in self.roverMotes[roverip]]
             except Exception as err:
-                self.roverMotes[roverip] = [str(err)]
-        # conntest.close()
+                self.roverMotes[roverip] = str(err)
         self.app.refreshRoverMotes(self.roverMotes)
         return json.dumps(self.roverMotes)
 

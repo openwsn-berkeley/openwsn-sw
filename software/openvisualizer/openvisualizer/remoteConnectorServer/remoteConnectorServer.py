@@ -91,11 +91,19 @@ class remoteConnectorServer():
         # add new configuration
         self.roverdict = newroverdict.copy()
         log.info('Rover connection:', str(self.roverdict))
-        for roverIP in self.roverdict.keys():
-            self.subscriber.connect("tcp://%s:%s" % (roverIP, self.zmqport))
-            for serial in self.roverdict[roverIP]:
-                signal = 'fromMoteConnector@'+serial
-                dispatcher.connect(
-                    self._sendToRemote_handler,
-                    signal = signal.encode('utf8')
-                    )
+        for roverIP, value in self.roverdict.items():
+            if not isinstance(value, str):
+                self.subscriber.connect("tcp://%s:%s" % (roverIP, self.zmqport))
+                for serial in self.roverdict[roverIP]:
+                    signal = 'fromMoteConnector@'+serial
+                    dispatcher.connect(
+                        self._sendToRemote_handler,
+                        signal = signal.encode('utf8')
+                        )
+            else:
+                self.roverdict.pop(roverIP)
+
+    def closeRoverConn(self, ipAddr):
+        if ipAddr in self.roverdict.keys():
+            self.subscriber.disconnect("tcp://%s:%s" % (ipAddr, self.zmqport))
+            self.roverdict.pop(ipAddr)
