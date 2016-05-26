@@ -24,6 +24,38 @@
                     error: errorOnAjax
                 });
             }
+
+            function updateRoverList(json) {
+                var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\">";
+                tbl_body += "<thead><tr><th><input type=\"checkbox\" onchange=\"checkAll(this)\"></th><th>Rover</th><th>Motes</th></tr></thead><tbody>";
+                var tbl_row = "<form action=\"\" method=\"post\" id=\"rover_form\">";
+                $.each(json, function(x , option) {
+                    tbl_row += ("<tr class=\"odd gradeX\"><td><input type=\"checkbox\" onchange=\"clearInter()\" name=\"rover_list\" value=\"" + x + "\"></td><td>" + x + "</td><td>" + option + "</td></tr>");
+                });
+                tbl_body += (tbl_row + "</form></tbody></table>");
+                $("#rover_tb").html(tbl_body).text();
+                console.log("rover list updated");
+            }
+
+            function errorOnAjax(jqxhr, status, errorstr) {
+                var errText = (errorstr == null)
+                        ? '' : ', error: ' + errorstr;
+                console.log('Ajax error: ' + status + errText);
+            }
+
+            function checkAll(ele){
+                clearInter();
+                var checkboxes = document.getElementsByName("rover_list");
+                if (ele.checked) {
+                    for (var i = 0; i < checkboxes.length; i++) {
+                        checkboxes[i].checked = true;
+                    }
+                } else {
+                    for (var i = 0; i < checkboxes.length; i++) {
+                        checkboxes[i].checked = false;
+                    }
+                }
+            }
         </script>
 
 		<div id="wrapper">
@@ -156,23 +188,6 @@
                                     console.log('Trying to delete rover from list: ' + rovers_del);
                                     setCookie("deleted_rover", rovers_del);
 		                    });
-
-						    function updateRoverList(json) {
-                                var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th></th><th>Rover</th><th>Motes</th></tr></thead><tbody>";
-                                var tbl_row = "<form action=\"\" method=\"post\" id=\"rover_form\">";
-                                $.each(json, function(x , option) {
-                                    tbl_row += ("<tr class=\"odd gradeX\"><td><input type=\"checkbox\" onchange=\"clearInter()\" name=\"rover_list\" value=\"" + x + "\"></td><td>" + x + "</td><td>" + option + "</td></tr>");
-                                });
-                                tbl_body += (tbl_row + "</form></tbody></table>");
-                                $("#rover_tb").html(tbl_body).text();
-                                console.log("rover list updated");
-						    }
-
-						    function errorOnAjax(jqxhr, status, errorstr) {
-						        var errText = (errorstr == null)
-						                ? '' : ', error: ' + errorstr;
-						        console.log('Ajax error: ' + status + errText);
-						    }
 
 			                $( "#motes_btn" )
 			                    .button()
