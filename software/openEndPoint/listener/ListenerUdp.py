@@ -56,7 +56,7 @@ class ListenerUdp(Listener.Listener):
             
             log.debug("got {2} from {1} at {0}".format(timestamp,source,data))
             
-            return (timestamp,source,data)
+            return timestamp, source, data
     
     def stop(self):
         # declare that this thread has to stop

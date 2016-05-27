@@ -52,7 +52,7 @@ class sixtusCoap(object):
         #2bytes slotnum:
         slotnum=int(slot_num)
         byte1=(slotnum>>8)&0x00FF
-        byte2=(slotnum)&0x00FF
+        byte2= slotnum & 0x00FF
         params += [byte2]
         params += [byte1]
         params += [int(ch_offset)]
@@ -79,7 +79,7 @@ class sixtusCoap(object):
         #2bytes slotnum:
         slotnum=int(slot_num)
         byte1=(slotnum>>8)&0x00FF
-        byte2=(slotnum)&0x00FF
+        byte2= slotnum & 0x00FF
         params += [byte2]
         params += [byte1]
         params += [int(ch_offset)] 
@@ -113,7 +113,7 @@ class sixtusCoap(object):
         #2bytes slotnum:
         slotnum=int(slot_num)
         byte1=(slotnum>>8)&0x00FF
-        byte2=(slotnum)&0x00FF
+        byte2= slotnum & 0x00FF
         params += [byte2]
         params += [byte1]  
         url='coap://[{0}]:{1}/{2}/'.format(dst_url,d.DEFAULT_UDP_PORT,self.RESOURCE)

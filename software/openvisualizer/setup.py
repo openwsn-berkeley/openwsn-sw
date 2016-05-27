@@ -38,7 +38,7 @@ with open(os.path.join('openvisualizer', 'data', 'requirements.txt')) as f:
 
 def appdirGlob(globstr, subdir=''):
     appdir = 'bin/openVisualizerApp'
-    if (subdir == ''):
+    if subdir == '':
         return glob.glob('/'.join([appdir, globstr]))
     else:
         return glob.glob('/'.join([appdir, subdir, globstr]))

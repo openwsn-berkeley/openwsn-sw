@@ -8,7 +8,7 @@ log.addHandler(NullHandler())
 
 import json
 
-class JSONWrapper():
+class JSONWrapper:
 
    def json_repr(self,obj):
       log.debug(obj)

@@ -39,7 +39,7 @@ class LocationManager(object):
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('assigning location ({0} {1})'.format(lat,lon))
         
-        return (lat,lon)
+        return lat, lon
     
     #======================== private =========================================
     

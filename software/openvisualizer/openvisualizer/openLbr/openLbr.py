@@ -194,9 +194,9 @@ class OpenLbr(eventBusClient.eventBusClient):
             lowpan           = self.ipv6_to_lowpan(ipv6)
             
             # add the source route to this destination
-            if (len(lowpan['dst_addr'])==16):
+            if len(lowpan['dst_addr'])==16:
                 dst_addr=lowpan['dst_addr'][8:]
-            elif (len(lowpan['dst_addr'])==8):
+            elif len(lowpan['dst_addr'])==8:
                 dst_addr=lowpan['dst_addr']
             else:
                 log.warning('unsupported address format {0}'.format(lowpan['dst_addr']))
@@ -246,12 +246,12 @@ class OpenLbr(eventBusClient.eventBusClient):
             dispatchSignal = None
             
             #read next header
-            if (ipv6dic['next_header']==self.IANA_IPv6HOPHEADER):
+            if ipv6dic['next_header']==self.IANA_IPv6HOPHEADER:
                 #hop by hop header present, check flags and parse    
-                if ((ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG):
+                if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
                     #error -- this packet has gone downstream somewhere.
                     log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
-                if ((ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG):
+                if (ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG:
                     #error -- loop in the route
                     log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
                 #skip the header and process the rest of the message.
@@ -259,7 +259,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 
             #===================================================================
 
-            if (ipv6dic['next_header']==self.IPV6_HEADER):
+            if ipv6dic['next_header']==self.IPV6_HEADER:
                 #ipv6 header (inner)
                 ipv6dic_inner = {}
                 # prasing the iphc inner header and get the next_header
@@ -273,9 +273,9 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ipv6dic['dst_addr'] = ipv6dic_inner['dst_addr']
                 ipv6dic['flow_label'] = ipv6dic_inner['flow_label']
                 
-            if (ipv6dic['next_header']==self.IANA_ICMPv6):
+            if ipv6dic['next_header']==self.IANA_ICMPv6:
                 #icmp header
-                if (len(ipv6dic['payload'])<5):
+                if len(ipv6dic['payload'])<5:
                     log.critical("wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data)))
                     print "wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data))
                     return
@@ -289,14 +289,14 @@ class OpenLbr(eventBusClient.eventBusClient):
                 #this function does the job
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
                  
-            elif(ipv6dic['next_header']==self.IANA_UDP):
+            elif ipv6dic['next_header']==self.IANA_UDP:
                 #udp header -- can be compressed.. assume first it is not compressed.
-                if (len(ipv6dic['payload'])<5):
+                if len(ipv6dic['payload'])<5:
                     log.critical("wrong payload lenght on UDP packet {0}".format(",".join(str(c) for c in data)))
                     print "wrong payload lenght on UDP packet {0}".format(",".join(str(c) for c in data))
                     return
                 
-                if (ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID):
+                if ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID:
                     
                     oldUdp=ipv6dic['payload'][:5]
                     #re-arrange fields and inflate
@@ -339,7 +339,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             
             success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
             
-            if success == True:
+            if success:
                 return
             
             # assemble the packet and dispatch it again as nobody answer 
@@ -462,7 +462,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         # destination address
         if len(lowpan['route'])>1:
             # source route needed, get prefix from compression Reference
-            if (len(compressReference)==16): 
+            if len(compressReference)==16:
                 prefix=compressReference[:8]
 
             # =======================3. RH3 6LoRH(s) ============================== 
@@ -681,25 +681,25 @@ class OpenLbr(eventBusClient.eventBusClient):
                 log.error("ERROR no support this type of 6LoRH yet")
         else:
             ptr = 2
-            if ((pkt_lowpan[0] >> 5) != 0x03):
+            if (pkt_lowpan[0] >> 5) != 0x03:
                 log.error("ERROR not a 6LowPAN packet")
                 return   
         
             # tf
             tf = ((pkt_lowpan[0]) >> 3) & 0x03
-            if (tf == self.IPHC_TF_3B):
+            if tf == self.IPHC_TF_3B:
                 pkt_ipv6['flow_label'] = ((pkt_lowpan[ptr]) << 16) + ((pkt_lowpan[ptr+1]) << 8) + ((pkt_lowpan[ptr+2]) << 0)
                 ptr = ptr + 3
-            elif (tf == self.IPHC_TF_ELIDED):
+            elif tf == self.IPHC_TF_ELIDED:
                 pkt_ipv6['flow_label'] = 0
             else:
                 log.error("Unsupported or wrong tf")
             # nh
             nh = ((pkt_lowpan[0]) >> 2) & 0x01
-            if (nh == self.IPHC_NH_INLINE):
+            if nh == self.IPHC_NH_INLINE:
                 pkt_ipv6['next_header'] = (pkt_lowpan[ptr])
                 ptr = ptr+1
-            elif (nh == self.IPHC_NH_COMPRESSED):
+            elif nh == self.IPHC_NH_COMPRESSED:
                 # log.error("unsupported nh==IPHC_NH_COMPRESSED")
                 # the next header will be retrieved later
                 pass
@@ -708,34 +708,34 @@ class OpenLbr(eventBusClient.eventBusClient):
                 
             # hlim
             hlim = (pkt_lowpan[0]) & 0x03
-            if (hlim == self.IPHC_HLIM_INLINE):
+            if hlim == self.IPHC_HLIM_INLINE:
                 pkt_ipv6['hop_limit'] = (pkt_lowpan[ptr])
                 ptr = ptr+1
-            elif (hlim == self.IPHC_HLIM_1):
+            elif hlim == self.IPHC_HLIM_1:
                 pkt_ipv6['hop_limit'] = 1
-            elif (hlim == self.IPHC_HLIM_64):
+            elif hlim == self.IPHC_HLIM_64:
                 pkt_ipv6['hop_limit'] = 64
-            elif (hlim == self.IPHC_HLIM_255):
+            elif hlim == self.IPHC_HLIM_255:
                 pkt_ipv6['hop_limit'] = 255
             else:
                 log.error("wrong hlim=="+str(hlim))
             # sam
             sam = ((pkt_lowpan[1]) >> 4) & 0x03
-            if (sam == self.IPHC_SAM_ELIDED):
+            if sam == self.IPHC_SAM_ELIDED:
                 #pkt from the previous hop
                 pkt_ipv6['src_addr'] = self.networkPrefix + mac_prev_hop
                 
-            elif (sam == self.IPHC_SAM_16B):
+            elif sam == self.IPHC_SAM_16B:
                 a1 = pkt_lowpan[ptr]
                 a2 = pkt_lowpan[ptr+1]
                 ptr = ptr+2
                 s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
                 pkt_ipv6['src_addr'] = self.networkPrefix+s
         
-            elif (sam == self.IPHC_SAM_64B):
+            elif sam == self.IPHC_SAM_64B:
                 pkt_ipv6['src_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
                 ptr = ptr + 8
-            elif (sam == self.IPHC_SAM_128B):
+            elif sam == self.IPHC_SAM_128B:
                 pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
                 ptr = ptr + 16
             else:
@@ -743,41 +743,41 @@ class OpenLbr(eventBusClient.eventBusClient):
                 
             # dam
             dam = ((pkt_lowpan[1]) & 0x03)
-            if (dam == self.IPHC_DAM_ELIDED):
+            if dam == self.IPHC_DAM_ELIDED:
                 if log.isEnabledFor(logging.DEBUG):
                     log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
                 pkt_ipv6['dst_addr'] = self.networkPrefix+self.dagRootEui64
-            elif (dam == self.IPHC_DAM_16B):
+            elif dam == self.IPHC_DAM_16B:
                 a1 = pkt_lowpan[ptr]
                 a2 = pkt_lowpan[ptr+1]
                 ptr = ptr+2
                 s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
                 pkt_ipv6['dst_addr'] = self.networPrefix+s
-            elif (dam == self.IPHC_DAM_64B):
+            elif dam == self.IPHC_DAM_64B:
                 pkt_ipv6['dst_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
                 ptr = ptr + 8
-            elif (dam == self.IPHC_DAM_128B):
+            elif dam == self.IPHC_DAM_128B:
                 pkt_ipv6['dst_addr'] = pkt_lowpan[ptr:ptr+16]
                 ptr = ptr + 16
             else:
                 log.error("wrong dam=="+str(dam))
 
-            if (nh == self.IPHC_NH_COMPRESSED):
-                if (((pkt_lowpan[ptr] >> 4) & 0x0f) == self.NHC_DISPATCH):
+            if nh == self.IPHC_NH_COMPRESSED:
+                if ((pkt_lowpan[ptr] >> 4) & 0x0f) == self.NHC_DISPATCH:
                     eid = (pkt_lowpan[ptr] & self.NHC_EID_MASK) >> 1
-                    if (eid == self.NHC_EID_HOPBYHOP):
+                    if eid == self.NHC_EID_HOPBYHOP:
                         pkt_ipv6['next_header'] = self.IANA_IPv6HOPHEADER
-                    elif (eid == self.NHC_EID_IPV6):
+                    elif eid == self.NHC_EID_IPV6:
                         pkt_ipv6['next_header'] = self.IPV6_HEADER
                     else:
                         log.error("wrong NH_EID=="+str(eid))
             
             #hop by hop header 
             #composed of NHC, NextHeader,Len + Rpl Option
-            if  (pkt_ipv6['next_header'] == self.IANA_IPv6HOPHEADER) : 
+            if pkt_ipv6['next_header'] == self.IANA_IPv6HOPHEADER:
                  pkt_ipv6['hop_nhc'] = pkt_lowpan[ptr]
                  ptr = ptr+1
-                 if ((pkt_ipv6['hop_nhc'] & 0x01) == 0):
+                 if (pkt_ipv6['hop_nhc'] & 0x01) == 0:
                     pkt_ipv6['hop_next_header'] = pkt_lowpan[ptr]
                     ptr = ptr+1
                  else :
@@ -797,8 +797,8 @@ class OpenLbr(eventBusClient.eventBusClient):
                  pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
                  ptr = ptr+2
                  #end RPL option
-                 if ((pkt_ipv6['hop_nhc'] & 0x01) == 1):
-                     if (((pkt_lowpan[ptr]>>1) & 0x07) == self.NHC_EID_IPV6):
+                 if (pkt_ipv6['hop_nhc'] & 0x01) == 1:
+                     if ((pkt_lowpan[ptr]>>1) & 0x07) == self.NHC_EID_IPV6:
                          pkt_ipv6['hop_next_header'] = self.IPV6_HEADER
 
         # payload
@@ -811,15 +811,14 @@ class OpenLbr(eventBusClient.eventBusClient):
         return pkt_ipv6
     
     def reassemble_ipv6_packet(self, pkt):
-        pktw = []
-        pktw.append(((6 << 4) + (pkt['traffic_class'] >> 4)))
-        pktw.append(( ((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16) ))
-        pktw.append(( (pkt['flow_label'] >> 8) & 0x00FF ))
-        pktw.append(( pkt['flow_label'] & 0x0000FF ))
-        pktw.append(( pkt['payload_length'] >> 8 ))
-        pktw.append(( pkt['payload_length'] & 0x00FF ))
-        pktw.append(( pkt['next_header'] ))
-        pktw.append(( pkt['hop_limit'] ))
+        pktw = [((6 << 4) + (pkt['traffic_class'] >> 4)),
+                (((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16)),
+                ((pkt['flow_label'] >> 8) & 0x00FF),
+                (pkt['flow_label'] & 0x0000FF),
+                (pkt['payload_length'] >> 8),
+                (pkt['payload_length'] & 0x00FF),
+                (pkt['next_header']),
+                (pkt['hop_limit'])]
         for i in range(0,16):
             pktw.append( (pkt['src_addr'][i]) )
         for i in range(0,16):
@@ -923,7 +922,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 # print the bytes
                 this_line        += [' %02x'%b]
                 # gather the end_chars
-                if b>32 and b<127:
+                if 32 < b < 127:
                     end_chars    += [chr(b)]
                 else:
                     end_chars    += ['.']

@@ -38,7 +38,8 @@ ADAPTER_KEY         = r'SYSTEM\CurrentControlSet\Control\Class\{4D36E972-E325-11
 TUNTAP_COMPONENT_ID = 'tap0901'
 
 def CTL_CODE(device_type, function, method, access):
-    return (device_type << 16) | (access << 14) | (function << 2) | method;
+    return (device_type << 16) | (access << 14) | (function << 2) | method
+
 
 def TAP_CONTROL_CODE(request, method):
     return CTL_CODE(34, request, method, 0)

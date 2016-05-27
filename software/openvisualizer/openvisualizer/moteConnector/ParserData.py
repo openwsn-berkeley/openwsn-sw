@@ -81,8 +81,8 @@ class ParserData(Parser.Parser):
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         # then notify a latency component that will plot that information.
         # port 61001==0xee,0x49
-        if (len(input) >37):
-           if (input[36]==238 and input[37]==73):
+        if len(input) >37:
+           if input[36]==238 and input[37]==73:
             # udp port 61001 for udplatency app.
                aux      = input[len(input)-5:]               # last 5 bytes of the packet are the ASN in the UDP latency packet
                diff     = self._asndiference(aux,asnbytes)   # calculate difference 
@@ -91,7 +91,7 @@ class ParserData(Parser.Parser):
                parent   = input[len(input)-21:len(input)-13] # the parent node is the first element (used to know topology)
                node     = input[len(input)-13:len(input)-5]  # the node address
                
-               if (timeinus<0xFFFF):
+               if timeinus<0xFFFF:
                # notify latency manager component. only if a valid value
                   dispatcher.send(
                      sender        = 'parserData',
@@ -117,7 +117,7 @@ class ParserData(Parser.Parser):
        
         eventType='data'
         # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header
-        return (eventType,(source,input))
+        return eventType, (source, input)
 
  #======================== private =========================================
  
@@ -125,18 +125,18 @@ class ParserData(Parser.Parser):
       
        asninit = struct.unpack('<HHB',''.join([chr(c) for c in init]))
        asnend  = struct.unpack('<HHB',''.join([chr(c) for c in end]))
-       if (asnend[2] != asninit[2]): #'byte4'
+       if asnend[2] != asninit[2]: #'byte4'
           return 0xFFFFFFFF
        else:
            pass
        
-       diff = 0;
-       if (asnend[1] == asninit[1]):#'bytes2and3'
+       diff = 0
+       if asnend[1] == asninit[1]:#'bytes2and3'
           return asnend[0]-asninit[0]#'bytes0and1'
        else:
-          if (asnend[1]-asninit[1]==1):##'bytes2and3'              diff  = asnend[0]#'bytes0and1'
+          if asnend[1]-asninit[1]==1:##'bytes2and3'              diff  = asnend[0]#'bytes0and1'
               diff += 0xffff-asninit[0]#'bytes0and1'
-              diff += 1;
+              diff += 1
           else:   
               diff = 0xFFFFFFFF
        

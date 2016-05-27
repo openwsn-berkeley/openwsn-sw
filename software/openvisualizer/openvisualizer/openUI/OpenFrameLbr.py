@@ -138,7 +138,7 @@ class OpenFrameLbr(OpenFrame.OpenFrame):
         connectParams = {}
         for line in authFile:
             match = re.search('(\S*)\s*=\s*(\S*)',line)
-            if match!=None:
+            if match is not None:
                 key = match.group(1).strip()
                 val = match.group(2).strip()
                 try:

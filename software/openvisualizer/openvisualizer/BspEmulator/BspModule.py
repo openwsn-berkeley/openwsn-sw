@@ -33,5 +33,5 @@ class BspModule(object):
     #======================== private =========================================
     
     def _checkInit(self):
-        assert(self.isInitialized)
+        assert self.isInitialized
     

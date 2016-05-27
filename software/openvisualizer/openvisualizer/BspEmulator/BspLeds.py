@@ -296,12 +296,12 @@ class BspLeds(BspModule.BspModule):
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('cmd_circular_shift')
         
-        (self.errorLedOn, \
-         self.radioLedOn, \
-         self.syncLedOn,  \
-         self.debugLedOn) = (self.radioLedOn, \
-                             self.syncLedOn,  \
-                             self.debugLedOn, \
+        (self.errorLedOn,
+         self.radioLedOn,
+         self.syncLedOn,
+         self.debugLedOn) = (self.radioLedOn,
+                             self.syncLedOn,
+                             self.debugLedOn,
                              self.errorLedOn)
     
     def cmd_increment(self):

@@ -68,7 +68,7 @@ class SerialTester(eventBusClient.eventBusClient):
     def _receiveDataFromMoteSerial(self,sender,signal,data):
         
         # handle data
-        if (chr(data[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA)):
+        if chr(data[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_DATA):
             # don't handle if I'm not testing
             with self.dataLock:
                 if not self.busyTesting:
@@ -96,7 +96,7 @@ class SerialTester(eventBusClient.eventBusClient):
             self.timeout     = newTimeout
     
     def setTrace(self,newTraceCb):
-        assert (callable(newTraceCb)) or (newTraceCb==None)
+        assert (callable(newTraceCb)) or (newTraceCb is None)
         with self.dataLock:
             self.traceCb     = newTraceCb
     

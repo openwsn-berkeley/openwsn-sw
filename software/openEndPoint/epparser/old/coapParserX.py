@@ -67,7 +67,7 @@ def parseCoapData(data, address):
 	for i in range(0, options):
             optionDelta = int((ord(data[option_pointer])&0b11110000)>>4)
             optionNumber = optionDelta
-            if (i > 0):
+            if i > 0:
                optionNumber = optionDelta + optionList[i-1][0]
             length = int(ord(data[option_pointer])&0b00001111)
             print data[option_pointer+1:option_pointer+length+1]
@@ -113,14 +113,14 @@ def parseCoapData(data, address):
         print "payload ",  payload
 	
 	#write the data to file if we're intereted in it
-	if((code == 3 or code == 2) and address[0][0:2] != "00" ):
+	if (code == 3 or code == 2) and address[0][0:2] != "00":
 		print "writing file"
 		if not os.path.exists("/var/www/data/" + address[0]):
     			os.makedirs("/var/www/data/" + address[0])
 		sensor_name = ""
 		now = datetime.datetime.now()
 		for option in optionList:
-			if (option[2] == 'Location-Path'):
+			if option[2] == 'Location-Path':
 				filepath = "/var/www/data/"+address[0]+"/" + option[3]+".txt"
 				f = open(filepath,"a")
 				if os.path.getsize(filepath)==0:

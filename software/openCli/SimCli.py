@@ -129,7 +129,7 @@ class SimCli(threading.Thread):
                     command['callback'](params[1:])
                     break
             
-            if found==False:
+            if not found:
                 print ' unknown command or alias \''+params[0]+'\''
     
     #======================== private =========================================
@@ -191,7 +191,7 @@ class SimCli(threading.Thread):
     
     def _handleBoot(self,params):
         # usage
-        if (len(params)!=1 and len(params)!=2):
+        if len(params)!=1 and len(params)!=2:
             self._printUsageFromName('boot')
             return
         

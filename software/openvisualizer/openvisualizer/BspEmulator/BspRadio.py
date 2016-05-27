@@ -304,7 +304,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         crc        = self.crcPasses
         
         # respond
-        return (rxBuffer,rssi,lqi,crc)
+        return rxBuffer, rssi, lqi, crc
     
     #======================== interrupts ======================================
     

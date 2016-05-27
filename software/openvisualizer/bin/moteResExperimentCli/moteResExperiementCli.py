@@ -51,8 +51,8 @@ class MoteStateCli(OpenCli):
                              'reserve cells; e.g. "r e6 eb 2 10032"',
                              ['mote_addr','neighbor_addr','num_of_links','start_at_asn'],
                              self._handlerRes)
-							
-	#======================== public ==========================================
+
+    #======================== public ==========================================
     
     #======================== private =========================================
     
@@ -71,7 +71,7 @@ class MoteStateCli(OpenCli):
                 print ms.getStateElem(params[0])
             except ValueError as err:
                 print err
-				
+
     def _handlerRes(self,params):
         for ms in self.moteState_handlers:
             try:

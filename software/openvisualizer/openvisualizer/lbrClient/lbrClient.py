@@ -207,7 +207,7 @@ class lbrClient(threading.Thread):
             # abort connection
             return
         #the packet should be at least size 20 which is P+prefix 
-        if (len(input) < 20 or input[0]!='P'):
+        if len(input) < 20 or input[0]!= 'P':
             
             # disconnect
             self.disconnect('Invalid prefix information from LBR')

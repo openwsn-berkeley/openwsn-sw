@@ -126,7 +126,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
         :param moteid: 16-bit ID of mote (optional)
         '''
-        log.debug("moteview moteid parameter is {0}".format(moteid));
+        log.debug("moteview moteid parameter is {0}".format(moteid))
 
         motelist = []
         for ms in self.app.moteStates:
@@ -348,7 +348,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         DAGrootList=[]
 
         for ms in self.app.moteStates:
-            if(ms.getStateElem(moteState.moteState.ST_IDMANAGER).isDAGroot):
+            if ms.getStateElem(moteState.moteState.ST_IDMANAGER).isDAGroot:
                 DAGrootList.append(ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()[1])
 
         data['DAGrootList']=DAGrootList

@@ -69,7 +69,7 @@ class UDPLatency(eventBusClient.eventBusClient):
         
         stats      = {} # dictionary of stats
         
-        if (self.latencyStats.get(str(address)) is None):
+        if self.latencyStats.get(str(address)) is None:
             
             # none for this node... create initial stats
             stats.update({'min':latency})
@@ -85,25 +85,25 @@ class UDPLatency(eventBusClient.eventBusClient):
             # get and update
             stats = self.latencyStats.get(str(address))
            
-            if (stats.get('min') > latency):
+            if stats.get('min') > latency:
                 stats.update({'min':latency})
            
-            if (stats.get('max') < latency):
+            if stats.get('max') < latency:
                 stats.update({'max':latency})
            
             stats.update({'avg':((stats.get('avg') * stats.get('pktRcvd')) + latency) / (stats.get('pktRcvd') + 1)})
             stats.update({'pktRcvd':(stats.get('pktRcvd') + 1)})
            
-            if (stats.get('prefParent') != parent):
+            if stats.get('prefParent') != parent:
                stats.update({'parentSwitch':(stats.get('parentSwitch')+1)})# record parent change since last message
             
             # check if packet is a duplicate
-            if (SN == stats.get('SN')):
+            if SN == stats.get('SN'):
                 # increment duplicated
                 stats.update({'DUP':(stats.get('DUP') + 1)})
             
             # update pktSent
-            if (SN > stats.get('pktSent')):
+            if SN > stats.get('pktSent'):
                 stats.update({'pktSent':SN + 1})
         
         # these fields are common

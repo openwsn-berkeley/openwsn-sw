@@ -606,7 +606,7 @@ class moteState(eventBusClient.eventBusClient):
         # unlock the state data
         self.stateLock.release()
         
-        if found==False:
+        if not found:
             raise SystemError("No handler for data {0}".format(data))
     
     def _isnamedtupleinstance(self,var,tupleInstance):

@@ -93,9 +93,9 @@ class DataQueue(object):
         
         self.dataLock.acquire()
         if self.data:
-            lastVal = self.data[-1]['value'];
+            lastVal = self.data[-1]['value']
         else:
-            lastVal = 0;
+            lastVal = 0
         self.dataLock.release()
         
         data = {

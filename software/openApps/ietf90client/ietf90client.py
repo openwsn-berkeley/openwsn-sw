@@ -466,7 +466,7 @@ class IETF90ClientGUI(object):
         except Exception as err:
             pass
         
-        return (ipv6,period)
+        return ipv6, period
 
 def main():
     IETF90Client()
