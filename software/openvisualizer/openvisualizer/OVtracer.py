@@ -8,9 +8,8 @@ log = logging.getLogger('OVtracer')
 log.setLevel(logging.DEBUG)
 log.addHandler(logging.NullHandler())
 
-
-import threading
 import yappi
+import threading
 
 class OVtracer(object):
     TRACING_INTERVAL = 30

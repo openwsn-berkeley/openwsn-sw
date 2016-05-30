@@ -28,19 +28,20 @@ print '\n'.join(banner)
 
 Help('''
 Usage:
-    scons [options] <rungui|runcli|runweb>
+    scons [options] <rungui|runcli|runweb|runrover>
     scons copy-simfw
     scons <sdist|upload|sdist-native>
     scons unittests
     scons docs
    
 Targets:
-    rungui/runcli/runweb:
+    rungui/runcli/runweb/runrover:
         Run OpenVisualizer with GUI, command line, or web interface,
         respectively.
         The application is run in the build/runui/ directory. Since it accesses
         your computer's network interfaces, it must be run as
         superuser/administrator.
+        runrover runs a minimal version of OpenVisualizer that should run on remote rovers.
         
         Options
           --sim         Run in simulator mode with default count of motes.
@@ -52,12 +53,14 @@ Targets:
           --nosimcopy   Skips copying simulation firmware at startup from the
                         openwsn-fw directory.
           --ovdebug     Enable debug mode; more detailed logging
-          
+
         Web UI only
           --host=<address> Web server listens on IP address;
                            default 0.0.0.0 (all interfaces)
           --port=n         Web server listens on port number 'n';
                            default 8080
+          --rover          Run in rover mode (allows to connect to motes plugged on remote rovers)
+
     
     copy-simfw:
         Copy files for the simulator, generated from an OpenWSN firmware 
@@ -175,6 +178,12 @@ AddOption('--port',
     type      = 'int')
 runnerEnv['PORTOPT'] = GetOption('portOpt')
 
+AddOption('--rover',
+    dest      = 'roverOpt',
+    default   = False,
+    action    = 'store_true')
+runnerEnv['ROVEROPT'] = GetOption('roverOpt')
+
 #============================ SCons targets ===================================
 
 #===== copy-simfw
@@ -197,7 +206,7 @@ runnerEnv['SIMHOSTOPT'] = env['SIMHOSTOPT']
 
 Alias('copy-simfw', sconsUtils.copySimfw(env, 'simcopy'))
 
-#===== rungui, runcli, runweb
+#===== rungui, runcli, runweb, runrover
 
 # Must define run targets below the copy-simfw target so SIMHOSTOPT is available. 
 # Run targets may copy simulation firmware before starting.

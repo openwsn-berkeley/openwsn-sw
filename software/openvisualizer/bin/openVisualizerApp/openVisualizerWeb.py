@@ -4,9 +4,9 @@
 #
 # Released under the BSD 2-Clause license as published at the link below.
 # http://opensource.org/licenses/BSD-2-Clause
+
 import sys
 import os
-import time
 
 if __name__=="__main__":
     # Update pythonpath if running in in-tree development mode
@@ -28,7 +28,6 @@ except ImportError:
 
 import json
 import bottle
-import random
 import re
 import threading
 import signal
@@ -36,15 +35,14 @@ import functools
 import datetime
 from bottle        import view, response
 
+
 import openVisualizerApp
-import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventBus      import eventBusClient
 from openvisualizer.SimEngine     import SimEngine
 from openvisualizer.BspEmulator   import VcdLogger
 from openvisualizer import ovVersion
-
-
-from pydispatch import dispatcher
+from coap import coap
+import time
 
 # add default parameters to all bottle templates
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
@@ -55,7 +53,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
     server.
     '''
 
-    def __init__(self,app,websrv):
+    def __init__(self,app,websrv,roverMode):
         '''
         :param app:    OpenVisualizerApp
         :param websrv: Web server
@@ -66,9 +64,17 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.app             = app
         self.engine          = SimEngine.SimEngine()
         self.websrv          = websrv
+        self.roverMode       = roverMode
+
+        #used for remote motes :
+
+        if roverMode :
+            self.roverMotes = {}
+            self.client = coap.coap()
+            self.client.respTimeout = 2
+            self.client.ackTimeout = 2
 
         self._defineRoutes()
-
         # To find page templates
         bottle.TEMPLATE_PATH.append('{0}/web_files/templates/'.format(self.app.datadir))
 
@@ -118,6 +124,89 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
+        if self.roverMode:
+            self.websrv.route(path='/rovers',                             callback=self._showrovers)
+            self.websrv.route(path='/updateroverlist/:updatemsg',         callback=self._updateRoverList)
+            self.websrv.route(path='/motesdiscovery/:srcip',              callback=self._motesDiscovery)
+
+    @view('rovers.tmpl')
+    def _showrovers(self):
+        '''
+        Handles the discovery and connection to remote motes using remoteConnectorServer component
+        '''
+        import netifaces as ni
+        myifdict = {}
+        for myif in ni.interfaces():
+            myifdict[myif] = ni.ifaddresses(myif)
+        tmplData = {
+            'myifdict'  : myifdict,
+            'roverMotes' : self.roverMotes,
+            'roverMode' : self.roverMode,
+        }
+        return tmplData
+
+    def _updateRoverList(self, updatemsg):
+        '''
+        Handles the devices discovery
+        '''
+
+        cmd, roverData = updatemsg.split('@')
+        if cmd == "add":
+            if roverData not in self.roverMotes.keys():
+                self.roverMotes[roverData] = []
+        elif cmd == "del":
+            for roverIP in roverData.split(','):
+                if roverIP in self.roverMotes.keys() and not self.roverMotes[roverIP]:
+                    self.roverMotes.pop(roverIP)
+        elif cmd == "upload":
+            newRovers = roverData.split(",")
+            for newRover in newRovers:
+                if newRover not in self.roverMotes.keys():
+                    self.roverMotes[newRover] = []
+        elif cmd == "disconn":
+            for roverIP in roverData.split(','):
+                if roverIP in self.roverMotes.keys():
+                    self.app.removeRoverMotes(roverIP, self.roverMotes.pop(roverIP))
+        moteDict = self.app.getMoteDict()
+        for rover in self.roverMotes:
+            for i, serial in enumerate(self.roverMotes[rover]):
+                for moteID, connserial in moteDict.items():
+                    if serial == connserial:
+                        self.roverMotes[rover][i] = moteID
+
+        return json.dumps(self.roverMotes)
+
+    def _motesDiscovery(self, srcip):
+        '''
+        Collects the list of motes available on the rover and connects them to oV
+        Use connetest to first check service availability
+        :param roverIP: IP of the rover
+        '''
+        coapThreads = []
+        for roverip in self.roverMotes.keys():
+            t = threading.Thread(target=self._getCoapResponse, args=(srcip, roverip))
+            t.setDaemon(True)
+            t.start()
+            coapThreads.append(t)
+        for t in coapThreads:
+            t.join()
+        self.app.refreshRoverMotes(self.roverMotes)
+        return json.dumps(self.roverMotes)
+
+    def _getCoapResponse(self, srcip, roverip):
+        log.info("sending coap request to rover {0}".format(roverip))
+        try:
+            if ':' in roverip:
+                response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip),
+                                           payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
+            else:
+                response = self.client.PUT('coap://{0}/pcinfo'.format(roverip),
+                                           payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
+            payload = ''.join([chr(b) for b in response])
+            self.roverMotes[roverip] = json.loads(payload)
+            self.roverMotes[roverip] = [rm + '@' + roverip for rm in self.roverMotes[roverip]]
+        except Exception as err:
+            self.roverMotes[roverip] = str(err)
 
     @view('moteview.tmpl')
     def _showMoteview(self, moteid=None):
@@ -128,17 +217,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         '''
         log.debug("moteview moteid parameter is {0}".format(moteid))
 
-        motelist = []
-        for ms in self.app.moteStates:
-            addr = ms.getStateElem(moteState.moteState.ST_IDMANAGER).get16bAddr()
-            if addr:
-                motelist.append( ''.join(['%02x'%b for b in addr]) )
-            else:
-                motelist.append(ms.moteConnector.serialport)
+        motelist = self.app.getMoteDict().keys()
 
         tmplData = {
             'motelist'       : motelist,
             'requested_mote' : moteid if moteid else 'none',
+            'roverMode'      : self.roverMode,
         }
         return tmplData
 
@@ -147,12 +231,13 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
                                   root='{0}/web_files/static/'.format(self.app.datadir))
 
     def _toggleDAGroot(self, moteid):
+
         '''
         Triggers toggle DAGroot state, via moteState. No real response. Page is
         updated when next retrieve mote data.
-
         :param moteid: 16-bit ID of mote
         '''
+
         log.info('Toggle root status for moteid {0}'.format(moteid))
         ms = self.app.getMoteState(moteid)
         if ms:
@@ -212,7 +297,9 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         Simple page; data for the page template is identical to the data
         for periodic updates of event list.
         '''
-        return self._getEventData()
+        tmplData = self._getEventData().copy()
+        tmplData['roverMode'] = self.roverMode
+        return tmplData
 
     def _showDAG(self):
         states,edges = self.app.topology.getDAG()
@@ -220,7 +307,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
 
     @view('routing.tmpl')
     def _showRouting(self):
-        return {}
+        return {'roverMode' : self.roverMode}
 
     @view('topology.tmpl')
     def _topologyPage(self):
@@ -228,7 +315,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         Retrieve the HTML/JS page.
         '''
 
-        return {}
+        return {'roverMode' : self.roverMode}
 
     def _topologyData(self):
         '''
@@ -385,6 +472,12 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'port number'
     )
+    parser.add_argument('-r', '--rover',
+        dest       = 'roverMode',
+        default    = False,
+        action     = 'store_true',
+        help       = 'rover mode, to access motes connected on rovers'
+    )
 
 webapp = None
 if __name__=="__main__":
@@ -405,11 +498,11 @@ if __name__=="__main__":
     )
 
     #===== start the app
-    app      = openVisualizerApp.main(parser)
+    app      = openVisualizerApp.main(parser, argspace.roverMode)
     
     #===== add a web interface
     websrv   = bottle.Bottle()
-    webapp   = OpenVisualizerWeb(app, websrv)
+    webapp   = OpenVisualizerWeb(app, websrv, argspace.roverMode)
 
     
 
