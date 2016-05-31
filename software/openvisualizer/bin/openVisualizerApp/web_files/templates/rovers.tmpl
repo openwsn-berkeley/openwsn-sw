@@ -84,6 +84,10 @@
 		                        % if myifdict[intf].has_key(23) and intf!="lo":
 		                            <option value={{myifdict[intf][23][0]['addr'].split('%')[0]}}>{{intf+": "+myifdict[intf][23][0]['addr'].split('%')[0]}}</option>
 		                        % end
+		                        //IPv6 for macOS
+		                        % if myifdict[intf].has_key(30) and intf!="lo":
+		                            <option value={{myifdict[intf][23][0]['addr'].split('%')[0]}}>{{intf+": "+myifdict[intf][23][0]['addr'].split('%')[0]}}</option>
+		                        % end
 		                    % end
 		                </select>
 		            </div>
