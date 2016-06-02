@@ -73,19 +73,19 @@
 		                <select class="rel_value_fld" id="myip_select" size="1">
 		                    <option value="none">Select Interface...</option>
 		                    % for intf in myifdict:
-		                        % if myifdict[intf].has_key(2) and intf!="lo":
+		                        % if myifdict[intf].has_key(2) and not intf.startswith("lo"):
  		                            <option value={{myifdict[intf][2][0]['addr']}}>{{intf+": "+myifdict[intf][2][0]['addr']}}</option>
   		                        % end
   		                        //IPv6 for linux
-		                        % if myifdict[intf].has_key(10) and intf!="lo":
+		                        % if myifdict[intf].has_key(10) and not intf.startswith("lo"):
 		                            <option value={{myifdict[intf][10][0]['addr'].split('%')[0]}}>{{intf+": "+myifdict[intf][10][0]['addr'].split('%')[0]}}</option>
 		                        % end
 		                        //IPv6 for windows
-		                        % if myifdict[intf].has_key(23) and intf!="lo":
+		                        % if myifdict[intf].has_key(23) and not intf.startswith("lo"):
 		                            <option value={{myifdict[intf][23][0]['addr'].split('%')[0]}}>{{intf+": "+myifdict[intf][23][0]['addr'].split('%')[0]}}</option>
 		                        % end
 		                        //IPv6 for macOS
-		                        % if myifdict[intf].has_key(30) and intf!="lo":
+		                        % if myifdict[intf].has_key(30) and not intf.startswith("lo"):
 		                            <option value={{myifdict[intf][30][0]['addr'].split('%')[0]}}>{{intf+": "+myifdict[intf][30][0]['addr'].split('%')[0]}}</option>
 		                        % end
 		                    % end

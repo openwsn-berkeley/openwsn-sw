@@ -73,6 +73,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
             self.client = coap.coap()
             self.client.respTimeout = 2
             self.client.ackTimeout = 2
+            self.client.maxRetransmit = 1
+
 
         self._defineRoutes()
         # To find page templates
