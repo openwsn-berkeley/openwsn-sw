@@ -108,6 +108,8 @@ class typeComponent(openType.openType):
         
         elif type==self.COMPONENT_SIXTOP:
             self.desc = 'SIXTOP'
+        elif type==self.COMPONENT_SIXTOP_RES:
+            self.desc = 'SIXTOP_RES'
         elif type==self.COMPONENT_NEIGHBORS:
             self.desc = 'NEIGHBORS '
         elif type==self.COMPONENT_SCHEDULE:
