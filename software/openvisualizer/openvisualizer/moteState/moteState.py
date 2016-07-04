@@ -429,7 +429,7 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_6P_CLEAR          =  ['6pClear',       13, 0]
     COMMAND_SET_SLOTDURATION      =  ['slotDuration',  14, 2]
     COMMAND_SET_6PRESPONSE_STATUS =  ['response',      15, 1]
-    COMMAND_SET_UINJECTPERIOD     =  ['uinjectPeriod', 16, 2]
+    COMMAND_SET_SF0BANDWIDTH      =  ['sf0Bandwidth',  16, 1]
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,
@@ -447,7 +447,7 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_6P_CLEAR,
         COMMAND_SET_SLOTDURATION,
         COMMAND_SET_6PRESPONSE_STATUS,
-        COMMAND_SET_UINJECTPERIOD
+        COMMAND_SET_SF0BANDWIDTH
     ]
 
     TRIGGER_ALL         = [
