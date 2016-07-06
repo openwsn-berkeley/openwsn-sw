@@ -148,6 +148,9 @@ class OpenVisualizerCli(Cmd):
         self.app.close()
         return True
 
+    def emptyline(self):
+        return
+
 
 #============================ main ============================================
 
