@@ -6,3 +6,4 @@ netifaces
 yappi
 pyzmq==15.2
 intelhex==2.1
+openwsn-coap
