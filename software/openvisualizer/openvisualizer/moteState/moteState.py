@@ -420,7 +420,7 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_DAOPERIOD         = ['daoPeriod',      4, 2]
     COMMAND_SET_DAGRANK           = ['dagrank',        5, 2]
     COMMAND_SET_SECURITY_STATUS   = ['security',       6, 1]
-    COMMAND_SET_FRAMELENGTH       = ['frameLength',    7, 2]
+    COMMAND_SET_SLOTFRAMELENGTH   = ['slotframeLength',7, 2]
     COMMAND_SET_ACK_STATUS        = ['ackReply',       8, 1]
     COMMAND_SET_6P_ADD            = ['6pAdd',          9, 3]
     COMMAND_SET_6P_DELETE         = ['6pDelete',      10, 3]
@@ -438,7 +438,7 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_DAOPERIOD,
         COMMAND_SET_DAGRANK,
         COMMAND_SET_SECURITY_STATUS,
-        COMMAND_SET_FRAMELENGTH,
+        COMMAND_SET_SLOTFRAMELENGTH,
         COMMAND_SET_ACK_STATUS,
         COMMAND_SET_6P_ADD,
         COMMAND_SET_6P_DELETE,
