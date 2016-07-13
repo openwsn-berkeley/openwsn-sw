@@ -107,5 +107,5 @@ errorDescriptions = {
   59: "security error on frameType {0}, code location {1}",
   60: "sixtop return code {0} at sixtop state {1} ",
   61: "6P count command returns Number of scheduled cells: {0}",
-  62: "the cells reserved to request mote contains slot {0} and slot {1}",
+  62: "6P List returns cells [({0},{1})]",
 }
