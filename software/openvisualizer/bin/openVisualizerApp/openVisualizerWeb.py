@@ -34,6 +34,7 @@ import signal
 import functools
 import datetime
 from bottle        import view, response
+from   cmd         import Cmd
 
 
 import openVisualizerApp
@@ -47,7 +48,7 @@ import time
 # add default parameters to all bottle templates
 view = functools.partial(view, ovVersion='.'.join(list([str(v) for v in ovVersion.VERSION])))
 
-class OpenVisualizerWeb(eventBusClient.eventBusClient):
+class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
     '''
     Provides web UI for OpenVisualizer. Runs as a webapp in a Bottle web
     server.
@@ -65,6 +66,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         self.engine          = SimEngine.SimEngine()
         self.websrv          = websrv
         self.roverMode       = roverMode
+
+        # command support
+        Cmd.__init__(self)
+        self.doc_header = 'Commands (type "help all" or "help <topic>"):'
+        self.prompt     = '> '
+        self.intro      = '\nOpenVisualizer  (type "help" for commands)'
 
         #used for remote motes :
 
@@ -455,6 +462,110 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient):
         }
         return response
 
+    #===== callbacks
+    
+    def do_state(self, arg):
+        """
+        Prints provided state, or lists states.
+        Usage: state [state-name]
+        """
+        if not arg:
+            for ms in self.app.moteStates:
+                output  = []
+                output += ['Available states:']
+                output += [' - {0}'.format(s) for s in ms.getStateElemNames()]
+                self.stdout.write('\n'.join(output))
+            self.stdout.write('\n')
+        else:
+            for ms in self.app.moteStates:
+                try:
+                    self.stdout.write(str(ms.getStateElem(arg)))
+                    self.stdout.write('\n')
+                except ValueError as err:
+                    self.stdout.write(err)
+    
+    def do_list(self, arg):
+        """List available states. (Obsolete; use 'state' without parameters.)"""
+        self.do_state('')
+    
+    def do_root(self, arg):
+        """
+        Sets dagroot to the provided mote, or lists motes
+        Usage: root [serial-port]
+        """
+        if not arg:
+            self.stdout.write('Available ports:')
+            if self.app.moteStates:
+                for ms in self.app.moteStates:
+                    self.stdout.write('  {0}'.format(ms.moteConnector.serialport))
+            else:
+                self.stdout.write('  <none>')
+            self.stdout.write('\n')
+        else:
+            for ms in self.app.moteStates:
+                try:
+                    if ms.moteConnector.serialport==arg:
+                        ms.triggerAction(moteState.moteState.TRIGGER_DAGROOT)
+                except ValueError as err:
+                    self.stdout.write(err)
+    
+    def do_set(self,arg):
+        """
+        Sets mote with parameters
+        Usag
+        """
+        if not arg:
+            self.stdout.write('Available ports:')
+            if self.app.moteStates:
+                for ms in self.app.moteStates:
+                    self.stdout.write('  {0}'.format(ms.moteConnector.serialport))
+            else:
+                self.stdout.write('  <none>')
+            self.stdout.write('\n')
+        else:
+            try:
+                [port,command,parameter] = arg.split(' ')
+                for ms in self.app.moteStates:
+                    try:
+                        if ms.moteConnector.serialport==port:
+                            ms.triggerAction([moteState.moteState.SET_COMMAND,command,parameter])
+                    except ValueError as err:
+                        self.stdout.write(err)
+            except ValueError as err:
+                print "{0}:{1}".format(type(err),err)
+
+    def help_all(self):
+        """Lists first line of help for all documented commands"""
+        names = self.get_names()
+        names.sort()
+        maxlen = 65
+        self.stdout.write(
+            'type "help <topic>" for topic details\n'.format(80-maxlen-3))
+        for name in names:
+            if name[:3] == 'do_':
+                try:
+                    doc = getattr(self, name).__doc__
+                    if doc:
+                        # Handle multi-line doc comments and format for length.
+                        doclines = doc.splitlines()
+                        doc      = doclines[0]
+                        if len(doc) == 0 and len(doclines) > 0:
+                            doc = doclines[1].strip()
+                        if len(doc) > maxlen:
+                            doc = doc[:maxlen] + '...'
+                        self.stdout.write('{0} - {1}\n'.format(
+                                                name[3:80-maxlen], doc))
+                except AttributeError:
+                    pass
+    
+    def do_quit(self, arg):
+        self.app.close()
+        os.kill(os.getpid(), signal.SIGTERM)
+        return True
+
+    def emptyline(self):
+        return
+
 #============================ main ============================================
 from argparse       import ArgumentParser
 
@@ -506,8 +617,6 @@ if __name__=="__main__":
     websrv   = bottle.Bottle()
     webapp   = OpenVisualizerWeb(app, websrv, argspace.roverMode)
 
-    
-
     # start web interface in a separate thread
     webthread = threading.Thread(
         target = websrv.run,
@@ -520,6 +629,8 @@ if __name__=="__main__":
     )
     webthread.start()
 
+    webapp.cmdloop()
+
     
     #===== add a cli (minimal) interface
 
@@ -529,10 +640,3 @@ if __name__=="__main__":
     banner += ['enter \'q\' to exit']
     banner  = '\n'.join(banner)
     print banner
-
-    while True:
-        input = raw_input('> ')
-        if input=='q':
-            print 'bye bye.'
-            app.close()
-            os.kill(os.getpid(), signal.SIGTERM)
