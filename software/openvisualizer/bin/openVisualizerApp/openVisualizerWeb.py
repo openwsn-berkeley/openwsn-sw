@@ -628,9 +628,6 @@ if __name__=="__main__":
         }
     )
     webthread.start()
-
-    webapp.cmdloop()
-
     
     #===== add a cli (minimal) interface
 
@@ -640,3 +637,5 @@ if __name__=="__main__":
     banner += ['enter \'q\' to exit']
     banner  = '\n'.join(banner)
     print banner
+
+    webapp.cmdloop()
