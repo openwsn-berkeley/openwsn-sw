@@ -120,20 +120,166 @@ unsigned short FCS16TAB[]={
   0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78,
 };
 
+
+struct scheduleRow {
+  unsigned char  row;
+  unsigned short slotOffset;
+  unsigned char  type;
+  unsigned char  shared;
+  unsigned char  channelOffset;
+  unsigned char  neighbor_type;
+  unsigned long long neighbor_bodyH;
+  unsigned long long neighbor_bodyL;
+  unsigned char  numRx;
+  unsigned char  numTx;
+  unsigned char  numTxACK;
+  unsigned char  lastUsedAsn_4;
+  unsigned short lastUsedAsn_2_3;
+  unsigned short lastUsedAsn_0_1;
+};
+
+struct neighborsRow {
+  unsigned char  row;
+  unsigned char  used;
+  unsigned char  parentPreference;
+  unsigned char  stableNeighbor;
+  unsigned char  switchStabilityCounter;
+  unsigned char  addr_type;
+  unsigned long long addr_bodyH;
+  unsigned long long addr_bodyL;
+  unsigned short DAGrank;
+  char           rssi;
+  unsigned char  numRx;
+  unsigned char  numTx;
+  unsigned char  numTxACK;
+  unsigned char  numWraps;
+  unsigned char  asn_4;
+  unsigned short asn_2_3;
+  unsigned short asn_0_1;
+  unsigned char  joinPrio;
+};
+
+
+
+struct moteStatus {
+  /* isSync */
+  unsigned char isSync;
+
+  /* IdManager */
+  unsigned char isDAGroot;
+  unsigned char myPANID_0;
+  unsigned char myPANID_1;
+  unsigned char my16bID_0;
+  unsigned char my16bID_1;
+  unsigned char my64bID_0;
+  unsigned char my64bID_1;
+  unsigned char my64bID_2;
+  unsigned char my64bID_3;
+  unsigned char my64bID_4;
+  unsigned char my64bID_5;
+  unsigned char my64bID_6;
+  unsigned char my64bID_7;
+  unsigned char myPrefix_0;
+  unsigned char myPrefix_1;
+  unsigned char myPrefix_2;
+  unsigned char myPrefix_3;
+  unsigned char myPrefix_4;
+  unsigned char myPrefix_5;
+  unsigned char myPrefix_6;
+  unsigned char myPrefix_7;
+
+  /* MyDagRank */
+  unsigned short myDAGrank;
+
+  /* OutputBuffer */
+  unsigned short index_write;
+  unsigned short index_read;
+
+  /* Asn */
+  unsigned char  asn_4;
+  unsigned short asn_2_3;
+  unsigned short asn_0_1;
+
+  /* MacStats */
+  unsigned char numSyncPkt;
+  unsigned char numSyncAck;
+  short         minCorrection;
+  short         maxCorrection;
+  unsigned char numDeSync;
+  unsigned int  numTicsOn;
+  unsigned int  numTicsTotal;
+
+  /* ScheduleRow */
+#define MAX_SCHEDULEROW 64
+  struct scheduleRow  sched_rows[MAX_SCHEDULEROW];
+
+  /* Backoff */
+  unsigned char backoffExponent;
+  unsigned char backoff;
+
+  /* QueueRow */
+#define QUEUE_ROW_COUNT 10
+  struct creatorOwner {
+    unsigned char creator;
+    unsigned char owner;
+  } queueRow[QUEUE_ROW_COUNT];
+
+  /* NeighborsRow */
+#define MAX_NEIGHBORS_ROW 64
+  struct neighborsRow neighbor_rows[MAX_NEIGHBORS_ROW];
+
+  /* kaPeriod */
+  unsigned int kaPeriod;
+};
+
+
+unsigned int tooShort=0;
+struct moteStatus stats;
+
+void parse_idmanager(unsigned char inBuf[], unsigned int inLen)
+{
+  if(inLen < 21+3) {
+    tooShort++;
+    return;
+  }
+
+  stats.isDAGroot = inBuf[3];
+  stats.myPANID_0 = inBuf[4];
+  stats.myPANID_1 = inBuf[5];
+  stats.my16bID_0 = inBuf[6];
+  stats.my16bID_1 = inBuf[7];
+  stats.my64bID_0 = inBuf[8];
+  stats.my64bID_1 = inBuf[9];
+  stats.my64bID_2 = inBuf[10];
+  stats.my64bID_3 = inBuf[11];
+  stats.my64bID_4 = inBuf[12];
+  stats.my64bID_5 = inBuf[13];
+  stats.my64bID_6 = inBuf[14];
+  stats.my64bID_7 = inBuf[15];
+  stats.myPrefix_0= inBuf[16];
+  stats.myPrefix_1= inBuf[17];
+  stats.myPrefix_2= inBuf[18];
+  stats.myPrefix_3= inBuf[19];
+  stats.myPrefix_4= inBuf[20];
+  stats.myPrefix_5= inBuf[21];
+  stats.myPrefix_6= inBuf[22];
+  stats.myPrefix_7= inBuf[23];
+}
+
 void parse_status(unsigned char inBuf[], unsigned int inLen)
 {
   if(inLen < 4) return;
-  unsigned int moteId = inBuf[0] + inBuf[1]<<8;
-  unsigned int statusElem = inBuf[1];
+  unsigned int moteId = inBuf[1] + inBuf[2]<<8;
+  unsigned int statusElem = inBuf[3];
 
-  printf("moteId %u status: %u --:", moteId, statusElem);
+  printf("moteId %04x status: %u --:", moteId, statusElem);
   switch(statusElem) {
   case 0:
     printf("sync\n");
     break;
 
   case 1:
-    printf("IdManager\n");
+    parse_idmanager(inBuf, inLen);
     break;
 
   case 2:
@@ -154,6 +300,26 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
 
   case 6:
     printf("ScheduleRow\n");
+    break;
+
+  case 7:
+    printf("backoff\n");
+    break;
+
+  case 8:
+    printf("QueueRow\n");
+    break;
+
+  case 9:
+    printf("NeighborsRow\n");
+    break;
+
+  case 10:
+    printf("kaPeriod\n");
+    break;
+
+  default:
+    printf("unknown\n");
     break;
   }
 
