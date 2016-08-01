@@ -236,34 +236,61 @@ struct moteStatus {
 unsigned int tooShort=0;
 struct moteStatus stats;
 
+char tput_init[]={0x1b,0x5b,0x21,0x70,0x1b,0x5b,0x3f,0x33,
+                  0x3b,0x34,0x6c,0x1b,0x5b,0x34,0x6c,0x1b,0x3e};
+char tput_clear[]={0x1b,0x5b,0x48,0x1b,0x5b,0x32,0x4a};
+char tput_cup00[]={0x1b,0x5b,0x31,0x3b,0x31,0x48};
+
+void screen_init(void)
+{
+  puts(tput_init);
+}
+
+void dump_screen(struct moteStatus *ms)
+{
+  puts(tput_clear);
+  puts(tput_cup00);
+
+  printf("DAG: %02d   PANID: %02x%02x    SHORT: %02x%02x\n", ms->isDAGroot,
+         ms->myPANID_0, ms->myPANID_1, ms->my16bID_0, ms->my16bID_1);
+
+  printf("EUI64: %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
+         ms->my64bID_0, ms->my64bID_1, ms->my64bID_2, ms->my64bID_3,
+         ms->my64bID_4, ms->my64bID_5, ms->my64bID_6, ms->my64bID_7);
+
+  printf("IPv6:  %02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
+         ms->myPrefix_0, ms->myPrefix_1, ms->myPrefix_2, ms->myPrefix_3,
+         ms->myPrefix_4, ms->myPrefix_5, ms->myPrefix_6, ms->myPrefix_7);
+}
+
 void parse_idmanager(unsigned char inBuf[], unsigned int inLen)
 {
-  if(inLen < 21+3) {
+  if(inLen < 21+4) {
     tooShort++;
     return;
   }
 
-  stats.isDAGroot = inBuf[3];
-  stats.myPANID_0 = inBuf[4];
-  stats.myPANID_1 = inBuf[5];
-  stats.my16bID_0 = inBuf[6];
-  stats.my16bID_1 = inBuf[7];
-  stats.my64bID_0 = inBuf[8];
-  stats.my64bID_1 = inBuf[9];
-  stats.my64bID_2 = inBuf[10];
-  stats.my64bID_3 = inBuf[11];
-  stats.my64bID_4 = inBuf[12];
-  stats.my64bID_5 = inBuf[13];
-  stats.my64bID_6 = inBuf[14];
-  stats.my64bID_7 = inBuf[15];
-  stats.myPrefix_0= inBuf[16];
-  stats.myPrefix_1= inBuf[17];
-  stats.myPrefix_2= inBuf[18];
-  stats.myPrefix_3= inBuf[19];
-  stats.myPrefix_4= inBuf[20];
-  stats.myPrefix_5= inBuf[21];
-  stats.myPrefix_6= inBuf[22];
-  stats.myPrefix_7= inBuf[23];
+  stats.isDAGroot = inBuf[4];
+  stats.myPANID_0 = inBuf[5];
+  stats.myPANID_1 = inBuf[6];
+  stats.my16bID_0 = inBuf[7];
+  stats.my16bID_1 = inBuf[8];
+  stats.my64bID_0 = inBuf[9];
+  stats.my64bID_1 = inBuf[10];
+  stats.my64bID_2 = inBuf[11];
+  stats.my64bID_3 = inBuf[12];
+  stats.my64bID_4 = inBuf[13];
+  stats.my64bID_5 = inBuf[14];
+  stats.my64bID_6 = inBuf[15];
+  stats.my64bID_7 = inBuf[16];
+  stats.myPrefix_0= inBuf[17];
+  stats.myPrefix_1= inBuf[18];
+  stats.myPrefix_2= inBuf[19];
+  stats.myPrefix_3= inBuf[20];
+  stats.myPrefix_4= inBuf[21];
+  stats.myPrefix_5= inBuf[22];
+  stats.myPrefix_6= inBuf[23];
+  stats.myPrefix_7= inBuf[24];
 }
 
 void parse_status(unsigned char inBuf[], unsigned int inLen)
@@ -275,7 +302,7 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
   printf("moteId %04x status: %u --:", moteId, statusElem);
   switch(statusElem) {
   case 0:
-    printf("sync\n");
+    dump_screen(&stats);
     break;
 
   case 1:
@@ -544,6 +571,8 @@ main(int argc, char **argv)
   setup_tty(motefd);
 
   progname = argv[0];
+
+  screen_init();
 
   while(1) {
     maxfd = 0;
