@@ -122,6 +122,7 @@ unsigned short FCS16TAB[]={
 
 
 /*
+ * size of structure
  * 1+2+1+1+1+1 + 8 + 8 + 1+1+1+5 = 31
  *
  */
@@ -140,7 +141,12 @@ struct scheduleRow {
   unsigned char  lastUsedAsn[5];
 };
 
-struct neighborsRow {
+/*
+ * size of structure
+ * 1+1+1+1 + 1+1+8+8 + 2+1+1+1 + 1+1+5+1 = 35
+ *
+ */
+struct neighborRow {
   unsigned char  row;
   unsigned char  used;
   unsigned char  parentPreference;
@@ -225,7 +231,8 @@ struct moteStatus {
 
   /* NeighborsRow */
 #define MAX_NEIGHBORS_ROW 64
-  struct neighborsRow neighbor_rows[MAX_NEIGHBORS_ROW];
+  struct neighborRow neighbor_rows[MAX_NEIGHBORS_ROW];
+  int neighbor_rows_max;
 
   /* kaPeriod */
   unsigned int kaPeriod;
@@ -376,6 +383,58 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
     }
   }
 
+};
+
+
+void parse_neighborRow(unsigned char inBuf[], unsigned int inLen)
+{
+  struct neighborRow nr;
+
+  if(inLen < (35+4)) {
+    tooShort++;
+    return;
+  }
+
+  nr.row        = inBuf[4];
+  nr.used       = inBuf[5];
+  nr.parentPreference = inBuf[6];
+  nr.stableNeighbor= inBuf[7];
+  nr.switchStabilityCounter = inBuf[8];
+  nr.addr_type  = inBuf[9];
+
+  nr.addr_bodyH = (unsigned long long)inBuf[10] +
+    (unsigned long long)inBuf[11] << 8 +
+    (unsigned long long)inBuf[12] << 16 +
+    (unsigned long long)inBuf[13] << 24 +
+    (unsigned long long)inBuf[14] << 32 +
+    (unsigned long long)inBuf[15] << 40 +
+    (unsigned long long)inBuf[16] << 48 +
+    (unsigned long long)inBuf[17] << 56;
+
+  nr.addr_bodyL = (unsigned long long)inBuf[18] +
+    (unsigned long long)inBuf[19] << 8 +
+    (unsigned long long)inBuf[20] << 16 +
+    (unsigned long long)inBuf[21] << 24 +
+    (unsigned long long)inBuf[22] << 32 +
+    (unsigned long long)inBuf[23] << 40 +
+    (unsigned long long)inBuf[24] << 48 +
+    (unsigned long long)inBuf[25] << 56;
+
+  nr.DAGrank = inBuf[26] + inBuf[27] << 8;
+  nr.rssi    = inBuf[28];
+  nr.numRx   = inBuf[29];
+  nr.numTx   = inBuf[30];
+  nr.numTxACK= inBuf[31];
+  nr.numWraps= inBuf[32];
+  memcpy(nr.asn, &inBuf[33], 5);
+  nr.joinPrio= inBuf[38];
+
+  if(nr.row < MAX_NEIGHBORS_ROW) {
+    stats.neighbor_rows[nr.row] = nr;
+    if(stats.neighbor_rows_max <= nr.row) {
+      stats.neighbor_rows_max = nr.row;
+    }
+  }
 };
 
 
