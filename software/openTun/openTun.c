@@ -274,7 +274,8 @@ void dump_screen(struct moteStatus *ms)
          ms->asn[0],         ms->asn[1],         ms->asn[2],
          ms->asn[3],         ms->asn[4]);
 
-  printf("\nSched Row: %03d\n", ms->sched_rows_max);
+  printf("\nSched    Row: %03d\n", ms->sched_rows_max);
+  printf(  "Neighbor Row: %03d\n", ms->neighbor_rows_max);
 }
 
 void parse_idmanager(unsigned char inBuf[], unsigned int inLen)
