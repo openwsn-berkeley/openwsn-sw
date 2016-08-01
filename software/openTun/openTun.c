@@ -196,9 +196,7 @@ struct moteStatus {
   unsigned short index_read;
 
   /* Asn */
-  unsigned char  asn_4;
-  unsigned short asn_2_3;
-  unsigned short asn_0_1;
+  unsigned char  asn[5];
 
   /* MacStats */
   unsigned char numSyncPkt;
@@ -251,7 +249,8 @@ void dump_screen(struct moteStatus *ms)
   puts(tput_clear);
   puts(tput_cup00);
 
-  printf("DAG: %02d   PANID: %02x%02x    SHORT: %02x%02x\n", ms->isDAGroot,
+  printf("DAG: %02d   DAGRANK: %02d  PANID: %02x%02x    SHORT: %02x%02x\n",
+         ms->isDAGroot, ms->myDAGrank,
          ms->myPANID_0, ms->myPANID_1, ms->my16bID_0, ms->my16bID_1);
 
   printf("EUI64: %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
@@ -261,6 +260,11 @@ void dump_screen(struct moteStatus *ms)
   printf("IPv6:  %02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
          ms->myPrefix_0, ms->myPrefix_1, ms->myPrefix_2, ms->myPrefix_3,
          ms->myPrefix_4, ms->myPrefix_5, ms->myPrefix_6, ms->myPrefix_7);
+
+  printf("\nASN:   %02x %02x %02x %02x %02x\n",
+         ms->asn[0],         ms->asn[1],         ms->asn[2],
+         ms->asn[3],         ms->asn[4]);
+
 }
 
 void parse_idmanager(unsigned char inBuf[], unsigned int inLen)
@@ -293,6 +297,23 @@ void parse_idmanager(unsigned char inBuf[], unsigned int inLen)
   stats.myPrefix_7= inBuf[24];
 }
 
+void parse_macstats(unsigned char inBuf[], unsigned int inLen)
+{
+  if(inLen < 15+4) {
+    tooShort++;
+    return;
+  }
+
+  stats.numSyncPkt = inBuf[5];
+  stats.numSyncAck = inBuf[6];
+  stats.minCorrection = inBuf[7] + inBuf[8]<<8;
+  stats.maxCorrection = inBuf[9] + inBuf[10]<<8;
+  stats.numDeSync  = inBuf[11];
+  stats.numTicsOn  = inBuf[12] + inBuf[13] << 8 + inBuf[14] << 16 + inBuf[15] << 24;
+  stats.numTicsTotal=inBuf[16] + inBuf[17] << 8 + inBuf[18] << 16 + inBuf[19] << 24;
+}
+
+
 void parse_status(unsigned char inBuf[], unsigned int inLen)
 {
   if(inLen < 4) return;
@@ -310,15 +331,20 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
     break;
 
   case 2:
-    printf("MyDagRank\n");
+    stats.myDAGrank = inBuf[4];
     break;
 
   case 3:
-    printf("OutputBuffer\n");
+    if(inLen >= 8) {
+      stats.index_read = inBuf[4] + inBuf[5]<<8;
+      stats.index_write= inBuf[6] + inBuf[7]<<8;
+    }
     break;
 
   case 4:
-    printf("Asn\n");
+    if(inLen >= 5 + 4) {
+      memcpy(stats.asn, inBuf+4, 5);
+    }
     break;
 
   case 5:
