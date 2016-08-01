@@ -255,6 +255,7 @@ void screen_init(void)
 
 void dump_screen(struct moteStatus *ms)
 {
+  int i;
   puts(tput_clear);
   puts(tput_cup00);
 
@@ -276,6 +277,23 @@ void dump_screen(struct moteStatus *ms)
 
   printf("\nSched    Row: %03d\n", ms->sched_rows_max);
   printf(  "Neighbor Row: %03d\n", ms->neighbor_rows_max);
+
+  printf("Schedule:\n");
+  for(i=0; i<ms->sched_rows_max; i++) {
+    struct scheduleRow *sr = &ms->sched_rows[i];
+    printf(" %02u lASN: %02x%02x%02x%02x%02x  CHAN: %03d/%05d Tx:%03d/%03d Rx: %03d %016lx%016lx\n",
+           sr->row,
+           sr->lastUsedAsn[0], sr->lastUsedAsn[1],
+           sr->lastUsedAsn[2], sr->lastUsedAsn[3], sr->lastUsedAsn[4],
+           sr->channelOffset, sr->slotOffset,
+           sr->numTx, sr->numTxACK, sr->numRx,
+           sr->neighbor_bodyH,
+           sr->neighbor_bodyL);
+  }
+  printf("\nNeighbours:\n");
+  for(i=0; i<ms->sched_rows_max; i++) {
+  }
+
 }
 
 void parse_idmanager(unsigned char inBuf[], unsigned int inLen)
@@ -738,6 +756,7 @@ main(int argc, char **argv)
   progname = argv[0];
 
   stats.sched_rows_max = -1;
+  stats.neighbor_rows_max = -1;
   screen_init();
 
   while(1) {
