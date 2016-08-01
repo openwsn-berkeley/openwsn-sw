@@ -121,6 +121,10 @@ unsigned short FCS16TAB[]={
 };
 
 
+/*
+ * 1+2+1+1+1+1 + 8 + 8 + 1+1+1+5 = 31
+ *
+ */
 struct scheduleRow {
   unsigned char  row;
   unsigned short slotOffset;
@@ -133,9 +137,7 @@ struct scheduleRow {
   unsigned char  numRx;
   unsigned char  numTx;
   unsigned char  numTxACK;
-  unsigned char  lastUsedAsn_4;
-  unsigned short lastUsedAsn_2_3;
-  unsigned short lastUsedAsn_0_1;
+  unsigned char  lastUsedAsn[5];
 };
 
 struct neighborsRow {
@@ -153,9 +155,7 @@ struct neighborsRow {
   unsigned char  numTx;
   unsigned char  numTxACK;
   unsigned char  numWraps;
-  unsigned char  asn_4;
-  unsigned short asn_2_3;
-  unsigned short asn_0_1;
+  unsigned char  asn[5];
   unsigned char  joinPrio;
 };
 
@@ -210,6 +210,7 @@ struct moteStatus {
   /* ScheduleRow */
 #define MAX_SCHEDULEROW 64
   struct scheduleRow  sched_rows[MAX_SCHEDULEROW];
+  int        sched_rows_max;
 
   /* Backoff */
   unsigned char backoffExponent;
@@ -250,7 +251,7 @@ void dump_screen(struct moteStatus *ms)
   puts(tput_clear);
   puts(tput_cup00);
 
-  printf("DAG: %02d   DAGRANK: %02d  PANID: %02x%02x    SHORT: %02x%02x\n",
+  printf("DAG: %02d   DAGRANK: %03d  PANID: %02x%02x    SHORT: %02x%02x\n",
          ms->isDAGroot, ms->myDAGrank,
          ms->myPANID_0, ms->myPANID_1, ms->my16bID_0, ms->my16bID_1);
 
@@ -266,6 +267,7 @@ void dump_screen(struct moteStatus *ms)
          ms->asn[0],         ms->asn[1],         ms->asn[2],
          ms->asn[3],         ms->asn[4]);
 
+  printf("\nSched Row: %03d\n", ms->sched_rows_max);
 }
 
 void parse_idmanager(unsigned char inBuf[], unsigned int inLen)
@@ -330,6 +332,51 @@ void parse_queueRow(unsigned char inBuf[], unsigned int inLen)
   }
 }
 
+void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
+{
+  struct scheduleRow sr;
+
+  if(inLen < (31+4)) {
+    tooShort++;
+    return;
+  }
+
+  sr.row        = inBuf[4];
+  sr.slotOffset = inBuf[5] + inBuf[6] << 8;
+  sr.type       = inBuf[7];
+  sr.shared     = inBuf[8];
+  sr.channelOffset = inBuf[9];
+  sr.neighbor_type = inBuf[10];
+  sr.neighbor_bodyH= (unsigned long long)inBuf[11] +
+    (unsigned long long)inBuf[12] << 8 +
+    (unsigned long long)inBuf[13] << 16 +
+    (unsigned long long)inBuf[14] << 24 +
+    (unsigned long long)inBuf[15] << 32 +
+    (unsigned long long)inBuf[16] << 40 +
+    (unsigned long long)inBuf[17] << 48 +
+    (unsigned long long)inBuf[18] << 56;
+  sr.neighbor_bodyL= (unsigned long long)inBuf[19] +
+    (unsigned long long)inBuf[20] << 8 +
+    (unsigned long long)inBuf[21] << 16 +
+    (unsigned long long)inBuf[22] << 24 +
+    (unsigned long long)inBuf[23] << 32 +
+    (unsigned long long)inBuf[24] << 40 +
+    (unsigned long long)inBuf[25] << 48 +
+    (unsigned long long)inBuf[26] << 56;
+
+  sr.numRx     = inBuf[27];
+  sr.numTx     = inBuf[28];
+  sr.numTxACK  = inBuf[29];
+  memcpy(sr.lastUsedAsn, &inBuf[30], 5);
+
+  if(sr.row < MAX_SCHEDULEROW) {
+    stats.sched_rows[sr.row] = sr;
+    stats.sched_rows_max = sr.row;
+  }
+
+};
+
+
 void parse_status(unsigned char inBuf[], unsigned int inLen)
 {
   if(inLen < 4) return;
@@ -369,6 +416,7 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
 
   case 6:
     if(verbose) printf("ScheduleRow\n");
+    parse_scheduleRow(inBuf, inLen);
     break;
 
   case 7:
@@ -627,6 +675,7 @@ main(int argc, char **argv)
 
   progname = argv[0];
 
+  stats.sched_rows_max = -1;
   screen_init();
 
   while(1) {
