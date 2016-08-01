@@ -232,6 +232,7 @@ struct moteStatus {
 
 
 unsigned int tooShort=0;
+unsigned int verbose =0;
 struct moteStatus stats;
 
 char tput_init[]={0x1b,0x5b,0x21,0x70,0x1b,0x5b,0x3f,0x33,
@@ -313,6 +314,21 @@ void parse_macstats(unsigned char inBuf[], unsigned int inLen)
   stats.numTicsTotal=inBuf[16] + inBuf[17] << 8 + inBuf[18] << 16 + inBuf[19] << 24;
 }
 
+void parse_queueRow(unsigned char inBuf[], unsigned int inLen)
+{
+  unsigned int i;
+  unsigned int queueCount = 4;
+
+  if(inLen < (QUEUE_ROW_COUNT*2)+4) {
+    tooShort++;
+    return;
+  }
+
+  for(i=0; i < QUEUE_ROW_COUNT; i++) {
+    stats.queueRow[i].creator = inBuf[queueCount++];
+    stats.queueRow[i].owner   = inBuf[queueCount++];
+  }
+}
 
 void parse_status(unsigned char inBuf[], unsigned int inLen)
 {
@@ -320,7 +336,7 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
   unsigned int moteId = inBuf[1] + inBuf[2]<<8;
   unsigned int statusElem = inBuf[3];
 
-  printf("moteId %04x status: %u --:", moteId, statusElem);
+  if(verbose) printf("moteId %04x status: %u --:", moteId, statusElem);
   switch(statusElem) {
   case 0:
     dump_screen(&stats);
@@ -348,27 +364,33 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
     break;
 
   case 5:
-    printf("MacStats\n");
+    parse_macstats(inBuf, inLen);
     break;
 
   case 6:
-    printf("ScheduleRow\n");
+    if(verbose) printf("ScheduleRow\n");
     break;
 
   case 7:
-    printf("backoff\n");
+    if(inLen >= 6) {
+      stats.backoffExponent = inBuf[4];
+      stats.backoff =         inBuf[5];
+    }
     break;
 
   case 8:
-    printf("QueueRow\n");
+    if(verbose) printf("QueueRow\n");
     break;
 
   case 9:
-    printf("NeighborsRow\n");
+    if(verbose) printf("NeighborsRow\n");
     break;
 
   case 10:
-    printf("kaPeriod\n");
+    /* kaPeriod */
+    if(inLen >= 8) {
+      stats.kaPeriod = inBuf[4] + inBuf[5] << 8 + inBuf[6] << 16 + inBuf[7] << 24;
+    }
     break;
 
   default:
@@ -383,38 +405,45 @@ void process_input(unsigned char inBuf[], unsigned int inLen)
   int i;
   switch(inBuf[0]) {
   case SERFRAME_MOTE2PC_DATA:
-    printf("mote2pc data(%u)\n  ", inLen);
+    if(verbose) {
+      printf("mote2pc data(%u)\n  ", inLen);
 
-    for(i=1; i<inLen; i++) {
-      printf("%02x ", inBuf[i]);
+      for(i=1; i<inLen; i++) {
+        printf("%02x ", inBuf[i]);
+      }
+      printf("\n");
     }
-    printf("\n");
     break;
 
   case SERFRAME_MOTE2PC_STATUS:
-    printf("mote2pc status(%u) \n  ", inLen);
+    if(verbose) printf("mote2pc status(%u) \n  ", inLen);
     parse_status(inBuf, inLen);
     break;
 
   case SERFRAME_MOTE2PC_INFO:
-    printf("mote2pc info\n");
+    if(verbose) printf("mote2pc info\n");
     break;
+
   case SERFRAME_MOTE2PC_ERROR:
-    printf("mote2pc error\n");
+    if(verbose) printf("mote2pc error\n");
     break;
+
   case SERFRAME_MOTE2PC_CRITICAL:
-    printf("mote2pc critical\n");
+    if(verbose) printf("mote2pc critical\n");
     break;
+
   case SERFRAME_MOTE2PC_REQUEST:
-    printf("mote2pc request(%u)\n  ", inLen);
-    for(i=1; i<inLen; i++) {
-      printf("%02x ", inBuf[i]);
+    if(verbose) {
+      printf("mote2pc request(%u)\n  ", inLen);
+      for(i=1; i<inLen; i++) {
+        printf("%02x ", inBuf[i]);
+      }
+      printf("\n");
     }
-    printf("\n");
     break;
 
   case SERFRAME_MOTE2PC_SNIFFED_PACKET:
-    printf("mote2pc sniffed\n");
+    if(verbose) printf("mote2pc sniffed\n");
     break;
 #if 0
   case SERFRAME_PC2MOTE_SETDAGROOT:
@@ -431,13 +460,13 @@ void process_input(unsigned char inBuf[], unsigned int inLen)
     break;
 #endif
   case SERFRAME_ACTION_YES:
-    printf("action yes\n");
+    if(verbose) printf("action yes\n");
     break;
   case SERFRAME_ACTION_NO:
-    printf("action no\n");
+    if(verbose) printf("action no\n");
     break;
   case SERFRAME_ACTION_TOGGLE:
-    printf("action toggle\n");
+    if(verbose) printf("action toggle\n");
     break;
   default:
     printf("invalid comment: %02x\n", inBuf[0]);
