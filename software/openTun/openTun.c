@@ -371,7 +371,9 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
 
   if(sr.row < MAX_SCHEDULEROW) {
     stats.sched_rows[sr.row] = sr;
-    stats.sched_rows_max = sr.row;
+    if(stats.sched_rows_max <= sr.row) {
+      stats.sched_rows_max = sr.row;
+    }
   }
 
 };
