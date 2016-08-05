@@ -12,6 +12,7 @@ import threading
 import time
 import traceback
 import sys
+import socket
 
 # TODO: import only when Windows
 
@@ -142,6 +143,12 @@ class OpenTunWindows(openTun.OpenTun):
         self.overlappedTx         = pywintypes.OVERLAPPED()
         self.overlappedTx.hEvent  = win32event.CreateEvent(None, 0, 0, None)
         
+        # [pendulum] create socket
+        self.sock = socket.socket(
+            socket.AF_INET,       # IPv4
+            socket.SOCK_DGRAM,    # UDP
+        )
+        
         # initialize parent class
         openTun.OpenTun.__init__(self)
     
@@ -158,6 +165,14 @@ class OpenTunWindows(openTun.OpenTun):
         
         # convert data to string
         data  = ''.join([chr(b) for b in data])
+        
+        # [pendulum] send to 127.0.0.1:3001, NOT IPv6
+        if len(data)==40+8+32:
+            data = data[-32:]
+            self.sock.sendto(data[-32:], ('127.0.0.1', 3001))
+            print 'sent to Matlab: {0}'.format(data)
+        
+        '''
         # write over tuntap interface
         try:
             win32file.WriteFile(self.tunIf, data, self.overlappedTx)
@@ -169,6 +184,7 @@ class OpenTunWindows(openTun.OpenTun):
             errMsg=u.formatCriticalMessage(err)
             print errMsg
             log.critical(errMsg)
+        '''
     
     def _createTunIf(self):
         '''
@@ -178,6 +194,8 @@ class OpenTunWindows(openTun.OpenTun):
             read/write operations.
         '''
         
+        # [pendulum] don't actually create the tun interface
+        '''
         # retrieve the ComponentId from the TUN/TAP interface
         componentId = self._get_tuntap_ComponentId()
         
@@ -221,16 +239,21 @@ class OpenTunWindows(openTun.OpenTun):
         
         # return the handler of the TUN interface
         return tunIf
+        '''
          
     def _createTunReadThread(self):
         '''
         Creates and starts the thread to read messages arriving from 
         the TUN interface
         '''
+        
+        # [pendulum] don't create the read thread
+        '''
         return TunReadThread(
             self.tunIf,
             self._v6ToMesh_notif
         )
+        '''
     
     #======================== helpers =========================================
     
