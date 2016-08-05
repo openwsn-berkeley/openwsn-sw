@@ -74,6 +74,8 @@ def findSerialPorts():
     # log
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in serialports]))
     
+    serialports.remove(('COM3', 115200)) # poipoipoi
+    
     return serialports
 
 #============================ class ===========================================
