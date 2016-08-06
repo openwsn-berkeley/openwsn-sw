@@ -256,8 +256,10 @@ void screen_init(void)
 void dump_screen(struct moteStatus *ms)
 {
   int i;
-  puts(tput_clear);
-  puts(tput_cup00);
+  if(!verbose) {
+    puts(tput_clear);
+    puts(tput_cup00);
+  }
 
   printf("DAG: %02d   DAGRANK: %03d  PANID: %02x%02x    SHORT: %02x%02x\n",
          ms->isDAGroot, ms->myDAGrank,
@@ -402,7 +404,12 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
   sr.numRx     = inBuf[27];
   sr.numTx     = inBuf[28];
   sr.numTxACK  = inBuf[29];
-  memcpy(sr.lastUsedAsn, &inBuf[30], 5);
+
+  sr.lastUsedAsn[0]  = inBuf[30];
+  sr.lastUsedAsn[2]  = inBuf[31];
+  sr.lastUsedAsn[1]  = inBuf[32];
+  sr.lastUsedAsn[4]  = inBuf[33];
+  sr.lastUsedAsn[3]  = inBuf[34];
 
   if(sr.row < MAX_SCHEDULEROW) {
     stats.sched_rows[sr.row] = sr;
@@ -454,7 +461,11 @@ void parse_neighborRow(unsigned char inBuf[], unsigned int inLen)
   nr.numTx   = inBuf[30];
   nr.numTxACK= inBuf[31];
   nr.numWraps= inBuf[32];
-  memcpy(nr.asn, &inBuf[33], 5);
+  nr.asn[0]  = inBuf[33];
+  nr.asn[2]  = inBuf[34];
+  nr.asn[1]  = inBuf[35];
+  nr.asn[4]  = inBuf[36];
+  nr.asn[3]  = inBuf[37];
   nr.joinPrio= inBuf[38];
 
   if(nr.row < MAX_NEIGHBORS_ROW) {
@@ -495,7 +506,11 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
 
   case 4:
     if(inLen >= 5 + 4) {
-      memcpy(stats.asn, inBuf+4, 5);
+      stats.asn[0]  = inBuf[4];
+      stats.asn[2]  = inBuf[5];
+      stats.asn[1]  = inBuf[6];
+      stats.asn[4]  = inBuf[7];
+      stats.asn[3]  = inBuf[8];
     }
     break;
 
@@ -689,7 +704,8 @@ void process_byte(unsigned char byte)
       inPos -= 2;
       process_input(inBuf, inPos);
     } else {
-      fprintf(stderr, "bad CRC: %02x vs %02x\n", crc, HDLC_CRCGOOD);
+      fprintf(stderr, "bad CRC: %02x vs %02x len=%u\n", crc,
+              HDLC_CRCGOOD, inPos);
     }
 
     currentstate = START;
