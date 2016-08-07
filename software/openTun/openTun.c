@@ -46,6 +46,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <getopt.h>
 
 //#include "opendefs.h"
 const char *progname;
@@ -280,7 +281,7 @@ void dump_screen(struct moteStatus *ms)
   printf("\nSched    Row: %03d\n", ms->sched_rows_max);
   printf(  "Neighbor Row: %03d\n", ms->neighbor_rows_max);
 
-  printf("Schedule:\n");
+  printf("Schedule:    ASN               offset   sent/ack     Rx  neighbor body ------------------\n");
   for(i=0; i<ms->sched_rows_max; i++) {
     struct scheduleRow *sr = &ms->sched_rows[i];
     printf(" %02u lASN: %02x%02x%02x%02x%02x  CHAN: %03d/%05d Tx:%03d/%03d Rx: %03d %016lx%016lx\n",
@@ -757,6 +758,18 @@ void setup_tty(int fd)
   }
 }
 
+void usage(void)
+{
+  fprintf(stderr, "openTun [--verbose] device\n");
+  exit(10);
+}
+
+static struct option const longopts[] =
+{
+    { "help",      0, 0, '?'},
+    { "verbose",   1, 0, 'v'},
+};
+
 int
 main(int argc, char **argv)
 {
@@ -764,13 +777,23 @@ main(int argc, char **argv)
   int ret;
   fd_set rset, wset;
   int motefd;
+  int c;
+  char *serialPort = "/dev/ttyAMA0";
 
-  if(argc != 2) {
-    fprintf(stderr, "Usage: openTun /dev/ttyXXX\n");
-    exit(2);
+
+  while((c = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
+    switch(c) {
+    case '?':
+    default:
+      usage();
+    }
   }
 
-  motefd = open(argv[1], O_RDWR|O_NDELAY);
+  if(optind < argc) {
+    serialPort = argv[optind];
+  }
+
+  motefd = open(serialPort, O_RDWR|O_NDELAY);
 
   if(motefd < 0) {
     perror("open");
