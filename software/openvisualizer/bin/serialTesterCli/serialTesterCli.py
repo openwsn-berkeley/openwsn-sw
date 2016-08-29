@@ -112,6 +112,8 @@ class serialTesterCli(OpenCli):
         self.moteConnector_handler.quit()
         self.moteProbe_handler.close()
 
+#============================ main ============================================
+
 def main():
     
     moteProbe_handler        = None
@@ -138,16 +140,18 @@ def main():
 #============================ application logging =============================
 import logging
 import logging.handlers
-logHandler = logging.handlers.RotatingFileHandler('serialTesterCli.log',
-                                                  maxBytes=2000000,
-                                                  backupCount=5,
-                                                  mode='w')
+logHandler = logging.handlers.RotatingFileHandler(
+    'serialTesterCli.log',
+    maxBytes=2000000,
+    backupCount=5,
+    mode='w'
+)
 logHandler.setFormatter(logging.Formatter("%(asctime)s [%(name)s:%(levelname)s] %(message)s"))
 for loggerName in [
-                   'SerialTester',
-                   'moteProbe',
-                   'OpenHdlc',
-                   ]:
+        'SerialTester',
+        'moteProbe',
+        'OpenHdlc',
+    ]:
     temp = logging.getLogger(loggerName)
     temp.setLevel(logging.DEBUG)
     temp.addHandler(logHandler)

@@ -134,10 +134,12 @@ class SerialTester(eventBusClient.eventBusClient):
         self._resetStats()
         
         # send packets and collect stats
-        for i in range(numTestPkt):
+        for pktNum in range(numTestPkt):
             
             # prepare random packet to send
             packetToSend = [random.randint(0x00,0xff) for _ in range(testPktLen)]
+            #packetToSend = [i+1 for i in range(testPktLen)]
+            #packetToSend = [0x00]*testPktLen
             
             # remember as last sent packet
             with self.dataLock:
@@ -155,6 +157,7 @@ class SerialTester(eventBusClient.eventBusClient):
                 self.stats['numSent']                 += 1
             
             # log
+            self._log('--- packet {0}'.format(pktNum))
             self._log('sent:     {0}'.format(self.formatList(self.lastSent)))
             
             # wait for answer
