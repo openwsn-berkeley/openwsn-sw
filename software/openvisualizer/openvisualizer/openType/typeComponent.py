@@ -150,6 +150,8 @@ class typeComponent(openType.openType):
             self.desc = 'CSENSORS'
         elif type==self.COMPONENT_CWELLKNOWN:
             self.desc = 'CWELLKNOWN'
+        elif type==self.COMPONENT_CSTORM:
+            self.desc = 'COMPONENT_CSTORM'
         
         elif type==self.COMPONENT_TECHO:
             self.desc = 'TECHO'
@@ -158,6 +160,8 @@ class typeComponent(openType.openType):
         
         elif type==self.COMPONENT_UECHO:
             self.desc = 'UECHO'
+        elif type==self.COMPONENT_UINJECT:
+            self.desc = 'COMPONENT_UINJECT'
         
         elif type==self.COMPONENT_RRT:
             self.desc = 'RRT'
