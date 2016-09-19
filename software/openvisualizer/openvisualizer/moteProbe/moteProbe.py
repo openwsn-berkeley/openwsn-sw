@@ -240,7 +240,7 @@ class moteProbe(threading.Thread):
                                                 outputToWrite = self.outputBuf.pop(0)
                                                 self.serial.write(outputToWrite)
                                     else:
-                                        with open('~/A8/serialData/'+socket.gethostname()++'.log','a') as f:
+                                        with open('~/A8/serialData/'+socket.gethostname()+'.log','a') as f:
                                             f.write(str([ord(c) for c in self.inputBuf])+'\n')
                                         # dispatch
                                         dispatcher.send(
