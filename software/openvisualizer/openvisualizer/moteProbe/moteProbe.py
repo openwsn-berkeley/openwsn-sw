@@ -68,8 +68,7 @@ def findSerialPorts():
             portMask = ['/dev/tty.usbserial-*']
         else:
             portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*']
-        for mask in portMask :
-            serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
+        serialports = [("/dev/ttyA8_M3", 500000)]
     
     # log
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in serialports]))
