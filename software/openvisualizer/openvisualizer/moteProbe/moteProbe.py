@@ -105,9 +105,6 @@ class moteProbe(threading.Thread):
             self.mode             = self.MODE_IOTLAB
         else:
             raise SystemError()
-
-        hostname = socket.gethostname()
-        self.serialFile = open(str(hostname)+'.log','w')
         
         # store params
         if   self.mode==self.MODE_SERIAL:
@@ -243,8 +240,8 @@ class moteProbe(threading.Thread):
                                                 outputToWrite = self.outputBuf.pop(0)
                                                 self.serial.write(outputToWrite)
                                     else:
-                                        if self.serialFile.closed == False:
-                                            self.serialFile.write(str([ord(c) for c in self.inputBuf])+'\n')
+                                        with open('~/A8/serialData/'+socket.gethostname()++'.log','a') as f:
+                                            f.write(str([ord(c) for c in self.inputBuf])+'\n')
                                         # dispatch
                                         dispatcher.send(
                                             sender        = self.name,
@@ -260,7 +257,6 @@ class moteProbe(threading.Thread):
             errMsg=u.formatCrashMessage(self.name,err)
             print errMsg
             log.critical(errMsg)
-            self.serialFile.close()
             sys.exit(-1)
     
     #======================== public ==========================================
@@ -275,7 +271,6 @@ class moteProbe(threading.Thread):
     
     def close(self):
         self.goOn = False
-        self.serialFile.close()
     
     #======================== private =========================================
     
