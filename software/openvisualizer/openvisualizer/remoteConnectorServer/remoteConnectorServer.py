@@ -10,7 +10,7 @@ log.addHandler(logging.NullHandler())
 
 import threading
 import json
-import zmq
+# import zmq
 
 from pydispatch import dispatcher
 
