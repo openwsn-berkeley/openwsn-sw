@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Thu, 18 Jun 2015 23:18:40
+# on Wed, 21 Sep 2016 18:22:22
 #
 
 components = {
@@ -43,6 +43,7 @@ components = {
   36: "UINJECT",
   37: "RRT",
   38: "SECURITY",
+  39: "USERIALBRIDGE",
 }
 
 errorDescriptions = {
@@ -55,7 +56,7 @@ errorDescriptions = {
    7: "wrong TCP state {0} (code location {1})",
    8: "TCP reset while in state {0} (code location {1})",
    9: "unsupported port number {0} (code location {1})",
-  10: "unexpected DAO (code location {0})",
+  10: "unexpected DAO (code location {0}). A change maybe happened on dagroot node.",
   11: "unsupported ICMPv6 type {0} (code location {1})",
   12: "unsupported 6LoWPAN parameter {1} at location {0}",
   13: "no next hop",
@@ -103,9 +104,10 @@ errorDescriptions = {
   55: "invalid packet frome radio, length {1} (code location {0})",
   56: "busy receiving when stop of serial activity, buffer input length {1} (code location {0})",
   57: "wrong CRC in input Buffer (input length {0})",
-  58: "frame received at asn {0} with timeCorrection of {1}",
+  58: "synchronized when received a packet",
   59: "security error on frameType {0}, code location {1}",
-  60: "sixtop return code {0} at sixtop state {1} ",
-  61: "6P count command returns Number of scheduled cells: {0}",
-  62: "6P List returns cells [({0},{1})]",
+  60: "sixtop return code {0} at sixtop state {1}",
+  61: "there are {0} cells to request mote",
+  62: "the cells reserved to request mote contains slot {0} and slot {1}",
+  63: "the slot {0} to be added is already in schedule",
 }
