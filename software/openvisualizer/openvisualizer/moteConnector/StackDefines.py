@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Wed, 21 Sep 2016 18:22:22
+# on Thu, 22 Sep 2016 18:09:15
 #
 
 components = {
@@ -110,4 +110,5 @@ errorDescriptions = {
   61: "there are {0} cells to request mote",
   62: "the cells reserved to request mote contains slot {0} and slot {1}",
   63: "the slot {0} to be added is already in schedule",
+  64: "watchdog timer fired.",
 }
