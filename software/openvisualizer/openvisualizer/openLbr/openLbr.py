@@ -407,8 +407,10 @@ class OpenLbr(eventBusClient.eventBusClient):
         # tf
         if ipv6['traffic_class']!=0:
             raise NotImplementedError('traffic_class={0} unsupported'.format(ipv6['traffic_class']))
-        if ipv6['flow_label']!=0:
-            raise NotImplementedError('flow_label={0} unsupported'.format(ipv6['flow_label']))
+        # comment the flow_label check as it's zero in 6lowpan network. See follow RFC:
+        # https://tools.ietf.org/html/rfc4944#section-10.1  
+        # if ipv6['flow_label']!=0:
+            # raise NotImplementedError('flow_label={0} unsupported'.format(ipv6['flow_label']))
         lowpan['tf']         = []
         
         # nh
