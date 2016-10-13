@@ -85,6 +85,9 @@ class ParserInfoErrorCritical(Parser.Parser):
     
     def _translateErrorDescription(self,error_code,arg1,arg2):
         try:
+            if error_code == 60:
+                arg1 = StackDefines.sixtop_returncode[arg1]
+                arg2 = StackDefines.sixtop_statemachine[arg2]
             return StackDefines.errorDescriptions[error_code].format(arg1,arg2)
         except KeyError:
             return "unknown error {0} arg1={1} arg2={2}".format(error_code,arg1,arg2)
