@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Thu, 18 Jun 2015 23:18:40
+# on Thu, 13 Oct 2016 16:59:38
 #
 
 components = {
@@ -43,6 +43,7 @@ components = {
   36: "UINJECT",
   37: "RRT",
   38: "SECURITY",
+  39: "USERIALBRIDGE",
 }
 
 errorDescriptions = {
@@ -50,12 +51,12 @@ errorDescriptions = {
    2: "received an echo reply",
    3: "getData asks for too few bytes, maxNumBytes={0}, fill level={1}",
    4: "the input buffer has overflown",
-   5: "the command is not allowed, command = {0}",
+   5: "the command is not allowerd, command = {0}",
    6: "unknown transport protocol {0} (code location {1})",
    7: "wrong TCP state {0} (code location {1})",
    8: "TCP reset while in state {0} (code location {1})",
    9: "unsupported port number {0} (code location {1})",
-  10: "unexpected DAO (code location {0})",
+  10: "unexpected DAO (code location {0}). A change maybe happened on dagroot node.",
   11: "unsupported ICMPv6 type {0} (code location {1})",
   12: "unsupported 6LoWPAN parameter {1} at location {0}",
   13: "no next hop",
@@ -103,9 +104,36 @@ errorDescriptions = {
   55: "invalid packet frome radio, length {1} (code location {0})",
   56: "busy receiving when stop of serial activity, buffer input length {1} (code location {0})",
   57: "wrong CRC in input Buffer (input length {0})",
-  58: "frame received at asn {0} with timeCorrection of {1}",
+  58: "synchronized when received a packet",
   59: "security error on frameType {0}, code location {1}",
-  60: "sixtop return code {0} at sixtop state {1} ",
-  61: "6P count command returns Number of scheduled cells: {0}",
-  62: "6P List returns cells [({0},{1})]",
+  60: "sixtop return code {0} at sixtop state {1}",
+  61: "there are {0} cells to request mote",
+  62: "the cells reserved to request mote contains slot {0} and slot {1}",
+  63: "the slot {0} to be added is already in schedule",
+}
+
+sixtop_returncode = {
+   6: "RC_SUCCESS",
+   7: "RC_ERR_VER",
+   8: "RC_ERR_SFID",
+   9: "RC_ERR_BUSY",
+  10: "RC_ERROR_NORES",
+  11: "RC_ERR_RESET",
+  12: "RC_ERR",
+}
+
+sixtop_statemachine = {
+   0: "IDLE",
+   1: "SENDING_REQUEST",
+   2: "WAIT_ADDREQUEST_SENDDONE",
+   3: "WAIT_DELETEREQUEST_SENDDONE",
+   4: "WAIT_COUNTREQUEST_SENDDONE",
+   5: "WAIT_LISTREQUEST_SENDDONE",
+   6: "WAIT_CLEARREQUEST_SENDDONE",
+   7: "WAIT_ADDRESPONSE",
+   8: "WAIT_DELETERESPONSE",
+   9: "WAIT_COUNTRESPONSE",
+  10: "WAIT_LISTRESPONSE",
+  11: "WAIT_CLEARRESPONSE",
+  12: "REQUEST_RECEIVED",
 }
