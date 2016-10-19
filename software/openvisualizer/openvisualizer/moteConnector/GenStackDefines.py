@@ -34,7 +34,7 @@ OUTPUT_FILE       = 'StackDefines.py'
 
 def genComponentCodes():
     
-    # find components code in openwsn.h
+    # find components code in opendefs.h
     codesFound = []
     for line in open(INPUT_FILE,'r'):
         m = re.search('\s*COMPONENT_(\S*)\s*=\s*(\S*),\s*',line)
@@ -57,7 +57,7 @@ def genComponentCodes():
 
 def genErrorDescriptions():
     
-    # find components code in openwsn.h
+    # find components code in opendefs.h
     codesFound = []
     for line in open(INPUT_FILE,'r'):
         m = re.search('\s*ERR_(\S*)\s*=\s*(\S*),\s*\/\/\s*([\S\s]*)',line)
@@ -81,7 +81,7 @@ def genErrorDescriptions():
 
 def genSixtopReturnCodes():
     
-    # find components code in openwsn.h
+    # find components code in sixtop.h
     codesFound = []
     for line in open(INPUT_FILE_SIXTOP,'r'):
         m = re.search('\s*#define\s*IANA_6TOP_RC_(\S*)\s*(\S*)\s*\S*\s*(\S*)\s*\S*\s*([\S\s]*)',line)
@@ -105,7 +105,7 @@ def genSixtopReturnCodes():
 
 def genSixtopStateMachine():
     
-    # find components code in openwsn.h
+    # find components code in sixtop.h
     codesFound = []
     for line in open(INPUT_FILE_SIXTOP,'r'):
         m = re.search('\s*SIX_STATE_(\S*)\s*=\s*(\S*),\s*',line)
@@ -131,7 +131,7 @@ def genSixtopStateMachine():
 def main():
     
     if os.path.exists(INPUT_FILE) and os.path.exists(INPUT_FILE_SIXTOP):
-        # we can access the openwsn.h file
+        # we can access the opendefs.h and sixtop file
         
         # gather the information
         output  = []
