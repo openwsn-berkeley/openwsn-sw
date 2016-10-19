@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Thu, 13 Oct 2016 16:59:38
+# on Wed, 19 Oct 2016 16:03:07
 #
 
 components = {
@@ -136,4 +136,5 @@ sixtop_statemachine = {
   10: "WAIT_LISTRESPONSE",
   11: "WAIT_CLEARRESPONSE",
   12: "REQUEST_RECEIVED",
+  13: "WAIT_RESPONSE_SENDDONE",
 }
