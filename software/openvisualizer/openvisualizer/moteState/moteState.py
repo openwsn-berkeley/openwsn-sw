@@ -139,6 +139,17 @@ class StateAsn(StateElem):
         self.data[0]['asn'].update(notif.asn_0_1,
                                    notif.asn_2_3,
                                    notif.asn_4)
+class StateJoined(StateElem):
+    
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        if 'joined' not in self.data[0]:
+            self.data[0]['joined']             = typeAsn.typeAsn()
+        self.data[0]['joined'].update(notif.asn_0_1,
+                                   notif.asn_2_3,
+                                   notif.asn_4)
 
 class StateMacStats(StateElem):
     
@@ -384,6 +395,7 @@ class moteState(eventBusClient.eventBusClient):
     
     ST_OUPUTBUFFER      = 'OutputBuffer'
     ST_ASN              = 'Asn'
+    ST_JOINED           = 'Joined'
     ST_MACSTATS         = 'MacStats'
     ST_SCHEDULEROW      = 'ScheduleRow'
     ST_SCHEDULE         = 'Schedule'
@@ -399,6 +411,7 @@ class moteState(eventBusClient.eventBusClient):
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
+        ST_JOINED,
         ST_MACSTATS,
         ST_SCHEDULE,
         ST_BACKOFF,
@@ -473,6 +486,7 @@ class moteState(eventBusClient.eventBusClient):
         
         self.state[self.ST_OUPUTBUFFER]     = StateOutputBuffer()
         self.state[self.ST_ASN]             = StateAsn()
+        self.state[self.ST_JOINED]          = StateJoined()
         self.state[self.ST_MACSTATS]        = StateMacStats()
         self.state[self.ST_SCHEDULE]        = StateTable(
                                                 StateScheduleRow,
