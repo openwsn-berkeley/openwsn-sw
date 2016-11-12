@@ -219,7 +219,17 @@ class ParserStatus(Parser.Parser):
                                         'kaPeriod',                  # H
                                     ],
                                 )
-    
+        self._addFieldsParser   (
+                                    3,
+                                    11,
+                                    'Joined',
+                                    '<BHH',
+                                    [
+                                        'joinedAsn_4',                     # B
+                                        'joinedAsn_2_3',                   # H
+                                        'joinedAsn_0_1',                   # H
+                                    ],
+                                )
     #======================== public ==========================================
     
     def parseInput(self,input):

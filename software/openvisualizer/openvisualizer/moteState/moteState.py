@@ -78,7 +78,7 @@ class StateElem(object):
             content = self._elemToDict(self.meta)
         else:
             raise ValueError('No aspect named {0}'.format(aspect))
-            
+        
         return json.dumps(content,
                           sort_keys = bool(isPrettyPrint),
                           indent    = 4 if isPrettyPrint else None)
@@ -145,11 +145,11 @@ class StateJoined(StateElem):
         StateElem.update(self)
         if len(self.data)==0:
             self.data.append({})
-        if 'joined' not in self.data[0]:
-            self.data[0]['joined']             = typeAsn.typeAsn()
-        self.data[0]['joined'].update(notif.asn_0_1,
-                                   notif.asn_2_3,
-                                   notif.asn_4)
+        if 'joinedAsn' not in self.data[0]:
+            self.data[0]['joinedAsn']             = typeAsn.typeAsn()
+        self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
+                                   notif.joinedAsn_2_3,
+                                   notif.joinedAsn_4)
 
 class StateMacStats(StateElem):
     
@@ -395,7 +395,6 @@ class moteState(eventBusClient.eventBusClient):
     
     ST_OUPUTBUFFER      = 'OutputBuffer'
     ST_ASN              = 'Asn'
-    ST_JOINED           = 'Joined'
     ST_MACSTATS         = 'MacStats'
     ST_SCHEDULEROW      = 'ScheduleRow'
     ST_SCHEDULE         = 'Schedule'
@@ -408,10 +407,10 @@ class moteState(eventBusClient.eventBusClient):
     ST_IDMANAGER        = 'IdManager'
     ST_MYDAGRANK        = 'MyDagRank'
     ST_KAPERIOD         = 'kaPeriod'
+    ST_JOINED           = 'Joined'
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
-        ST_JOINED,
         ST_MACSTATS,
         ST_SCHEDULE,
         ST_BACKOFF,
@@ -421,6 +420,7 @@ class moteState(eventBusClient.eventBusClient):
         ST_IDMANAGER, 
         ST_MYDAGRANK,
         ST_KAPERIOD,
+        ST_JOINED,
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
@@ -557,6 +557,9 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_MYDAGRANK].update,
             self.parserStatus.named_tuple[self.ST_KAPERIOD]:
                 self.state[self.ST_KAPERIOD].update,
+            self.parserStatus.named_tuple[self.ST_JOINED]:
+                self.state[self.ST_JOINED].update,
+
         }
         
         # initialize parent class
