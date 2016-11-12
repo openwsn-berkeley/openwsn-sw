@@ -281,6 +281,7 @@
 									        
 									        if (hasJson) {
 									            asnJson      = $.parseJSON(json.Asn)[0];
+                                                                                    joinedJson   = $.parseJSON(json.Asn)[0];
 									            idJson       = $.parseJSON(json.IdManager)[0];
 									            syncJson     = $.parseJSON(json.IsSync)[0];
 									            dagrankJson  = $.parseJSON(json.MyDagRank)[0];
@@ -302,7 +303,7 @@
 									        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' : 'Not synchronized');
 									        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
 									        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
-									        $("#join_fld").text(          hasJson ? asnJson.asn                     : '');
+									        $("#join_fld").text(         hasJson ? joinedJson.asn                     : '');
 									        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
 									        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
 									        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');
