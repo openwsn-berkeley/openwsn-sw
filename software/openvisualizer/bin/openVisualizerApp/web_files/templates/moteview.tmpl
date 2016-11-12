@@ -158,6 +158,11 @@
 	                                                        <span class="pull-right text-muted small" id="dagrank_fld"><em></em>
 	                                                        </span>
 	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-bolt fa-fw"></i> isJoined
+	                                                        <span class="pull-right text-muted small" id="join_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
 	                                                </div>
 	                                                <h5>Output Buffer</h5>
 	                                                <div class="list-group">
@@ -297,6 +302,7 @@
 									        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' : 'Not synchronized');
 									        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
 									        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
+									        $("#join_fld").text(          hasJson ? asnJson.asn                     : '');
 									        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
 									        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
 									        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');
