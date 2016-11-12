@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Wed, 19 Oct 2016 16:03:07
+# on Tue, 11 Apr 2017 11:42:16
 #
 
 components = {
@@ -44,6 +44,7 @@ components = {
   37: "RRT",
   38: "SECURITY",
   39: "USERIALBRIDGE",
+  40: "CJOIN",
 }
 
 errorDescriptions = {
@@ -51,7 +52,7 @@ errorDescriptions = {
    2: "received an echo reply",
    3: "getData asks for too few bytes, maxNumBytes={0}, fill level={1}",
    4: "the input buffer has overflown",
-   5: "the command is not allowerd, command = {0}",
+   5: "the command is not allowed, command = {0}",
    6: "unknown transport protocol {0} (code location {1})",
    7: "wrong TCP state {0} (code location {1})",
    8: "TCP reset while in state {0} (code location {1})",
@@ -110,6 +111,7 @@ errorDescriptions = {
   61: "there are {0} cells to request mote",
   62: "the cells reserved to request mote contains slot {0} and slot {1}",
   63: "the slot {0} to be added is already in schedule",
+  64: "node joined",
 }
 
 sixtop_returncode = {
