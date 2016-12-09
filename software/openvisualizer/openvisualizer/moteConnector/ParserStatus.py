@@ -187,7 +187,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBQQHbBBBBBHHB',
+                                    '<BBBBBBQQHbBBBBBHHBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
@@ -207,6 +207,7 @@ class ParserStatus(Parser.Parser):
                                         'asn_2_3',                   # H
                                         'asn_0_1',                   # H
                                         'joinPrio',                  # B
+                                        'isNoRes',                   # B
                                     ],
                                 )
         self._addFieldsParser   (   
