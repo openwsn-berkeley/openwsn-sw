@@ -290,6 +290,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
                  
             elif ipv6dic['next_header']==self.IANA_UDP:
+                print ipv6dic['payload']
                 #udp header -- can be compressed.. assume first it is not compressed.
                 if len(ipv6dic['payload'])<5:
                     log.critical("wrong payload lenght on UDP packet {0}".format(",".join(str(c) for c in data)))
@@ -702,7 +703,6 @@ class OpenLbr(eventBusClient.eventBusClient):
                 pkt_ipv6['next_header'] = (pkt_lowpan[ptr])
                 ptr = ptr+1
             elif nh == self.IPHC_NH_COMPRESSED:
-                # log.error("unsupported nh==IPHC_NH_COMPRESSED")
                 # the next header will be retrieved later
                 pass
             else:
@@ -773,6 +773,8 @@ class OpenLbr(eventBusClient.eventBusClient):
                         pkt_ipv6['next_header'] = self.IPV6_HEADER
                     else:
                         log.error("wrong NH_EID=="+str(eid))
+                elif pkt_lowpan[ptr] & self.NHC_UDP_ID == self.NHC_UDP_ID:
+                    pkt_ipv6['next_header'] = self.IANA_UDP
             
             #hop by hop header 
             #composed of NHC, NextHeader,Len + Rpl Option
