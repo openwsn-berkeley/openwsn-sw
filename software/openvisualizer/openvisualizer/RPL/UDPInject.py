@@ -26,7 +26,7 @@ from openvisualizer.eventBus import eventBusClient
 
 class UDPInject(eventBusClient.eventBusClient):
    
-    UDP_INJECT_PORT  = 2000
+    UDP_INJECT_PORT  = 61617 # 0xf0b1
     
     def __init__(self):
                 # initialize parent class
@@ -66,7 +66,6 @@ class UDPInject(eventBusClient.eventBusClient):
         
         Calculate latency values are in ms[SUPERFRAMELENGTH].
         '''
-
         address    = ",".join(hex(c) for c in data[0])
         asn        = struct.unpack('<HHB',''.join([chr(c) for c in data[1][:5]]))
         counter    = struct.unpack('<H',''.join([chr(c) for c in data[1][5:]]))
@@ -81,6 +80,10 @@ class UDPInject(eventBusClient.eventBusClient):
         self.stateLock.acquire()
         self.contentStats.update({str(address):stats})
         self.stateLock.release()
+
+        # print self.contentStats
+
+        return True
 
     # this is not activated as this function are not bound to a signal
     def _infoDagRoot_notif(self,sender,signal,data):
