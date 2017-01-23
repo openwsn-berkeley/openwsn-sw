@@ -67,6 +67,11 @@ class OpenTun(eventBusClient.eventBusClient):
                     'callback'    : self._getNetworkPrefix_notif,
                 },
                 {
+                    'sender'      : self.WILDCARD,
+                    'signal'      : 'getNetworkHost',
+                    'callback'    : self._getNetworkHost_notif,
+                },
+                {
                     'sender'   : self.WILDCARD,
                     'signal'   : 'v6ToInternet',
                     'callback' : self._v6ToInternet_notif
@@ -129,6 +134,9 @@ class OpenTun(eventBusClient.eventBusClient):
     def _getNetworkPrefix_notif(self,sender,signal,data):
         return IPV6PREFIX
     
+    def _getNetworkHost_notif(self,sender,signal,data):
+        return IPV6HOST
+
     def _v6ToMesh_notif(self,data):
         '''
         Called when receiving data from the TUN interface.

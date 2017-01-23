@@ -290,7 +290,6 @@ class OpenLbr(eventBusClient.eventBusClient):
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
                  
             elif ipv6dic['next_header']==self.IANA_UDP:
-                print ipv6dic['payload']
                 #udp header -- can be compressed.. assume first it is not compressed.
                 if len(ipv6dic['payload'])<5:
                     log.critical("wrong payload lenght on UDP packet {0}".format(",".join(str(c) for c in data)))
@@ -333,9 +332,10 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
                     ipv6dic['app_payload']=ipv6dic['payload'][8:]
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,u.buf2int(ipv6dic['udp_dest_port']))
+
             
             #keep payload and app_payload in case we want to assemble the message later. 
-            #ass source address is being retrieved from the IPHC header, the signal includes it in case
+            #as source address is being retrieved from the IPHC header, the signal includes it in case
             #receiver such as RPL DAO processing needs to know the source.               
             
             success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
