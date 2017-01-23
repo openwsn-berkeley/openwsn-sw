@@ -17,10 +17,10 @@ RPL Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`UDPLatency` Module
+:mod:`UDPInject` Module
 ------------------------
 
-.. automodule:: openvisualizer.RPL.UDPLatency
+.. automodule:: openvisualizer.RPL.UDPInject
     :members:
     :undoc-members:
     :show-inheritance:

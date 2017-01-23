@@ -118,6 +118,13 @@ class OpenLbr(eventBusClient.eventBusClient):
     
     NHC_UDP_MASK             = 0xF8
     NHC_UDP_ID               = 0xF0
+    NHC_UDP_PORTS_MASK       = 0x03
+
+    NHC_UDP_PORTS_INLINE     = 0
+    NHC_UDP_PORTS_16S_8D     = 1
+    NHC_UDP_PORTS_8S_16D     = 2
+    NHC_UDP_PORTS_4S_4D      = 3
+
     
     def __init__(self):
         
@@ -298,46 +305,62 @@ class OpenLbr(eventBusClient.eventBusClient):
                 
                 if ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID:
                     
-                    oldUdp=ipv6dic['payload'][:5]
-                    #re-arrange fields and inflate
-                    newUdp = []
-                    newUdp += oldUdp[1:3] # Source Port
-                    newUdp += oldUdp[3:5] # Destination Port
-                    length = 8+len(pkt[5:])
-                    newUdp += [(length & 0xFF00) >> 8] # Length
-                    newUdp += [(length & 0x00FF) >> 0]
+                    lowpan_nhc        = ipv6dic['payload'][0]
+                    udp_header_length = 0
+                    newUdp            = []
+
+                    if lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_INLINE:
+                        newUdp += [u.buf2int(ipv6dic['payload'][1:3])]
+                        newUdp += [u.buf2int(ipv6dic['payload'][3:5])]
+                        udp_header_length = 5
+                    elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_16S_8D:
+                        newUdp += [u.buf2int(ipv6dic['payload'][1:3])]
+                        newUdp += [0xf000 + ipv6dic['payload'][3]]
+                        udp_header_length = 4
+                    elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_8S_16D:
+                        newUdp += [0xf000 + ipv6dic['payload'][1]]
+                        newUdp += [u.buf2int(ipv6dic['payload'][2:4])]
+                        udp_header_length = 4
+                    elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_4S_4D:
+                        newUdp += [0xf0b0 +((ipv6dic['payload'][1] >> 4) & 0x0f)]
+                        newUdp += [0xf0b0 +((ipv6dic['payload'][1] >> 0) & 0x0f)]
+                        udp_header_length = 2
+
                     idxCS = len(newUdp) # remember index of checksum
                     newUdp += [0x00,0x00] # Checksum (placeholder)
+                    udp_header_length += 2
+
                     #append payload to compute crc again
-                    newUdp += ipv6dic['payload'][5:] # data octets
+                    newUdp += ipv6dic['payload'][udp_header_length:] # data octets
                     
                     checksum = u.calculateCRC(newUdp)
                     #fill crc with the right value.
                     newUdp[idxCS] = checksum[0]
                     newUdp[idxCS+1] = checksum[1]
+
                     #keep fields for later processing if needed
-                    ipv6dic['udp_src_port']=newUdp[:2]
-                    ipv6dic['udp_dest_port']=newUdp[2:4]
-                    ipv6dic['udp_length']=newUdp[4:6]
-                    ipv6dic['udp_checksum']=newUdp[6:8]
-                    ipv6dic['app_payload']=newUdp[8:]
+                    ipv6dic['udp_src_port']=newUdp[0]
+                    ipv6dic['udp_dest_port']=newUdp[1]
+                    ipv6dic['udp_length']=len(ipv6dic['payload'])
+                    ipv6dic['udp_checksum']=newUdp[2:4]
+                    ipv6dic['app_payload']=newUdp[4:]
                     
                     #substitute udp header by the uncompressed header.               
-                    ipv6dic['payload'] =newUdp[:8] + ipv6dic['payload'][5:]
+                    ipv6dic['payload'] = newUdp
                 else:
                     #No UDP header compressed    
-                    ipv6dic['udp_src_port']=ipv6dic['payload'][:2]
-                    ipv6dic['udp_dest_port']=ipv6dic['payload'][2:4]
+                    ipv6dic['udp_src_port']=u.buf2int(ipv6dic['payload'][:2])
+                    ipv6dic['udp_dest_port']=u.buf2int(ipv6dic['payload'][2:4])
                     ipv6dic['udp_length']=ipv6dic['payload'][4:6]
                     ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
                     ipv6dic['app_payload']=ipv6dic['payload'][8:]
-                dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,u.buf2int(ipv6dic['udp_dest_port']))
+                dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,ipv6dic['udp_dest_port'])
             
             #keep payload and app_payload in case we want to assemble the message later. 
-            #ass source address is being retrieved from the IPHC header, the signal includes it in case
+            #as source address is being retrieved from the IPHC header, the signal includes it in case
             #receiver such as RPL DAO processing needs to know the source.               
-            
-            success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))    
+
+            success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))
             
             if success:
                 return
@@ -702,7 +725,6 @@ class OpenLbr(eventBusClient.eventBusClient):
                 pkt_ipv6['next_header'] = (pkt_lowpan[ptr])
                 ptr = ptr+1
             elif nh == self.IPHC_NH_COMPRESSED:
-                # log.error("unsupported nh==IPHC_NH_COMPRESSED")
                 # the next header will be retrieved later
                 pass
             else:
@@ -773,6 +795,8 @@ class OpenLbr(eventBusClient.eventBusClient):
                         pkt_ipv6['next_header'] = self.IPV6_HEADER
                     else:
                         log.error("wrong NH_EID=="+str(eid))
+                elif pkt_lowpan[ptr] & self.NHC_UDP_ID == self.NHC_UDP_ID:
+                    pkt_ipv6['next_header'] = self.IANA_UDP
             
             #hop by hop header 
             #composed of NHC, NextHeader,Len + Rpl Option
