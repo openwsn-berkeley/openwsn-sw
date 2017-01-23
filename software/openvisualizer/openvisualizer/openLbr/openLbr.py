@@ -347,7 +347,6 @@ class OpenLbr(eventBusClient.eventBusClient):
                     
                     #substitute udp header by the uncompressed header.               
                     ipv6dic['payload'] = newUdp
-                    print newUdp
                 else:
                     #No UDP header compressed    
                     ipv6dic['udp_src_port']=u.buf2int(ipv6dic['payload'][:2])
