@@ -56,7 +56,7 @@ class OpenVisualizerApp(object):
         self.openLbr              = openLbr.OpenLbr()
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
-        self.UDPInject            = UDPInject.UDPInject()
+        self.udpInject            = UDPInject.UDPInject()
         self.DAGrootList          = []
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 

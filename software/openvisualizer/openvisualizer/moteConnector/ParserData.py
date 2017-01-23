@@ -78,12 +78,12 @@ class ParserData(Parser.Parser):
         
         # when the packet goes to internet it comes with the asn at the beginning as timestamp.
          
-        # cross layer trick here. capture UDP packet from UDPInject and get ASN to compute latency.
+        # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
         # then notify a latency component that will plot that information.
         # port 61001==0xee,0x49
         if len(input) >37:
            if input[36]==238 and input[37]==73:
-            # udp port 61001 for UDPInject app.
+            # udp port 61001 for udplatency app.
                aux      = input[len(input)-5:]               # last 5 bytes of the packet are the ASN in the UDP latency packet
                diff     = self._asndiference(aux,asnbytes)   # calculate difference 
                timeinus = diff*self.MSPERSLOT                # compute time in ms
@@ -109,7 +109,7 @@ class ParserData(Parser.Parser):
                # for x in computed:
                    #input.append(x)
            else:
-               # no UDPInject
+               # no udplatency
                # print input
                pass     
         else:

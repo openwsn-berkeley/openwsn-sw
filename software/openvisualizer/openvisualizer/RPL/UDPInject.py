@@ -10,7 +10,7 @@ Module which receives UDP Latency messages .
                   April 2013
 '''
 import logging
-log = logging.getLogger('UDPInject')
+log = logging.getLogger('udpInject')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
