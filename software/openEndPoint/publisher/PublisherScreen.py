@@ -32,7 +32,7 @@ class PublisherScreen(Publisher.Publisher):
                                                data)
         
         file = open("poipoi.txt","a")
-        file.write(' '.join(["%.2x"%b for b in data]) + '\n')
+        file.write(' '.join(["%.2x"%data[b] for b in data]) + '\n')
         file.close()
     
     #======================== private =========================================
