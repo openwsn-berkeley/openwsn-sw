@@ -52,8 +52,7 @@ class remoteConnectorServer(object):
         self.publisher.bind(self.pub_address)
         log.info('Publisher started on %s' % self.pub_address)
 
-        self.threads = [threading.Thread(target=self._handle_sub),
-                        threading.Thread(target=self._handle_req),
+        self.threads = [threading.Thread(target=self._handle_req),
                         threading.Thread(target=self._handle_pub_all),
                         threading.Thread(target=self._handle_admin)]
 
@@ -134,31 +133,6 @@ class remoteConnectorServer(object):
                         count += 1
                         subscriptions.remove(unsub)
             admin.send_json({"subscriptions": list(subscriptions)})
-
-    def _handle_sub(self):
-        """
-
-        :return:
-        """
-        context = zmq.Context()
-        subscriber = context.socket(zmq.SUB)
-        subscriber.setsockopt(zmq.IPV6, 1)
-        subscriber.setsockopt(zmq.IPV4ONLY, 0)
-        subscriber.setsockopt(zmq.SUBSCRIBE, "")
-        log.info("Subscriber started")
-
-        count = 0
-        while True:
-            event = subscriber.recv_json()
-            if count > 10:
-                log.info("Received remote event\n" + json.dumps(event) + "\nDispatching to event bus")
-                count = 0
-            dispatcher.send(
-                sender=event['sender'].encode("utf8"),
-                signal=event['signal'].encode("utf8"),
-                data=event['data']
-            )
-            count += 1
 
     def _handle_req(self):
         """
