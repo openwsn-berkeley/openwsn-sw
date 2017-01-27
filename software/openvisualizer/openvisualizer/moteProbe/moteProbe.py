@@ -25,6 +25,7 @@ from   pydispatch import dispatcher
 import OpenHdlc
 import openvisualizer.openvisualizer_utils as u
 from   openvisualizer.moteConnector import OpenParser
+from   openvisualizer.moteConnector.SerialTester import SerialTester
 
 #============================ functions =======================================
 
@@ -67,14 +68,30 @@ def findSerialPorts():
         if platform.system() == 'Darwin':
             portMask = ['/dev/tty.usbserial-*']
         else:
-            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*']
+            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
         for mask in portMask :
             serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
+
+    # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
+    # Also test for 500000 to find IoT Lab M3 motes
+    mote_ports = []
+
+    for port in serialports:
+        for baudrate in [port[1], 500000]:
+            probe = moteProbe(serialport=(port[0],baudrate))
+            tester = SerialTester(probe.portname)
+            tester.setNumTestPkt(1)
+            tester.setTimeout(1)
+            tester.test(blocking=True)
+            if tester.getStats()['numOk'] >= 1:
+                mote_ports.append((port[0],baudrate));
+            probe.close()
+            probe.join()
     
     # log
-    log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in serialports]))
+    log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
     
-    return serialports
+    return mote_ports
 
 #============================ class ===========================================
 
@@ -174,6 +191,7 @@ class moteProbe(threading.Thread):
                     self.serial = serial.Serial(self.serialport,self.baudrate)
                     self.serial.setDTR(0)
                     self.serial.setRTS(0)
+                    self.serial.setTimeout(1)
                 elif self.mode==self.MODE_EMULATED:
                     self.serial = self.emulatedMote.bspUart
                 elif self.mode==self.MODE_IOTLAB:
@@ -186,6 +204,8 @@ class moteProbe(threading.Thread):
                     try:
                         if   self.mode==self.MODE_SERIAL:
                             rxBytes = self.serial.read(1)
+                            if rxBytes == 0: # timeout
+                                continue
                         elif self.mode==self.MODE_EMULATED:
                             rxBytes = self.serial.read()
                         elif self.mode==self.MODE_IOTLAB:
@@ -257,6 +277,9 @@ class moteProbe(threading.Thread):
             print errMsg
             log.critical(errMsg)
             sys.exit(-1)
+        finally:
+            if self.mode==self.MODE_SERIAL and self.serial is not None:
+                self.serial.close()
     
     #======================== public ==========================================
     
