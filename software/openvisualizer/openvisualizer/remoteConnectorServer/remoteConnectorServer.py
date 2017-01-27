@@ -141,15 +141,15 @@ class remoteConnectorServer(object):
         :return:
         """
         context = zmq.Context()
-        subscriber = context.socket(zmq.SUB)
-        subscriber.setsockopt(zmq.IPV6, 1)
-        subscriber.setsockopt(zmq.IPV4ONLY, 0)
-        subscriber.setsockopt(zmq.SUBSCRIBE, "")
+        self.subscriber = context.socket(zmq.SUB)
+        self.subscriber.setsockopt(zmq.IPV6, 1)
+        self.subscriber.setsockopt(zmq.IPV4ONLY, 0)
+        self.subscriber.setsockopt(zmq.SUBSCRIBE, "")
         log.info("Subscriber started")
 
         count = 0
         while True:
-            event = subscriber.recv_json()
+            event = self.subscriber.recv_json()
             if count > 10:
                 log.info("Received remote event\n" + json.dumps(event) + "\nDispatching to event bus")
                 count = 0
