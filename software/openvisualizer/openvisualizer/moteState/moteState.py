@@ -258,7 +258,7 @@ class StateNeighborsRow(StateElem):
         self.data[0]['asn'].update(notif.asn_0_1,
                                    notif.asn_2_3,
                                    notif.asn_4)
-        self.data[0]['isNoRes']                  = notif.isNoRes
+        self.data[0]['f6PNORES']                 = notif.f6PNORES
 
 class StateIsSync(StateElem):
     
@@ -513,7 +513,7 @@ class moteState(eventBusClient.eventBusClient):
                                                         'numWraps',
                                                         'asn',
                                                         'joinPrio',
-                                                        'isNoRes'
+                                                        'f6PNORES'
                                                     ]
                                                 ))
         self.state[self.ST_ISSYNC]          = StateIsSync()

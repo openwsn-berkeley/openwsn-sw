@@ -24,7 +24,7 @@ from openvisualizer.moteState       import moteState
 from openvisualizer.RPL             import RPL
 from openvisualizer.openLbr         import openLbr
 from openvisualizer.openTun         import openTun
-from openvisualizer.RPL             import UDPLatency
+from openvisualizer.RPL             import UDPInject
 from openvisualizer.RPL             import topology
 from openvisualizer                 import appdirs
 from openvisualizer.remoteConnectorServer   import remoteConnectorServer
@@ -56,7 +56,7 @@ class OpenVisualizerApp(object):
         self.openLbr              = openLbr.OpenLbr()
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
-        self.udpLatency           = UDPLatency.UDPLatency()
+        self.udpInject            = UDPInject.UDPInject()
         self.DAGrootList          = []
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
