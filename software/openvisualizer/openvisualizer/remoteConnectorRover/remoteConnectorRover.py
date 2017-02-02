@@ -9,7 +9,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import threading
-# import zmq
+import zmq
 
 from pydispatch import dispatcher
 
