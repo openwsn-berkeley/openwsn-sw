@@ -69,28 +69,9 @@ def findSerialPorts():
             portMask = ['/dev/tty.usbserial-*']
         else:
             portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
-        serialports = [("/dev/ttyA8_M3", 115200)]
-
-    # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
-    # Also test for 500000 to find IoT Lab M3 motes
-    mote_ports = []
-
-    for port in serialports:
-        for baudrate in [port[1], 500000]:
-            probe = moteProbe(serialport=(port[0],baudrate))
-            tester = SerialTester(probe.portname)
-            tester.setNumTestPkt(1)
-            tester.setTimeout(1)
-            tester.test(blocking=True)
-            if tester.getStats()['numOk'] >= 1:
-                mote_ports.append((port[0],baudrate));
-            probe.close()
-            probe.join()
     
-    # log
-    log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
-    
-    return mote_ports
+    serialports = [('/dev/ttyA8_M3', 500000)]
+    return serialports
 
 #============================ class ===========================================
 
