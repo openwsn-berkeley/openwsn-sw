@@ -30,7 +30,7 @@ class eventBusMonitor(object):
         # local variables
         self.dataLock                  = threading.Lock()
         self.stats                     = {}
-        self.wiresharkDebugEnabled     = False
+        self.wiresharkDebugEnabled     = True
         self.dagRootEui64              = [0x00]*8
         self.simMode                   = False
         
