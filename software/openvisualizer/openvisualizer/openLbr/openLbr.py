@@ -305,48 +305,62 @@ class OpenLbr(eventBusClient.eventBusClient):
                 
                 if ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID:
                     
-                    lowpan_nhc        = ipv6dic['payload'][0]
-                    udp_header_length = 0
-                    newUdp            = []
+                    lowpan_nhc            = ipv6dic['payload'][0]
+                    udp_header_length     = 0
+                    newUdp                = []
+                    newUdp_header_length  = 0
 
                     if lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_INLINE:
-                        newUdp += [u.buf2int(ipv6dic['payload'][1:3])]
-                        newUdp += [u.buf2int(ipv6dic['payload'][3:5])]
+                        src_port  = u.buf2int(ipv6dic['payload'][1:3])
+                        dest_port = u.buf2int(ipv6dic['payload'][3:5])
                         udp_header_length = 5
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_16S_8D:
-                        newUdp += [u.buf2int(ipv6dic['payload'][1:3])]
-                        newUdp += [0xf000 + ipv6dic['payload'][3]]
+                        src_port  = u.buf2int(ipv6dic['payload'][1:3])
+                        dest_port = 0xf000 + ipv6dic['payload'][3]
                         udp_header_length = 4
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_8S_16D:
-                        newUdp += [0xf000 + ipv6dic['payload'][1]]
-                        newUdp += [u.buf2int(ipv6dic['payload'][2:4])]
+                        src_port  = 0xf000 + ipv6dic['payload'][1]
+                        dest_port = u.buf2int(ipv6dic['payload'][2:4])
                         udp_header_length = 4
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_4S_4D:
-                        newUdp += [0xf0b0 +((ipv6dic['payload'][1] >> 4) & 0x0f)]
-                        newUdp += [0xf0b0 +((ipv6dic['payload'][1] >> 0) & 0x0f)]
+                        src_port  = 0xf0b0 +((ipv6dic['payload'][1] >> 4) & 0x0f)
+                        dest_port = 0xf0b0 +((ipv6dic['payload'][1] >> 0) & 0x0f)
                         udp_header_length = 2
 
+                    newUdp  =  [src_port  >>8 , src_port  & 0x00ff]
+                    newUdp  += [dest_port >>8 , dest_port & 0x00ff]
+
+                    idxLen = len(newUdp) # remember index of payload length
+                    newUdp += [0x00,0x00] # length (placeholder)
+                    newUdp_header_length += 2
+
+                    udp_header_length += 2 # skip two bytes checksum following
                     idxCS = len(newUdp) # remember index of checksum
                     newUdp += [0x00,0x00] # Checksum (placeholder)
-                    udp_header_length += 2
+                    newUdp_header_length += 2
 
                     #append payload to compute crc again
                     newUdp += ipv6dic['payload'][udp_header_length:] # data octets
-                    
-                    checksum = u.calculateCRC(newUdp)
+
+                    udp_len  = [0, len(ipv6dic['payload'][udp_header_length:])+8]
+                    newUdp[idxLen]   = udp_len[0]
+                    newUdp[idxLen+1] = udp_len[1]
+
+                    checksum = u.calculatePseudoHeaderCRC(ipv6dic['src_addr'],ipv6dic['dst_addr'],udp_len,[0,ipv6dic['next_header']],newUdp)
                     #fill crc with the right value.
-                    newUdp[idxCS] = checksum[0]
+                    newUdp[idxCS]   = checksum[0]
                     newUdp[idxCS+1] = checksum[1]
 
                     #keep fields for later processing if needed
-                    ipv6dic['udp_src_port']=newUdp[0]
-                    ipv6dic['udp_dest_port']=newUdp[1]
-                    ipv6dic['udp_length']=len(ipv6dic['payload'])
-                    ipv6dic['udp_checksum']=newUdp[2:4]
-                    ipv6dic['app_payload']=newUdp[4:]
+                    ipv6dic['udp_src_port']       = u.buf2int(newUdp[0:2])
+                    ipv6dic['udp_dest_port']      = u.buf2int(newUdp[2:4])
+                    ipv6dic['udp_length']         = newUdp[4:6]
+                    ipv6dic['udp_checksum']       = newUdp[6:8]
+                    ipv6dic['app_payload']        = newUdp[8:]
                     
                     #substitute udp header by the uncompressed header.               
-                    ipv6dic['payload'] = newUdp
+                    ipv6dic['payload']        = newUdp
+                    ipv6dic['payload_length'] = len(newUdp)
                 else:
                     #No UDP header compressed    
                     ipv6dic['udp_src_port']=u.buf2int(ipv6dic['payload'][:2])
@@ -354,6 +368,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ipv6dic['udp_length']=ipv6dic['payload'][4:6]
                     ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
                     ipv6dic['app_payload']=ipv6dic['payload'][8:]
+                    
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,ipv6dic['udp_dest_port'])
             
             #keep payload and app_payload in case we want to assemble the message later. 
@@ -364,7 +379,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             
             if success:
                 return
-            
+
             # assemble the packet and dispatch it again as nobody answer 
             ipv6pkt=self.reassemble_ipv6_packet(ipv6dic)       
             
