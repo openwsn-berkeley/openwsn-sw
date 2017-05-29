@@ -29,6 +29,8 @@ class ParserInfoErrorCritical(Parser.Parser):
                            SEVERITY_CRITICAL,]
                            
     WILDCARD  = '*'
+    LARGETIMECORRECTION = 5 # in ticks
+    MAXTIMERCOUNTER     = 0xffff
     
     def __init__(self,severity):
         assert severity in self.SEVERITY_ALL
@@ -79,6 +81,10 @@ class ParserInfoErrorCritical(Parser.Parser):
                 signal        = 'timeCorrection',
                 data          = json.dumps(tc),
             )
+            
+            # only print timeCorrection when it's larger than +/-5 ticks.
+            if arg1 > self.MAXTIMERCOUNTER - self.LARGETIMECORRECTION or arg1 < self.LARGETIMECORRECTION:
+                return 'error', input
         
         # log
         if   self.severity==self.SEVERITY_INFO:
