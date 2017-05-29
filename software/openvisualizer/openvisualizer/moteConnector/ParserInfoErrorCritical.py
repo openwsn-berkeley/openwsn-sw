@@ -12,6 +12,8 @@ import struct
 
 from ParserException import ParserException
 import Parser
+from pydispatch import dispatcher
+import json
 
 import StackDefines
 
@@ -25,6 +27,10 @@ class ParserInfoErrorCritical(Parser.Parser):
     SEVERITY_ALL        = [SEVERITY_INFO,
                            SEVERITY_ERROR,
                            SEVERITY_CRITICAL,]
+                           
+    WILDCARD  = '*'
+    LARGETIMECORRECTION = 5 # in ticks
+    MAXTIMERCOUNTER     = 0xffff
     
     def __init__(self,severity):
         assert severity in self.SEVERITY_ALL
@@ -62,6 +68,23 @@ class ParserInfoErrorCritical(Parser.Parser):
             MOTEID     = moteId,
             ERROR_DESC = self._translateErrorDescription(error_code,arg1,arg2),
         )
+        
+        if error_code == 28: # timeCorrection error
+            tc = {}
+            tc['MOTEID']            = moteId
+            tc['COMPONENT']         = self._translateCallingComponent(callingComponent)
+            tc['ERROR_DESC']        = self._translateErrorDescription(error_code,arg1,arg2),
+            tc['TimeCorrection']    = arg1
+            
+            dispatcher.send(
+                sender        = self.WILDCARD,
+                signal        = 'timeCorrection',
+                data          = json.dumps(tc),
+            )
+            
+            # only print timeCorrection when it's larger than +/-5 ticks.
+            if arg1 > self.MAXTIMERCOUNTER - self.LARGETIMECORRECTION or arg1 < self.LARGETIMECORRECTION:
+                return 'error', input
         
         # log
         if   self.severity==self.SEVERITY_INFO:
