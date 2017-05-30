@@ -9,6 +9,7 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import struct
+import numpy
 
 from ParserException import ParserException
 import Parser
@@ -74,7 +75,7 @@ class ParserInfoErrorCritical(Parser.Parser):
             tc['MOTEID']            = moteId
             tc['COMPONENT']         = self._translateCallingComponent(callingComponent)
             tc['ERROR_DESC']        = self._translateErrorDescription(error_code,arg1,arg2),
-            tc['TimeCorrection']    = arg1
+            tc['TimeCorrection']    = int(numpy.int16(arg1))
             
             dispatcher.send(
                 sender        = self.WILDCARD,
