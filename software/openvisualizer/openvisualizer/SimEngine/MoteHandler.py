@@ -14,12 +14,11 @@ import binascii
 
 from openvisualizer.SimEngine   import SimEngine
 from openvisualizer.BspEmulator import BspBoard
-from openvisualizer.BspEmulator import BspBsp_timer
 from openvisualizer.BspEmulator import BspDebugpins
 from openvisualizer.BspEmulator import BspEui64
 from openvisualizer.BspEmulator import BspLeds
 from openvisualizer.BspEmulator import BspRadio
-from openvisualizer.BspEmulator import BspRadiotimer
+from openvisualizer.BspEmulator import BspSctimer
 from openvisualizer.BspEmulator import BspUart
 from openvisualizer.BspEmulator import HwSupply
 from openvisualizer.BspEmulator import HwCrystal
@@ -77,11 +76,10 @@ class MoteHandler(threading.Thread):
         self.hwCrystal       = HwCrystal.HwCrystal(self)
         # bsp
         self.bspBoard        = BspBoard.BspBoard(self)
-        self.bspBsp_timer    = BspBsp_timer.BspBsp_timer(self)
         self.bspDebugpins    = BspDebugpins.BspDebugpins(self)
         self.bspEui64        = BspEui64.BspEui64(self)
         self.bspLeds         = BspLeds.BspLeds(self)
-        self.bspRadiotimer   = BspRadiotimer.BspRadiotimer(self)
+        self.bspSctimer      = BspSctimer.BspSctimer(self)
         self.bspRadio        = BspRadio.BspRadio(self)
         self.bspUart         = BspUart.BspUart(self)
         # status
@@ -95,12 +93,6 @@ class MoteHandler(threading.Thread):
         # board
         mote.set_callback(notifId('board_init'),                          self.bspBoard.cmd_init)
         mote.set_callback(notifId('board_sleep'),                         self.bspBoard.cmd_sleep)
-        # bsp_timer
-        mote.set_callback(notifId('bsp_timer_init'),                      self.bspBsp_timer.cmd_init)
-        mote.set_callback(notifId('bsp_timer_reset'),                     self.bspBsp_timer.cmd_reset)
-        mote.set_callback(notifId('bsp_timer_scheduleIn'),                self.bspBsp_timer.cmd_scheduleIn)
-        mote.set_callback(notifId('bsp_timer_cancel_schedule'),           self.bspBsp_timer.cmd_cancel_schedule)
-        mote.set_callback(notifId('bsp_timer_get_currentValue'),          self.bspBsp_timer.cmd_get_currentValue)
         # debugpins
         mote.set_callback(notifId('debugpins_init'),                      self.bspDebugpins.cmd_init)
         mote.set_callback(notifId('debugpins_frame_toggle'),              self.bspDebugpins.cmd_frame_toggle)
@@ -157,10 +149,6 @@ class MoteHandler(threading.Thread):
         # radio
         mote.set_callback(notifId('radio_init'),                          self.bspRadio.cmd_init)
         mote.set_callback(notifId('radio_reset'),                         self.bspRadio.cmd_reset)
-        mote.set_callback(notifId('radio_startTimer'),                    self.bspRadio.cmd_startTimer)
-        mote.set_callback(notifId('radio_getTimerValue'),                 self.bspRadio.cmd_getTimerValue)
-        mote.set_callback(notifId('radio_setTimerPeriod'),                self.bspRadio.cmd_setTimerPeriod)
-        mote.set_callback(notifId('radio_getTimerPeriod'),                self.bspRadio.cmd_getTimerPeriod)
         mote.set_callback(notifId('radio_setFrequency'),                  self.bspRadio.cmd_setFrequency)
         mote.set_callback(notifId('radio_rfOn'),                          self.bspRadio.cmd_rfOn)
         mote.set_callback(notifId('radio_rfOff'),                         self.bspRadio.cmd_rfOff)
@@ -170,15 +158,12 @@ class MoteHandler(threading.Thread):
         mote.set_callback(notifId('radio_rxEnable'),                      self.bspRadio.cmd_rxEnable)
         mote.set_callback(notifId('radio_rxNow'),                         self.bspRadio.cmd_rxNow)
         mote.set_callback(notifId('radio_getReceivedFrame'),              self.bspRadio.cmd_getReceivedFrame)
-        # radiotimer
-        mote.set_callback(notifId('radiotimer_init'),                     self.bspRadiotimer.cmd_init)
-        mote.set_callback(notifId('radiotimer_start'),                    self.bspRadiotimer.cmd_start)
-        mote.set_callback(notifId('radiotimer_getValue'),                 self.bspRadiotimer.cmd_getValue)
-        mote.set_callback(notifId('radiotimer_setPeriod'),                self.bspRadiotimer.cmd_setPeriod)
-        mote.set_callback(notifId('radiotimer_getPeriod'),                self.bspRadiotimer.cmd_getPeriod)
-        mote.set_callback(notifId('radiotimer_schedule'),                 self.bspRadiotimer.cmd_schedule)
-        mote.set_callback(notifId('radiotimer_cancel'),                   self.bspRadiotimer.cmd_cancel)
-        mote.set_callback(notifId('radiotimer_getCapturedTime'),          self.bspRadiotimer.cmd_getCapturedTime)
+        # sctimer
+        mote.set_callback(notifId('sctimer_init'),                        self.bspSctimer.cmd_init)
+        mote.set_callback(notifId('sctimer_setCompare'),                  self.bspSctimer.cmd_setCompare)
+        mote.set_callback(notifId('sctimer_readCounter'),                 self.bspSctimer.cmd_readCounter)
+        mote.set_callback(notifId('sctimer_enable'),                      self.bspSctimer.cmd_enable)
+        mote.set_callback(notifId('sctimer_disable'),                     self.bspSctimer.cmd_disable)
         # uart
         mote.set_callback(notifId('uart_init'),                           self.bspUart.cmd_init)
         mote.set_callback(notifId('uart_enableInterrupts'),               self.bspUart.cmd_enableInterrupts)
@@ -203,11 +188,10 @@ class MoteHandler(threading.Thread):
                 'HwCrystal_'+str(self.id),
                 # bsp
                 'BspBoard_'+str(self.id),
-                'BspBsp_timer_'+str(self.id),
                 'BspDebugpins_'+str(self.id),
                 'BspEui64_'+str(self.id),
                 'BspLeds_'+str(self.id),
-                'BspRadiotimer_'+str(self.id),
+                'BspSctimer_'+str(self.id),
                 'BspRadio_'+str(self.id),
                 'BspUart_'+str(self.id),
             ]:
