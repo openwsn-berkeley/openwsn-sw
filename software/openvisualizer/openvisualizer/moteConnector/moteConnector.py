@@ -12,6 +12,7 @@ import threading
 import socket
 import traceback
 import sys
+import binascii
 import openvisualizer.openvisualizer_utils as u
 
 from pydispatch import dispatcher
@@ -198,6 +199,19 @@ class moteConnector(eventBusClient.eventBusClient):
                 print "Wrong 6p parameter format {0}. Split the slot by".format(data[1])
                 print "comma. e.g. 6,7. (up to 3)"
                 return [outcome,dataToSend]
+        elif data[0] == 'joinKey':
+            try:
+                if len(data[1]) != commandLen*2: # two hex chars is one byte
+                    raise ValueError
+                payload = binascii.unhexlify(data[1])
+                dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
+                    commandId,
+                    commandLen,
+                ]
+                dataToSend += [ord(b) for b in payload]
+            except:
+                print "============================================="
+                print "Wrong joinKey format. Input 16-byte long hex string. e.g. cafebeefcafebeefcafebeefcafebeef"
         else:
             parameter = int(data[1])
             if parameter <= 0xffff:
