@@ -14,22 +14,6 @@ log.addHandler(logging.NullHandler())
 
 import cbor
 
-
-class JRC():
-
-    def __init__(self):
-        # log
-        log.info("create instance")
-
-        # open coap server
-        self.c = coap.coap()
-
-        # install resource
-        self.c.addResource(joinResource())
-
-    def close(self):
-        self.c.close()
-
 class joinResource(coapResource.coapResource):
 
     KEY_VALUE = 'e6bf4287c2d7618d6a9687445ffd33e6'.decode('hex') # default L2 key for the network

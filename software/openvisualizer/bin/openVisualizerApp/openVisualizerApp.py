@@ -26,7 +26,6 @@ from openvisualizer.openLbr         import openLbr
 from openvisualizer.openTun         import openTun
 from openvisualizer.RPL             import UDPInject
 from openvisualizer.RPL             import topology
-from openvisualizer.JRC             import JRC
 from openvisualizer                 import appdirs
 from openvisualizer.remoteConnectorServer   import remoteConnectorServer
 
@@ -58,7 +57,6 @@ class OpenVisualizerApp(object):
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpInject            = UDPInject.UDPInject()
-        self.jrc                  = JRC.JRC()
         self.DAGrootList          = []
         # create openTun call last since indicates prefix
         self.openTun              = openTun.create() 
@@ -188,7 +186,6 @@ class OpenVisualizerApp(object):
         log.info('Closing OpenVisualizer')
         self.openTun.close()
         self.rpl.close()
-        self.jrc.close()
         for probe in self.moteProbes:
             probe.close()
                 
