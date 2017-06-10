@@ -47,7 +47,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         # local variables
         self.timeline    = self.engine.timeline
         self.propagation = self.engine.propagation
-        self.radiotimer  = self.motehandler.bspRadiotimer
+        self.sctimer     = self.motehandler.bspSctimer
         
         # local variables
         self.frequency   = None   # frequency the radio is tuned to
@@ -98,50 +98,6 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         
         # change state
         self._changeState(RadioState.STOPPED)
-    
-    def cmd_startTimer(self,period):
-        '''emulates
-           void radio_startTimer(PORT_TIMER_WIDTH period)'''
-        
-        # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_startTimer')
-        
-        # defer to radiotimer
-        self.motehandler.bspRadiotimer.cmd_start(period)
-    
-    def cmd_getTimerValue(self):
-        '''emulates
-           PORT_TIMER_WIDTH radio_getTimerValue()'''
-        
-        # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_getTimerValue')
-        
-        # defer to radiotimer
-        return self.motehandler.bspRadiotimer.cmd_getValue()
-    
-    def cmd_setTimerPeriod(self,period):
-        '''emulates
-           void radio_setTimerPeriod(PORT_TIMER_WIDTH period)'''
-        
-        # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_setTimerPeriod')
-        
-        # defer to radiotimer
-        return self.motehandler.bspRadiotimer.cmd_setPeriod(period)
-    
-    def cmd_getTimerPeriod(self):
-        '''emulates
-           PORT_TIMER_WIDTH radio_getTimerPeriod()'''
-        
-        # log the activity
-        if self.log.isEnabledFor(logging.DEBUG):
-            self.log.debug('cmd_getTimerPeriod')
-        
-        # defer to radiotimer
-        return self.motehandler.bspRadiotimer.cmd_getPeriod()
     
     def cmd_setFrequency(self,frequency):
         '''emulates
@@ -327,7 +283,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         )
         
         # signal start of frame to mote
-        counterVal           = self.radiotimer.getCounterVal()
+        counterVal           = self.sctimer.cmd_readCounter()
         
         # indicate to the mote
         self.motehandler.mote.radio_isr_startFrame(counterVal)
@@ -338,7 +294,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
     def intr_startOfFrame_fromPropagation(self):
         
         # signal start of frame to mote
-        counterVal           = self.radiotimer.getCounterVal()
+        counterVal           = self.sctimer.cmd_readCounter()
         
         # indicate to the mote
         self.motehandler.mote.radio_isr_startFrame(counterVal)
@@ -355,7 +311,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         )
         
         # signal end of frame to mote
-        counterVal           = self.radiotimer.getCounterVal()
+        counterVal           = self.sctimer.cmd_readCounter()
         
         # indicate to the mote
         self.motehandler.mote.radio_isr_endFrame(counterVal)
@@ -366,7 +322,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
     def intr_endOfFrame_fromPropagation(self):
         
         # signal end of frame to mote
-        counterVal           = self.radiotimer.getCounterVal()
+        counterVal           = self.sctimer.cmd_readCounter()
         
         # log
         if self.log.isEnabledFor(logging.DEBUG):

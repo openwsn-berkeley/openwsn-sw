@@ -9,14 +9,6 @@ BspEmulator Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspBsp_timer` Module
---------------------------
-
-.. automodule:: openvisualizer.BspEmulator.BspBsp_timer
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
 :mod:`BspDebugpins` Module
 --------------------------
 
@@ -57,10 +49,10 @@ BspEmulator Package
     :undoc-members:
     :show-inheritance:
 
-:mod:`BspRadiotimer` Module
+:mod:`BspSctimer` Module
 ---------------------------
 
-.. automodule:: openvisualizer.BspEmulator.BspRadiotimer
+.. automodule:: openvisualizer.BspEmulator.BspSctimer
     :members:
     :undoc-members:
     :show-inheritance:
