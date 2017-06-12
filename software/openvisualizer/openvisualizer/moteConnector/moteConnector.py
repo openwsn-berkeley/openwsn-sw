@@ -250,13 +250,13 @@ class moteConnector(eventBusClient.eventBusClient):
             except:
                 print "============================================="
                 print "Wrong 6p parameter format."
-                print "                           command    cellOptions    numCell celllist_delete celllist_add   listoffset maxListLen  "
-                print "comma. e.g. set <portname> 6pAdd      tx,            1,                      5-6-7"
-                print "comma. e.g. set <portname> 6pDelete   tx,            1,      5"
-                print "comma. e.g. set <portname> 6pRelocate tx,            1,      5,              6-7-8"
+                print "                           command    cellOptions numCell celllist_delete celllist_add listoffset maxListLen addition"
+                print "comma. e.g. set <portname> 6pAdd      tx,         1,                      5-6-7"
+                print "comma. e.g. set <portname> 6pDelete   tx,         1,      5"
+                print "comma. e.g. set <portname> 6pRelocate tx,         1,      5,              6-7-8"
                 print "comma. e.g. set <portname> 6pCount    tx"
-                print "comma. e.g. set <portname> 6pList     tx,                                                   5,         3"
-                print "comma. e.g. set <portname> 6pClear"
+                print "comma. e.g. set <portname> 6pList     tx,                                              5,         3"
+                print "comma. e.g. set <portname> 6pClear                                                                           all"
                 return [outcome,dataToSend]
         else:
             parameter = int(data[1])
