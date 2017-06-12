@@ -244,7 +244,6 @@ class moteConnector(eventBusClient.eventBusClient):
                         assert TRUE
                     dataToSend  += map(int,celllist_add)
                 dataToSend[2] = len(dataToSend)-3
-                print dataToSend
                 outcome       = True
                 return [outcome,dataToSend]
             except:
