@@ -46,6 +46,14 @@ class OpenLbr(eventBusClient.eventBusClient):
     K_FLAG                   = 0x01
     FLAG_MASK                = 0x1F
     
+    #deadline hop header flags
+    ORG_FLAG                 = 0x80
+    DELAY_FLAG               = 0x40
+    ETL_FLAG                 = 0x38
+    OTL_FLAG                 = 0x07
+    TU_FLAG                  = 0xC0
+    EXP_FLAG                 = 0x38
+    
     # Number of bytes in an IPv6 header.
     IPv6_HEADER_LEN          = 40
     
@@ -101,6 +109,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     ELECTIVE_6LoRH           = 0xA0
     CRITICAL_6LoRH           = 0x80
 
+    TYPE_6LoRH_DEADLINE      = 0x07
     TYPE_6LoRH_IP_IN_IP      = 0x06
     TYPE_6LoRH_RPI           = 0x05
     TYPE_6LoRH_RH3_0         = 0x00
@@ -717,6 +726,47 @@ class OpenLbr(eventBusClient.eventBusClient):
                         ptr += 16
                     else:
                         log.error("ERROR wrong length of encapsulate")
+                elif pkt_lowpan[ptr] & self.MASK_6LoRH == self.ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_DEADLINE:
+                    length = pkt_lowpan[ptr] & self.MASK_LENGTH_6LoRH_IPINIP
+                    nxt_byte = pkt_lowpan[ptr+2]
+                		
+                    # 3rd byte
+                    o_val = (pkt_lowpan[ptr+2] & self.ORG_FLAG) >> 7
+                    d_val = (pkt_lowpan[ptr+2] & self.DELAY_FLAG) >> 6
+                    etl_val = (pkt_lowpan[ptr+2] & self.ETL_FLAG) >> 3
+                    otl_val = (pkt_lowpan[ptr+2] & self.OTL_FLAG)                                      
+                		
+                    # 4th byte
+                    tu_val = (pkt_lowpan[ptr+3] & self.TU_FLAG) >> 6
+                    exponent = (pkt_lowpan[ptr+3] & self.EXP_FLAG) >>  3                                    		
+                		
+                    # Expiration Time
+                    nxt_ptr = ptr+4
+                    exp_time = []
+                    for counter in range (0,etl_val+1):
+                        exp_time.append(pkt_lowpan[nxt_ptr+counter])
+                    
+                		
+                    # Origination Time
+                    if o_val == 1:
+                        org_time = []
+                        nxt_ptr = nxt_ptr+counter+1                		
+                        for counter in range (0,otl_val+1):		
+                            org_time.append(pkt_lowpan[nxt_ptr+counter])
+					          				
+                    # log
+                    if log.isEnabledFor(logging.ERROR):
+                        output               = []
+                        output              += [' ']
+                        output              += ['Received a DeadLine Hop-by-Hop Header']
+                        output              += ['exp_time is {0}'.format(u.formatAddr(exp_time))]
+                        if o_val == 1:
+                            output              += ['org_time is {0}'.format(u.formatAddr(org_time))]
+                        output               = '\n'.join(output)  
+                        log.error(output)
+                        print output
+
+                    ptr += length+1        
             else:
                 log.error("ERROR no support this type of 6LoRH yet")
         else:
