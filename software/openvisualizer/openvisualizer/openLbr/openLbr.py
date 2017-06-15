@@ -745,6 +745,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     exp_time = []
                     for counter in range (0,etl_val+1):
                         exp_time.append(pkt_lowpan[nxt_ptr+counter])
+                    e_time = exp_time[::-1]
                     
                 		
                     # Origination Time
@@ -753,15 +754,16 @@ class OpenLbr(eventBusClient.eventBusClient):
                         nxt_ptr = nxt_ptr+counter+1                		
                         for counter in range (0,otl_val+1):		
                             org_time.append(pkt_lowpan[nxt_ptr+counter])
+                        o_time = org_time[::-1]
 					          				
                     # log
                     if log.isEnabledFor(logging.ERROR):
                         output               = []
                         output              += [' ']
                         output              += ['Received a DeadLine Hop-by-Hop Header']
-                        output              += ['exp_time is {0}'.format(u.formatAddr(exp_time))]
+                        output              += ['exp_time is {0}'.format(u.formatAddr(e_time))]
                         if o_val == 1:
-                            output              += ['org_time is {0}'.format(u.formatAddr(org_time))]
+                            output              += ['org_time is {0}'.format(u.formatAddr(o_time))]
                         output               = '\n'.join(output)  
                         log.error(output)
                         print output
