@@ -436,16 +436,17 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_SECURITY_STATUS   = ['security',       6, 1]
     COMMAND_SET_SLOTFRAMELENGTH   = ['slotframeLength',7, 2]
     COMMAND_SET_ACK_STATUS        = ['ackReply',       8, 1]
-    COMMAND_SET_6P_ADD            = ['6pAdd',          9, 3]
-    COMMAND_SET_6P_DELETE         = ['6pDelete',      10, 3]
-    COMMAND_SET_6P_COUNT          = ['6pCount',       11, 0]
-    COMMAND_SET_6P_LIST           = ['6pList',        12, 0]
-    COMMAND_SET_6P_CLEAR          = ['6pClear',       13, 0]
-    COMMAND_SET_SLOTDURATION      = ['slotDuration',  14, 2]
-    COMMAND_SET_6PRESPONSE        = ['6pResponse',    15, 1]
-    COMMAND_SET_UINJECTPERIOD     = ['uinjectPeriod', 16, 1]
-    COMMAND_SET_ECHO_REPLY_STATUS = ['echoReply',     17, 1]
-    COMMAND_SET_JOIN_KEY          = ['joinKey',       18,16]
+    COMMAND_SET_6P_ADD            = ['6pAdd',          9,16] # maxium three candidate cells, length could be shorter
+    COMMAND_SET_6P_DELETE         = ['6pDelete',      10, 8] # only one cell to delete
+    COMMAND_SET_6P_RELOCATE       = ['6pRelocate',    11,24] # one cell to relocate, three candidate cells , length could be shorter
+    COMMAND_SET_6P_COUNT          = ['6pCount',       12, 3]
+    COMMAND_SET_6P_LIST           = ['6pList',        13, 7]
+    COMMAND_SET_6P_CLEAR          = ['6pClear',       14, 0]
+    COMMAND_SET_SLOTDURATION      = ['slotDuration',  15, 2]
+    COMMAND_SET_6PRESPONSE        = ['6pResponse',    16, 1]
+    COMMAND_SET_UINJECTPERIOD     = ['uinjectPeriod', 17, 1]
+    COMMAND_SET_ECHO_REPLY_STATUS = ['echoReply',     18, 1]
+    COMMAND_SET_JOIN_KEY          = ['joinKey',       19,16]
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,
@@ -458,6 +459,7 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_ACK_STATUS,
         COMMAND_SET_6P_ADD,
         COMMAND_SET_6P_DELETE,
+        COMMAND_SET_6P_RELOCATE,
         COMMAND_SET_6P_COUNT,
         COMMAND_SET_6P_LIST,
         COMMAND_SET_6P_CLEAR,

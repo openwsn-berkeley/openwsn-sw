@@ -81,7 +81,7 @@ def findSerialPorts():
             probe = moteProbe(serialport=(port[0],baudrate))
             tester = SerialTester(probe.portname)
             tester.setNumTestPkt(1)
-            tester.setTimeout(1)
+            tester.setTimeout(2)
             tester.test(blocking=True)
             if tester.getStats()['numOk'] >= 1:
                 mote_ports.append((port[0],baudrate));
