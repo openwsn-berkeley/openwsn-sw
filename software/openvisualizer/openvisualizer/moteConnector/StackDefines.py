@@ -45,6 +45,8 @@ components = {
   38: "RRT",
   39: "SECURITY",
   40: "USERIALBRIDGE",
+  41: "UEXPIRATION",
+  42: "UMONITOR",
 }
 
 errorDescriptions = {
@@ -113,6 +115,8 @@ errorDescriptions = {
   63: "the slot {0} to be added is already in schedule",
   64: "the received packet format is not supported {code location {0}}",
   65: "the metadata type is not suppored",
+  66: "the received packet has expired",
+  67: "packet expiry time reached, dropped",
 }
 
 sixtop_returncode = {
