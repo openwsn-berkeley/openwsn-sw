@@ -37,7 +37,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,simTopology,iotlabmotes, pathTopo, roverMode):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, pathTopo, roverMode):
         
         # store params
         self.confdir              = confdir
@@ -47,13 +47,14 @@ class OpenVisualizerApp(object):
         self.numMotes             = numMotes
         self.trace                = trace
         self.debug                = debug
+        self.usePageZero           = usePageZero
         self.iotlabmotes          = iotlabmotes
         self.pathTopo             = pathTopo
         self.roverMode            = roverMode
 
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
-        self.openLbr              = openLbr.OpenLbr()
+        self.openLbr              = openLbr.OpenLbr(usePageZero)
         self.rpl                  = RPL.RPL()
         self.topology             = topology.topology()
         self.udpInject            = UDPInject.UDPInject()
@@ -278,7 +279,7 @@ def main(parser=None, roverMode=False):
         
     _addParserArgs(parser)
     argspace = parser.parse_args()
-    
+
     confdir, datadir, logdir = _initExternalDirs(argspace.appdir, argspace.debug)
     
     # Must use a '/'-separated path for log dir, even on Windows.
@@ -300,11 +301,12 @@ def main(parser=None, roverMode=False):
         argspace.numMotes = DEFAULT_MOTE_COUNT
 
     log.info('Initializing OpenVisualizerApp with options:\n\t{0}'.format(
-            '\n    '.join(['appdir   = {0}'.format(argspace.appdir),
-                           'sim      = {0}'.format(argspace.simulatorMode),
-                           'simCount = {0}'.format(argspace.numMotes),
-                           'trace    = {0}'.format(argspace.trace),
-                           'debug    = {0}'.format(argspace.debug)],
+            '\n    '.join(['appdir      = {0}'.format(argspace.appdir),
+                           'sim         = {0}'.format(argspace.simulatorMode),
+                           'simCount    = {0}'.format(argspace.numMotes),
+                           'trace       = {0}'.format(argspace.trace),
+                           'debug       = {0}'.format(argspace.debug),
+                           'usePageZero = {0}'.format(argspace.usePageZero)],
             )))
     log.info('Using external dirs:\n\t{0}'.format(
             '\n    '.join(['conf     = {0}'.format(confdir),
@@ -321,6 +323,7 @@ def main(parser=None, roverMode=False):
         numMotes        = argspace.numMotes,
         trace           = argspace.trace,
         debug           = argspace.debug,
+        usePageZero     = argspace.usePageZero,
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
         pathTopo        = argspace.pathTopo,
@@ -363,6 +366,12 @@ def _addParserArgs(parser):
         default    = False,
         action     = 'store_true',
         help       = 'enables application debugging'
+    )
+    parser.add_argument('-pagez', '--usePageZero',
+        dest       = 'usePageZero',
+        default    = False,
+        action     = 'store_true',
+        help       = 'use page number 0 in page dispatch (only works with one-hop)'
     )
     parser.add_argument('-iotm', '--iotlabmotes',
         dest       = 'iotlabmotes',

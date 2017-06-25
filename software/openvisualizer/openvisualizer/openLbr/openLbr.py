@@ -135,7 +135,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     NHC_UDP_PORTS_4S_4D      = 3
 
     
-    def __init__(self):
+    def __init__(self,usePageZero):
         
         # log
         log.info("create instance")
@@ -144,6 +144,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         self.stateLock            = threading.Lock()
         self.networkPrefix        = None
         self.dagRootEui64         = None
+        self.usePageZero          = usePageZero
          
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
@@ -491,6 +492,11 @@ class OpenLbr(eventBusClient.eventBusClient):
         '''
         returnVal            = []
 
+
+        if self.usePageZero:
+            print 'Page dispatch page number zero is not supported!\n'
+            raise SystemError()
+        
         # the 6lowpan packet contains 4 parts
         # 1. Page Dispatch (page 1)
         # 2. RH3 6LoRH(s)
