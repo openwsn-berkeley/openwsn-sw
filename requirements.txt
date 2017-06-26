@@ -7,4 +7,3 @@ netifaces
 yappi
 intelhex==2.1
 openwsn-coap
-numpy
