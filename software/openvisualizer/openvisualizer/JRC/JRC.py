@@ -4,7 +4,9 @@ import threading
 from   coap   import    coap,                    \
                         coapResource,            \
                         coapDefines as d,        \
-                        coapOption as o
+                        coapOption as o,         \
+                        coapUtils as u,          \
+                        coapObjectSecurity as oscoap
 import coseDefines
 import logging
 import logging.handlers
@@ -13,6 +15,26 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import cbor
+import binascii
+
+MASTERSECRET = binascii.unhexlify('000102030405060708090A0B0C0D0E0F')
+
+joinedNodes = []
+
+
+def JRCSecurityContextLookup(kid):
+    kidBuf = u.str2buf(kid)
+
+    eui64 = kidBuf[:-1]
+    senderID = eui64 + [0x01] # sender ID of JRC is reversed
+    recipientID = eui64 + [0x00]
+
+    context = oscoap.SecurityContext(masterSecret   = MASTERSECRET,
+                                     senderID       = u.buf2str(senderID),
+                                     recipientID    = u.buf2str(recipientID),
+                                     aeadAlgorithm  = oscoap.AES_CCM_16_64_128())
+
+    return context
 
 class joinResource(coapResource.coapResource):
 
@@ -25,6 +47,8 @@ class joinResource(coapResource.coapResource):
             self,
             path = 'j',
         )
+
+        self.addSecurityBinding((None, [d.METHOD_GET]))  # security context should be returned by the callback
     
     def GET(self,options=[]):
         
@@ -77,8 +101,16 @@ if __name__ == "__main__":
     log.addHandler(fileLogger)
     log.addHandler(consoleLogger)
  
-    jrc = JRC()
+    c = coap.coap()
+
+    joinResource = joinResource()
+
+    c.addResource(joinResource)
+
+    c.addSecurityContextHandler(JRCSecurityContextLookup) # register callback
+
 
     raw_input('\n\nServer running. Press Enter to close.\n\n')
-    jrc.close()
+    
+    c.close()
 
