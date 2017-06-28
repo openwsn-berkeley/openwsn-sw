@@ -206,6 +206,29 @@ class OpenVisualizerApp(object):
         else:
             return None
 
+    def getMotesConnectivity(self):
+        motes  = []
+        states = []
+        edges  = []
+
+        for ms in self.moteStates:
+            idManager = ms.getStateElem(ms.ST_IDMANAGER)
+            if idManager and idManager.get16bAddr():
+                src_s = ''.join(['%02X'%b for b in idManager.get16bAddr()])
+                motes.append(src_s)
+            neighborTable = ms.getStateElem(ms.ST_NEIGHBORS)
+            for neighbor in neighborTable.data:
+                if neighbor.data[0]['used']==1 and neighbor.data[0]['parentPreference']==1:
+                    dst_s =''.join(['%02X' %b for b in neighbor.data[0]['addr'].addr[-2:]])
+                    edges.append({ 'u':src_s, 'v':dst_s })
+                    break
+
+        motes = list(set(motes))
+        for mote in motes:
+            d = { 'id': mote, 'value': { 'label': mote } } 
+            states.append(d)
+        return states, edges
+        
     def refreshRoverMotes(self, roverMotes):
         '''Connect the list of roverMotes to openvisualiser.
 
