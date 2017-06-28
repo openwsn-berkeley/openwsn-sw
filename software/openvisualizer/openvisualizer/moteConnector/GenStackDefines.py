@@ -26,14 +26,15 @@ import time
 
 #============================ defines =========================================
 
-INPUT_FILE    = os.path.join('..','..','..','..','..','openwsn-fw','inc','opendefs.h')
-OUTPUT_FILE   = 'StackDefines.py'
+INPUT_FILE        = os.path.join('..','..','..','..','..','openwsn-fw','inc','opendefs.h')
+INPUT_FILE_SIXTOP = os.path.join('..','..','..','..','..','openwsn-fw','openstack','02b-MAChigh','sixtop.h')
+OUTPUT_FILE       = 'StackDefines.py'
 
 #============================ helpers =========================================
 
 def genComponentCodes():
     
-    # find components code in openwsn.h
+    # find components code in opendefs.h
     codesFound = []
     for line in open(INPUT_FILE,'r'):
         m = re.search('\s*COMPONENT_(\S*)\s*=\s*(\S*),\s*',line)
@@ -56,7 +57,7 @@ def genComponentCodes():
 
 def genErrorDescriptions():
     
-    # find components code in openwsn.h
+    # find components code in opendefs.h
     codesFound = []
     for line in open(INPUT_FILE,'r'):
         m = re.search('\s*ERR_(\S*)\s*=\s*(\S*),\s*\/\/\s*([\S\s]*)',line)
@@ -78,12 +79,59 @@ def genErrorDescriptions():
     
     return output
 
+def genSixtopReturnCodes():
+    
+    # find components code in sixtop.h
+    codesFound = []
+    for line in open(INPUT_FILE_SIXTOP,'r'):
+        m = re.search('\s*#define\s*IANA_6TOP_RC_(\S*)\s*(\S*)\s*\S*\s*(\S*)\s*\S*\s*([\S\s]*)',line)
+        if m:
+            name = m.group(3)
+            desc = m.group(4).strip()
+            try:
+                code = int(m.group(2),16)
+            except ValueError:
+                print "WARNING: {0} is not a hex number".format(m.group(2))
+            else:
+                codesFound.append((code,name))
+    
+    # turn into text
+    output  = ["sixtop_returncode = {"]
+    output += ["{0:>4}: \"{1}\",".format(a,b) for (a,b) in codesFound]
+    output += ["}"]
+    output  = '\n'.join(output)
+    
+    return output
+
+def genSixtopStateMachine():
+    
+    # find components code in sixtop.h
+    codesFound = []
+    for line in open(INPUT_FILE_SIXTOP,'r'):
+        m = re.search('\s*SIX_STATE_(\S*)\s*=\s*(\S*),\s*',line)
+        if m:
+            name = m.group(1)
+            try:
+                code = int(m.group(2),16)
+            except ValueError:
+                print "WARNING: {0} is not a hex number".format(m.group(2))
+            else:
+                codesFound.append((code,name))
+    
+    # turn into text
+    output  = ["sixtop_statemachine = {"]
+    output += ["{0:>4}: \"{1}\",".format(a,b) for (a,b) in codesFound]
+    output += ["}"]
+    output  = '\n'.join(output)
+    
+    return output
+
 #============================ main ============================================
 
 def main():
     
-    if os.path.exists(INPUT_FILE):
-        # we can access the openwsn.h file
+    if os.path.exists(INPUT_FILE) and os.path.exists(INPUT_FILE_SIXTOP):
+        # we can access the opendefs.h and sixtop file
         
         # gather the information
         output  = []
@@ -95,6 +143,10 @@ def main():
         output += [genComponentCodes()]
         output += [""]
         output += [genErrorDescriptions()]
+        output += [""]
+        output += [genSixtopReturnCodes()]
+        output += [""]
+        output += [genSixtopStateMachine()]
         output += [""]
         output  = '\n'.join(output)
         

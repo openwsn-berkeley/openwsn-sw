@@ -162,8 +162,12 @@ class moteConnector(eventBusClient.eventBusClient):
     
     def _commandToBytes(self,data):
         
+        # data[0]: commandID
+        # data[1]: parameter
+
         outcome    = False
         dataToSend = []
+        ptr        = 0
 
         # get commandId
         commandIndex = 0
@@ -188,15 +192,70 @@ class moteConnector(eventBusClient.eventBusClient):
             try:
                 dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
                     commandId,
-                    len(data[1][1:-1].split(','))
+                    commandLen
                 ]
-                if data[0] == '6pAdd' or data[0] == '6pDelete':
-                    if len(data[1][1:-1].split(','))>0:
-                        dataToSend += [int(i) for i in data[1][1:-1].split(',')] # celllist
+                paramList = data[1].split(',')
+                if data[0] != '6pClear':
+                    if paramList[0] == 'tx':
+                        cellOptions = 1<<0
+                    elif paramList[0] == 'rx':
+                        cellOptions = 1<<1
+                    elif paramList[0] == 'shared':
+                        cellOptions = 1<<0 | 1<<1 | 1<<2
+                    else:
+                        print "unsupport cellOptions!"
+                        assert TRUE
+                else:
+                    dataToSend[2] = len(dataToSend)-3
+                    outcome       = True
+                    return [outcome,dataToSend]
+                ptr += 1
+                dataToSend  += [cellOptions]
+                if data[0] == '6pList'  and len(paramList)==3:
+                    dataToSend += map(int,paramList[ptr:])
+                if data[0] == '6pAdd':
+                    # append numCell
+                    dataToSend += [int(paramList[ptr])]
+                    ptr += 1
+                    # append celllist
+                    celllist_add = paramList[ptr].split('-')
+                    dataToSend += map(int,celllist_add)
+                if data[0] == '6pDelete':
+                    # append numCell
+                    dataToSend += [int(paramList[ptr])]
+                    # append celllist
+                    celllist_delete = paramList[ptr+1].split('-')
+                    if int(paramList[ptr]) != len(celllist_delete):
+                        print "length of celllist to delete doesn't match numCell!"
+                        assert TRUE
+                    dataToSend += map(int,celllist_delete)
+                if data[0] == '6pRelocate':
+                    dataToSend += [int(paramList[ptr])]
+                    # append celllist
+                    celllist_delete = paramList[ptr+1].split('-')
+                    if int(paramList[ptr]) != len(celllist_delete):
+                        print "length of celllist to relocate doesn't match numCell!"
+                        assert TRUE
+                    ptr += 2
+                    dataToSend  += map(int,celllist_delete)
+                    celllist_add = paramList[ptr].split('-')
+                    if len(celllist_add) < len(celllist_delete):
+                        print "length of candidate celllist must larger than numCell!"
+                        assert TRUE
+                    dataToSend  += map(int,celllist_add)
+                dataToSend[2] = len(dataToSend)-3
+                outcome       = True
+                return [outcome,dataToSend]
             except:
                 print "============================================="
-                print "Wrong 6p parameter format {0}. Split the slot by".format(data[1])
-                print "comma. e.g. 6,7. (up to 3)"
+                print "Wrong 6p parameter format."
+                print "                           command    cellOptions numCell celllist_delete celllist_add listoffset maxListLen addition"
+                print "comma. e.g. set <portname> 6pAdd      tx,         1,                      5-6-7"
+                print "comma. e.g. set <portname> 6pDelete   tx,         1,      5"
+                print "comma. e.g. set <portname> 6pRelocate tx,         1,      5,              6-7-8"
+                print "comma. e.g. set <portname> 6pCount    tx"
+                print "comma. e.g. set <portname> 6pList     tx,                                              5,         3"
+                print "comma. e.g. set <portname> 6pClear                                                                           all"
                 return [outcome,dataToSend]
         else:
             parameter = int(data[1])
@@ -215,7 +274,8 @@ class moteConnector(eventBusClient.eventBusClient):
                 return [outcome,dataToSend]
 
         # the command is legal if I got here
-        outcome = True
+        dataToSend[2] = len(dataToSend)-3
+        outcome       = True
         return [outcome,dataToSend]
 
 

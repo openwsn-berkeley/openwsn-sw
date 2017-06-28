@@ -57,7 +57,8 @@ class pcInfo(coapResource.coapResource):
 
 
     def listmotes(self):
-        serialList = glob.glob('/dev/ttyUSB*')   # Get all Serial ports
+        serialList  = glob.glob('/dev/ttyUSB*')   # Get all Serial ports
         serialList += glob.glob('/dev/ttyAMA*')
+        serialList += glob.glob('/dev/ttyA8_M3')
         return json.dumps([serial for serial in serialList])
     

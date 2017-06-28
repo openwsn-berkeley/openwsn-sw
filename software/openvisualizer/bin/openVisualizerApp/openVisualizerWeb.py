@@ -121,6 +121,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.websrv.route(path='/eventBus',                               callback=self._showEventBus)
         self.websrv.route(path='/routing',                                callback=self._showRouting)
         self.websrv.route(path='/routing/dag',                            callback=self._showDAG)
+        self.websrv.route(path='/connectivity',                           callback=self._showConnectivity)
+        self.websrv.route(path='/connectivity/motes',                     callback=self._showMotesConnectivity)
         self.websrv.route(path='/eventdata',                              callback=self._getEventData)
         self.websrv.route(path='/wiresharkDebug/:enabled',                callback=self._setWiresharkDebug)
         self.websrv.route(path='/gologicDebug/:enabled',                  callback=self._setGologicDebug)
@@ -312,6 +314,14 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
     def _showDAG(self):
         states,edges = self.app.topology.getDAG()
+        return { 'states': states, 'edges': edges }
+
+    @view('connectivity.tmpl')
+    def _showConnectivity(self):
+        return {'roverMode' : self.roverMode}
+
+    def _showMotesConnectivity(self):
+        states,edges = self.app.getMotesConnectivity()
         return { 'states': states, 'edges': edges }
 
     @view('routing.tmpl')

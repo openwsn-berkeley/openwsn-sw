@@ -17,6 +17,8 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import threading
+import time
+from datetime import timedelta
 
 import openvisualizer.openvisualizer_utils as u
 from openvisualizer.eventBus import eventBusClient
@@ -28,6 +30,8 @@ class topology(eventBusClient.eventBusClient):
         # local variables
         self.dataLock        = threading.Lock()
         self.parents         = {}
+        self.parentsLastSeen = {}
+        self.NODE_TIMEOUT_THRESHOLD = 150
         
         eventBusClient.eventBusClient.__init__(
             self,
@@ -76,6 +80,18 @@ class topology(eventBusClient.eventBusClient):
         with self.dataLock:
             #data[0] == source address, data[1] == list of parents
             self.parents.update({data[0]:data[1]})
+            self.parentsLastSeen.update({data[0]: time.time()})
+
+        self._clearNodeTimeout()
+
+    def _clearNodeTimeout(self):
+        threshold = time.time() - self.NODE_TIMEOUT_THRESHOLD
+        with self.dataLock:
+            for node in self.parentsLastSeen.keys():
+                if self.parentsLastSeen[node] < threshold:
+                    if node in self.parents:
+                        del self.parents[node]
+                    del self.parentsLastSeen[node]
     
     #======================== private =========================================
     

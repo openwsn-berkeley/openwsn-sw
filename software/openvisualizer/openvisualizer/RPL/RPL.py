@@ -255,13 +255,13 @@ class RPL(eventBusClient.eventBusClient):
         # log
         output               = []
         output              += ['']
-        output              += ['received RPL DAO from {0}'.format(u.formatAddr(source))]
+        output              += ['received RPL DAO from {0}:{1}'.format(u.formatIPv6Addr(self.networkPrefix),u.formatIPv6Addr(source))]
         output              += ['- parents:']
         for p in parents:
-            output          += ['   . {0}'.format(u.formatAddr(p))]
+            output          += ['   {0}:{1}'.format(u.formatIPv6Addr(self.networkPrefix),u.formatIPv6Addr(p))]
         output              += ['- children:']
         for p in children:
-            output          += ['   . {0}'.format(u.formatAddr(p))]
+            output          += ['   {0}:{1}'.format(u.formatIPv6Addr(self.networkPrefix),u.formatIPv6Addr(p))]
         output               = '\n'.join(output)
         if log.isEnabledFor(logging.DEBUG):
             log.debug(output)
