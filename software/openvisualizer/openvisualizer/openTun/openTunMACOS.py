@@ -194,7 +194,7 @@ class OpenTunMACOS(openTun.OpenTun):
         #=====start radvd
             #os.system('radvd start')
             
-            return f
+            return (f, ifname)
          
     def _createTunReadThread(self):
         '''
@@ -206,5 +206,23 @@ class OpenTunMACOS(openTun.OpenTun):
             self._v6ToMesh_notif
         )
    
+    def _registerDagRoot_notif(self,sender,signal,data):
+        '''
+        Called when new DAG root registers. The function adds
+        IPv6 address of the DAG root to the TUN interface.
+        '''
+        prefixStr = u.formatIPv6Addr(data['prefix'])
+        hostStr   = u.formatIPv6Addr(data['host'])
+        v=os.system('ifconfig {0} inet6 add {1}:{2} prefixlen 64'.format(self.tunIfName, prefixStr, hostStr))
+
+    def _unregisterDagRoot_notif(self,sender,signal,data):
+        '''
+        Called when a DAG root unregisters. The function removes
+        IPv6 address of the DAG root from the TUN interface.
+        '''
+        prefixStr = u.formatIPv6Addr(data['prefix'])
+        hostStr   = u.formatIPv6Addr(data['host'])
+        v=os.system('ifconfig {0} inet6 delete {1}:{2}'.format(self.tunIfName, prefixStr, hostStr))
+
     #======================== helpers =========================================
     
