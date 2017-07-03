@@ -39,9 +39,9 @@
                             console.log('state/edges not found in result');
                             hasJson = false;
                         }
-                        
+
                         if (hasJson) {
-                            if(json.states.length > 0 && json.edges.length > 0) {
+                            if(json.states.length > 0) {
                                 $("#connectivity_status").text("");
                                 var states = json.states;
                                 var edges  = json.edges;

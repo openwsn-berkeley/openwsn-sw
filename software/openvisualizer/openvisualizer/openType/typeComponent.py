@@ -61,8 +61,9 @@ class typeComponent(openType.openType):
     COMPONENT_UINJECT                   = 0x24
     COMPONENT_RRT                       = 0x25
     COMPONENT_SECURITY                  = 0x26
-    COMPONENT_UEXPIRATION               = 0x29
-    COMPONENT_UMONITOR                  = 0x2a
+    COMPONENT_USERIALBRIDGE             = 0x27
+    COMPONENT_UEXPIRATION               = 0x28
+    COMPONENT_UMONITOR                  = 0x29
     
     def __init__(self):
         # log

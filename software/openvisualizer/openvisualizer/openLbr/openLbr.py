@@ -395,7 +395,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             
             self.dispatch('v6ToInternet',ipv6pkt)
             
-        except (ValueError,NotImplementedError) as err:
+        except (ValueError,IndexError,NotImplementedError) as err:
             log.error(err)
             pass
     

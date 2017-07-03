@@ -218,6 +218,8 @@ class OpenVisualizerApp(object):
                 motes.append(src_s)
             neighborTable = ms.getStateElem(ms.ST_NEIGHBORS)
             for neighbor in neighborTable.data:
+                if len(neighbor.data)==0:
+                    break
                 if neighbor.data[0]['used']==1 and neighbor.data[0]['parentPreference']==1:
                     dst_s =''.join(['%02X' %b for b in neighbor.data[0]['addr'].addr[-2:]])
                     edges.append({ 'u':src_s, 'v':dst_s })
