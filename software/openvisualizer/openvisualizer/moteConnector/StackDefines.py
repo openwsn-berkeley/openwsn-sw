@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Mon, 19 Jun 2017 14:05:10
+# on Mon, 26 Jun 2017 14:34:11
 #
 
 components = {
@@ -46,6 +46,7 @@ components = {
   39: "SECURITY",
   40: "USERIALBRIDGE",
   41: "CJOIN",
+  48: "OPENOSCOAP",
 }
 
 errorDescriptions = {
@@ -115,6 +116,10 @@ errorDescriptions = {
   64: "the received packet format is not supported {code location {0}}",
   65: "the metadata type is not suppored",
   66: "node joined",
+  67: "OSCOAP sequence number reached maximum value",
+  68: "OSCOAP buffer overflow detected {code location {0}}",
+  69: "OSCOAP replay protection failed",
+  70: "OSCOAP decryption and tag verification failed",
 }
 
 sixtop_returncode = {
