@@ -10,6 +10,9 @@ from   coap   import    coap,                    \
 import coseDefines
 import logging
 import logging.handlers
+from openvisualizer.eventBus import eventBusClient
+import openvisualizer.openvisualizer_utils as u
+
 log = logging.getLogger('JRC')
 log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
@@ -19,8 +22,50 @@ import binascii
 
 MASTERSECRET = binascii.unhexlify('000102030405060708090A0B0C0D0E0F')
 
+KEY_VALUE = [0xe6, 0xbf, 0x42, 0x87, 0xc2, 0xd7, 0x61, 0x8d, 0x6a, 0x96, 0x87, 0x44, 0x5f ,0xfd, 0x33, 0xe6] # default L2 key for the network
+KEY_ID = [0x01] # L2 key index
+
 joinedNodes = []
 
+# ======================== Interface with OpenVisualizer ======================================
+class JRC(eventBusClient.eventBusClient):
+    def __init__(self):
+        # log
+        log.info("create instance")
+
+        # store params
+
+        # initialize parent class
+        eventBusClient.eventBusClient.__init__(
+            self,
+            name='JRC',
+            registrations=[
+                {
+                    'sender': self.WILDCARD,
+                    'signal': 'getL2SecurityKey',
+                    'callback': self._getL2SecurityKey_notif,
+                },
+            ]
+        )
+
+        # local variables
+        self.stateLock = threading.Lock()
+
+    # ======================== public ==========================================
+
+    def close(self):
+        # nothing to do
+        pass
+
+    # ======================== private =========================================
+
+    # ==== handle EventBus notifications
+
+    def _getL2SecurityKey_notif(self, sender, signal, data):
+        '''
+        Return L2 security key for the network.
+        '''
+        return {'index' : KEY_ID, 'value' : KEY_VALUE}
 
 def JRCSecurityContextLookup(kid):
     kidBuf = u.str2buf(kid)
@@ -36,10 +81,8 @@ def JRCSecurityContextLookup(kid):
 
     return context
 
+# ==================== Implementation of CoAP join resource =====================
 class joinResource(coapResource.coapResource):
-
-    KEY_VALUE = 'e6bf4287c2d7618d6a9687445ffd33e6'.decode('hex') # default L2 key for the network
-    KEY_ID    = '01'.decode('hex') # key identifier
     
     def __init__(self):
         # initialize parent class
@@ -53,12 +96,12 @@ class joinResource(coapResource.coapResource):
     def GET(self,options=[]):
         
         respCode        = d.COAP_RC_2_05_CONTENT
-        respOptions     = [o.ContentFormat([d.FORMAT_CBOR])]
+        respOptions     = []
 
         k1 = {}
         k1[coseDefines.KEY_LABEL_KTY]   = coseDefines.KEY_VALUE_SYMMETRIC
-        k1[coseDefines.KEY_LABEL_KID]   = self.KEY_ID
-        k1[coseDefines.KEY_LABEL_K]     = self.KEY_VALUE
+        k1[coseDefines.KEY_LABEL_KID]   = u.buf2str(KEY_ID)
+        k1[coseDefines.KEY_LABEL_K]     = u.buf2str(KEY_VALUE)
 
         join_response = [[k1]]
         join_response_serialized = cbor.dumps(join_response)

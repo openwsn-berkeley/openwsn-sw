@@ -134,12 +134,19 @@ class moteConnector(eventBusClient.eventBusClient):
                         )
                         self.networkPrefix = networkPrefix
                 
+                # retrieve the security key of the network
+                with self.stateLock:
+                    keyDict = self._dispatchAndGetResult(
+                            signal       = 'getL2SecurityKey',
+                            data         = [],
+                    )
+    
                 # create data to send
                 with self.stateLock:
                     dataToSend = [
                         OpenParser.OpenParser.SERFRAME_PC2MOTE_SETDAGROOT,
                         OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
-                    ]+self.networkPrefix
+                    ]+self.networkPrefix+keyDict['index']+keyDict['value']
                 
                 # toggle the DAGroot state
                 self._sendToMoteProbe(
