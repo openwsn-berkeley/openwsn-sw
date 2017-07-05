@@ -125,6 +125,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     NHC_UDP_PORTS_8S_16D     = 2
     NHC_UDP_PORTS_4S_4D      = 3
 
+    LINK_LOCAL_PREFIX        = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
     
     def __init__(self):
         
@@ -192,6 +193,11 @@ class OpenLbr(eventBusClient.eventBusClient):
              # filter out multicast packets
             if ipv6['dst_addr'][0]==0xff:
                 return
+
+            if ipv6['dst_addr'][0]==0xfe and ipv6['dst_addr'][1]==0x80:
+                isLinkLocal = True
+            else:
+                isLinkLocal = False
             
             # log
             if log.isEnabledFor(logging.DEBUG):
@@ -207,16 +213,19 @@ class OpenLbr(eventBusClient.eventBusClient):
                 dst_addr=lowpan['dst_addr']
             else:
                 log.warning('unsupported address format {0}'.format(lowpan['dst_addr']))
-                    
-            lowpan['route'] = self._getSourceRoute(dst_addr)
+                   
+            if isLinkLocal:
+                lowpan['route'] = [dst_addr]
+            else:
+                lowpan['route'] = self._getSourceRoute(dst_addr)
             
-            if len(lowpan['route'])<2:
-                # no source route could be found
-                log.warning('no source route to {0}'.format(lowpan['dst_addr']))
-                # TODO: return ICMPv6 message
-                return
+                if len(lowpan['route'])<2:
+                    # no source route could be found
+                    log.error('no source route to {0}'.format(lowpan['dst_addr']))
+                    # TODO: return ICMPv6 message
+                    return
             
-            lowpan['route'].pop() #remove last as this is me.
+                lowpan['route'].pop() #remove last as this is me.
             
             lowpan['nextHop'] = lowpan['route'][len(lowpan['route'])-1] #get next hop as this has to be the destination address, this is the last element on the list
             # turn dictionary of fields into raw bytes
@@ -758,42 +767,57 @@ class OpenLbr(eventBusClient.eventBusClient):
                 pkt_ipv6['hop_limit'] = 255
             else:
                 log.error("wrong hlim=="+str(hlim))
+
+            # sac
+            sac = ((pkt_lowpan[1]) >> 6) & 0x01
+            if sac == self.IPHC_SAC_STATELESS:
+                prefix = self.LINK_LOCAL_PREFIX
+            elif sac == self.IPHC_SAC_STATEFUL:
+                prefix = self.networkPrefix
+                
             # sam
             sam = ((pkt_lowpan[1]) >> 4) & 0x03
             if sam == self.IPHC_SAM_ELIDED:
                 #pkt from the previous hop
-                pkt_ipv6['src_addr'] = self.networkPrefix + mac_prev_hop
+                pkt_ipv6['src_addr'] = prefix + mac_prev_hop
                 
             elif sam == self.IPHC_SAM_16B:
                 a1 = pkt_lowpan[ptr]
                 a2 = pkt_lowpan[ptr+1]
                 ptr = ptr+2
                 s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
-                pkt_ipv6['src_addr'] = self.networkPrefix+s
+                pkt_ipv6['src_addr'] = prefix+s
         
             elif sam == self.IPHC_SAM_64B:
-                pkt_ipv6['src_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
+                pkt_ipv6['src_addr'] = prefix+pkt_lowpan[ptr:ptr+8]
                 ptr = ptr + 8
             elif sam == self.IPHC_SAM_128B:
                 pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
                 ptr = ptr + 16
             else:
                 log.error("wrong sam=="+str(sam))
-                
+             
+            # dac
+            dac = ((pkt_lowpan[1]) >> 2) & 0x01
+            if dac == self.IPHC_DAC_STATELESS:
+                prefix = self.LINK_LOCAL_PREFIX
+            elif dac == self.IPHC_DAC_STATEFUL:
+                prefix = self.networkPrefix
+          
             # dam
             dam = ((pkt_lowpan[1]) & 0x03)
             if dam == self.IPHC_DAM_ELIDED:
                 if log.isEnabledFor(logging.DEBUG):
                     log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
-                pkt_ipv6['dst_addr'] = self.networkPrefix+self.dagRootEui64
+                pkt_ipv6['dst_addr'] = prefix+self.dagRootEui64
             elif dam == self.IPHC_DAM_16B:
                 a1 = pkt_lowpan[ptr]
                 a2 = pkt_lowpan[ptr+1]
                 ptr = ptr+2
                 s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
-                pkt_ipv6['dst_addr'] = self.networPrefix+s
+                pkt_ipv6['dst_addr'] = prefix+s
             elif dam == self.IPHC_DAM_64B:
-                pkt_ipv6['dst_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
+                pkt_ipv6['dst_addr'] = prefix+pkt_lowpan[ptr:ptr+8]
                 ptr = ptr + 8
             elif dam == self.IPHC_DAM_128B:
                 pkt_ipv6['dst_addr'] = pkt_lowpan[ptr:ptr+16]
