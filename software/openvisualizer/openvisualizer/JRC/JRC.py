@@ -8,10 +8,8 @@ from   coap   import    coap,                    \
                         coapUtils as u,          \
                         coapObjectSecurity as oscoap
 import coseDefines
-import logging
 import logging.handlers
 from openvisualizer.eventBus import eventBusClient
-import openvisualizer.openvisualizer_utils as u
 
 log = logging.getLogger('JRC')
 log.setLevel(logging.ERROR)
@@ -21,14 +19,28 @@ import cbor
 import binascii
 
 MASTERSECRET = binascii.unhexlify('000102030405060708090A0B0C0D0E0F')
+KEY_VALUE = [0xe6, 0xbf, 0x42, 0x87, 0xc2, 0xd7, 0x61, 0x8d, 0x6a, 0x96, 0x87, 0x44, 0x5f, 0xfd, 0x33, 0xe6]  # default L2 key for the network
+KEY_ID = [0x01]  # L2 key index
 
-KEY_VALUE = [0xe6, 0xbf, 0x42, 0x87, 0xc2, 0xd7, 0x61, 0x8d, 0x6a, 0x96, 0x87, 0x44, 0x5f ,0xfd, 0x33, 0xe6] # default L2 key for the network
-KEY_ID = [0x01] # L2 key index
+# ======================== Context Handler needs to be registered =============================
 
-joinedNodes = []
+def JRCSecurityContextLookup(kid):
+    kidBuf = u.str2buf(kid)
+
+    eui64 = kidBuf[:-1]
+    senderID = eui64 + [0x01]  # sender ID of JRC is reversed
+    recipientID = eui64 + [0x00]
+
+    context = oscoap.SecurityContext(masterSecret=MASTERSECRET,
+                                     senderID=u.buf2str(senderID),
+                                     recipientID=u.buf2str(recipientID),
+                                     aeadAlgorithm=oscoap.AES_CCM_16_64_128())
+
+    return context
 
 # ======================== Interface with OpenVisualizer ======================================
 class JRC(eventBusClient.eventBusClient):
+
     def __init__(self):
         # log
         log.info("create instance")
@@ -67,20 +79,6 @@ class JRC(eventBusClient.eventBusClient):
         '''
         return {'index' : KEY_ID, 'value' : KEY_VALUE}
 
-def JRCSecurityContextLookup(kid):
-    kidBuf = u.str2buf(kid)
-
-    eui64 = kidBuf[:-1]
-    senderID = eui64 + [0x01] # sender ID of JRC is reversed
-    recipientID = eui64 + [0x00]
-
-    context = oscoap.SecurityContext(masterSecret   = MASTERSECRET,
-                                     senderID       = u.buf2str(senderID),
-                                     recipientID    = u.buf2str(recipientID),
-                                     aeadAlgorithm  = oscoap.AES_CCM_16_64_128())
-
-    return context
-
 # ==================== Implementation of CoAP join resource =====================
 class joinResource(coapResource.coapResource):
     
@@ -94,7 +92,6 @@ class joinResource(coapResource.coapResource):
         self.addSecurityBinding((None, [d.METHOD_GET]))  # security context should be returned by the callback
     
     def GET(self,options=[]):
-        
         respCode        = d.COAP_RC_2_05_CONTENT
         respOptions     = []
 

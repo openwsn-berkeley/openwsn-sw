@@ -78,6 +78,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
         self.coap = coap.coap()
         self.coap.addResource(JRC.joinResource())
+        self.coap.addSecurityContextHandler(JRC.JRCSecurityContextLookup)
         self.coap.respTimeout = 2
         self.coap.ackTimeout = 2
         self.coap.maxRetransmit = 1
