@@ -33,6 +33,9 @@ VIRTUALTUNID = [0x00,0x00,0x86,0xdd]
 IFF_TUN            = 0x0001
 TUNSETIFF          = 0x400454ca
 
+# link-local prefix
+LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+
 #============================ helper classes ==================================
 
 class TunReadThread(threading.Thread):
@@ -211,8 +214,12 @@ class OpenTunMACOS(openTun.OpenTun):
         Called when new DAG root registers. The function adds
         IPv6 address of the DAG root to the TUN interface.
         '''
-        prefixStr = u.formatIPv6Addr(data['prefix'])
+        # add global address
+        prefixStr = u.formatIPv6Addr(data['prefix']) # network prefix
         hostStr   = u.formatIPv6Addr(data['host'])
+        v=os.system('ifconfig {0} inet6 add {1}:{2} prefixlen 64'.format(self.tunIfName, prefixStr, hostStr))
+        # add link-local address
+        prefixStr = u.formatIPv6Addr(LINK_LOCAL_PREFIX) # link-local prefix
         v=os.system('ifconfig {0} inet6 add {1}:{2} prefixlen 64'.format(self.tunIfName, prefixStr, hostStr))
 
     def _unregisterDagRoot_notif(self,sender,signal,data):
@@ -220,8 +227,12 @@ class OpenTunMACOS(openTun.OpenTun):
         Called when a DAG root unregisters. The function removes
         IPv6 address of the DAG root from the TUN interface.
         '''
+        # remove global address
         prefixStr = u.formatIPv6Addr(data['prefix'])
         hostStr   = u.formatIPv6Addr(data['host'])
+        v=os.system('ifconfig {0} inet6 delete {1}:{2}'.format(self.tunIfName, prefixStr, hostStr))
+        # remove link-local address
+        prefixStr = u.formatIPv6Addr(LINK_LOCAL_PREFIX) # link-local prefix
         v=os.system('ifconfig {0} inet6 delete {1}:{2}'.format(self.tunIfName, prefixStr, hostStr))
 
     #======================== helpers =========================================

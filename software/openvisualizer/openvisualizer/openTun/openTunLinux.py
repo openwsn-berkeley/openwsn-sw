@@ -33,6 +33,9 @@ VIRTUALTUNID = [0x00,0x00,0x86,0xdd]
 IFF_TUN            = 0x0001
 TUNSETIFF          = 0x400454ca
 
+# link-local prefix
+LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+
 #============================ helper classes ==================================
 
 class TunReadThread(threading.Thread):
@@ -219,8 +222,12 @@ class OpenTunLinux(openTun.OpenTun):
         Called when new DAG root registers. The function adds
         IPv6 address of the DAG root to the TUN interface.
         '''
+        # add global address
         prefixStr = u.formatIPv6Addr(data['prefix'])
         hostStr   = u.formatIPv6Addr(data['host'])
+        v = os.system('ip -6 addr add ' + prefixStr + ':' + hostStr + '/64 dev ' + self.tunIfName)
+        # add link-local address
+        prefixStr = u.formatIPv6Addr(LINK_LOCAL_PREFIX)
         v = os.system('ip -6 addr add ' + prefixStr + ':' + hostStr + '/64 dev ' + self.tunIfName)
 
     def _unregisterDagRoot_notif(self,sender,signal,data):
@@ -228,8 +235,12 @@ class OpenTunLinux(openTun.OpenTun):
         Called when a DAG root unregisters. The function removes
         IPv6 address of the DAG root from the TUN interface.
         '''
+        # remove global address
         prefixStr = u.formatIPv6Addr(data['prefix'])
         hostStr   = u.formatIPv6Addr(data['host'])
+        v = os.system('ip -6 addr del ' + prefixStr + ':' + hostStr + ' dev ' + self.tunIfName)
+        # remove link-local address
+        prefixStr = u.formatIPv6Addr(LINK_LOCAL_PREFIX)
         v = os.system('ip -6 addr del ' + prefixStr + ':' + hostStr + ' dev ' + self.tunIfName)
 
     #======================== helpers =========================================
