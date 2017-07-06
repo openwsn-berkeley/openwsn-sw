@@ -9,7 +9,6 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 import struct
-import numpy
 
 from ParserException import ParserException
 import Parser
@@ -75,7 +74,11 @@ class ParserInfoErrorCritical(Parser.Parser):
             tc['MOTEID']            = moteId
             tc['COMPONENT']         = self._translateCallingComponent(callingComponent)
             tc['ERROR_DESC']        = self._translateErrorDescription(error_code,arg1,arg2),
-            tc['TimeCorrection']    = int(numpy.int16(arg1))
+            # convert to 16bit integer
+            if arg1>=self.MAXTIMERCOUNTER/2:
+                tc['TimeCorrection'] = arg1-self.MAXTIMERCOUNTER
+            else:
+                tc['TimeCorrection'] = arg1
             
             dispatcher.send(
                 sender        = self.WILDCARD,
@@ -84,7 +87,7 @@ class ParserInfoErrorCritical(Parser.Parser):
             )
             
             # only print timeCorrection when it's larger than +/-5 ticks.
-            if arg1 > self.MAXTIMERCOUNTER - self.LARGETIMECORRECTION or arg1 < self.LARGETIMECORRECTION:
+            if tc['TimeCorrection'] > self.MAXTIMERCOUNTER - self.LARGETIMECORRECTION or tc['TimeCorrection'] < self.LARGETIMECORRECTION:
                 return 'error', input
         
         # log

@@ -23,6 +23,7 @@ class ParserData(Parser.Parser):
     IPHC_SAM       = 4
     IPHC_DAM       = 0
     
+    UINJECT_MASK    = 'uinject'
      
     def __init__(self):
         
@@ -79,41 +80,31 @@ class ParserData(Parser.Parser):
         # when the packet goes to internet it comes with the asn at the beginning as timestamp.
          
         # cross layer trick here. capture UDP packet from udpLatency and get ASN to compute latency.
-        # then notify a latency component that will plot that information.
-        # port 61001==0xee,0x49
         if len(input) >37:
-           if input[36]==238 and input[37]==73:
-            # udp port 61001 for udplatency app.
-               aux      = input[len(input)-5:]               # last 5 bytes of the packet are the ASN in the UDP latency packet
-               diff     = self._asndiference(aux,asnbytes)   # calculate difference 
-               timeinus = diff*self.MSPERSLOT                # compute time in ms
-               SN       = input[len(input)-23:len(input)-21] # SN sent by mote
-               parent   = input[len(input)-21:len(input)-13] # the parent node is the first element (used to know topology)
-               node     = input[len(input)-13:len(input)-5]  # the node address
-               
-               if timeinus<0xFFFF:
-               # notify latency manager component. only if a valid value
-                  dispatcher.send(
-                     sender        = 'parserData',
-                     signal        = 'latency',
-                     data          = (node,timeinus,parent,SN),
-                  )
-               else:
-                   # this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
-                   print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
-                   print ",".join(hex(c) for c in input)
-                   log.warning("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
-                   pass
-               # in case we want to send the computed time to internet..
-               # computed=struct.pack('<H', timeinus)#to be appended to the pkt
-               # for x in computed:
-                   #input.append(x)
-           else:
-               # no udplatency
-               # print input
-               pass     
+            if self.UINJECT_MASK == ''.join(chr(i) for i in input[-7:]):
+                aux      = input[len(input)-14:len(input)-9]  # last 5 bytes of the packet are the ASN in the UDP latency packet
+                diff     = self._asndiference(aux,asnbytes)   # calculate difference 
+                timeinus = diff*self.MSPERSLOT                # compute time in ms
+                SN       = input[len(input)-9:len(input)-7]   # SN sent by mote
+                if timeinus<0xFFFF:
+                    # print "source {0}, dest {1}, timeinus {2}ms, SN {3}".format(source, dest,timeinus,SN)
+                    pass
+                else:
+                    # this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
+                    print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
+                    print ",".join(hex(c) for c in input)
+                    log.warning("Wrong latency computation {0} = {1} mS".format(str(node),timeinus))
+                    pass
+                # in case we want to send the computed time to internet..
+                # computed=struct.pack('<H', timeinus)#to be appended to the pkt
+                # for x in computed:
+                    #input.append(x)
+            else:
+                # no udplatency
+                # print input
+                pass     
         else:
-           pass      
+            pass      
        
         eventType='data'
         # notify a tuple including source as one hop away nodes elide SRC address as can be inferred from MAC layer header

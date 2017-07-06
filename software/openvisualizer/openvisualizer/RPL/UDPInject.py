@@ -68,7 +68,7 @@ class UDPInject(eventBusClient.eventBusClient):
         '''
         address    = ",".join(hex(c) for c in data[0])
         asn        = struct.unpack('<HHB',''.join([chr(c) for c in data[1][:5]]))
-        counter    = struct.unpack('<H',''.join([chr(c) for c in data[1][5:]]))
+        counter    = struct.unpack('<H',''.join([chr(c) for c in data[1][5:7]]))
 
         stats = {}
         

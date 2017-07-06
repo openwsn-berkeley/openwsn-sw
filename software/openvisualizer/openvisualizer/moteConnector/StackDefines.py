@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Mon, 26 Jun 2017 14:34:11
+# on Thu, 06 Jul 2017 15:16:27
 #
 
 components = {
@@ -45,8 +45,10 @@ components = {
   38: "RRT",
   39: "SECURITY",
   40: "USERIALBRIDGE",
-  41: "CJOIN",
-  48: "OPENOSCOAP",
+  41: "UEXPIRATION",
+  42: "UMONITOR",
+  43: "CJOIN",
+  44: "OPENOSCOAP",
 }
 
 errorDescriptions = {
@@ -115,11 +117,14 @@ errorDescriptions = {
   63: "the slot {0} to be added is already in schedule",
   64: "the received packet format is not supported {code location {0}}",
   65: "the metadata type is not suppored",
-  66: "node joined",
-  67: "OSCOAP sequence number reached maximum value",
-  68: "OSCOAP buffer overflow detected {code location {0}}",
-  69: "OSCOAP replay protection failed",
-  70: "OSCOAP decryption and tag verification failed",
+  66: "the received packet has expired",
+  67: "packet expiry time reached, dropped",
+  68: "node joined",
+  69: "OSCOAP sequence number reached maximum value",
+  70: "OSCOAP buffer overflow detected {code location {0}}",
+  71: "OSCOAP replay protection failed",
+  72: "OSCOAP decryption and tag verification failed",
+  73: "Aborted join process {code location {0}}",
 }
 
 sixtop_returncode = {
