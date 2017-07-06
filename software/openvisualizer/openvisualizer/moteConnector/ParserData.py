@@ -88,6 +88,7 @@ class ParserData(Parser.Parser):
                 SN       = input[len(input)-9:len(input)-7]   # SN sent by mote
                 if timeinus<0xFFFF:
                     # print "source {0}, dest {1}, timeinus {2}ms, SN {3}".format(source, dest,timeinus,SN)
+                    pass
                 else:
                     # this usually happens when the serial port framing is not correct and more than one message is parsed at the same time. this will be solved with HDLC framing.
                     print "Wrong latency computation {0} = {1} mS".format(str(node),timeinus)
