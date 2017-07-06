@@ -36,6 +36,11 @@ import datetime
 from bottle        import view, response
 from   cmd         import Cmd
 
+# We want to import local module coap instead of the built-in one
+here = sys.path[0]
+openwsnDir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(here)))))
+coapDir = os.path.join(openwsnDir, 'coap')
+sys.path.insert(0, coapDir)
 
 import openVisualizerApp
 from openvisualizer.eventBus      import eventBusClient
