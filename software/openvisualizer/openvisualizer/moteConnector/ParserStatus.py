@@ -187,10 +187,11 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBQQHbBBBBBHHBBBB',
+                                    '<BBBBBBBQQHbBBBBBHHBBBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
+                                        'insecure',                  # B
                                         'parentPreference',          # B
                                         'stableNeighbor',            # B
                                         'switchStabilityCounter',    # B

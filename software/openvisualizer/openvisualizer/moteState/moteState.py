@@ -245,6 +245,7 @@ class StateNeighborsRow(StateElem):
         if len(self.data)==0:
             self.data.append({})
         self.data[0]['used']                     = notif.used
+        self.data[0]['insecure']                 = notif.insecure
         self.data[0]['parentPreference']         = notif.parentPreference
         self.data[0]['stableNeighbor']           = notif.stableNeighbor
         self.data[0]['switchStabilityCounter']   = notif.switchStabilityCounter
@@ -517,6 +518,7 @@ class moteState(eventBusClient.eventBusClient):
                                                 columnOrder = '.'.join(
                                                     [
                                                         'used',
+                                                        'insecure',
                                                         'parentPreference',
                                                         'stableNeighbor',
                                                         'switchStabilityCounter',
