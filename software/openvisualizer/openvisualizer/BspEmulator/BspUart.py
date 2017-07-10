@@ -18,6 +18,11 @@ class BspUart(BspModule.BspModule):
     INTR_TX   = 'uart.tx'
     INTR_RX   = 'uart.rx'
     BAUDRATE  = 115200
+
+    XOFF            0x13
+    XON             0x11
+    XONXOFF_ESCAPE  0x12
+    XONXOFF_MASK    0x10
     
     def __init__(self,motehandler):
         
@@ -39,6 +44,8 @@ class BspUart(BspModule.BspModule):
         self.uartTxBufferLock     = threading.Lock()
         self.waitForDoneReading   = threading.Lock()
         self.waitForDoneReading.acquire()
+        self.fXonXoffEscaping     = False
+        self.xonXoffEscapedByte   = 0
         
         # initialize the parent
         BspModule.BspModule.__init__(self,'BspUart')
@@ -137,15 +144,55 @@ class BspUart(BspModule.BspModule):
         
         # update variables
         self.txInterruptFlag      = False
-    
-    def cmd_writeByte(self,byteToWrite):
+
+    def cmd_writeByte(self, byteToWrite):
         '''emulates
            void uart_writeByte(uint8_t byteToWrite)'''
-        
+
         # log the activity
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('cmd_writeByte byteToWrite='+str(self.byteToWrite))
+
+        # set tx interrupt flag
+        self.txInterruptFlag      = True
         
+        # calculate the time at which the byte will have been sent
+        doneSendingTime           = self.timeline.getCurrentTime()+float(1.0/float(self.BAUDRATE))
+
+        # schedule uart TX interrupt in 1/BAUDRATE seconds
+        self.timeline.scheduleEvent(
+            doneSendingTime,
+            self.motehandler.getId(),
+            self.intr_tx,
+            self.INTR_TX
+        )
+
+        if (byteToWrite==self.XON || byteToWrite==self.XOFF || byteToWrite==self.XONXOFF_ESCAPE) {
+            self.fXonXoffEscaping     = True;
+            self.xonXoffEscapedByte   = byteToWrite;
+            # add to receive buffer
+            with self.uartRxBufferLock:
+                self.uartRxBuffer    += [self.XONXOFF_ESCAPE]
+        } else {
+            # add to receive buffer
+            with self.uartRxBufferLock:
+                self.uartRxBuffer    += [byteToWrite]
+        }
+
+        # release the semaphore indicating there is something in RX buffer
+        self.uartRxBufferSem.release()
+        
+        # wait for the moteProbe to be done reading
+        self.waitForDoneReading.acquire()
+
+    def cmd_setCTS(self, state):
+        '''emulates
+           void uart_setCTS(bool state)'''
+
+        # log the activity
+        if self.log.isEnabledFor(logging.DEBUG):
+            self.log.debug('uart_setCTS state='+str(self.state))
+
         # set tx interrupt flag
         self.txInterruptFlag      = True
         
@@ -162,7 +209,10 @@ class BspUart(BspModule.BspModule):
         
         # add to receive buffer
         with self.uartRxBufferLock:
-            self.uartRxBuffer    += [byteToWrite]
+            if (state==True):
+                self.uartRxBuffer    += [self.XON]
+            else:
+                self.uartRxBuffer    += [self.XOFF]
         
         # release the semaphore indicating there is something in RX buffer
         self.uartRxBufferSem.release()
@@ -226,7 +276,7 @@ class BspUart(BspModule.BspModule):
         # retrieve the byte last sent
         with self.uartTxBufferLock:
             return self.uartTxNext
-    
+
     #======================== interrupts ======================================
     
     def intr_tx(self):
@@ -237,9 +287,37 @@ class BspUart(BspModule.BspModule):
         # log the activity
         if self.log.isEnabledFor(logging.DEBUG):
             self.log.debug('intr_tx')
-        
-        # send interrupt to mote
-        self.motehandler.mote.uart_isr_tx()
+
+        if self.fXonXoffEscaping==True:
+            self.fXonXoffEscaping = False
+
+            # set tx interrupt flag
+            self.txInterruptFlag      = True
+            
+            # calculate the time at which the byte will have been sent
+            doneSendingTime           = self.timeline.getCurrentTime()+float(1.0/float(self.BAUDRATE))
+
+            # schedule uart TX interrupt in 1/BAUDRATE seconds
+            self.timeline.scheduleEvent(
+                doneSendingTime,
+                self.motehandler.getId(),
+                self.intr_tx,
+                self.INTR_TX
+            )
+            
+            # add to receive buffer
+            with self.uartRxBufferLock:
+                self.uartRxBuffer    += [self.xonXoffEscapedByte^self.XONXOFF_MASK]
+
+            # release the semaphore indicating there is something in RX buffer
+            self.uartRxBufferSem.release()
+            
+            # wait for the moteProbe to be done reading
+            self.waitForDoneReading.acquire()
+
+        else:
+            # send interrupt to mote
+            self.motehandler.mote.uart_isr_tx()
         
         # do *not* kick the scheduler
         return False
