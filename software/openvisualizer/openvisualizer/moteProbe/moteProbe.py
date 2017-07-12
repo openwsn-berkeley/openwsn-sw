@@ -79,6 +79,8 @@ def findSerialPorts():
     for port in serialports:
         for baudrate in [port[1], 500000]:
             probe = moteProbe(serialport=(port[0],baudrate))
+            while hasattr(probe, 'serial')==False:
+                pass
             tester = SerialTester(probe.portname)
             tester.setNumTestPkt(1)
             tester.setTimeout(2)
@@ -86,8 +88,10 @@ def findSerialPorts():
             if tester.getStats()['numOk'] >= 1:
                 mote_ports.append((port[0],baudrate));
             probe.close()
+            while probe.serial.isOpen():
+                pass
             probe.join()
-    
+
     # log
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
     
@@ -197,6 +201,7 @@ class moteProbe(threading.Thread):
                     self.serial = serial.Serial(
                         port                  = self.serialport,
                         baudrate              = self.baudrate,
+                        timeout               = 1,
                         xonxoff               = True,
                     )
                     self.serial.setDTR(0)

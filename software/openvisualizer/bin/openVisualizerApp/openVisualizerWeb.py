@@ -644,7 +644,7 @@ if __name__=="__main__":
     banner  = []
     banner += ['OpenVisualizer']
     banner += ['web interface started at {0}:{1}'.format(argspace.host,argspace.port)]
-    banner += ['enter \'q\' to exit']
+    banner += ['enter \'quit\' to exit']
     banner  = '\n'.join(banner)
     print banner
 

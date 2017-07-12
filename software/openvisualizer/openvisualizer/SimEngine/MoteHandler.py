@@ -174,6 +174,7 @@ class MoteHandler(threading.Thread):
         mote.set_callback(notifId('uart_writeCircularBuffer_FASTSIM'),    self.bspUart.cmd_writeCircularBuffer_FASTSIM)
         mote.set_callback(notifId('uart_writeBufferByLen_FASTSIM'),       self.bspUart.uart_writeBufferByLen_FASTSIM)
         mote.set_callback(notifId('uart_readByte'),                       self.bspUart.cmd_readByte)
+        mote.set_callback(notifId('uart_setCTS'),                         self.bspUart.cmd_setCTS)
         
         # logging this module
         self.log             = logging.getLogger('MoteHandler_'+str(self.id))

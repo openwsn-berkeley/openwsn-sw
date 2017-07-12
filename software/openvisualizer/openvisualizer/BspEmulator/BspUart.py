@@ -15,14 +15,14 @@ class BspUart(BspModule.BspModule):
     Emulates the 'uart' BSP module
     '''
     
-    INTR_TX   = 'uart.tx'
-    INTR_RX   = 'uart.rx'
-    BAUDRATE  = 115200
+    INTR_TX         = 'uart.tx'
+    INTR_RX         = 'uart.rx'
+    BAUDRATE        = 115200
 
-    XOFF            0x13
-    XON             0x11
-    XONXOFF_ESCAPE  0x12
-    XONXOFF_MASK    0x10
+    XOFF            = 0x13
+    XON             = 0x11
+    XONXOFF_ESCAPE  = 0x12
+    XONXOFF_MASK    = 0x10
     
     def __init__(self,motehandler):
         
@@ -67,7 +67,7 @@ class BspUart(BspModule.BspModule):
             assert len(self.uartRxBuffer)>0
             returnVal             = [chr(b) for b in self.uartRxBuffer]
             self.uartRxBuffer     = []
-        
+
         # return that element
         return returnVal
     
@@ -167,17 +167,16 @@ class BspUart(BspModule.BspModule):
             self.INTR_TX
         )
 
-        if (byteToWrite==self.XON || byteToWrite==self.XOFF || byteToWrite==self.XONXOFF_ESCAPE) {
+        if byteToWrite==self.XON or byteToWrite==self.XOFF or byteToWrite==self.XONXOFF_ESCAPE:
             self.fXonXoffEscaping     = True;
             self.xonXoffEscapedByte   = byteToWrite;
             # add to receive buffer
             with self.uartRxBufferLock:
                 self.uartRxBuffer    += [self.XONXOFF_ESCAPE]
-        } else {
+        else:
             # add to receive buffer
             with self.uartRxBufferLock:
                 self.uartRxBuffer    += [byteToWrite]
-        }
 
         # release the semaphore indicating there is something in RX buffer
         self.uartRxBufferSem.release()
@@ -257,8 +256,14 @@ class BspUart(BspModule.BspModule):
         
         # add to receive buffer
         with self.uartRxBufferLock:
+            i = 0
+            while i != len(buffer):
+                if buffer[i]==self.XON or buffer[i]==self.XOFF or buffer[i]==self.XONXOFF_ESCAPE:
+                    newitem = (self.XONXOFF_ESCAPE, buffer[i]^self.XONXOFF_MASK)
+                    buffer[i:i+1] = newitem
+                i += 1
             self.uartRxBuffer    += buffer
-        
+
         # release the semaphore indicating there is something in RX buffer
         self.uartRxBufferSem.release()
         
