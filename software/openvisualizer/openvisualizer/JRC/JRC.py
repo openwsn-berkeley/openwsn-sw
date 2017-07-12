@@ -29,6 +29,8 @@ KEY_ID = [0x01]  # L2 key index
 # link-local prefix
 LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 
+joinedNodes = []
+
 # ======================== Context Handler needs to be registered =============================
 
 def JRCSecurityContextLookup(kid):
@@ -38,6 +40,15 @@ def JRCSecurityContextLookup(kid):
     senderID = eui64 + [0x01]  # sender ID of JRC is reversed
     recipientID = eui64 + [0x00]
 
+    global joinedNodes
+    # if eui-64 is found in the list of joined nodes, return the appropriate context
+    # this is important for replay protection
+    for dict in joinedNodes:
+        if dict['eui64'] == u.buf2str(eui64):
+            return dict['context']
+
+    # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
+    # handler of the join resource
     context = oscoap.SecurityContext(masterSecret=MASTERSECRET,
                                      senderID=u.buf2str(senderID),
                                      recipientID=u.buf2str(recipientID),
@@ -244,7 +255,14 @@ class joinResource(coapResource.coapResource):
         join_response_serialized = cbor.dumps(join_response)
 
         respPayload     = [ord(b) for b in join_response_serialized]
-        
+
+        objectSecurity = oscoap.objectSecurityOptionLookUp(options)
+        assert objectSecurity
+
+        global joinedNodes
+        joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid),
+                        'context' : objectSecurity.context}]
+
         return (respCode,respOptions,respPayload)
 
 if __name__ == "__main__":
