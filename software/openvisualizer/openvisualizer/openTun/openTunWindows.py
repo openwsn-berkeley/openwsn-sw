@@ -220,7 +220,7 @@ class OpenTunWindows(openTun.OpenTun):
         )
         
         # return the handler of the TUN interface
-        return (tunIf, None)
+        return tunIf
          
     def _createTunReadThread(self):
         '''
@@ -231,25 +231,7 @@ class OpenTunWindows(openTun.OpenTun):
             self.tunIf,
             self._v6ToMesh_notif
         )
-
-    def _registerDagRoot_notif(self,sender,signal,data):
-        '''
-        Called when new DAG root registers. The function adds
-        IPv6 address of the DAG root to the TUN interface.
-        '''
-        prefixStr = u.formatIPv6Addr(data['prefix'])
-        hostStr   = u.formatIPv6Addr(data['host'])
-        raise NotImplementedError('Dynamic DAG root IPv6 address addition not supported in Windows')
-
-    def _unregisterDagRoot_notif(self,sender,signal,data):
-        '''
-        Called when a DAG root unregisters. The function removes
-        IPv6 address of the DAG root from the TUN interface.
-        '''
-        prefixStr = u.formatIPv6Addr(data['prefix'])
-        hostStr   = u.formatIPv6Addr(data['host'])
-        raise NotImplementedError('Dynamic DAG root IPv6 address removal not supported in Windows')
-
+    
     #======================== helpers =========================================
     
     def _get_tuntap_ComponentId(self):

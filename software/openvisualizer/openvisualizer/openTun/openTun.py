@@ -76,25 +76,15 @@ class OpenTun(eventBusClient.eventBusClient):
                     'signal'   : 'v6ToInternet',
                     'callback' : self._v6ToInternet_notif
                 },
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'registerDagRoot',
-                    'callback' : self._registerDagRoot_notif
-                },
-                {
-                    'sender'   : self.WILDCARD,
-                    'signal'   : 'unregisterDagRoot',
-                    'callback' : self._unregisterDagRoot_notif
-                },
             ]
         )
-                
+        
         # local variables
-        (self.tunIf, self.tunIfName) = self._createTunIf()
+        self.tunIf                = self._createTunIf()
         if self.tunIf:
-            self.tunReadThread       = self._createTunReadThread()
+            self.tunReadThread    = self._createTunReadThread()
         else:
-            self.tunReadThread       = None
+            self.tunReadThread    = None
         
         # TODO: retrieve network prefix from interface settings
         
@@ -174,18 +164,3 @@ class OpenTun(eventBusClient.eventBusClient):
         Creates the thread to read messages arriving from the TUN interface
         '''
         raise NotImplementedError('subclass must implement')
-
-    def _registerDagRoot_notif(self,sender,signal,data):
-        '''
-        Called when new DAG root registers. The function adds
-        IPv6 address of the DAG root to the TUN interface.
-        '''
-        raise NotImplementedError('subclass must implement')
-
-    def _unregisterDagRoot_notif(self,sender,signal,data):
-        '''
-        Called when a DAG root unregisters. The function removes
-        IPv6 address of the DAG root from the TUN interface.
-        '''
-        raise NotImplementedError('subclass must implement')
-
