@@ -79,16 +79,12 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.prompt     = '> '
         self.intro      = '\nOpenVisualizer  (type "help" for commands)'
 
-        #used for remote motes and JRC:
-
-        self.coap = coap.coap()
-        self.coap.addResource(JRC.joinResource())
-        self.coap.addSecurityContextHandler(JRC.JRCSecurityContextLookup)
-        self.coap.respTimeout = 2
-        self.coap.ackTimeout = 2
-        self.coap.maxRetransmit = 1
-
-        if roverMode :
+        # used for remote motes:
+        if roverMode:
+            self.coap = coap.coap()
+            self.coap.respTimeout = 2
+            self.coap.ackTimeout = 2
+            self.coap.maxRetransmit = 1
             self.roverMotes = {}
 
         self._defineRoutes()
@@ -578,7 +574,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                     pass
     
     def do_quit(self, arg):
-        self.coap.close()
         self.app.close()
         os.kill(os.getpid(), signal.SIGTERM)
         return True

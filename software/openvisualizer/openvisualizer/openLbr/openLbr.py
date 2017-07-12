@@ -222,6 +222,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             elif len(lowpan['dst_addr'])==8:
                 dst_addr=lowpan['dst_addr']
             else:
+                dst_addr=None
                 log.warning('unsupported address format {0}'.format(lowpan['dst_addr']))
                    
             if isLinkLocal:
