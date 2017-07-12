@@ -46,7 +46,6 @@ import openVisualizerApp
 from openvisualizer.eventBus      import eventBusClient
 from openvisualizer.SimEngine     import SimEngine
 from openvisualizer.BspEmulator   import VcdLogger
-from openvisualizer.JRC           import JRC
 from openvisualizer import ovVersion
 from coap import coap
 import time
@@ -79,13 +78,15 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.prompt     = '> '
         self.intro      = '\nOpenVisualizer  (type "help" for commands)'
 
-        # used for remote motes:
-        if roverMode:
-            self.coap = coap.coap()
-            self.coap.respTimeout = 2
-            self.coap.ackTimeout = 2
-            self.coap.maxRetransmit = 1
+        #used for remote motes :
+
+        if roverMode :
             self.roverMotes = {}
+            self.client = coap.coap()
+            self.client.respTimeout = 2
+            self.client.ackTimeout = 2
+            self.client.maxRetransmit = 1
+
 
         self._defineRoutes()
         # To find page templates
@@ -212,10 +213,10 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         log.info("sending coap request to rover {0}".format(roverip))
         try:
             if ':' in roverip:
-                response = self.coap.PUT('coap://[{0}]/pcinfo'.format(roverip),
+                response = self.client.PUT('coap://[{0}]/pcinfo'.format(roverip),
                                            payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
             else:
-                response = self.coap.PUT('coap://{0}/pcinfo'.format(roverip),
+                response = self.client.PUT('coap://{0}/pcinfo'.format(roverip),
                                            payload=[ord(c) for c in (srcip + ';50000;' + roverip)])
             payload = ''.join([chr(b) for b in response])
             self.roverMotes[roverip] = json.loads(payload)
