@@ -69,8 +69,6 @@ class JRC(eventBusClient.eventBusClient):
         self.coapServer = coap.coap(udpPort=d.DEFAULT_UDP_PORT, testing=True)
         self.coapServer.addResource(joinResource())
         self.coapServer.addSecurityContextHandler(JRCSecurityContextLookup)
-        self.coapServer.respTimeout = 2
-        self.coapServer.ackTimeout = 2
         self.coapServer.maxRetransmit = 1
 
         self.coapClient = None
@@ -219,7 +217,7 @@ class JRC(eventBusClient.eventBusClient):
         ip += [0x00, 0x00, 0x00]  # traffic class (lower nibble) + flow label
         ip += udp[4:6]  # payload length
         ip += [17]  # next header (protocol); UDP=17
-        ip += [255]  # hop limit (pick a safe value)
+        ip += [64]  # hop limit (pick a safe value)
         ip += srcIpv6Address  # source
         ip += dstIpv6Address  # destination
         ip += udp
