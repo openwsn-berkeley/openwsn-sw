@@ -184,6 +184,8 @@ class JRC(eventBusClient.eventBusClient):
         Receive CoAP response and forward it to the mesh network.
         Appends UDP and IPv6 headers to the CoAP message and forwards it on the Eventbus towards the mesh.
         '''
+        self.coapClient.close()
+
         # UDP
         udplen = len(data) + 8
 
