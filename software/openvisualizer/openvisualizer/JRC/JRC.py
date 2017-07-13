@@ -45,6 +45,7 @@ def JRCSecurityContextLookup(kid):
     # this is important for replay protection
     for dict in joinedNodes:
         if dict['eui64'] == u.buf2str(eui64):
+            log.info("Node {0} found in joinedNodes. Returning context {1}.".format(binascii.hexlify(dict['eui64']), str(dict['context'])))
             return dict['context']
 
     # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
@@ -53,6 +54,8 @@ def JRCSecurityContextLookup(kid):
                                      senderID=u.buf2str(senderID),
                                      recipientID=u.buf2str(recipientID),
                                      aeadAlgorithm=oscoap.AES_CCM_16_64_128())
+
+    log.info("Node {0} not found in joinedNodes. Instantiating new context based on the master secret.".format(binascii.hexlify(u.buf2str(eui64))))
 
     return context
 
@@ -260,7 +263,7 @@ class joinResource(coapResource.coapResource):
         assert objectSecurity
 
         global joinedNodes
-        joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid),
+        joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid[:8]), # remove last prepended byte
                         'context' : objectSecurity.context}]
 
         return (respCode,respOptions,respPayload)
