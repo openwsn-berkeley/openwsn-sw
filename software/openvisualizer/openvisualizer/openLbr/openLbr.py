@@ -648,18 +648,34 @@ class OpenLbr(eventBusClient.eventBusClient):
             cid              = self.IPHC_CID_NO
         else:
             cid              = self.IPHC_CID_YES
-        sac                  = self.IPHC_SAC_STATELESS
+
+        if self._isLinkLocal(lowpan['src_addr']):
+            sac                  = self.IPHC_SAC_STATELESS
+            lowpan['src_addr'] = lowpan['src_addr'][8:]
+        else:
+            sac                  = self.IPHC_SAC_STATEFUL
+            if lowpan['src_addr'][:8] == [187, 187, 0, 0, 0, 0, 0, 0]:
+                lowpan['src_addr'] = lowpan['src_addr'][8:]
+
         if   len(lowpan['src_addr'])==128/8:
             sam              = self.IPHC_SAM_128B
         elif len(lowpan['src_addr'])==64/8:
-            sam              = IPHC_SAM_64B
+            sam              = self.IPHC_SAM_64B
         elif len(lowpan['src_addr'])==16/8:
             sam              = self.IPHC_SAM_16B
         elif len(lowpan['src_addr'])==0:
             sam              = self.IPHC_SAM_ELIDED
         else:
             raise SystemError()
-        dac                  = self.IPHC_DAC_STATELESS
+
+        if self._isLinkLocal(lowpan['dst_addr']):
+            dac                  = self.IPHC_DAC_STATELESS
+            lowpan['dst_addr'] = lowpan['dst_addr'][8:]
+        else:
+            dac                  = self.IPHC_DAC_STATEFUL
+            if lowpan['dst_addr'][:8] == [187, 187, 0, 0, 0, 0, 0, 0]:
+                lowpan['dst_addr'] = lowpan['dst_addr'][8:]
+
         m                    = self.IPHC_M_NO
         if   len(lowpan['dst_addr'])==128/8:
             dam              = self.IPHC_DAM_128B
@@ -980,6 +996,11 @@ class OpenLbr(eventBusClient.eventBusClient):
         if data['isDAGroot']==1:
             with self.stateLock:
                 self.dagRootEui64     = data['eui64'][:]
+
+    def _isLinkLocal(self, ipv6Address):
+        if ipv6Address[:8] == self.LINK_LOCAL_PREFIX:
+            return True
+        return False
 
 #===== formatting
     
