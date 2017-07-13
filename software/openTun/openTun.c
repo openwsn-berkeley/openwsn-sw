@@ -486,7 +486,7 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
   unsigned int moteId = inBuf[1] + inBuf[2]<<8;
   unsigned int statusElem = inBuf[3];
 
-  if(verbose) printf("moteId %04x status: %u --:", moteId, statusElem);
+  if(verbose > 2) fprintf(stderr, "moteId %04x status: %u --:", moteId, statusElem);
   switch(statusElem) {
   case 0:
     dump_screen(&stats);
@@ -522,7 +522,7 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
     break;
 
   case 6:
-    if(verbose) printf("ScheduleRow\n");
+    if(verbose > 2) fprintf(stderr, "ScheduleRow\n");
     parse_scheduleRow(inBuf, inLen);
     break;
 
@@ -534,11 +534,12 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
     break;
 
   case 8:
-    if(verbose) printf("QueueRow\n");
+    if(verbose > 2) fprintf(stderr, "QueueRow\n");
+    parse_queueRow(inBuf, inLen);
     break;
 
   case 9:
-    if(verbose) printf("NeighborsRow\n");
+    if(verbose) fprintf(stderr, "NeighborsRow\n");
     break;
 
   case 10:
@@ -561,70 +562,70 @@ void process_input(unsigned char inBuf[], unsigned int inLen)
   switch(inBuf[0]) {
   case SERFRAME_MOTE2PC_DATA:
     if(verbose) {
-      printf("mote2pc data(%u)\n  ", inLen);
+      fprintf(stderr, "mote2pc data(%u)\n  ", inLen);
 
       for(i=1; i<inLen; i++) {
-        printf("%02x ", inBuf[i]);
+        fprintf(stderr, "%02x ", inBuf[i]);
       }
-      printf("\n");
+      fprintf(stderr, "\n");
     }
     break;
 
   case SERFRAME_MOTE2PC_STATUS:
-    if(verbose) printf("mote2pc status(%u) \n  ", inLen);
+    if(verbose > 1) fprintf(stderr, "mote2pc status(%u) \n  ", inLen);
     parse_status(inBuf, inLen);
     break;
 
   case SERFRAME_MOTE2PC_INFO:
-    if(verbose) printf("mote2pc info\n");
+    if(verbose) fprintf(stderr, "mote2pc info\n");
     break;
 
   case SERFRAME_MOTE2PC_ERROR:
-    if(verbose) printf("mote2pc error\n");
+    if(verbose) fprintf(stderr, "mote2pc error\n");
     break;
 
   case SERFRAME_MOTE2PC_CRITICAL:
-    if(verbose) printf("mote2pc critical\n");
+    if(verbose) fprintf(stderr, "mote2pc critical\n");
     break;
 
   case SERFRAME_MOTE2PC_REQUEST:
-    if(verbose) {
-      printf("mote2pc request(%u)\n  ", inLen);
+    if(verbose > 1) {
+      fprintf(stderr, "mote2pc request(%u)\n  ", inLen);
       for(i=1; i<inLen; i++) {
-        printf("%02x ", inBuf[i]);
+        fprintf(stderr, "%02x ", inBuf[i]);
       }
-      printf("\n");
+      fprintf(stderr, "\n");
     }
     break;
 
   case SERFRAME_MOTE2PC_SNIFFED_PACKET:
-    if(verbose) printf("mote2pc sniffed\n");
+    if(verbose) fprintf(stderr, "mote2pc sniffed\n");
     break;
 #if 0
   case SERFRAME_PC2MOTE_SETDAGROOT:
-    printf("pc2mote setdagroot\n");
+    fprintf(stderr,"pc2mote setdagroot\n");
     break;
   case SERFRAME_PC2MOTE_DATA:
-    printf("pc2mote data\n");
+    fprintf(stderr,"pc2mote data\n");
     break;
   case SERFRAME_PC2MOTE_TRIGGERSERIALECHO:
-    printf("pc2mote triggerserialecho\n");
+    fprintf(stderr,"pc2mote triggerserialecho\n");
     break;
   case SERFRAME_PC2MOTE_COMMAND_GD:
-    printf("pc2mote GD\n");
+    fprintf(stderr,"pc2mote GD\n");
     break;
 #endif
   case SERFRAME_ACTION_YES:
-    if(verbose) printf("action yes\n");
+    if(verbose) fprintf(stderr,"action yes\n");
     break;
   case SERFRAME_ACTION_NO:
-    if(verbose) printf("action no\n");
+    if(verbose) fprintf(stderr,"action no\n");
     break;
   case SERFRAME_ACTION_TOGGLE:
-    if(verbose) printf("action toggle\n");
+    if(verbose) fprintf(stderr,"action toggle\n");
     break;
   default:
-    printf("invalid comment: %02x\n", inBuf[0]);
+    fprintf(stderr,"invalid comment: %02x\n", inBuf[0]);
     break;
   }
 }
@@ -776,7 +777,7 @@ void usage(void)
 static struct option const longopts[] =
 {
     { "help",      0, 0, '?'},
-    { "verbose",   1, 0, 'v'},
+    { "verbose",   0, 0, 'v'},
 };
 
 int
@@ -792,6 +793,9 @@ main(int argc, char **argv)
 
   while((c = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
     switch(c) {
+    case 'v':
+      verbose++;
+      break;
     case '?':
     default:
       usage();
@@ -805,7 +809,7 @@ main(int argc, char **argv)
   motefd = open(serialPort, O_RDWR|O_NDELAY);
 
   if(motefd < 0) {
-    perror("open");
+    perror(serialPort);
     exit(1);
   }
   setup_tty(motefd);

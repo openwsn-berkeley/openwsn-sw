@@ -1,4 +1,5 @@
-CFLAGS+= -I../../../openwsn-fw/inc/
+CFLAGS+= -I../../../openwsn-fw/inc/ -g
+LDFLAGS=-g
 
 openTun:	openTun.c
 
