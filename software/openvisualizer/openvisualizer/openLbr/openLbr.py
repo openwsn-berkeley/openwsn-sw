@@ -630,13 +630,13 @@ class OpenLbr(eventBusClient.eventBusClient):
             raise NotImplementedError()
         # next header is in NHC format
         nh               = self.IPHC_NH_INLINE
-        if   lowpan['hlim']==1:
+        if   lowpan['hlim'][0]==1:
             hlim             = self.IPHC_HLIM_1
             lowpan['hlim'] = []
-        elif lowpan['hlim']==64:
+        elif lowpan['hlim'][0]==64:
             hlim             = self.IPHC_HLIM_64
             lowpan['hlim'] = []
-        elif lowpan['hlim']==255:
+        elif lowpan['hlim'][0]==255:
             hlim             = self.IPHC_HLIM_255
             lowpan['hlim'] = []
         else:
