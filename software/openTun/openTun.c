@@ -278,6 +278,8 @@ void dump_screen(struct moteStatus *ms)
          ms->asn[0],         ms->asn[1],         ms->asn[2],
          ms->asn[3],         ms->asn[4]);
 
+  printf("syncPkt: %02d ack: %02d\n", stats.numSyncPkt, stats.numSyncAck);
+
   printf("\nSched    Row: %03d\n", ms->sched_rows_max);
   printf(  "Neighbor Row: %03d\n", ms->neighbor_rows_max);
 
@@ -704,12 +706,19 @@ void process_byte(unsigned char byte)
       /* good crc! */
       inPos -= 2;
       process_input(inBuf, inPos);
+      currentstate = START;
     } else {
       fprintf(stderr, "bad CRC: %02x vs %02x len=%u\n", crc,
               HDLC_CRCGOOD, inPos);
+      /* bad CRC might be caused by jumping into middle of packet,
+       * so if len=0, then jump straight into PROCESSING */
+      if(inPos == 0) {
+        currentstate = PROCESSING;
+      } else {
+        currentstate = START;
+      }
     }
 
-    currentstate = START;
   }
 }
 
