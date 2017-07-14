@@ -144,10 +144,12 @@ class eventBusClient(object):
             if (s1!=s2) and (s1!=self.WILDCARD) and (s2!=self.WILDCARD):
                 returnVal = False
         elif type(s1)==type(s2)==tuple:
-            assert len(s1)==len(s2)==3
-            for i in range(3):
-                if (s1[i]!=s2[i]) and (s1[i]!=self.WILDCARD) and (s2[i]!=self.WILDCARD):
-                    returnVal = False
+            if len(s1)==len(s2)==3:
+                for i in range(3):
+                    if (s1[i]!=s2[i]) and (s1[i]!=self.WILDCARD) and (s2[i]!=self.WILDCARD):
+                        returnVal = False
+            else:
+                returnVal = False
         else:
             returnVal = False
         

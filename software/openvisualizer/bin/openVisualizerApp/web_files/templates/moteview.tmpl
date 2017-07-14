@@ -158,6 +158,11 @@
 	                                                        <span class="pull-right text-muted small" id="dagrank_fld"><em></em>
 	                                                        </span>
 	                                                    </a>
+	                                                    <a class="list-group-item">
+	                                                        <i class="fa fa-bolt fa-fw"></i> Join ASN
+	                                                        <span class="pull-right text-muted small" id="join_fld"><em></em>
+	                                                        </span>
+	                                                    </a>
 	                                                </div>
 	                                                <h5>Output Buffer</h5>
 	                                                <div class="list-group">
@@ -273,7 +278,7 @@
 									            console.log('Asn not found in result');
 									            hasJson = false;
 									        }
-									        
+
 									        if (hasJson) {
 									            asnJson      = $.parseJSON(json.Asn)[0];
 									            idJson       = $.parseJSON(json.IdManager)[0];
@@ -285,7 +290,8 @@
 									            schedJson    = $.parseJSON(json.Schedule);
 									            queueJson    = $.parseJSON(json.Queue);
 									            nbrsJson     = $.parseJSON(json.Neighbors);
-                                                kaPeriodJson = $.parseJSON(json.kaPeriod)[0];
+                                                                                    kaPeriodJson = $.parseJSON(json.kaPeriod)[0];
+                                                                                    joinedJson   = $.parseJSON(json.Joined)[0];
 									        }
 									        
 									        // Exclude tailing description from server
@@ -297,6 +303,7 @@
 									        $("#sync_fld").text(         hasJson && syncJson.isSync > 0 ? 'Synchronized!' : 'Not synchronized');
 									        $("#pan_fld").text(          hasJson ? idJson.myPANID                  : '');
 									        $("#asn_fld").text(          hasJson ? asnJson.asn                     : '');
+									        $("#join_fld").text(         hasJson ? joinedJson.joinedAsn                     : '');
 									        $("#dagrank_fld").text(      hasJson ? dagrankJson.myDAGrank           : '');
 									        $("#outread_fld").text(      hasJson ? outbufJson.index_read           : '');
 									        $("#outwrite_fld").text(     hasJson ? outbufJson.index_write          : '');
@@ -349,10 +356,11 @@
 
 											// Neighbors responsive table
 									        if (hasJson) {
-									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Used</th><th>f6PNORES</th><th>sixtopGEN</th><th>sixtopSeqNum</th><th>Parent</th><th>Stable</th><th>Stability</th><th>Address</th><th>DAG Rank</th><th>JP</th><th>RSS</th><th>RX</th><th>TX</th><th>TX ACK</th><th>Wrap</th><th>ASN</th></tr></thead><tbody>";
+									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Used</th><th>Insecure</th><th>f6PNORES</th><th>sixtopGEN</th><th>sixtopSeqNum</th><th>Parent</th><th>Stable</th><th>Stability</th><th>Address</th><th>DAG Rank</th><th>JP</th><th>RSS</th><th>RX</th><th>TX</th><th>TX ACK</th><th>Wrap</th><th>ASN</th></tr></thead><tbody>";
 									        
 										        $.each(nbrsJson, function() {
 											        var tbl_row = "<td>" + this['used'] + "</td>";
+                                                                                                tbl_row += "<td>" + this['insecure'] + "</td>";
 											        tbl_row += "<td>" + this['f6PNORES'] + "</td>";
 											        tbl_row += "<td>" + this['sixtopGEN'] + "</td>";
 											        tbl_row += "<td>" + this['sixtopSeqNum'] + "</td>";

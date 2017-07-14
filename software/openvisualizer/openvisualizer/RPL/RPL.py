@@ -138,6 +138,13 @@ class RPL(eventBusClient.eventBusClient):
                 callback          = self._fromMoteDataLocal_notif,
             )
             
+            # announce new DAG root
+            self.dispatch(
+                signal        = 'registerDagRoot',
+                data          = {'prefix' : self.networkPrefix,
+                                 'host' : newDagRootEui64}
+            )
+    
             # store DAGroot
             with self.stateLock:
                 self.dagRootEui64 = newDagRootEui64
@@ -157,6 +164,13 @@ class RPL(eventBusClient.eventBusClient):
                     self.IANA_ICMPv6_RPL_TYPE
                 ),
                 callback          = self._fromMoteDataLocal_notif,
+            )
+
+            # announce that node is no longer DAG root
+            self.dispatch(
+                signal        = 'unregisterDagRoot',
+                data          = {'prefix' : self.networkPrefix,
+                                 'host' : self.dagRootEui64}
             )
             
             # clear DAGroot

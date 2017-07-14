@@ -12,6 +12,7 @@ import threading
 import socket
 import traceback
 import sys
+import binascii
 import openvisualizer.openvisualizer_utils as u
 
 from pydispatch import dispatcher
@@ -133,12 +134,19 @@ class moteConnector(eventBusClient.eventBusClient):
                         )
                         self.networkPrefix = networkPrefix
                 
+                # retrieve the security key of the network
+                with self.stateLock:
+                    keyDict = self._dispatchAndGetResult(
+                            signal       = 'getL2SecurityKey',
+                            data         = [],
+                    )
+    
                 # create data to send
                 with self.stateLock:
                     dataToSend = [
                         OpenParser.OpenParser.SERFRAME_PC2MOTE_SETDAGROOT,
                         OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
-                    ]+self.networkPrefix
+                    ]+self.networkPrefix+keyDict['index']+keyDict['value']
                 
                 # toggle the DAGroot state
                 self._sendToMoteProbe(
@@ -257,6 +265,19 @@ class moteConnector(eventBusClient.eventBusClient):
                 print "comma. e.g. set <portname> 6pList     tx,                                              5,         3"
                 print "comma. e.g. set <portname> 6pClear                                                                           all"
                 return [outcome,dataToSend]
+        elif data[0] == 'joinKey':
+            try:
+                if len(data[1]) != commandLen*2: # two hex chars is one byte
+                    raise ValueError
+                payload = binascii.unhexlify(data[1])
+                dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
+                    commandId,
+                    commandLen,
+                ]
+                dataToSend += [ord(b) for b in payload]
+            except:
+                print "============================================="
+                print "Wrong joinKey format. Input 16-byte long hex string. e.g. cafebeefcafebeefcafebeefcafebeef"
         else:
             parameter = int(data[1])
             if parameter <= 0xffff:
