@@ -250,7 +250,7 @@ struct moteStatus {
   unsigned int kaPeriod;
 };
 
-
+char *serialPort = "/dev/ttyAMA0";
 unsigned int tooShort=0;
 unsigned int verbose =0;
 struct moteStatus stats;
@@ -273,9 +273,10 @@ void dump_screen(struct moteStatus *ms)
     puts(tput_cup00);
   }
 
-  printf("DAG: %02d   DAGRANK: %03d  PANID: %02x%02x    SHORT: %02x%02x\n",
+  printf("DAG: %02d   DAGRANK: %03d  PANID: %02x%02x    SHORT: %02x%02x port: %s\n",
          ms->isDAGroot, ms->myDAGrank,
-         ms->myPANID_0, ms->myPANID_1, ms->my16bID_0, ms->my16bID_1);
+         ms->myPANID_0, ms->myPANID_1, ms->my16bID_0, ms->my16bID_1,
+         serialPort);
 
   printf("EUI64: %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
          ms->my64bID_0, ms->my64bID_1, ms->my64bID_2, ms->my64bID_3,
@@ -863,7 +864,6 @@ main(int argc, char **argv)
   fd_set rset, wset;
   int motefd;
   int c;
-  char *serialPort = "/dev/ttyAMA0";
 
 
   while((c = getopt_long(argc, argv, "", longopts, NULL)) != -1) {
