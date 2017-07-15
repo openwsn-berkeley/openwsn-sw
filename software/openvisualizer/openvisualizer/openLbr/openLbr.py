@@ -1,6 +1,6 @@
-# Copyright (c) 2010-2013, Regents of the University of California. 
-# All rights reserved. 
-#  
+# Copyright (c) 2010-2013, Regents of the University of California.
+# All rights reserved.
+#
 # Released under the BSD 3-Clause license as published at the link below.
 # https://openwsn.atlassian.net/wiki/display/OW/License
 import logging
@@ -18,26 +18,26 @@ class OpenLbr(eventBusClient.eventBusClient):
     '''
     Class which is responsible for translating between 6LoWPAN and IPv6
     headers.
-    
+
     This class implements the following RFCs:
-    
+
     * *http://tools.ietf.org/html/rfc6282*
       Compression Format for IPv6 Datagrams over IEEE 802.15.4-Based Networks.
-    * *http://tools.ietf.org/html/rfc2460* 
+    * *http://tools.ietf.org/html/rfc2460*
       Internet Protocol, Version 6 (IPv6) Specification
     * *http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
-       The IPv6 Flow Label within a RPL domain  
+       The IPv6 Flow Label within a RPL domain
     '''
     #implementing http://tools.ietf.org/html/draft-thubert-6man-flow-label-for-rpl-03
-    
-    # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml 
+
+    # http://www.iana.org/assignments/protocol-numbers/protocol-numbers.xml
     IANA_PROTOCOL_IPv6ROUTE  = 43
     IANA_UDP                 = 17
     IANA_ICMPv6              = 58
     IANA_IPv6HOPHEADER       = 0
     # there is no IANA for IPV6 HEADER right now, we use NHC identifier for it
     IPV6_HEADER              = 0xEE #https://tools.ietf.org/html/rfc6282#section-4.2
-    
+
     #hop header flags
     O_FLAG                   = 0x10
     R_FLAG                   = 0x08
@@ -45,7 +45,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     I_FLAG                   = 0x02
     K_FLAG                   = 0x01
     FLAG_MASK                = 0x1F
-    
+
     #deadline hop header flags
     ORG_FLAG                 = 0x80
     DELAY_FLAG               = 0x40
@@ -53,12 +53,12 @@ class OpenLbr(eventBusClient.eventBusClient):
     OTL_FLAG                 = 0x07
     TU_FLAG                  = 0xC0
     EXP_FLAG                 = 0x38
-    
+
     # Number of bytes in an IPv6 header.
     IPv6_HEADER_LEN          = 40
-    
+
     IPHC_DISPATCH            = 3
-    
+
     IPHC_TF_4B               = 0
     IPHC_TF_3B               = 1
     IPHC_TF_1B               = 2
@@ -70,7 +70,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     IPHC_HLIM_INLINE         = 0
     IPHC_HLIM_1              = 1
     IPHC_HLIM_64             = 2
-    IPHC_HLIM_255            = 3 
+    IPHC_HLIM_255            = 3
 
     IPHC_CID_NO              = 0
     IPHC_CID_YES             = 1
@@ -95,7 +95,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     IPHC_DAM_ELIDED          = 3
 
     NHC_DISPATCH             = 0x0E
-    
+
     NHC_EID_MASK             = 0x0E
     NHC_EID_HOPBYHOP         = 0
     NHC_EID_ROUTING          = 1
@@ -119,12 +119,12 @@ class OpenLbr(eventBusClient.eventBusClient):
     TYPE_6LoRH_RH3_4         = 0x04
 
     MASK_LENGTH_6LoRH_IPINIP = 0x1F
-    
+
     #=== RPL source routing header (RFC6554)
     SR_FIR_TYPE              = 0x03
-    
-    #=== UDP Header compression (RFC6282) 
-    
+
+    #=== UDP Header compression (RFC6282)
+
     NHC_UDP_MASK             = 0xF8
     NHC_UDP_ID               = 0xF0
     NHC_UDP_PORTS_MASK       = 0x03
@@ -135,18 +135,18 @@ class OpenLbr(eventBusClient.eventBusClient):
     NHC_UDP_PORTS_4S_4D      = 3
 
     LINK_LOCAL_PREFIX        = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
-    
+
     def __init__(self,usePageZero):
-        
+
         # log
         log.info("create instance")
-        
+
         # store params
         self.stateLock            = threading.Lock()
         self.networkPrefix        = None
         self.dagRootEui64         = None
         self.usePageZero          = usePageZero
-         
+
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
             self,
@@ -165,38 +165,38 @@ class OpenLbr(eventBusClient.eventBusClient):
                 {
                     'sender'   : self.WILDCARD,
                     'signal'   : 'infoDagRoot', #signal once a dagroot id is received
-                    'callback' : self._infoDagRoot_notif, 
+                    'callback' : self._infoDagRoot_notif,
                 },
                 {
                     'sender'   : self.WILDCARD, #signal when a pkt from the mesh arrives and has to be forwarded to Internet (or local)
                     'signal'   : 'fromMote.data', #only to data (any), not status nor error
-                    'callback' : self._meshToV6_notif, 
+                    'callback' : self._meshToV6_notif,
                 },
             ]
         )
-        
+
         # local variables
-            
+
     #======================== public ==========================================
-    
+
     #======================== private =========================================
-    
+
     #===== IPv6 -> 6LoWPAN
-    
+
     def _v6ToMesh_notif(self,sender,signal,data):
         '''
         Converts a IPv6 packet into a 6LoWPAN packet.
-        
+
         This function assumes there is a component listening on the EventBus
         which answers to the 'getSourceRoute' signal.
-        
+
         This function dispatches the 6LoWPAN packet with signal 'bytesToMesh'.
         '''
-        
+
         try:
-            
+
             ipv6_bytes       = data
-            
+
             # turn raw byte into dictionary of fields
             ipv6             = self.disassemble_ipv6(ipv6_bytes)
 
@@ -208,14 +208,14 @@ class OpenLbr(eventBusClient.eventBusClient):
                 isLinkLocal = True
             else:
                 isLinkLocal = False
-            
+
             # log
             if log.isEnabledFor(logging.DEBUG):
                 log.debug(self._format_IPv6(ipv6,ipv6_bytes))
-            
+
             # convert IPv6 dictionary into 6LoWPAN dictionary
             lowpan           = self.ipv6_to_lowpan(ipv6)
-            
+
             # add the source route to this destination
             if len(lowpan['dst_addr'])==16:
                 dst_addr=lowpan['dst_addr'][8:]
@@ -224,28 +224,28 @@ class OpenLbr(eventBusClient.eventBusClient):
             else:
                 dst_addr=None
                 log.warning('unsupported address format {0}'.format(lowpan['dst_addr']))
-                   
+
             if isLinkLocal:
                 lowpan['route'] = [dst_addr]
             else:
                 lowpan['route'] = self._getSourceRoute(dst_addr)
-            
+
                 if len(lowpan['route'])<2:
                     # no source route could be found
                     log.error('no source route to {0}'.format(lowpan['dst_addr']))
                     # TODO: return ICMPv6 message
                     return
-            
+
                 lowpan['route'].pop() #remove last as this is me.
-            
+
             lowpan['nextHop'] = lowpan['route'][len(lowpan['route'])-1] #get next hop as this has to be the destination address, this is the last element on the list
             # turn dictionary of fields into raw bytes
             lowpan_bytes     = self.reassemble_lowpan(lowpan)
-            
+
             # log
             if log.isEnabledFor(logging.DEBUG):
                 log.debug(self._format_lowpan(lowpan,lowpan_bytes))
-            
+
             #print "output:"
             #print lowpan_bytes
             # dispatch
@@ -253,16 +253,16 @@ class OpenLbr(eventBusClient.eventBusClient):
                 signal       = 'bytesToMesh',
                 data         = (lowpan['nextHop'],lowpan_bytes),
             )
-            
+
         except (ValueError,NotImplementedError) as err:
             log.error(err)
             pass
-    
-    
+
+
     def _meshToV6_notif(self,sender,signal,data):
         '''
         Converts a 6LowPAN packet into a IPv6 packet.
-        
+
         This function dispatches the IPv6 packet with signal 'according to the destination address, protocol_type and port'.
         '''
         try:
@@ -271,10 +271,10 @@ class OpenLbr(eventBusClient.eventBusClient):
             ipv6dic = self.lowpan_to_ipv6(data)
             success = True
             dispatchSignal = None
-            
+
             #read next header
             if ipv6dic['next_header']==self.IANA_IPv6HOPHEADER:
-                #hop by hop header present, check flags and parse    
+                #hop by hop header present, check flags and parse
                 if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
                     #error -- this packet has gone downstream somewhere.
                     log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
@@ -283,13 +283,13 @@ class OpenLbr(eventBusClient.eventBusClient):
                     log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
                 #skip the header and process the rest of the message.
                 ipv6dic['next_header'] = ipv6dic['hop_next_header']
-                
+
             #===================================================================
 
             if ipv6dic['next_header']==self.IPV6_HEADER:
                 #ipv6 header (inner)
                 ipv6dic_inner = {}
-                # prasing the iphc inner header and get the next_header
+                # parsing the iphc inner header and get the next_header
                 ipv6dic_inner = self.lowpan_to_ipv6([ipv6dic['pre_hop'],ipv6dic['payload']])
                 ipv6dic['next_header'] = ipv6dic_inner['next_header']
                 ipv6dic['payload'] = ipv6dic_inner['payload']
@@ -299,32 +299,32 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ipv6dic['hop_limit'] = ipv6dic_inner['hop_limit']
                 ipv6dic['dst_addr'] = ipv6dic_inner['dst_addr']
                 ipv6dic['flow_label'] = ipv6dic_inner['flow_label']
-                
+
             if ipv6dic['next_header']==self.IANA_ICMPv6:
                 #icmp header
                 if len(ipv6dic['payload'])<5:
                     log.critical("wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data)))
                     print "wrong payload lenght on ICMPv6 packet {0}".format(",".join(str(c) for c in data))
                     return
-                
-                
+
+
                 ipv6dic['icmpv6_type']=ipv6dic['payload'][0]
                 ipv6dic['icmpv6_code']=ipv6dic['payload'][1]
                 ipv6dic['icmpv6_checksum']=ipv6dic['payload'][2:4]
                 ipv6dic['app_payload']=ipv6dic['payload'][4:]
-                
+
                 #this function does the job
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_ICMPv6,ipv6dic['icmpv6_type'])
-                 
+
             elif ipv6dic['next_header']==self.IANA_UDP:
                 #udp header -- can be compressed.. assume first it is not compressed.
                 if len(ipv6dic['payload'])<5:
                     log.critical("wrong payload lenght on UDP packet {0}".format(",".join(str(c) for c in data)))
                     print "wrong payload lenght on UDP packet {0}".format(",".join(str(c) for c in data))
                     return
-                
+
                 if ipv6dic['payload'][0] & self.NHC_UDP_MASK==self.NHC_UDP_ID:
-                    
+
                     lowpan_nhc            = ipv6dic['payload'][0]
                     udp_header_length     = 0
                     newUdp                = []
@@ -377,63 +377,63 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ipv6dic['udp_length']         = newUdp[4:6]
                     ipv6dic['udp_checksum']       = newUdp[6:8]
                     ipv6dic['app_payload']        = newUdp[8:]
-                    
-                    #substitute udp header by the uncompressed header.               
+
+                    #substitute udp header by the uncompressed header.
                     ipv6dic['payload']        = newUdp
                     ipv6dic['payload_length'] = len(newUdp)
                 else:
-                    #No UDP header compressed    
+                    #No UDP header compressed
                     ipv6dic['udp_src_port']=u.buf2int(ipv6dic['payload'][:2])
                     ipv6dic['udp_dest_port']=u.buf2int(ipv6dic['payload'][2:4])
                     ipv6dic['udp_length']=ipv6dic['payload'][4:6]
                     ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
                     ipv6dic['app_payload']=ipv6dic['payload'][8:]
-                    
+
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,ipv6dic['udp_dest_port'])
-            
-            #keep payload and app_payload in case we want to assemble the message later. 
+
+            #keep payload and app_payload in case we want to assemble the message later.
             #as source address is being retrieved from the IPHC header, the signal includes it in case
-            #receiver such as RPL DAO processing needs to know the source.               
+            #receiver such as RPL DAO processing needs to know the source.
 
             success = self._dispatchProtocol(dispatchSignal,(ipv6dic['src_addr'],ipv6dic['app_payload']))
-            
+
             if success:
                 return
 
-            # assemble the packet and dispatch it again as nobody answer 
-            ipv6pkt=self.reassemble_ipv6_packet(ipv6dic)       
-            
+            # assemble the packet and dispatch it again as nobody answer
+            ipv6pkt=self.reassemble_ipv6_packet(ipv6dic)
+
             self.dispatch('v6ToInternet',ipv6pkt)
-            
+
         except (ValueError,IndexError,NotImplementedError) as err:
             log.error(err)
             pass
-    
+
     def disassemble_ipv6(self,ipv6):
         '''
         Turn byte array representing IPv6 packets into into dictionary
         of fields.
-        
+
         See http://tools.ietf.org/html/rfc2460#page-4.
-        
+
         :param ipv6: [in] Byte array representing an IPv6 packet.
-        
+
         :raises: ValueError when some part of the process is not defined in
             the standard.
         :raises: NotImplementedError when some part of the process is defined in
             the standard, but not implemented in this module.
-        
+
         :returns: A dictionary of fields.
         '''
-        
+
         if len(ipv6)<self.IPv6_HEADER_LEN:
             raise ValueError('Packet too small ({0} bytes) no space for IPv6 header'.format(len(ipv6)))
-        
+
         returnVal                      = {}
         returnVal['version']           = ipv6[0] >> 4
         if returnVal['version']!=6:
             raise ValueError('Not an IPv6 packet, version=={0}'.format(returnVal['version']))
-        
+
         returnVal['traffic_class']     = ((ipv6[0] & 0x0F) << 4) + (ipv6[1] >> 4)
         returnVal['flow_label']        = ((ipv6[1] & 0x0F) << 16) + (ipv6[2] << 8) + ipv6[3]
         returnVal['payload_length']    = u.buf2int(ipv6[4:6])
@@ -442,62 +442,62 @@ class OpenLbr(eventBusClient.eventBusClient):
         returnVal['src_addr']          = ipv6[8:8+16]
         returnVal['dst_addr']          = ipv6[24:24+16]
         returnVal['payload']           = ipv6[40:]
-        
+
         return returnVal
-    
+
     def ipv6_to_lowpan(self,ipv6):
         '''
         Compact IPv6 header into 6LowPAN header.
-        
+
         :param ipv6: [in] A disassembled IPv6 packet.
-        
+
         :raises: ValueError when some part of the process is not defined in
             the standard.
         :raises: NotImplementedError when some part of the process is defined in
             the standard, but not implemented in this module.
-        
+
         :returns: A disassembled 6LoWPAN packet.
         '''
-        
+
         # header
         lowpan = {}
-        
+
         # tf
         if ipv6['traffic_class']!=0:
             raise NotImplementedError('traffic_class={0} unsupported'.format(ipv6['traffic_class']))
         # comment the flow_label check as it's zero in 6lowpan network. See follow RFC:
-        # https://tools.ietf.org/html/rfc4944#section-10.1  
+        # https://tools.ietf.org/html/rfc4944#section-10.1
         # if ipv6['flow_label']!=0:
             # raise NotImplementedError('flow_label={0} unsupported'.format(ipv6['flow_label']))
         lowpan['tf']         = []
-        
+
         # nh
         lowpan['nh']         = [ipv6['next_header']]
-        
+
         # hlim
         lowpan['hlim']       = [ipv6['hop_limit']]
-        
+
         # cid
         lowpan['cid']        = []
-        
+
         # src_addr
         lowpan['src_addr']   = ipv6['src_addr']
-        
+
         # dst_addr
         lowpan['dst_addr']   = ipv6['dst_addr']
-        
+
         # payload
         lowpan['payload']    = ipv6['payload']
-        
+
         # join
         return lowpan
-    
+
     def reassemble_lowpan(self,lowpan):
         '''
         Turn dictionary of 6LoWPAN header fields into byte array.
-        
+
         :param lowpan: [in] dictionary of fields representing a 6LoWPAN header.
-        
+
         :returns: A list of bytes representing the 6LoWPAN packet.
         '''
         returnVal            = []
@@ -506,14 +506,14 @@ class OpenLbr(eventBusClient.eventBusClient):
         if self.usePageZero:
             print 'Page dispatch page number zero is not supported!\n'
             raise SystemError()
-        
+
         # the 6lowpan packet contains 4 parts
         # 1. Page Dispatch (page 1)
         # 2. RH3 6LoRH(s)
         # 3. RPI 6LoRH (maybe elided)
         # 4. IPinIP 6LoRH (maybe elided)
         # 5. IPHC inner header
-        
+
         # ===================== 1. Page Dispatch (page 1) =====================
 
         returnVal += [self.PAGE_ONE_DISPATCH]
@@ -530,7 +530,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             if len(compressReference)==16:
                 prefix=compressReference[:8]
 
-            # =======================3. RH3 6LoRH(s) ============================== 
+            # =======================3. RH3 6LoRH(s) ==============================
             sizeUnitType = 0xff
             size     = 0
             hopList  = []
@@ -608,7 +608,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         # ===================== 2. IPinIP 6LoRH ===============================
 
         if lowpan['src_addr'][:8] != [187, 187, 0, 0, 0, 0, 0, 0]:
-            # add RPI 
+            # add RPI
             # TBD
             flag = self.O_FLAG | self.I_FLAG | self.K_FLAG
             senderRank = 0 # rank of dagroot
@@ -621,7 +621,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             compressReference = [187, 187, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1]
         else:
             compressReference = lowpan['src_addr']
- 
+
         # ========================= 4. IPHC inner header ======================
         # Byte1: 011(3b) TF(2b) NH(1b) HLIM(2b)
         if len(lowpan['tf'])==0:
@@ -642,7 +642,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         else:
             hlim             = self.IPHC_HLIM_INLINE
         returnVal           += [(self.IPHC_DISPATCH<<5) + (tf<<3) + (nh<<2) + (hlim<<0)]
-        
+
         # Byte2: CID(1b) SAC(1b) SAM(2b) M(1b) DAC(2b) DAM(2b)
         if len(lowpan['cid'])==0:
             cid              = self.IPHC_CID_NO
@@ -694,16 +694,16 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         # nh
         returnVal           += lowpan['nh']
-        
+
         # hlim
         returnVal           += lowpan['hlim']
-        
+
         # cid
         returnVal           += lowpan['cid']
 
         # src_addr
         returnVal           += lowpan['src_addr']
-        
+
         # dst_addr
         returnVal           += lowpan['dst_addr']
 
@@ -711,11 +711,11 @@ class OpenLbr(eventBusClient.eventBusClient):
         returnVal           += lowpan['payload']
 
         return returnVal
-    
+
     #===== 6LoWPAN -> IPv6
-    
+
     def lowpan_to_ipv6(self,data):
-                
+
         pkt_ipv6 = {}
         mac_prev_hop=data[0]
         pkt_lowpan=data[1]
@@ -733,7 +733,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ptr += 1
                 else:
                     pkt_ipv6['hop_rplInstanceID'] = 0
-               
+
                 if pkt_ipv6['hop_flags'] & self.K_FLAG==0:
                     pkt_ipv6['hop_senderRank'] = ((pkt_lowpan[ptr]) << 8) + ((pkt_lowpan[ptr+1]) << 0)
                     ptr += 2
@@ -761,33 +761,33 @@ class OpenLbr(eventBusClient.eventBusClient):
                 elif pkt_lowpan[ptr] & self.MASK_6LoRH == self.ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_DEADLINE:
                     length = pkt_lowpan[ptr] & self.MASK_LENGTH_6LoRH_IPINIP
                     nxt_byte = pkt_lowpan[ptr+2]
-                		
+
                     # 3rd byte
                     o_val = (pkt_lowpan[ptr+2] & self.ORG_FLAG) >> 7
                     d_val = (pkt_lowpan[ptr+2] & self.DELAY_FLAG) >> 6
                     etl_val = (pkt_lowpan[ptr+2] & self.ETL_FLAG) >> 3
-                    otl_val = (pkt_lowpan[ptr+2] & self.OTL_FLAG)                                      
-                		
+                    otl_val = (pkt_lowpan[ptr+2] & self.OTL_FLAG)
+
                     # 4th byte
                     tu_val = (pkt_lowpan[ptr+3] & self.TU_FLAG) >> 6
-                    exponent = (pkt_lowpan[ptr+3] & self.EXP_FLAG) >>  3                                    		
-                		
+                    exponent = (pkt_lowpan[ptr+3] & self.EXP_FLAG) >>  3
+
                     # Expiration Time
                     nxt_ptr = ptr+4
                     exp_time = []
                     for counter in range (0,etl_val+1):
                         exp_time.append(pkt_lowpan[nxt_ptr+counter])
                     e_time = exp_time[::-1]
-                    
-                		
+
+
                     # Origination Time
                     if o_val == 1:
                         org_time = []
-                        nxt_ptr = nxt_ptr+counter+1                		
-                        for counter in range (0,otl_val+1):		
+                        nxt_ptr = nxt_ptr+counter+1
+                        for counter in range (0,otl_val+1):
                             org_time.append(pkt_lowpan[nxt_ptr+counter])
                         o_time = org_time[::-1]
-					          				
+
                     # log
                     if log.isEnabledFor(logging.ERROR):
                         output               = []
@@ -796,19 +796,19 @@ class OpenLbr(eventBusClient.eventBusClient):
                         output              += ['exp_time is {0}'.format(u.formatAddr(e_time))]
                         if o_val == 1:
                             output              += ['org_time is {0}'.format(u.formatAddr(o_time))]
-                        output               = '\n'.join(output)  
+                        output               = '\n'.join(output)
                         log.error(output)
                         print output
 
-                    ptr += length+1        
+                    ptr += length+1
             else:
                 log.error("ERROR no support this type of 6LoRH yet")
         else:
             ptr = 2
             if (pkt_lowpan[0] >> 5) != 0x03:
                 log.error("ERROR not a 6LowPAN packet")
-                return   
-        
+                return
+
             # tf
             tf = ((pkt_lowpan[0]) >> 3) & 0x03
             if tf == self.IPHC_TF_3B:
@@ -828,7 +828,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 pass
             else:
                 log.error("wrong nh field nh="+str(nh))
-                
+
             # hlim
             hlim = (pkt_lowpan[0]) & 0x03
             if hlim == self.IPHC_HLIM_INLINE:
@@ -849,20 +849,20 @@ class OpenLbr(eventBusClient.eventBusClient):
                 prefix = self.LINK_LOCAL_PREFIX
             elif sac == self.IPHC_SAC_STATEFUL:
                 prefix = self.networkPrefix
-                
+
             # sam
             sam = ((pkt_lowpan[1]) >> 4) & 0x03
             if sam == self.IPHC_SAM_ELIDED:
                 #pkt from the previous hop
                 pkt_ipv6['src_addr'] = prefix + mac_prev_hop
-                
+
             elif sam == self.IPHC_SAM_16B:
                 a1 = pkt_lowpan[ptr]
                 a2 = pkt_lowpan[ptr+1]
                 ptr = ptr+2
                 s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
                 pkt_ipv6['src_addr'] = prefix+s
-        
+
             elif sam == self.IPHC_SAM_64B:
                 pkt_ipv6['src_addr'] = prefix+pkt_lowpan[ptr:ptr+8]
                 ptr = ptr + 8
@@ -871,14 +871,14 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ptr = ptr + 16
             else:
                 log.error("wrong sam=="+str(sam))
-             
+
             # dac
             dac = ((pkt_lowpan[1]) >> 2) & 0x01
             if dac == self.IPHC_DAC_STATELESS:
                 prefix = self.LINK_LOCAL_PREFIX
             elif dac == self.IPHC_DAC_STATEFUL:
                 prefix = self.networkPrefix
-          
+
             # dam
             dam = ((pkt_lowpan[1]) & 0x03)
             if dam == self.IPHC_DAM_ELIDED:
@@ -911,8 +911,8 @@ class OpenLbr(eventBusClient.eventBusClient):
                         log.error("wrong NH_EID=="+str(eid))
                 elif pkt_lowpan[ptr] & self.NHC_UDP_ID == self.NHC_UDP_ID:
                     pkt_ipv6['next_header'] = self.IANA_UDP
-            
-            #hop by hop header 
+
+            #hop by hop header
             #composed of NHC, NextHeader,Len + Rpl Option
             if pkt_ipv6['next_header'] == self.IANA_IPv6HOPHEADER:
                  pkt_ipv6['hop_nhc'] = pkt_lowpan[ptr]
@@ -949,7 +949,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         pkt_ipv6['payload_length'] = len(pkt_ipv6['payload'])
         pkt_ipv6['pre_hop']        = mac_prev_hop
         return pkt_ipv6
-    
+
     def reassemble_ipv6_packet(self, pkt):
         pktw = [((6 << 4) + (pkt['traffic_class'] >> 4)),
                 (((pkt['traffic_class'] & 0x0F) << 4) + (pkt['flow_label'] >> 16)),
@@ -962,37 +962,37 @@ class OpenLbr(eventBusClient.eventBusClient):
         for i in range(0,16):
             pktw.append( (pkt['src_addr'][i]) )
         for i in range(0,16):
-            pktw.append( (pkt['dst_addr'][i]) ) 
-        
+            pktw.append( (pkt['dst_addr'][i]) )
+
         return pktw + pkt['payload']
-        
-    
-    
+
+
+
     #======================== helpers =========================================
-    
+
     #===== source route
-    
+
     def _getSourceRoute(self,destination):
         returnVal = self._dispatchAndGetResult(
             signal       = 'getSourceRoute',
             data         = destination,
         )
         return returnVal
-    
+
     def _setPrefix_notif(self,sender,signal, data):
         '''
         Record the network prefix.
         '''
         with self.stateLock:
-            self.networkPrefix    = data  
+            self.networkPrefix    = data
             log.info('Set network prefix  {0}'.format(u.formatIPv6Addr(data)))
-            
-            
+
+
     def _infoDagRoot_notif(self,sender,signal,data):
         '''
         Record the DAGroot's EUI64 address.
         '''
-        
+
         if data['isDAGroot']==1:
             with self.stateLock:
                 self.dagRootEui64     = data['eui64'][:]
@@ -1003,7 +1003,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         return False
 
 #===== formatting
-    
+
     def _format_IPv6(self,ipv6,ipv6_bytes):
         output  = []
         output += ['']
@@ -1023,7 +1023,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         output += [self._formatWireshark(ipv6_bytes)]
         output += ['']
         return '\n'.join(output)
-    
+
     def _format_lowpan(self,lowpan,lowpan_bytes):
         output          = []
         output         += ['']
@@ -1045,21 +1045,21 @@ class OpenLbr(eventBusClient.eventBusClient):
         output += [self._formatWireshark(lowpan_bytes)]
         output += ['']
         return '\n'.join(output)
-    
+
     def _formatWireshark(self,pkt):
         NUM_BYTES_PER_LINE        = 16
-        
+
         output                    = []
         index                     = 0
         while index<len(pkt):
             this_line             = []
-            
+
             # get the bytes for this line
             bytes                 = pkt[index:index+NUM_BYTES_PER_LINE]
-            
+
             # print the header
             this_line            += ['%06x '%index]
-            
+
             # print the bytes (gather the end_chars)
             end_chars             = []
             end_chars            += ['  ']
@@ -1071,19 +1071,19 @@ class OpenLbr(eventBusClient.eventBusClient):
                     end_chars    += [chr(b)]
                 else:
                     end_chars    += ['.']
-            
+
             # pad
             for _ in range(len(bytes),NUM_BYTES_PER_LINE):
                 this_line        += ['   ']
-            
+
             # print the end_chars
             this_line            += end_chars
-            
+
             # store the line
             this_line             = ''.join(this_line)
             output               += [this_line]
-            
+
             # increment index
             index                += NUM_BYTES_PER_LINE
-        
+
         return '\n'.join(output)
