@@ -278,13 +278,13 @@ void dump_screen(struct moteStatus *ms)
          ms->myPANID_0, ms->myPANID_1, ms->my16bID_0, ms->my16bID_1,
          serialPort);
 
+  printf("IPv6:  %02x%02x:%02x%02x:%02x%02x:%02x%02x/64 prefix\n",
+         ms->myPrefix_0, ms->myPrefix_1, ms->myPrefix_2, ms->myPrefix_3,
+         ms->myPrefix_4, ms->myPrefix_5, ms->myPrefix_6, ms->myPrefix_7);
+
   printf("EUI64: %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x\n",
          ms->my64bID_0, ms->my64bID_1, ms->my64bID_2, ms->my64bID_3,
          ms->my64bID_4, ms->my64bID_5, ms->my64bID_6, ms->my64bID_7);
-
-  printf("IPv6:  %02x%02x:%02x%02x:%02x%02x:%02x%02x\n",
-         ms->myPrefix_0, ms->myPrefix_1, ms->myPrefix_2, ms->myPrefix_3,
-         ms->myPrefix_4, ms->myPrefix_5, ms->myPrefix_6, ms->myPrefix_7);
 
   printf("\nASN:   %02x %02x %02x %02x %02x\n",
          ms->asn[0],         ms->asn[1],         ms->asn[2],
