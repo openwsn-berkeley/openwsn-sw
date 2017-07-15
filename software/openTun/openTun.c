@@ -505,10 +505,34 @@ void parse_neighborRow(unsigned char inBuf[], unsigned int inLen)
 void parse_joinHistoryRow(unsigned char inBuf[], unsigned int inLen)
 {
   struct joinedHistory *jh;
+  unsigned int previousRow;
 
-  if(stats.joined_history_cur >= MAX_JOINHIST_ROW) {
+  /* guard against too small packets */
+  if(inLen < 5) return;
+
+#if 0
+  if(stats.joined_history_max == 0) {
+    printf("WAITING FOR DEBUGGER\n");
+    sleep(60);
+  }
+#endif
+
+  if(stats.joined_history_cur > MAX_JOINHIST_ROW) {
     stats.joined_history_cur=0;
   }
+
+  previousRow = stats.joined_history_cur-1;
+  if(stats.joined_history_cur == 0) {
+    previousRow = stats.joined_history_max-1;
+  }
+
+  /* only log a new join ASN if it is different than previous one */
+  if(stats.joined_history_max > 0 &&
+     memcmp(stats.joinedHistory_rows[previousRow].asn,
+            inBuf, 5)==0) {
+    return;
+  }
+
   jh = &stats.joinedHistory_rows[stats.joined_history_cur];
 
   jh->row    = stats.joined_count;
