@@ -166,6 +166,10 @@ struct neighborRow {
   unsigned char  joinPrio;
 };
 
+struct joinedHistory {
+  unsigned char  row;
+  unsigned char  asn[5];
+};
 
 
 struct moteStatus {
@@ -234,6 +238,13 @@ struct moteStatus {
 #define MAX_NEIGHBORS_ROW 64
   struct neighborRow neighbor_rows[MAX_NEIGHBORS_ROW];
   int neighbor_rows_max;
+
+  /* JoinedHistoryRow */
+#define MAX_JOINHIST_ROW 5
+  struct joinedHistory joinedHistory_rows[MAX_JOINHIST_ROW];
+  int joined_history_cur;
+  int joined_history_max;
+  int joined_count;
 
   /* kaPeriod */
   unsigned int kaPeriod;
@@ -307,6 +318,18 @@ void dump_screen(struct moteStatus *ms)
            nr->addr_bodyH,
            nr->addr_bodyL);
   }
+
+  printf("\nJoined:\n");
+  for(i=0; i<ms->joined_history_max; i++) {
+    struct joinedHistory *jh = &ms->joinedHistory_rows[i];
+
+    printf(" %02u ASN: %02x%02x%02x%02x%02x ",
+           jh->row,
+           jh->asn[0], jh->asn[1],
+           jh->asn[2], jh->asn[3], jh->asn[4]);
+  }
+  printf("\n");
+
 
 }
 
@@ -479,6 +502,29 @@ void parse_neighborRow(unsigned char inBuf[], unsigned int inLen)
   }
 };
 
+void parse_joinHistoryRow(unsigned char inBuf[], unsigned int inLen)
+{
+  struct joinedHistory *jh;
+
+  if(stats.joined_history_cur >= MAX_JOINHIST_ROW) {
+    stats.joined_history_cur=0;
+  }
+  jh = &stats.joinedHistory_rows[stats.joined_history_cur];
+
+  jh->row    = stats.joined_count;
+  jh->asn[0] = inBuf[0];
+  jh->asn[1] = inBuf[1];
+  jh->asn[2] = inBuf[2];
+  jh->asn[3] = inBuf[3];
+  jh->asn[4] = inBuf[4];
+
+  stats.joined_history_cur++;
+  stats.joined_count++;
+  if(stats.joined_history_max < stats.joined_history_cur) {
+    stats.joined_history_max = stats.joined_history_cur;
+  }
+
+}
 
 void parse_status(unsigned char inBuf[], unsigned int inLen)
 {
@@ -549,8 +595,13 @@ void parse_status(unsigned char inBuf[], unsigned int inLen)
     }
     break;
 
+  case 11:
+    /* Joined */
+    parse_joinHistoryRow(inBuf, inLen);
+    break;
+
   default:
-    printf("unknown\n");
+    fprintf(stderr, "unknown status: %u\n", statusElem);
     break;
   }
 
