@@ -293,7 +293,6 @@ void dump_screen(struct moteStatus *ms)
   printf("syncPkt: %02d ack: %02d\n", stats.numSyncPkt, stats.numSyncAck);
 
   printf("\nSched    Row: %03d\n", ms->sched_rows_max);
-  printf(  "Neighbor Row: %03d\n", ms->neighbor_rows_max);
 
   printf("Schedule:    ASN               offset   sent/ack     Rx  neighbor body ------------------\n");
   for(i=0; i<ms->sched_rows_max; i++) {
@@ -307,7 +306,9 @@ void dump_screen(struct moteStatus *ms)
            sr->neighbor_bodyH,
            sr->neighbor_bodyL);
   }
-  printf("\nNeighbours:\n");
+
+  printf("\nNeighbor Row: %03d\n", ms->neighbor_rows_max);
+  printf("Neighbours:\n");
   for(i=0; i<ms->neighbor_rows_max; i++) {
     struct neighborRow *nr = &ms->neighbor_rows[i];
     printf(" %02u ASN: %02x%02x%02x%02x%02x  R:%05d %03d %03d Tx:%03d/%03d Rx: %03d %016lx%016lx\n",
