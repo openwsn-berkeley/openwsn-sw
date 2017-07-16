@@ -20,6 +20,7 @@ log.addHandler(logging.NullHandler())
 
 import cbor
 import binascii
+import os
 
 # ======================== Top Level JRC Class =============================
 class JRC():
@@ -248,7 +249,7 @@ class joinResource(coapResource.coapResource):
     def __init__(self):
         self.joinedNodes = []
 
-        self.networkKey = [0xe6, 0xbf, 0x42, 0x87, 0xc2, 0xd7, 0x61, 0x8d, 0x6a, 0x96, 0x87, 0x44, 0x5f, 0xfd, 0x33, 0xe6]  # default L2 key for the network
+        self.networkKey = u.str2buf(os.urandom(16)) # random key every time OpenVisualizer is initialized
         self.networkKeyIndex = [0x01] # L2 key index
 
         # initialize parent class
