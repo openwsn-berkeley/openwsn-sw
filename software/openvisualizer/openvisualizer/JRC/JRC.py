@@ -5,7 +5,6 @@ from   coap   import    coap,                    \
                         coapOption as o,         \
                         coapUtils as u,          \
                         coapObjectSecurity as oscoap
-from coap.socketUdpDispatcher import socketUdpDispatcher
 
 import coseDefines
 import logging.handlers
@@ -21,57 +20,69 @@ log.addHandler(logging.NullHandler())
 
 import cbor
 import binascii
+import os
 
-MASTERSECRET = binascii.unhexlify('000102030405060708090A0B0C0D0E0F')
-KEY_VALUE = [0xe6, 0xbf, 0x42, 0x87, 0xc2, 0xd7, 0x61, 0x8d, 0x6a, 0x96, 0x87, 0x44, 0x5f, 0xfd, 0x33, 0xe6]  # default L2 key for the network
-KEY_ID = [0x01]  # L2 key index
+# ======================== Top Level JRC Class =============================
+class JRC():
+    def __init__(self):
+        coapResource = joinResource()
+        self.coapServer = coapServer(coapResource, contextHandler(coapResource).securityContextLookup)
 
-# link-local prefix
-LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    def close(self):
+        self.coapServer.close()
 
-joinedNodes = []
+# ======================== Security Context Handler =========================
+class contextHandler():
+    MASTERSECRET = binascii.unhexlify('000102030405060708090A0B0C0D0E0F')
 
-# ======================== Context Handler needs to be registered =============================
+    def __init__(self, joinResource):
+        self.joinResource = joinResource
 
-def JRCSecurityContextLookup(kid):
-    kidBuf = u.str2buf(kid)
+    # ======================== Context Handler needs to be registered =============================
+    def securityContextLookup(self, kid):
+        kidBuf = u.str2buf(kid)
 
-    eui64 = kidBuf[:-1]
-    senderID = eui64 + [0x01]  # sender ID of JRC is reversed
-    recipientID = eui64 + [0x00]
+        eui64 = kidBuf[:-1]
+        senderID = eui64 + [0x01]  # sender ID of JRC is reversed
+        recipientID = eui64 + [0x00]
 
-    global joinedNodes
-    # if eui-64 is found in the list of joined nodes, return the appropriate context
-    # this is important for replay protection
-    for dict in joinedNodes:
-        if dict['eui64'] == u.buf2str(eui64):
-            log.info("Node {0} found in joinedNodes. Returning context {1}.".format(binascii.hexlify(dict['eui64']), str(dict['context'])))
-            return dict['context']
+        # if eui-64 is found in the list of joined nodes, return the appropriate context
+        # this is important for replay protection
+        for dict in self.joinResource.joinedNodes:
+            if dict['eui64'] == u.buf2str(eui64):
+                log.info("Node {0} found in joinedNodes. Returning context {1}.".format(binascii.hexlify(dict['eui64']),
+                                                                                        str(dict['context'])))
+                return dict['context']
 
-    # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
-    # handler of the join resource
-    context = oscoap.SecurityContext(masterSecret=MASTERSECRET,
-                                     senderID=u.buf2str(senderID),
-                                     recipientID=u.buf2str(recipientID),
-                                     aeadAlgorithm=oscoap.AES_CCM_16_64_128())
+        # if eui-64 is not found, create a new tentative context but only add it to the list of joined nodes in the GET
+        # handler of the join resource
+        context = oscoap.SecurityContext(masterSecret=self.MASTERSECRET,
+                                         senderID=u.buf2str(senderID),
+                                         recipientID=u.buf2str(recipientID),
+                                         aeadAlgorithm=oscoap.AES_CCM_16_64_128())
 
-    log.info("Node {0} not found in joinedNodes. Instantiating new context based on the master secret.".format(binascii.hexlify(u.buf2str(eui64))))
+        log.info("Node {0} not found in joinedNodes. Instantiating new context based on the master secret.".format(
+            binascii.hexlify(u.buf2str(eui64))))
 
-    return context
+        return context
 
 # ======================== Interface with OpenVisualizer ======================================
-class JRC(eventBusClient.eventBusClient):
+class coapServer(eventBusClient.eventBusClient):
+    # link-local prefix
+    LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 
-    def __init__(self):
+    def __init__(self, coapResource, contextHandler):
         # log
         log.info("create instance")
+
+        self.coapResource = coapResource
 
         # run CoAP server in testing mode
         # this mode does not open a real socket, rather uses PyDispatcher for sending/receiving messages
         # We interface this mode with OpenVisualizer to run JRC co-located with the DAG root
         self.coapServer = coap.coap(udpPort=d.DEFAULT_UDP_PORT, testing=True)
-        self.coapServer.addResource(joinResource())
-        self.coapServer.addSecurityContextHandler(JRCSecurityContextLookup)
+        self.coapServer.addResource(coapResource)
+        self.coapServer.addSecurityContextHandler(contextHandler)
         self.coapServer.maxRetransmit = 1
 
         self.coapClient = None
@@ -120,7 +131,7 @@ class JRC(eventBusClient.eventBusClient):
         '''
         Return L2 security key for the network.
         '''
-        return {'index' : KEY_ID, 'value' : KEY_VALUE}
+        return {'index' : self.coapResource.networkKeyIndex, 'value' : self.coapResource.networkKey}
 
     def _registerDagRoot_notif(self, sender, signal, data):
         # register for the global address of the DAG root
@@ -138,7 +149,7 @@ class JRC(eventBusClient.eventBusClient):
         self.register(
             sender=self.WILDCARD,
             signal=(
-                tuple(LINK_LOCAL_PREFIX + data['host']),
+                tuple(self.LINK_LOCAL_PREFIX + data['host']),
                 self.PROTO_UDP,
                 d.DEFAULT_UDP_PORT
             ),
@@ -162,7 +173,7 @@ class JRC(eventBusClient.eventBusClient):
         self.unregister(
             sender=self.WILDCARD,
             signal=(
-                tuple(LINK_LOCAL_PREFIX + data['host']),
+                tuple(self.LINK_LOCAL_PREFIX + data['host']),
                 self.PROTO_UDP,
                 d.DEFAULT_UDP_PORT
             ),
@@ -235,8 +246,12 @@ class JRC(eventBusClient.eventBusClient):
 
 # ==================== Implementation of CoAP join resource =====================
 class joinResource(coapResource.coapResource):
-    
     def __init__(self):
+        self.joinedNodes = []
+
+        self.networkKey = u.str2buf(os.urandom(16)) # random key every time OpenVisualizer is initialized
+        self.networkKeyIndex = [0x01] # L2 key index
+
         # initialize parent class
         coapResource.coapResource.__init__(
             self,
@@ -251,8 +266,8 @@ class joinResource(coapResource.coapResource):
 
         k1 = {}
         k1[coseDefines.KEY_LABEL_KTY]   = coseDefines.KEY_VALUE_SYMMETRIC
-        k1[coseDefines.KEY_LABEL_KID]   = u.buf2str(KEY_ID)
-        k1[coseDefines.KEY_LABEL_K]     = u.buf2str(KEY_VALUE)
+        k1[coseDefines.KEY_LABEL_KID]   = u.buf2str(self.networkKeyIndex)
+        k1[coseDefines.KEY_LABEL_K]     = u.buf2str(self.networkKey)
 
         join_response = [[k1]]
         join_response_serialized = cbor.dumps(join_response)
@@ -262,8 +277,7 @@ class joinResource(coapResource.coapResource):
         objectSecurity = oscoap.objectSecurityOptionLookUp(options)
         assert objectSecurity
 
-        global joinedNodes
-        joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid[:8]), # remove last prepended byte
+        self.joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid[:8]), # remove last prepended byte
                         'context' : objectSecurity.context}]
 
         return (respCode,respOptions,respPayload)
