@@ -41,6 +41,7 @@
 #include <signal.h>
 #include <termios.h>
 #include <sys/ioctl.h>
+#include <assert.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -134,12 +135,16 @@ struct scheduleRow {
   unsigned char  shared;
   unsigned char  channelOffset;
   unsigned char  neighbor_type;
-  unsigned long long neighbor_bodyH;
-  unsigned long long neighbor_bodyL;
+  unsigned long long neighbor_body;
+
   unsigned char  numRx;
   unsigned char  numTx;
   unsigned char  numTxACK;
   unsigned char  lastUsedAsn[5];
+  unsigned char  joinPrio;
+  unsigned char  f6PNORES;
+  unsigned char  sixtopGEN;
+  unsigned char  sixtopSeqNum;
 };
 
 /*
@@ -150,12 +155,12 @@ struct scheduleRow {
 struct neighborRow {
   unsigned char  row;
   unsigned char  used;
+  unsigned char  insecure;
   unsigned char  parentPreference;
   unsigned char  stableNeighbor;
   unsigned char  switchStabilityCounter;
   unsigned char  addr_type;
-  unsigned long long addr_bodyH;
-  unsigned long long addr_bodyL;
+  unsigned long long addr_body;
   unsigned short DAGrank;
   char           rssi;
   unsigned char  numRx;
@@ -164,6 +169,9 @@ struct neighborRow {
   unsigned char  numWraps;
   unsigned char  asn[5];
   unsigned char  joinPrio;
+  unsigned char  f6PNORES;
+  unsigned char  sixtopGEN;
+  unsigned char  sixtopSeqNum;
 };
 
 struct joinedHistory {
@@ -297,28 +305,26 @@ void dump_screen(struct moteStatus *ms)
   printf("Schedule:    ASN               offset   sent/ack     Rx  neighbor body ------------------\n");
   for(i=0; i<ms->sched_rows_max; i++) {
     struct scheduleRow *sr = &ms->sched_rows[i];
-    printf(" %02u lASN: %02x%02x%02x%02x%02x  CHAN: %03d/%05d Tx:%03d/%03d Rx: %03d %016llx%016llx\n",
+    printf(" %02u lASN: %02x%02x%02x%02x%02x  CHAN: %03d/%05d Tx:%03d/%03d Rx: %03d %016llx\n",
            sr->row,
            sr->lastUsedAsn[0], sr->lastUsedAsn[1],
            sr->lastUsedAsn[2], sr->lastUsedAsn[3], sr->lastUsedAsn[4],
            sr->channelOffset, sr->slotOffset,
            sr->numTx, sr->numTxACK, sr->numRx,
-           sr->neighbor_bodyH,
-           sr->neighbor_bodyL);
+           sr->neighbor_body);
   }
 
   printf("\nNeighbor Row: %03d\n", ms->neighbor_rows_max);
   printf("Neighbours:             rank  typ cnt                    address\n");
   for(i=0; i<ms->neighbor_rows_max; i++) {
     struct neighborRow *nr = &ms->neighbor_rows[i];
-    printf(" %02u ASN: %02x%02x%02x%02x%02x   R:%05d %03d %03d Tx:%03d/%03d Rx: %03d %016llx%016llx\n",
+    printf(" %02u ASN: %02x%02x%02x%02x%02x   R:%05d %03d %03d Tx:%03d/%03d Rx: %03d %016llx\n",
            nr->row,
            nr->asn[0], nr->asn[1],
            nr->asn[2], nr->asn[3], nr->asn[4],
            nr->DAGrank, nr->addr_type, nr->stableNeighbor,
            nr->numTx, nr->numTxACK, nr->numRx,
-           nr->addr_bodyH,
-           nr->addr_bodyL);
+           nr->addr_body);
   }
 
   printf("\nJoined:\n");
@@ -401,7 +407,7 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
 {
   struct scheduleRow sr;
 
-  if(inLen < (31+4)) {
+  if(inLen < (30)) {
     tooShort++;
     return;
   }
@@ -412,7 +418,7 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
   sr.shared     = inBuf[8];
   sr.channelOffset = inBuf[9];
   sr.neighbor_type = inBuf[10];
-  sr.neighbor_bodyH= (unsigned long long)inBuf[11] +
+  sr.neighbor_body= (unsigned long long)inBuf[11] +
     (unsigned long long)inBuf[12] << 8 +
     (unsigned long long)inBuf[13] << 16 +
     (unsigned long long)inBuf[14] << 24 +
@@ -420,24 +426,20 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
     (unsigned long long)inBuf[16] << 40 +
     (unsigned long long)inBuf[17] << 48 +
     (unsigned long long)inBuf[18] << 56;
-  sr.neighbor_bodyL= (unsigned long long)inBuf[19] +
-    (unsigned long long)inBuf[20] << 8 +
-    (unsigned long long)inBuf[21] << 16 +
-    (unsigned long long)inBuf[22] << 24 +
-    (unsigned long long)inBuf[23] << 32 +
-    (unsigned long long)inBuf[24] << 40 +
-    (unsigned long long)inBuf[25] << 48 +
-    (unsigned long long)inBuf[26] << 56;
 
-  sr.numRx     = inBuf[27];
-  sr.numTx     = inBuf[28];
-  sr.numTxACK  = inBuf[29];
+  sr.numRx     = inBuf[19];
+  sr.numTx     = inBuf[20];
+  sr.numTxACK  = inBuf[21];
 
-  sr.lastUsedAsn[0]  = inBuf[30];
-  sr.lastUsedAsn[2]  = inBuf[31];
-  sr.lastUsedAsn[1]  = inBuf[32];
-  sr.lastUsedAsn[4]  = inBuf[33];
-  sr.lastUsedAsn[3]  = inBuf[34];
+  sr.lastUsedAsn[0]  = inBuf[22];
+  sr.lastUsedAsn[2]  = inBuf[23];
+  sr.lastUsedAsn[1]  = inBuf[24];
+  sr.lastUsedAsn[4]  = inBuf[25];
+  sr.lastUsedAsn[3]  = inBuf[26];
+  sr.joinPrio= inBuf[27];
+  sr.f6PNORES= inBuf[28];
+  sr.sixtopGEN=inBuf[29];
+  sr.sixtopSeqNum = inBuf[30];
 
   if(sr.row < MAX_SCHEDULEROW) {
     stats.sched_rows[sr.row] = sr;
@@ -452,52 +454,65 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
 void parse_neighborRow(unsigned char inBuf[], unsigned int inLen)
 {
   struct neighborRow nr;
+  unsigned char *p;
 
-  if(inLen < (35+4)) {
+  if(inLen < (5+31)) {
     tooShort++;
     if((tooShort % 100) == 0) {
-      fprintf(stderr, "parse_neighborRow: too short, inlen < 39");
+      fprintf(stderr, "parse_neighborRow: too short, inlen: %u < %u", inLen, (5+31));
     }
     return;
   }
 
-  nr.row        = inBuf[4];
-  nr.used       = inBuf[5];
-  nr.parentPreference = inBuf[6];
-  nr.stableNeighbor= inBuf[7];
-  nr.switchStabilityCounter = inBuf[8];
-  nr.addr_type  = inBuf[9];
+  p = inBuf + 4;
+  nr.row        = *p++;         //  'row',                       # B
+  nr.used       = *p++;         //  'used',                      # B
+  nr.insecure   = *p++;         //  'insecure',                  # B
+  nr.parentPreference = *p++;   //  'parentPreference',          # B
+  nr.stableNeighbor= *p++;      //  'stableNeighbor',            # B
+  nr.switchStabilityCounter = *p++;  //  'switchStabilityCounter',    # B
+  nr.addr_type  = *p++;         //  'addr_type',                 # B
 
-  nr.addr_bodyH = (unsigned long long)inBuf[10] +
-    (unsigned long long)inBuf[11] << 8 +
-    (unsigned long long)inBuf[12] << 16 +
-    (unsigned long long)inBuf[13] << 24 +
-    (unsigned long long)inBuf[14] << 32 +
-    (unsigned long long)inBuf[15] << 40 +
-    (unsigned long long)inBuf[16] << 48 +
-    (unsigned long long)inBuf[17] << 56;
+  //  'addr_bodyH',                # Q
+  //  'addr_bodyL',                # Q
+  nr.addr_body = (unsigned long long)p[0] +
+    (unsigned long long)p[1] << 8 +
+    (unsigned long long)p[2] << 16 +
+    (unsigned long long)p[3] << 24 +
+    (unsigned long long)p[4] << 32 +
+    (unsigned long long)p[5] << 40 +
+    (unsigned long long)p[6] << 48 +
+    (unsigned long long)p[7] << 56;
+  p += 8;
 
-  nr.addr_bodyL = (unsigned long long)inBuf[18] +
-    (unsigned long long)inBuf[19] << 8 +
-    (unsigned long long)inBuf[20] << 16 +
-    (unsigned long long)inBuf[21] << 24 +
-    (unsigned long long)inBuf[22] << 32 +
-    (unsigned long long)inBuf[23] << 40 +
-    (unsigned long long)inBuf[24] << 48 +
-    (unsigned long long)inBuf[25] << 56;
+  //  'DAGrank',                   # H
+  nr.DAGrank = p[0] + p[1] << 8;  p += 2;
 
-  nr.DAGrank = inBuf[26] + inBuf[27] << 8;
-  nr.rssi    = inBuf[28];
-  nr.numRx   = inBuf[29];
-  nr.numTx   = inBuf[30];
-  nr.numTxACK= inBuf[31];
-  nr.numWraps= inBuf[32];
-  nr.asn[0]  = inBuf[33];
-  nr.asn[2]  = inBuf[34];
-  nr.asn[1]  = inBuf[35];
-  nr.asn[4]  = inBuf[36];
-  nr.asn[3]  = inBuf[37];
-  nr.joinPrio= inBuf[38];
+    //  'joinPrio',                  # B
+    //  'f6PNORES',                  # B
+    //  'sixtopGEN',                 # B
+    //  'sixtopSeqNum',              # B
+  nr.rssi    = *p++;//  'rssi',                      # b
+  nr.numRx   = *p++;    //  'numRx',                     # B
+  nr.numTx   = *p++;    //  'numTx',                     # B
+  nr.numTxACK= *p++;    //  'numTxACK',                  # B
+  nr.numWraps= *p++;    //  'numWraps',                  # B
+
+  //  'asn_4',                     # B
+  //  'asn_2_3',                   # H
+  //  'asn_0_1',                   # H
+  nr.asn[0]  = *p++;
+  nr.asn[2]  = *p++;
+  nr.asn[1]  = *p++;
+  nr.asn[4]  = *p++;
+  nr.asn[3]  = *p++;
+
+  nr.joinPrio = *p++;  //  'joinPrio',                  # B
+  nr.f6PNORES = *p++;  //  'f6PNORES',                  # B
+  nr.sixtopGEN= *p++;  //  'sixtopGEN',                 # B
+  nr.sixtopSeqNum=*p++; // 'sixtopSeqNum',              # B
+
+  assert((p - inBuf) == 35);
 
   if(nr.row < MAX_NEIGHBORS_ROW) {
     stats.neighbor_rows[nr.row] = nr;
