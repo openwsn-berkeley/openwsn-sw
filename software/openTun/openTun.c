@@ -406,6 +406,7 @@ void parse_queueRow(unsigned char inBuf[], unsigned int inLen)
 void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
 {
   struct scheduleRow sr;
+  unsigned char *p;
 
   if(inLen < (30)) {
     tooShort++;
@@ -418,14 +419,16 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
   sr.shared     = inBuf[8];
   sr.channelOffset = inBuf[9];
   sr.neighbor_type = inBuf[10];
-  sr.neighbor_body= (unsigned long long)inBuf[11] +
-    (unsigned long long)inBuf[12] << 8 +
-    (unsigned long long)inBuf[13] << 16 +
-    (unsigned long long)inBuf[14] << 24 +
-    (unsigned long long)inBuf[15] << 32 +
-    (unsigned long long)inBuf[16] << 40 +
-    (unsigned long long)inBuf[17] << 48 +
-    (unsigned long long)inBuf[18] << 56;
+
+  p = inBuf + 11;
+  sr.neighbor_body=(unsigned long long)p[7] +
+    (unsigned long long)p[6] << 8 +
+    (unsigned long long)p[5] << 16 +
+    (unsigned long long)p[4] << 24 +
+    (unsigned long long)p[3] << 32 +
+    (unsigned long long)p[2] << 40 +
+    (unsigned long long)p[1] << 48 +
+    (unsigned long long)p[0] << 56;
 
   sr.numRx     = inBuf[19];
   sr.numTx     = inBuf[20];
@@ -475,14 +478,14 @@ void parse_neighborRow(unsigned char inBuf[], unsigned int inLen)
 
   //  'addr_bodyH',                # Q
   //  'addr_bodyL',                # Q
-  nr.addr_body = (unsigned long long)p[0] +
-    (unsigned long long)p[1] << 8 +
-    (unsigned long long)p[2] << 16 +
-    (unsigned long long)p[3] << 24 +
-    (unsigned long long)p[4] << 32 +
-    (unsigned long long)p[5] << 40 +
-    (unsigned long long)p[6] << 48 +
-    (unsigned long long)p[7] << 56;
+  nr.addr_body = (unsigned long long)p[7] +
+    (unsigned long long)p[6] << 8 +
+    (unsigned long long)p[5] << 16 +
+    (unsigned long long)p[4] << 24 +
+    (unsigned long long)p[3] << 32 +
+    (unsigned long long)p[2] << 40 +
+    (unsigned long long)p[1] << 48 +
+    (unsigned long long)p[0] << 56;
   p += 8;
 
   //  'DAGrank',                   # H
@@ -492,7 +495,7 @@ void parse_neighborRow(unsigned char inBuf[], unsigned int inLen)
     //  'f6PNORES',                  # B
     //  'sixtopGEN',                 # B
     //  'sixtopSeqNum',              # B
-  nr.rssi    = *p++;//  'rssi',                      # b
+  nr.rssi    = *p++;    //  'rssi',                      # b
   nr.numRx   = *p++;    //  'numRx',                     # B
   nr.numTx   = *p++;    //  'numTx',                     # B
   nr.numTxACK= *p++;    //  'numTxACK',                  # B
@@ -557,10 +560,10 @@ void parse_joinHistoryRow(unsigned char inBuf[], unsigned int inLen)
 
   jh->row    = stats.joined_count;
   jh->asn[0] = inBuf[0];
-  jh->asn[1] = inBuf[1];
-  jh->asn[2] = inBuf[2];
-  jh->asn[3] = inBuf[3];
-  jh->asn[4] = inBuf[4];
+  jh->asn[2] = inBuf[1];
+  jh->asn[1] = inBuf[2];
+  jh->asn[4] = inBuf[3];
+  jh->asn[3] = inBuf[4];
 
   stats.joined_history_cur++;
   stats.joined_count++;
