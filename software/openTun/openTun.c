@@ -328,13 +328,13 @@ void dump_screen(struct moteStatus *ms)
   }
 
   printf("\nJoined:\n");
-  for(i=0; i<ms->joined_history_max; i++) {
+  for(i=0; i<ms->joined_history_max && i<MAX_JOINHIST_ROW; i++) {
     struct joinedHistory *jh = &ms->joinedHistory_rows[i];
 
     printf(" %02u ASN: %02x%02x%02x%02x%02x ",
            jh->row,
-           jh->asn[0], jh->asn[1],
-           jh->asn[2], jh->asn[3], jh->asn[4]);
+           jh->asn[0], jh->asn[2],  /* must decode little endian here */
+           jh->asn[1], jh->asn[4], jh->asn[3]);
   }
   printf("\n");
 
@@ -540,7 +540,7 @@ void parse_joinHistoryRow(unsigned char inBuf[], unsigned int inLen)
   }
 #endif
 
-  if(stats.joined_history_cur > MAX_JOINHIST_ROW) {
+  if(stats.joined_history_cur >= MAX_JOINHIST_ROW) {
     stats.joined_history_cur=0;
   }
 
@@ -559,11 +559,13 @@ void parse_joinHistoryRow(unsigned char inBuf[], unsigned int inLen)
   jh = &stats.joinedHistory_rows[stats.joined_history_cur];
 
   jh->row    = stats.joined_count;
+
+  /* must keep asn exactly as from network for comparison to work! */
   jh->asn[0] = inBuf[0];
-  jh->asn[2] = inBuf[1];
-  jh->asn[1] = inBuf[2];
-  jh->asn[4] = inBuf[3];
-  jh->asn[3] = inBuf[4];
+  jh->asn[1] = inBuf[1];
+  jh->asn[2] = inBuf[2];
+  jh->asn[3] = inBuf[3];
+  jh->asn[4] = inBuf[4];
 
   stats.joined_history_cur++;
   stats.joined_count++;
@@ -914,6 +916,7 @@ main(int argc, char **argv)
 
   progname = argv[0];
 
+  memset(&stats, 0, sizeof(stats));
   stats.sched_rows_max = -1;
   stats.neighbor_rows_max = -1;
   screen_init();
