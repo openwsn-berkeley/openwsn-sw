@@ -297,7 +297,7 @@ void dump_screen(struct moteStatus *ms)
   printf("Schedule:    ASN               offset   sent/ack     Rx  neighbor body ------------------\n");
   for(i=0; i<ms->sched_rows_max; i++) {
     struct scheduleRow *sr = &ms->sched_rows[i];
-    printf(" %02u lASN: %02x%02x%02x%02x%02x  CHAN: %03d/%05d Tx:%03d/%03d Rx: %03d %016lx%016lx\n",
+    printf(" %02u lASN: %02x%02x%02x%02x%02x  CHAN: %03d/%05d Tx:%03d/%03d Rx: %03d %016llux%016llux\n",
            sr->row,
            sr->lastUsedAsn[0], sr->lastUsedAsn[1],
            sr->lastUsedAsn[2], sr->lastUsedAsn[3], sr->lastUsedAsn[4],
@@ -311,7 +311,7 @@ void dump_screen(struct moteStatus *ms)
   printf("Neighbours:\n");
   for(i=0; i<ms->neighbor_rows_max; i++) {
     struct neighborRow *nr = &ms->neighbor_rows[i];
-    printf(" %02u ASN: %02x%02x%02x%02x%02x  R:%05d %03d %03d Tx:%03d/%03d Rx: %03d %016lx%016lx\n",
+    printf(" %02u ASN: %02x%02x%02x%02x%02x  R:%05d %03d %03d Tx:%03d/%03d Rx: %03d %016llux%016llux\n",
            nr->row,
            nr->asn[0], nr->asn[1],
            nr->asn[2], nr->asn[3], nr->asn[4],
