@@ -407,7 +407,7 @@ void parse_scheduleRow(unsigned char inBuf[], unsigned int inLen)
   }
 
   sr.row        = inBuf[4];
-  sr.slotOffset = inBuf[5] + inBuf[6] << 8;
+  sr.slotOffset = inBuf[5] + (inBuf[6] << 8);
   sr.type       = inBuf[7];
   sr.shared     = inBuf[8];
   sr.channelOffset = inBuf[9];
