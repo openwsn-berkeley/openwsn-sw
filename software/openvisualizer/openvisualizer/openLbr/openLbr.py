@@ -246,6 +246,14 @@ class OpenLbr(eventBusClient.eventBusClient):
             if log.isEnabledFor(logging.DEBUG):
                 log.debug(self._format_lowpan(lowpan,lowpan_bytes))
 
+            # don't forward the ICMPv6 packets to the motes (unsupported)
+            if (ipv6['next_header'] == self.IANA_ICMPv6) : #&& (lowpan['src_addr'] == ) : 
+                log.error('ICMPv6 packet to forward to {0}, The packet is dropped (not supported by openWSN)'.format(
+                    u.formatIPv6Addr(ipv6['dst_addr'])
+                    ))
+                log.error(self._format_lowpan(lowpan,lowpan_bytes))
+                return
+            
             #print "output:"
             #print lowpan_bytes
             # dispatch
