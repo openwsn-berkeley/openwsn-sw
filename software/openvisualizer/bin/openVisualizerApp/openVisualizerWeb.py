@@ -498,7 +498,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                     self.stdout.write(str(ms.getStateElem(arg)))
                     self.stdout.write('\n')
                 except ValueError as err:
-                    self.stdout.write(err)
+                    self.stdout.write(str(err))
+                    self.stdout.write('\n')
     
     def do_list(self, arg):
         """List available states. (Obsolete; use 'state' without parameters.)"""
@@ -523,7 +524,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                     if ms.moteConnector.serialport==arg:
                         ms.triggerAction(moteState.moteState.TRIGGER_DAGROOT)
                 except ValueError as err:
-                    self.stdout.write(err)
+                    self.stdout.write(str(err))
+                    self.stdout.write('\n')
     
     def do_set(self,arg):
         """
@@ -547,6 +549,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                             ms.triggerAction([moteState.moteState.SET_COMMAND,command,parameter])
                     except ValueError as err:
                         self.stdout.write(err)
+                        self.stdout.write('\n')
             except ValueError as err:
                 print "{0}:{1}".format(type(err),err)
 
@@ -650,7 +653,7 @@ if __name__=="__main__":
     banner  = []
     banner += ['OpenVisualizer']
     banner += ['web interface started at {0}:{1}'.format(argspace.host,argspace.port)]
-    banner += ['enter \'q\' to exit']
+    banner += ['enter \'quit\' to exit']
     banner  = '\n'.join(banner)
     print banner
 
