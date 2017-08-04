@@ -119,7 +119,7 @@ class BspSctimer(BspModule.BspModule):
         except Exception as err:
             errMsg=u.formatCriticalMessage(err)
             print errMsg
-            log.critical(errMsg)
+            self.log.critical(errMsg)
     
     def cmd_readCounter(self):
         '''emulates

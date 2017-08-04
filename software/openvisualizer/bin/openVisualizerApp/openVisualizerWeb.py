@@ -36,6 +36,11 @@ import datetime
 from bottle        import view, response
 from   cmd         import Cmd
 
+# We want to import local module coap instead of the built-in one
+here = sys.path[0]
+openwsnDir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(here)))))
+coapDir = os.path.join(openwsnDir, 'coap')
+sys.path.insert(0, coapDir)
 
 import openVisualizerApp
 from openvisualizer.eventBus      import eventBusClient
@@ -281,6 +286,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                 ms.ST_SCHEDULE    : ms.getStateElem(ms.ST_SCHEDULE).toJson('data'),
                 ms.ST_QUEUE       : ms.getStateElem(ms.ST_QUEUE).toJson('data'),
                 ms.ST_NEIGHBORS   : ms.getStateElem(ms.ST_NEIGHBORS).toJson('data'),
+                ms.ST_JOINED      : ms.getStateElem(ms.ST_JOINED).toJson('data'),
             }
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
@@ -492,7 +498,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                     self.stdout.write(str(ms.getStateElem(arg)))
                     self.stdout.write('\n')
                 except ValueError as err:
-                    self.stdout.write(err)
+                    self.stdout.write(str(err))
+                    self.stdout.write('\n')
     
     def do_list(self, arg):
         """List available states. (Obsolete; use 'state' without parameters.)"""
@@ -517,7 +524,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                     if ms.moteConnector.serialport==arg:
                         ms.triggerAction(moteState.moteState.TRIGGER_DAGROOT)
                 except ValueError as err:
-                    self.stdout.write(err)
+                    self.stdout.write(str(err))
+                    self.stdout.write('\n')
     
     def do_set(self,arg):
         """
@@ -541,6 +549,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                             ms.triggerAction([moteState.moteState.SET_COMMAND,command,parameter])
                     except ValueError as err:
                         self.stdout.write(err)
+                        self.stdout.write('\n')
             except ValueError as err:
                 print "{0}:{1}".format(type(err),err)
 

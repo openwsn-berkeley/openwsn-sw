@@ -22,6 +22,7 @@ from openvisualizer.moteProbe       import moteProbe
 from openvisualizer.moteConnector   import moteConnector
 from openvisualizer.moteState       import moteState
 from openvisualizer.RPL             import RPL
+from openvisualizer.JRC             import JRC
 from openvisualizer.openLbr         import openLbr
 from openvisualizer.openTun         import openTun
 from openvisualizer.RPL             import UDPInject
@@ -56,6 +57,7 @@ class OpenVisualizerApp(object):
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
         self.openLbr              = openLbr.OpenLbr(usePageZero)
         self.rpl                  = RPL.RPL()
+        self.jrc                  = JRC.JRC()
         self.topology             = topology.topology()
         self.udpInject            = UDPInject.UDPInject()
         self.DAGrootList          = []
@@ -187,6 +189,7 @@ class OpenVisualizerApp(object):
         log.info('Closing OpenVisualizer')
         self.openTun.close()
         self.rpl.close()
+        self.jrc.close()
         for probe in self.moteProbes:
             probe.close()
                 
@@ -218,6 +221,8 @@ class OpenVisualizerApp(object):
                 motes.append(src_s)
             neighborTable = ms.getStateElem(ms.ST_NEIGHBORS)
             for neighbor in neighborTable.data:
+                if len(neighbor.data)==0:
+                    break
                 if neighbor.data[0]['used']==1 and neighbor.data[0]['parentPreference']==1:
                     dst_s =''.join(['%02X' %b for b in neighbor.data[0]['addr'].addr[-2:]])
                     edges.append({ 'u':src_s, 'v':dst_s })
