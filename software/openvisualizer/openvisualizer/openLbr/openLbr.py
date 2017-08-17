@@ -135,6 +135,9 @@ class OpenLbr(eventBusClient.eventBusClient):
     NHC_UDP_PORTS_4S_4D      = 3
 
     LINK_LOCAL_PREFIX        = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    
+    #=== Errors    
+    ERR_DESTINATIONUNREACHABLE = 1
 
     def __init__(self,usePageZero):
 
@@ -248,9 +251,9 @@ class OpenLbr(eventBusClient.eventBusClient):
 
 
             # don't forward the ICMPv6 packets to the motes (unsupported)     
-            if (ipv6['next_header'] == self.IANA_ICMPv6) and (ipv6_bytes[40] == 1) : #ICMPv6 destination unreachable 
+            if (ipv6['next_header'] == self.IANA_ICMPv6) and (ipv6['payload'][0] == self.ERR_DESTINATIONUNREACHABLE) :
                 
-                log.error('ICMPv6 packet to forward to {0}, The packet is dropped (not supported by openWSN)'.format(
+                log.error('ICMPv6 packet to forward to {0}, The packet is dropped (DESTINATIONUNREACHABLE not supported by openWSN)'.format(
                     u.formatIPv6Addr(ipv6['dst_addr'])
                     ))
                 log.error(self._format_lowpan(lowpan,lowpan_bytes))
