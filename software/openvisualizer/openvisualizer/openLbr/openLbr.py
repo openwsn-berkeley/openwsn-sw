@@ -246,6 +246,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             if log.isEnabledFor(logging.DEBUG):
                 log.debug(self._format_lowpan(lowpan,lowpan_bytes))
 
+
             # don't forward the ICMPv6 packets to the motes (unsupported)     
             if (ipv6['next_header'] == self.IANA_ICMPv6) and (ipv6_bytes[40] == 1) : #ICMPv6 destination unreachable 
                 
@@ -255,6 +256,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                 log.error(self._format_lowpan(lowpan,lowpan_bytes))
                 return
             
+
             #print "output:"
             #print lowpan_bytes
             # dispatch

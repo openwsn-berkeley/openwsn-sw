@@ -88,6 +88,18 @@ class remoteConnectorServer(object):
             event = self.queue.get(block=True)
             pub_all.send_json(event)
 
+    def clean_event(self, raw_event):
+        """
+        Convert a data tuple pydispatcher event to a dict
+        before sending it on the rover socket
+        """
+        event = raw_event
+        try:
+            event["data"] = event.get("data", None)._asdict()
+        except AttributeError:
+            log.debug("The data was not a tuple")
+        return event
+
     def _handle_admin(self):
         """
         Manage pub settings of the ZMQ PUB socket.
@@ -102,7 +114,8 @@ class remoteConnectorServer(object):
 
         def _handle_pub_all_callback(**kwargs):
             # Assume here that we got a JSON
-            self.queue.put(kwargs)
+            cleaned_event = self.clean_event(kwargs)
+            self.queue.put(cleaned_event)
 
         subscriptions = set()
         while True:
