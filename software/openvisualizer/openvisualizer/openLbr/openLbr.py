@@ -272,17 +272,14 @@ class OpenLbr(eventBusClient.eventBusClient):
             success = True
             dispatchSignal = None
 
+            hopbyhop_header_present = False
+
             #read next header
             if ipv6dic['next_header']==self.IANA_IPv6HOPHEADER:
-                #hop by hop header present, check flags and parse
-                if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
-                    #error -- this packet has gone downstream somewhere.
-                    log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
-                if (ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG:
-                    #error -- loop in the route
-                    log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                # mark hop by hop header present, check hop_flags after obtaining src_addr in IPV6 header. 
+                hopbyhop_header_present = True
                 #skip the header and process the rest of the message.
-                ipv6dic['next_header'] = ipv6dic['hop_next_header']
+                ipv6dic['next_header']  = ipv6dic['hop_next_header']
 
             #===================================================================
 
@@ -299,6 +296,15 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ipv6dic['hop_limit'] = ipv6dic_inner['hop_limit']
                 ipv6dic['dst_addr'] = ipv6dic_inner['dst_addr']
                 ipv6dic['flow_label'] = ipv6dic_inner['flow_label']
+
+                if hopbyhop_header_present:
+                    #hop by hop header present, check hop_flags
+                    if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
+                        #error -- this packet has gone downstream somewhere.
+                        log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                    if (ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG:
+                        #error -- loop in the route
+                        log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
 
             if ipv6dic['next_header']==self.IANA_ICMPv6:
                 #icmp header
