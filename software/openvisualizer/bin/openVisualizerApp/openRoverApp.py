@@ -62,7 +62,7 @@ class OpenRoverApp(object):
         if self.remoteConnector :
             self.remoteConnector.close()
             #leave it time to timeout
-            time.sleep(1)
+            time.sleep(2)
             self.remoteConnector=None
         self.remoteConnector = remoteConnectorRover.remoteConnectorRover(app=self, PCip=PCip, PCport=PCport, roverID=roverID)
 
