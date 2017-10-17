@@ -48,6 +48,8 @@ class remoteConnectorRover():
         # give this thread a name
         self.name = 'remoteConnectorRover'
 
+        self.numberOfSignalData = 0
+        self.singalDataBuffer   = []
         for mote in app.getMoteProbes() :
             # subscribe to dispatcher
             dispatcher.connect(
@@ -63,9 +65,15 @@ class remoteConnectorRover():
 
     #======================== remote interaction ============================
     def _sendToRemote_handler(self,sender,signal,data):
-        #send the data after appending @roverID
-        self.publisher.send_json({'sender' : '{0}@{1}'.format(sender,self.roverID), 'signal' : '{0}@{1}'.format(signal,self.roverID), 'data':data})
-        log.debug('message sent to remote host :\n sender : {0}, signal : {1}, data : {2}'.format('{0}@{1}'.format(sender,self.roverID), '{0}@{1}'.format(signal,self.roverID), data))
+
+        self.numberOfSignalData    = (self.numberOfSignalData+1)%12
+        if self.numberOfSignalData == 0:
+            #send the data after appending @roverID
+            self.publisher.send_json({'sender' : '{0}@{1}'.format(sender,self.roverID), 'signal' : '{0}@{1}'.format(signal,self.roverID), 'data':self.singalDataBuffer})
+            log.debug('message sent to remote host :\n sender : {0}, signal : {1}, data : {2}'.format('{0}@{1}'.format(sender,self.roverID), '{0}@{1}'.format(signal,self.roverID), self.singalDataBuffer))
+            self.singalDataBuffer = []
+        else:
+            self.singalDataBuffer.append(data)
 
     def _recvdFromRemote(self):
         while self.goOn :
