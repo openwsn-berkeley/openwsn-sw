@@ -67,13 +67,12 @@ class remoteConnectorRover():
     def _sendToRemote_handler(self,sender,signal,data):
 
         self.numberOfSignalData    = (self.numberOfSignalData+1)%12
+        self.singalDataBuffer.append(data)
         if self.numberOfSignalData == 0:
             #send the data after appending @roverID
             self.publisher.send_json({'sender' : '{0}@{1}'.format(sender,self.roverID), 'signal' : '{0}@{1}'.format(signal,self.roverID), 'data':self.singalDataBuffer})
             log.debug('message sent to remote host :\n sender : {0}, signal : {1}, data : {2}'.format('{0}@{1}'.format(sender,self.roverID), '{0}@{1}'.format(signal,self.roverID), self.singalDataBuffer))
-            self.singalDataBuffer = []
-        else:
-            self.singalDataBuffer.append(data)
+            self.singalDataBuffer = []   
 
     def _recvdFromRemote(self):
         while self.goOn :
