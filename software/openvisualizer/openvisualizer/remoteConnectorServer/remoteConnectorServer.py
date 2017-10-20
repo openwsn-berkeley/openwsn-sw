@@ -163,16 +163,12 @@ class remoteConnectorServer(object):
         count = 0
         while True:
             event = self.subscriber.recv_json()
-            if count > 10:
-                log.info("Received remote event\n" + json.dumps(event) + "\nDispatching to event bus")
-                count = 0
             for i in range(len(event['data'])):
                 dispatcher.send(
                     sender=event['sender'].encode("utf8"),
                     signal=event['signal'].encode("utf8"),
                     data=event['data'][i]
                 )
-            count += 1
 
     def _handle_req(self):
         """
