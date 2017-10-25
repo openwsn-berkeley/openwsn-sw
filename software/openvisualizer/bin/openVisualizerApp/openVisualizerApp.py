@@ -38,7 +38,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, pathTopo, roverMode):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, pathTopo):
         
         # store params
         self.confdir              = confdir
@@ -51,7 +51,6 @@ class OpenVisualizerApp(object):
         self.usePageZero           = usePageZero
         self.iotlabmotes          = iotlabmotes
         self.pathTopo             = pathTopo
-        self.roverMode            = roverMode
 
         # local variables
         self.eventBusMonitor      = eventBusMonitor.eventBusMonitor()
@@ -117,8 +116,7 @@ class OpenVisualizerApp(object):
             moteState.moteState(mc) for mc in self.moteConnectors
         ]
 
-        if self.roverMode :
-            self.remoteConnectorServer = remoteConnectorServer.remoteConnectorServer()
+        self.remoteConnectorServer = remoteConnectorServer.remoteConnectorServer()
 
 
         # boot all emulated motes, if applicable
@@ -294,7 +292,7 @@ from argparse       import ArgumentParser
 
 DEFAULT_MOTE_COUNT = 3
 
-def main(parser=None, roverMode=False):
+def main(parser=None):
     '''
     Entry point for application startup by UI. Parses common arguments.
     
@@ -354,8 +352,7 @@ def main(parser=None, roverMode=False):
         usePageZero     = argspace.usePageZero,
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
-        pathTopo        = argspace.pathTopo,
-        roverMode       = roverMode
+        pathTopo        = argspace.pathTopo
     )
 
 def _addParserArgs(parser):
