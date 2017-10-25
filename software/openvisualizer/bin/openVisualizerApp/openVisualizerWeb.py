@@ -59,7 +59,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
     server.
     '''
 
-    def __init__(self,app,websrv,roverMode):
+    def __init__(self,app,websrv):
         '''
         :param app:    OpenVisualizerApp
         :param websrv: Web server
@@ -70,7 +70,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.app             = app
         self.engine          = SimEngine.SimEngine()
         self.websrv          = websrv
-        self.roverMode       = roverMode
 
         # command support
         Cmd.__init__(self)
@@ -80,12 +79,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
         #used for remote motes :
 
-        if roverMode :
-            self.roverMotes = {}
-            self.client = coap.coap()
-            self.client.respTimeout = 2
-            self.client.ackTimeout = 2
-            self.client.maxRetransmit = 1
+        self.roverMotes = {}
+        self.client = coap.coap()
+        self.client.respTimeout = 2
+        self.client.ackTimeout = 2
+        self.client.maxRetransmit = 1
 
 
         self._defineRoutes()
@@ -140,10 +138,9 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
-        if self.roverMode:
-            self.websrv.route(path='/rovers',                             callback=self._showrovers)
-            self.websrv.route(path='/updateroverlist/:updatemsg',         callback=self._updateRoverList)
-            self.websrv.route(path='/motesdiscovery/:srcip',              callback=self._motesDiscovery)
+        self.websrv.route(path='/rovers',                                 callback=self._showrovers)
+        self.websrv.route(path='/updateroverlist/:updatemsg',             callback=self._updateRoverList)
+        self.websrv.route(path='/motesdiscovery/:srcip',                  callback=self._motesDiscovery)
 
     @view('rovers.tmpl')
     def _showrovers(self):
@@ -157,7 +154,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         tmplData = {
             'myifdict'  : myifdict,
             'roverMotes' : self.roverMotes,
-            'roverMode' : self.roverMode,
+            'roverMode' : True,
         }
         return tmplData
 
@@ -238,7 +235,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         tmplData = {
             'motelist'       : motelist,
             'requested_mote' : moteid if moteid else 'none',
-            'roverMode'      : self.roverMode,
+            'roverMode'      : True,
         }
         return tmplData
 
@@ -315,7 +312,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         for periodic updates of event list.
         '''
         tmplData = self._getEventData().copy()
-        tmplData['roverMode'] = self.roverMode
+        tmplData['roverMode'] = True
         return tmplData
 
     def _showDAG(self):
@@ -324,7 +321,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
     @view('connectivity.tmpl')
     def _showConnectivity(self):
-        return {'roverMode' : self.roverMode}
+        return {'roverMode' : True}
 
     def _showMotesConnectivity(self):
         states,edges = self.app.getMotesConnectivity()
@@ -332,7 +329,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
     @view('routing.tmpl')
     def _showRouting(self):
-        return {'roverMode' : self.roverMode}
+        return {'roverMode' : True}
 
     @view('topology.tmpl')
     def _topologyPage(self):
@@ -340,7 +337,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         Retrieve the HTML/JS page.
         '''
 
-        return {'roverMode' : self.roverMode}
+        return {'roverMode' : True}
 
     def _topologyData(self):
         '''
@@ -604,12 +601,6 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'port number'
     )
-    parser.add_argument('-r', '--rover',
-        dest       = 'roverMode',
-        default    = False,
-        action     = 'store_true',
-        help       = 'rover mode, to access motes connected on rovers'
-    )
 
 webapp = None
 if __name__=="__main__":
@@ -630,11 +621,11 @@ if __name__=="__main__":
     )
 
     #===== start the app
-    app      = openVisualizerApp.main(parser, argspace.roverMode)
+    app      = openVisualizerApp.main(parser)
     
     #===== add a web interface
     websrv   = bottle.Bottle()
-    webapp   = OpenVisualizerWeb(app, websrv, argspace.roverMode)
+    webapp   = OpenVisualizerWeb(app, websrv)
 
     # start web interface in a separate thread
     webthread = threading.Thread(

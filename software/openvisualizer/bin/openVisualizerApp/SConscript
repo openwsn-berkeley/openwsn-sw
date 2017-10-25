@@ -65,8 +65,6 @@ def uiRunner(target, source, env):
         argList.append('-H {0}'.format(env['HOSTOPT']))
     if env['PORTOPT']:
         argList.append('-p {0}'.format(env['PORTOPT']))
-    if env['ROVEROPT']:
-        argList.append('--rover')
     
     result = 0
     try:

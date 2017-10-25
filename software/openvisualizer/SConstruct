@@ -60,7 +60,6 @@ Targets:
                            default 0.0.0.0 (all interfaces)
           --port=n         Web server listens on port number 'n';
                            default 8080
-          --rover          Run in rover mode (allows to connect to motes plugged on remote rovers)
 
     
     copy-simfw:
@@ -184,12 +183,6 @@ AddOption('--port',
     default   = 8080,
     type      = 'int')
 runnerEnv['PORTOPT'] = GetOption('portOpt')
-
-AddOption('--rover',
-    dest      = 'roverOpt',
-    default   = False,
-    action    = 'store_true')
-runnerEnv['ROVEROPT'] = GetOption('roverOpt')
 
 #============================ SCons targets ===================================
 
