@@ -74,7 +74,7 @@ if __name__=="__main__":
     #===== start the app
     app      = OpenRoverApp()
     #===== start the coap server
-    c = coapserver.coap.coap()
+    c = coapserver.coap.coap(udpPort=9000)
     c.addResource(coapserver.pcInfo(app))
     #===== add a cli (minimal) interface
     banner  = []
