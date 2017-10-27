@@ -80,7 +80,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         #used for remote motes :
 
         self.roverMotes = {}
-        self.client = coap.coap()
+        self.client = coap.coap(udpPort=9000)
         self.client.respTimeout = 2
         self.client.ackTimeout = 2
         self.client.maxRetransmit = 1
