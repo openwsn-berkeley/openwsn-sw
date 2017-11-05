@@ -62,7 +62,7 @@ class OpenRoverApp(object):
         if self.remoteConnector :
             self.remoteConnector.close()
             #leave it time to timeout
-            time.sleep(1)
+            time.sleep(2)
             self.remoteConnector=None
         self.remoteConnector = remoteConnectorRover.remoteConnectorRover(app=self, PCip=PCip, PCport=PCport, roverID=roverID)
 
@@ -74,7 +74,7 @@ if __name__=="__main__":
     #===== start the app
     app      = OpenRoverApp()
     #===== start the coap server
-    c = coapserver.coap.coap()
+    c = coapserver.coap.coap(udpPort=9000)
     c.addResource(coapserver.pcInfo(app))
     #===== add a cli (minimal) interface
     banner  = []

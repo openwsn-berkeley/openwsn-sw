@@ -36,6 +36,11 @@ import datetime
 from bottle        import view, response
 from   cmd         import Cmd
 
+# We want to import local module coap instead of the built-in one
+here = sys.path[0]
+openwsnDir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(here)))))
+coapDir = os.path.join(openwsnDir, 'coap')
+sys.path.insert(0, coapDir)
 
 import openVisualizerApp
 from openvisualizer.eventBus      import eventBusClient
@@ -54,7 +59,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
     server.
     '''
 
-    def __init__(self,app,websrv,roverMode):
+    def __init__(self,app,websrv):
         '''
         :param app:    OpenVisualizerApp
         :param websrv: Web server
@@ -65,7 +70,6 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.app             = app
         self.engine          = SimEngine.SimEngine()
         self.websrv          = websrv
-        self.roverMode       = roverMode
 
         # command support
         Cmd.__init__(self)
@@ -75,12 +79,11 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
 
         #used for remote motes :
 
-        if roverMode :
-            self.roverMotes = {}
-            self.client = coap.coap()
-            self.client.respTimeout = 2
-            self.client.ackTimeout = 2
-            self.client.maxRetransmit = 1
+        self.roverMotes = {}
+        self.client = coap.coap(udpPort=9000)
+        self.client.respTimeout = 2
+        self.client.ackTimeout = 2
+        self.client.maxRetransmit = 1
 
 
         self._defineRoutes()
@@ -121,6 +124,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.websrv.route(path='/eventBus',                               callback=self._showEventBus)
         self.websrv.route(path='/routing',                                callback=self._showRouting)
         self.websrv.route(path='/routing/dag',                            callback=self._showDAG)
+        self.websrv.route(path='/connectivity',                           callback=self._showConnectivity)
+        self.websrv.route(path='/connectivity/motes',                     callback=self._showMotesConnectivity)
         self.websrv.route(path='/eventdata',                              callback=self._getEventData)
         self.websrv.route(path='/wiresharkDebug/:enabled',                callback=self._setWiresharkDebug)
         self.websrv.route(path='/gologicDebug/:enabled',                  callback=self._setGologicDebug)
@@ -133,10 +138,9 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         self.websrv.route(path='/topology/connections',   method='DELETE',callback=self._topologyConnectionsDelete)
         self.websrv.route(path='/topology/route',         method='GET',   callback=self._topologyRouteRetrieve)
         self.websrv.route(path='/static/<filepath:path>',                 callback=self._serverStatic)
-        if self.roverMode:
-            self.websrv.route(path='/rovers',                             callback=self._showrovers)
-            self.websrv.route(path='/updateroverlist/:updatemsg',         callback=self._updateRoverList)
-            self.websrv.route(path='/motesdiscovery/:srcip',              callback=self._motesDiscovery)
+        self.websrv.route(path='/rovers',                                 callback=self._showrovers)
+        self.websrv.route(path='/updateroverlist/:updatemsg',             callback=self._updateRoverList)
+        self.websrv.route(path='/motesdiscovery/:srcip',                  callback=self._motesDiscovery)
 
     @view('rovers.tmpl')
     def _showrovers(self):
@@ -150,7 +154,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         tmplData = {
             'myifdict'  : myifdict,
             'roverMotes' : self.roverMotes,
-            'roverMode' : self.roverMode,
+            'roverMode' : True,
         }
         return tmplData
 
@@ -231,7 +235,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         tmplData = {
             'motelist'       : motelist,
             'requested_mote' : moteid if moteid else 'none',
-            'roverMode'      : self.roverMode,
+            'roverMode'      : True,
         }
         return tmplData
 
@@ -279,6 +283,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                 ms.ST_SCHEDULE    : ms.getStateElem(ms.ST_SCHEDULE).toJson('data'),
                 ms.ST_QUEUE       : ms.getStateElem(ms.ST_QUEUE).toJson('data'),
                 ms.ST_NEIGHBORS   : ms.getStateElem(ms.ST_NEIGHBORS).toJson('data'),
+                ms.ST_JOINED      : ms.getStateElem(ms.ST_JOINED).toJson('data'),
             }
         else:
             log.debug('Mote {0} not found in moteStates'.format(moteid))
@@ -307,16 +312,24 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         for periodic updates of event list.
         '''
         tmplData = self._getEventData().copy()
-        tmplData['roverMode'] = self.roverMode
+        tmplData['roverMode'] = True
         return tmplData
 
     def _showDAG(self):
         states,edges = self.app.topology.getDAG()
         return { 'states': states, 'edges': edges }
 
+    @view('connectivity.tmpl')
+    def _showConnectivity(self):
+        return {'roverMode' : True}
+
+    def _showMotesConnectivity(self):
+        states,edges = self.app.getMotesConnectivity()
+        return { 'states': states, 'edges': edges }
+
     @view('routing.tmpl')
     def _showRouting(self):
-        return {'roverMode' : self.roverMode}
+        return {'roverMode' : True}
 
     @view('topology.tmpl')
     def _topologyPage(self):
@@ -324,7 +337,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
         Retrieve the HTML/JS page.
         '''
 
-        return {'roverMode' : self.roverMode}
+        return {'roverMode' : True}
 
     def _topologyData(self):
         '''
@@ -482,7 +495,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                     self.stdout.write(str(ms.getStateElem(arg)))
                     self.stdout.write('\n')
                 except ValueError as err:
-                    self.stdout.write(err)
+                    self.stdout.write(str(err))
+                    self.stdout.write('\n')
     
     def do_list(self, arg):
         """List available states. (Obsolete; use 'state' without parameters.)"""
@@ -507,7 +521,8 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                     if ms.moteConnector.serialport==arg:
                         ms.triggerAction(moteState.moteState.TRIGGER_DAGROOT)
                 except ValueError as err:
-                    self.stdout.write(err)
+                    self.stdout.write(str(err))
+                    self.stdout.write('\n')
     
     def do_set(self,arg):
         """
@@ -531,6 +546,7 @@ class OpenVisualizerWeb(eventBusClient.eventBusClient,Cmd):
                             ms.triggerAction([moteState.moteState.SET_COMMAND,command,parameter])
                     except ValueError as err:
                         self.stdout.write(err)
+                        self.stdout.write('\n')
             except ValueError as err:
                 print "{0}:{1}".format(type(err),err)
 
@@ -585,12 +601,6 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'port number'
     )
-    parser.add_argument('-r', '--rover',
-        dest       = 'roverMode',
-        default    = False,
-        action     = 'store_true',
-        help       = 'rover mode, to access motes connected on rovers'
-    )
 
 webapp = None
 if __name__=="__main__":
@@ -611,11 +621,11 @@ if __name__=="__main__":
     )
 
     #===== start the app
-    app      = openVisualizerApp.main(parser, argspace.roverMode)
+    app      = openVisualizerApp.main(parser)
     
     #===== add a web interface
     websrv   = bottle.Bottle()
-    webapp   = OpenVisualizerWeb(app, websrv, argspace.roverMode)
+    webapp   = OpenVisualizerWeb(app, websrv)
 
     # start web interface in a separate thread
     webthread = threading.Thread(
@@ -634,7 +644,7 @@ if __name__=="__main__":
     banner  = []
     banner += ['OpenVisualizer']
     banner += ['web interface started at {0}:{1}'.format(argspace.host,argspace.port)]
-    banner += ['enter \'q\' to exit']
+    banner += ['enter \'quit\' to exit']
     banner  = '\n'.join(banner)
     print banner
 

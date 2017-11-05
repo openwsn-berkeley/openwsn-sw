@@ -78,7 +78,7 @@ class StateElem(object):
             content = self._elemToDict(self.meta)
         else:
             raise ValueError('No aspect named {0}'.format(aspect))
-            
+        
         return json.dumps(content,
                           sort_keys = bool(isPrettyPrint),
                           indent    = 4 if isPrettyPrint else None)
@@ -139,6 +139,17 @@ class StateAsn(StateElem):
         self.data[0]['asn'].update(notif.asn_0_1,
                                    notif.asn_2_3,
                                    notif.asn_4)
+class StateJoined(StateElem):
+    
+    def update(self,notif):
+        StateElem.update(self)
+        if len(self.data)==0:
+            self.data.append({})
+        if 'joinedAsn' not in self.data[0]:
+            self.data[0]['joinedAsn']             = typeAsn.typeAsn()
+        self.data[0]['joinedAsn'].update(notif.joinedAsn_0_1,
+                                   notif.joinedAsn_2_3,
+                                   notif.joinedAsn_4)
 
 class StateMacStats(StateElem):
     
@@ -236,6 +247,7 @@ class StateNeighborsRow(StateElem):
         if len(self.data)==0:
             self.data.append({})
         self.data[0]['used']                     = notif.used
+        self.data[0]['insecure']                 = notif.insecure
         self.data[0]['parentPreference']         = notif.parentPreference
         self.data[0]['stableNeighbor']           = notif.stableNeighbor
         self.data[0]['switchStabilityCounter']   = notif.switchStabilityCounter
@@ -259,6 +271,8 @@ class StateNeighborsRow(StateElem):
                                    notif.asn_2_3,
                                    notif.asn_4)
         self.data[0]['f6PNORES']                 = notif.f6PNORES
+        self.data[0]['sixtopGEN']                = notif.sixtopGEN
+        self.data[0]['sixtopSeqNum']             = notif.sixtopSeqNum
 
 class StateIsSync(StateElem):
     
@@ -398,6 +412,7 @@ class moteState(eventBusClient.eventBusClient):
     ST_IDMANAGER        = 'IdManager'
     ST_MYDAGRANK        = 'MyDagRank'
     ST_KAPERIOD         = 'kaPeriod'
+    ST_JOINED           = 'Joined'
     ST_ALL              = [
         ST_OUPUTBUFFER,
         ST_ASN,
@@ -410,6 +425,7 @@ class moteState(eventBusClient.eventBusClient):
         ST_IDMANAGER, 
         ST_MYDAGRANK,
         ST_KAPERIOD,
+        ST_JOINED,
     ]
     
     TRIGGER_DAGROOT     = 'DAGroot'
@@ -425,15 +441,17 @@ class moteState(eventBusClient.eventBusClient):
     COMMAND_SET_SECURITY_STATUS   = ['security',       6, 1]
     COMMAND_SET_SLOTFRAMELENGTH   = ['slotframeLength',7, 2]
     COMMAND_SET_ACK_STATUS        = ['ackReply',       8, 1]
-    COMMAND_SET_6P_ADD            = ['6pAdd',          9, 3]
-    COMMAND_SET_6P_DELETE         = ['6pDelete',      10, 3]
-    COMMAND_SET_6P_COUNT          = ['6pCount',       11, 0]
-    COMMAND_SET_6P_LIST           = ['6pList',        12, 0]
-    COMMAND_SET_6P_CLEAR          = ['6pClear',       13, 0]
-    COMMAND_SET_SLOTDURATION      = ['slotDuration',  14, 2]
-    COMMAND_SET_6PRESPONSE        = ['6pResponse',    15, 1]
-    COMMAND_SET_UINJECTPERIOD     = ['uinjectPeriod', 16, 1]
-    COMMAND_SET_ECHO_REPLY_STATUS = ['echoReply',     17, 1]
+    COMMAND_SET_6P_ADD            = ['6pAdd',          9,16] # maxium three candidate cells, length could be shorter
+    COMMAND_SET_6P_DELETE         = ['6pDelete',      10, 8] # only one cell to delete
+    COMMAND_SET_6P_RELOCATE       = ['6pRelocate',    11,24] # one cell to relocate, three candidate cells , length could be shorter
+    COMMAND_SET_6P_COUNT          = ['6pCount',       12, 3]
+    COMMAND_SET_6P_LIST           = ['6pList',        13, 7]
+    COMMAND_SET_6P_CLEAR          = ['6pClear',       14, 0]
+    COMMAND_SET_SLOTDURATION      = ['slotDuration',  15, 2]
+    COMMAND_SET_6PRESPONSE        = ['6pResponse',    16, 1]
+    COMMAND_SET_UINJECTPERIOD     = ['uinjectPeriod', 17, 1]
+    COMMAND_SET_ECHO_REPLY_STATUS = ['echoReply',     18, 1]
+    COMMAND_SET_JOIN_KEY          = ['joinKey',       19,16]
     COMMAND_ALL                   = [
         COMMAND_SET_EBPERIOD ,
         COMMAND_SET_CHANNEL,
@@ -446,6 +464,7 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_ACK_STATUS,
         COMMAND_SET_6P_ADD,
         COMMAND_SET_6P_DELETE,
+        COMMAND_SET_6P_RELOCATE,
         COMMAND_SET_6P_COUNT,
         COMMAND_SET_6P_LIST,
         COMMAND_SET_6P_CLEAR,
@@ -453,6 +472,7 @@ class moteState(eventBusClient.eventBusClient):
         COMMAND_SET_6PRESPONSE,
         COMMAND_SET_UINJECTPERIOD,
         COMMAND_SET_ECHO_REPLY_STATUS,
+        COMMAND_SET_JOIN_KEY,
     ]
 
     TRIGGER_ALL         = [
@@ -475,6 +495,7 @@ class moteState(eventBusClient.eventBusClient):
         
         self.state[self.ST_OUPUTBUFFER]     = StateOutputBuffer()
         self.state[self.ST_ASN]             = StateAsn()
+        self.state[self.ST_JOINED]          = StateJoined()
         self.state[self.ST_MACSTATS]        = StateMacStats()
         self.state[self.ST_SCHEDULE]        = StateTable(
                                                 StateScheduleRow,
@@ -501,6 +522,7 @@ class moteState(eventBusClient.eventBusClient):
                                                 columnOrder = '.'.join(
                                                     [
                                                         'used',
+                                                        'insecure',
                                                         'parentPreference',
                                                         'stableNeighbor',
                                                         'switchStabilityCounter',
@@ -513,7 +535,9 @@ class moteState(eventBusClient.eventBusClient):
                                                         'numWraps',
                                                         'asn',
                                                         'joinPrio',
-                                                        'f6PNORES'
+                                                        'f6PNORES',
+                                                        'sixtopGEN',
+                                                        'sixtopSeqNum',
                                                     ]
                                                 ))
         self.state[self.ST_ISSYNC]          = StateIsSync()
@@ -547,6 +571,9 @@ class moteState(eventBusClient.eventBusClient):
                 self.state[self.ST_MYDAGRANK].update,
             self.parserStatus.named_tuple[self.ST_KAPERIOD]:
                 self.state[self.ST_KAPERIOD].update,
+            self.parserStatus.named_tuple[self.ST_JOINED]:
+                self.state[self.ST_JOINED].update,
+
         }
         
         # initialize parent class

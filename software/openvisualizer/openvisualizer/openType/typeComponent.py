@@ -61,6 +61,9 @@ class typeComponent(openType.openType):
     COMPONENT_UINJECT                   = 0x24
     COMPONENT_RRT                       = 0x25
     COMPONENT_SECURITY                  = 0x26
+    COMPONENT_USERIALBRIDGE             = 0x27
+    COMPONENT_UEXPIRATION               = 0x28
+    COMPONENT_UMONITOR                  = 0x29
     
     def __init__(self):
         # log
@@ -168,6 +171,13 @@ class typeComponent(openType.openType):
             
         elif type==self.COMPONENT_SECURITY:
             self.desc = 'SECURITY'
+            
+        elif type==self.COMPONENT_UEXPIRATION:
+            self.desc = 'UEXPIRATION'
+            
+        elif type==self.COMPONENT_UMONITOR:
+            self.desc = 'UMONITOR'
+            
         else:
             self.desc = 'unknown'
             self.addr = None

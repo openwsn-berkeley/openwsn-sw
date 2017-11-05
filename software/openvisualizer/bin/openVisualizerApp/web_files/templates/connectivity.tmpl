@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        %include head.tmpl
+        <link rel="stylesheet" type="text/css" href="/static/css/d3.css" />
+        <script src="/static/js/d3.min.js" charset="utf-8"></script>
+        <script src="/static/js/dagre-d3.min.js"></script>
+    </head>
+    <body>
+        <div id="wrapper">
+            %include navbar.tmpl ovVersion=ovVersion, roverMode=roverMode
+
+            <div id="page-wrapper">
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h1 class="page-header">Connectivity</h1>
+                    </div>
+                </div>
+
+                <script>
+                    var n_dots = 1;
+                    $( document ).ready(function() {
+                        $.ajax({
+                                dataType: "json",
+                                url: "/connectivity/motes",
+                                success: updateForData,
+                                error: errorOnAjax
+                            });
+                    });
+                    
+                    function updateForData(json) {
+                        // Updates Connectivity
+                        console.log('mote neighbor table data received');
+                        var hasJson = true
+                        if (json.result && json.result == "none") {
+                            console.log('no data in result');
+                            hasJson = false;
+                        } else if (!json.states || !json.edges) {
+                            console.log('state/edges not found in result');
+                            hasJson = false;
+                        }
+
+                        if (hasJson) {
+                            if(json.states.length > 0) {
+                                $("#connectivity_status").text("");
+                                var states = json.states;
+                                var edges  = json.edges;
+                                var g = new dagreD3.Digraph();
+                                var renderer = new dagreD3.Renderer();
+                                var layout = dagreD3.layout().rankDir("BT");
+                                var rrun = renderer.layout(layout).run(dagreD3.json.decode(states, edges), d3.select("svg g"));
+                                d3.select("svg")
+                                    .attr("width", rrun.graph().width + 40)
+                                    .attr("height", rrun.graph().height + 40);            
+                            }
+                            else
+                            {
+                                var dots = Array(n_dots + 1).join(".");
+                                n_dots++;
+                                if (n_dots > 3)
+                                    n_dots = 1;
+                                $("#connectivity_status").text("Waiting connectivity information " + dots);
+                            }
+                        }
+                        
+                        timeoutId = setTimeout(function() {
+                            $.ajax({
+                                dataType: "json",
+                                url: "/connectivity/motes",
+                                success: updateForData,
+                                error: errorOnAjax
+                            });
+                        }, 5000);
+                    
+                    }
+                    
+                    function errorOnAjax(jqxhr, status, errorstr) {
+                        var errText = (errorstr == null)
+                                ? '' : ', error: ' + errorstr;
+                        console.log('Ajax error: ' + status + errText);
+                    }
+                </script>
+
+                <div class="row">
+                    <div class="col-lg-12">
+                        <h5>Network Connectivity</h5>
+                        <div class="rel_value_fld" id="routing_status"></div>
+                        <svg id="svg" width=400 height=800>
+                            <g transform="translate(20, 20)"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

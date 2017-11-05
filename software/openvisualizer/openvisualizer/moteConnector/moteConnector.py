@@ -12,6 +12,7 @@ import threading
 import socket
 import traceback
 import sys
+import binascii
 import openvisualizer.openvisualizer_utils as u
 
 from pydispatch import dispatcher
@@ -133,12 +134,19 @@ class moteConnector(eventBusClient.eventBusClient):
                         )
                         self.networkPrefix = networkPrefix
                 
+                # retrieve the security key of the network
+                with self.stateLock:
+                    keyDict = self._dispatchAndGetResult(
+                            signal       = 'getL2SecurityKey',
+                            data         = [],
+                    )
+    
                 # create data to send
                 with self.stateLock:
                     dataToSend = [
                         OpenParser.OpenParser.SERFRAME_PC2MOTE_SETDAGROOT,
                         OpenParser.OpenParser.SERFRAME_ACTION_TOGGLE,
-                    ]+self.networkPrefix
+                    ]+self.networkPrefix+keyDict['index']+keyDict['value']
                 
                 # toggle the DAGroot state
                 self._sendToMoteProbe(
@@ -162,8 +170,12 @@ class moteConnector(eventBusClient.eventBusClient):
     
     def _commandToBytes(self,data):
         
+        # data[0]: commandID
+        # data[1]: parameter
+
         outcome    = False
         dataToSend = []
+        ptr        = 0
 
         # get commandId
         commandIndex = 0
@@ -188,16 +200,98 @@ class moteConnector(eventBusClient.eventBusClient):
             try:
                 dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
                     commandId,
-                    len(data[1][1:-1].split(','))
+                    commandLen
                 ]
-                if data[0] == '6pAdd' or data[0] == '6pDelete':
-                    if len(data[1][1:-1].split(','))>0:
-                        dataToSend += [int(i) for i in data[1][1:-1].split(',')] # celllist
+                paramList = data[1].split(',')
+                if data[0] != '6pClear':
+                    if paramList[0] == 'tx':
+                        cellOptions = 1<<0
+                    elif paramList[0] == 'rx':
+                        cellOptions = 1<<1
+                    elif paramList[0] == 'shared':
+                        cellOptions = 1<<0 | 1<<1 | 1<<2
+                    else:
+                        print "unsupport cellOptions!"
+                        assert TRUE
+                else:
+                    dataToSend[2] = len(dataToSend)-3
+                    outcome       = True
+                    return [outcome,dataToSend]
+                ptr += 1
+                dataToSend  += [cellOptions]
+                celllist_add    = {}
+                celllist_delete = {}
+                if data[0] == '6pList'  and len(paramList)==3:
+                    dataToSend += map(int,paramList[ptr:])
+                if data[0] == '6pAdd':
+                    # append numCell
+                    dataToSend += [int(paramList[ptr])]
+                    # append celllist
+                    celllist_add['slotoffset']    = paramList[ptr+1].split('-')
+                    celllist_add['channeloffset'] = paramList[ptr+2].split('-')
+                    if len(celllist_add['slotoffset']) != len(celllist_add['channeloffset']) or len(celllist_add['slotoffset']) < int(paramList[ptr]):
+                        print "the length of slotoffset list and channeloffset list for candidate cell should be equal!"
+                        assert TRUE
+                    dataToSend += map(int,celllist_add['slotoffset'])
+                    dataToSend += map(int,celllist_add['channeloffset'])
+                if data[0] == '6pDelete':
+                    # append numCell
+                    dataToSend += [int(paramList[ptr])]
+                    # append celllist
+                    celllist_delete['slotoffset']    = paramList[ptr+1].split('-')
+                    celllist_delete['channeloffset'] = paramList[ptr+2].split('-')
+                    if int(paramList[ptr]) != len(celllist_delete['slotoffset']) or int(paramList[ptr]) != len(celllist_delete['channeloffset']):
+                        print "length of celllist (slotoffset/channeloffset) to delete doesn't match numCell!"
+                        assert TRUE
+                    dataToSend += map(int,celllist_delete['slotoffset'])
+                    dataToSend += map(int,celllist_delete['channeloffset'])
+                if data[0] == '6pRelocate':
+                    dataToSend += [int(paramList[ptr])]
+                    # append celllist
+                    celllist_delete['slotoffset']    = paramList[ptr+1].split('-')
+                    celllist_delete['channeloffset'] = paramList[ptr+2].split('-')
+                    if int(paramList[ptr]) != len(celllist_delete['slotoffset']) or int(paramList[ptr]) != len(celllist_delete['channeloffset']):
+                        print "length of celllist (slotoffset/channeloffset) to delete doesn't match numCell!"
+                        assert TRUE
+                    dataToSend += map(int,celllist_delete['slotoffset'])
+                    dataToSend += map(int,celllist_delete['channeloffset'])
+                    ptr += 3
+                    # append celllist
+                    celllist_add['slotoffset']    = paramList[ptr].split('-')
+                    celllist_add['channeloffset'] = paramList[ptr+1].split('-')
+                    if len(celllist_add['slotoffset']) != len(celllist_add['channeloffset']) or len(celllist_add['slotoffset']) < len(celllist_delete['slotoffset']):
+                        print "the length of slotoffset list and channeloffset list for candidate cell should be equal and the length of candidate celllist must no less than numCell!"
+                        assert TRUE
+                    dataToSend += map(int,celllist_add['slotoffset'])
+                    dataToSend += map(int,celllist_add['channeloffset'])
+                dataToSend[2] = len(dataToSend)-3
+                outcome       = True
+                return [outcome,dataToSend]
             except:
                 print "============================================="
-                print "Wrong 6p parameter format {0}. Split the slot by".format(data[1])
-                print "comma. e.g. 6,7. (up to 3)"
+                print "Wrong 6p parameter format."
+                print "                           command    cellOptions numCell     celllist_delete         celllist_add       listoffset maxListLen addition"
+                print "                                                          (slotlist,channellist)  (slotlist,channellist)"
+                print "comma. e.g. set <portname> 6pAdd      tx,         1,                                  5-6-7,4-4-4"
+                print "comma. e.g. set <portname> 6pDelete   rx,         1,              5,4"
+                print "comma. e.g. set <portname> 6pRelocate tx,         1,              5,4,                6-7-8,4-4-4"
+                print "comma. e.g. set <portname> 6pCount    shared"
+                print "comma. e.g. set <portname> 6pList     tx,                                                                 5,         3"
+                print "comma. e.g. set <portname> 6pClear                                                                                              all"
                 return [outcome,dataToSend]
+        elif data[0] == 'joinKey':
+            try:
+                if len(data[1]) != commandLen*2: # two hex chars is one byte
+                    raise ValueError
+                payload = binascii.unhexlify(data[1])
+                dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_COMMAND,
+                    commandId,
+                    commandLen,
+                ]
+                dataToSend += [ord(b) for b in payload]
+            except:
+                print "============================================="
+                print "Wrong joinKey format. Input 16-byte long hex string. e.g. cafebeefcafebeefcafebeefcafebeef"
         else:
             parameter = int(data[1])
             if parameter <= 0xffff:
@@ -215,7 +309,8 @@ class moteConnector(eventBusClient.eventBusClient):
                 return [outcome,dataToSend]
 
         # the command is legal if I got here
-        outcome = True
+        dataToSend[2] = len(dataToSend)-3
+        outcome       = True
         return [outcome,dataToSend]
 
 

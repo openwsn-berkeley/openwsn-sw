@@ -7,3 +7,7 @@ netifaces
 yappi
 intelhex==2.1
 openwsn-coap
+pylint==1.6.0
+pycryptodome
+cbor
+hkdf

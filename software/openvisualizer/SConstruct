@@ -53,13 +53,13 @@ Targets:
           --nosimcopy   Skips copying simulation firmware at startup from the
                         openwsn-fw directory.
           --ovdebug     Enable debug mode; more detailed logging
+          --usePageZero Use page number 0 in page dispatch of 6lowpan packet (only works within one-hop).
 
         Web UI only
           --host=<address> Web server listens on IP address;
                            default 0.0.0.0 (all interfaces)
           --port=n         Web server listens on port number 'n';
                            default 8080
-          --rover          Run in rover mode (allows to connect to motes plugged on remote rovers)
 
     
     copy-simfw:
@@ -163,6 +163,12 @@ AddOption('--ovdebug',
     action    = 'store_true')
 runnerEnv['DEBUGOPT'] = GetOption('debugOpt')
 
+AddOption('--usePageZero',
+    dest      = 'usePageZero',
+    default   = False,
+    action    = 'store_true')
+runnerEnv['USEPAGEZERO'] = GetOption('usePageZero')
+
 # These options are used only by the web runner. We define them here for
 # simplicity, but they must be removed from non-web use in the runner 
 # SConscript.
@@ -177,12 +183,6 @@ AddOption('--port',
     default   = 8080,
     type      = 'int')
 runnerEnv['PORTOPT'] = GetOption('portOpt')
-
-AddOption('--rover',
-    dest      = 'roverOpt',
-    default   = False,
-    action    = 'store_true')
-runnerEnv['ROVEROPT'] = GetOption('roverOpt')
 
 #============================ SCons targets ===================================
 

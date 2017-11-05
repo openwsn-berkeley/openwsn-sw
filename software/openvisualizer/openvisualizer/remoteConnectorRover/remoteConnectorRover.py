@@ -10,6 +10,8 @@ log.addHandler(logging.NullHandler())
 
 import threading
 import zmq
+import time
+import Queue
 
 from pydispatch import dispatcher
 
@@ -48,6 +50,10 @@ class remoteConnectorRover():
         # give this thread a name
         self.name = 'remoteConnectorRover'
 
+        self.numberOfSignalData = 0
+        self.singalDataBuffer   = []
+        self.sendDone_queue          = Queue.Queue()
+        self.okToSendTimeout         = False
         for mote in app.getMoteProbes() :
             # subscribe to dispatcher
             dispatcher.connect(
@@ -58,14 +64,33 @@ class remoteConnectorRover():
         self.t = threading.Thread(target=self._recvdFromRemote)
         self.t.setDaemon(True)
         self.t.start()
+
+        self.t_sendTimeout = threading.Thread(target=self._sendTimeout)
+        self.t_sendTimeout.setDaemon(True)
+        self.t_sendTimeout.start()
+
         log.info('subscriber started')
 
+    def _sendTimeout(self):
+        while True:
+            time.sleep(10)
+            self.okToSendTimeout = True
+            if self.sendDone_queue.get() == 'sendDone':
+                self.okToSendTimeout = False
 
     #======================== remote interaction ============================
     def _sendToRemote_handler(self,sender,signal,data):
-        #send the data after appending @roverID
-        self.publisher.send_json({'sender' : '{0}@{1}'.format(sender,self.roverID), 'signal' : '{0}@{1}'.format(signal,self.roverID), 'data':data})
-        log.debug('message sent to remote host :\n sender : {0}, signal : {1}, data : {2}'.format('{0}@{1}'.format(sender,self.roverID), '{0}@{1}'.format(signal,self.roverID), data))
+
+        if self.okToSendTimeout:
+            self.numberOfSignalData    = (self.numberOfSignalData+1)%12
+            self.singalDataBuffer.append(data)
+            if self.numberOfSignalData == 0:
+                #send the data after appending @roverID
+                self.publisher.send_json({'sender' : '{0}@{1}'.format(sender,self.roverID), 'signal' : '{0}@{1}'.format(signal,self.roverID), 'data':self.singalDataBuffer})
+                log.debug('message sent to remote host :\n sender : {0}, signal : {1}, data : {2}'.format('{0}@{1}'.format(sender,self.roverID), '{0}@{1}'.format(signal,self.roverID), self.singalDataBuffer))
+                self.singalDataBuffer = []
+                self.sendDone_queue.put('sendDone')
+                self.okToSendTimeout = False
 
     def _recvdFromRemote(self):
         while self.goOn :

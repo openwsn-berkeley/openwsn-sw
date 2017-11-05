@@ -189,10 +189,11 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBQQHbBBBBBHHBB',
+                                    '<BBBBBBBQQHbBBBBBHHBBBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
+                                        'insecure',                  # B
                                         'parentPreference',          # B
                                         'stableNeighbor',            # B
                                         'switchStabilityCounter',    # B
@@ -210,6 +211,8 @@ class ParserStatus(Parser.Parser):
                                         'asn_0_1',                   # H
                                         'joinPrio',                  # B
                                         'f6PNORES',                  # B
+                                        'sixtopGEN',                 # B
+                                        'sixtopSeqNum',              # B
                                     ],
                                 )
         self._addFieldsParser   (   
@@ -221,7 +224,17 @@ class ParserStatus(Parser.Parser):
                                         'kaPeriod',                  # H
                                     ],
                                 )
-    
+        self._addFieldsParser   (
+                                    3,
+                                    11,
+                                    'Joined',
+                                    '<BHH',
+                                    [
+                                        'joinedAsn_4',                     # B
+                                        'joinedAsn_2_3',                   # H
+                                        'joinedAsn_0_1',                   # H
+                                    ],
+                                )
     #======================== public ==========================================
     
     def parseInput(self,input):

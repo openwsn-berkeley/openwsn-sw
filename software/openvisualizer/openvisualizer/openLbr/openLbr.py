@@ -46,6 +46,14 @@ class OpenLbr(eventBusClient.eventBusClient):
     K_FLAG                   = 0x01
     FLAG_MASK                = 0x1F
     
+    #deadline hop header flags
+    ORG_FLAG                 = 0x80
+    DELAY_FLAG               = 0x40
+    ETL_FLAG                 = 0x38
+    OTL_FLAG                 = 0x07
+    TU_FLAG                  = 0xC0
+    EXP_FLAG                 = 0x38
+
     # Number of bytes in an IPv6 header.
     IPv6_HEADER_LEN          = 40
     
@@ -101,6 +109,7 @@ class OpenLbr(eventBusClient.eventBusClient):
     ELECTIVE_6LoRH           = 0xA0
     CRITICAL_6LoRH           = 0x80
 
+    TYPE_6LoRH_DEADLINE      = 0x07
     TYPE_6LoRH_IP_IN_IP      = 0x06
     TYPE_6LoRH_RPI           = 0x05
     TYPE_6LoRH_RH3_0         = 0x00
@@ -125,9 +134,13 @@ class OpenLbr(eventBusClient.eventBusClient):
     NHC_UDP_PORTS_8S_16D     = 2
     NHC_UDP_PORTS_4S_4D      = 3
 
+    LINK_LOCAL_PREFIX        = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
     
-    def __init__(self):
+    #=== Errors    
+    ERR_DESTINATIONUNREACHABLE = 1
         
+    def __init__(self,usePageZero):
+
         # log
         log.info("create instance")
         
@@ -135,6 +148,7 @@ class OpenLbr(eventBusClient.eventBusClient):
         self.stateLock            = threading.Lock()
         self.networkPrefix        = None
         self.dagRootEui64         = None
+        self.usePageZero          = usePageZero
          
         # initialize parent class
         eventBusClient.eventBusClient.__init__(
@@ -193,6 +207,11 @@ class OpenLbr(eventBusClient.eventBusClient):
             if ipv6['dst_addr'][0]==0xff:
                 return
             
+            if ipv6['dst_addr'][0]==0xfe and ipv6['dst_addr'][1]==0x80:
+                isLinkLocal = True
+            else:
+                isLinkLocal = False
+
             # log
             if log.isEnabledFor(logging.DEBUG):
                 log.debug(self._format_IPv6(ipv6,ipv6_bytes))
@@ -206,13 +225,17 @@ class OpenLbr(eventBusClient.eventBusClient):
             elif len(lowpan['dst_addr'])==8:
                 dst_addr=lowpan['dst_addr']
             else:
+                dst_addr=None
                 log.warning('unsupported address format {0}'.format(lowpan['dst_addr']))
                     
+            if isLinkLocal:
+                lowpan['route'] = [dst_addr]
+            else:
             lowpan['route'] = self._getSourceRoute(dst_addr)
             
             if len(lowpan['route'])<2:
                 # no source route could be found
-                log.warning('no source route to {0}'.format(lowpan['dst_addr']))
+                    log.error('no source route to {0}'.format(lowpan['dst_addr']))
                 # TODO: return ICMPv6 message
                 return
             
@@ -226,6 +249,17 @@ class OpenLbr(eventBusClient.eventBusClient):
             if log.isEnabledFor(logging.DEBUG):
                 log.debug(self._format_lowpan(lowpan,lowpan_bytes))
             
+
+            # don't forward the ICMPv6 packets to the motes (unsupported)     
+            if (ipv6['next_header'] == self.IANA_ICMPv6) and (ipv6['payload'][0] == self.ERR_DESTINATIONUNREACHABLE) :
+                
+                log.error('ICMPv6 packet to forward to {0}, The packet is dropped (DESTINATIONUNREACHABLE not supported by openWSN)'.format(
+                    u.formatIPv6Addr(ipv6['dst_addr'])
+                    ))
+                log.error(self._format_lowpan(lowpan,lowpan_bytes))
+                return
+            
+
             #print "output:"
             #print lowpan_bytes
             # dispatch
@@ -252,17 +286,12 @@ class OpenLbr(eventBusClient.eventBusClient):
             success = True
             dispatchSignal = None
             
+            hopbyhop_header_present = False
+
             #read next header
             if ipv6dic['next_header']==self.IANA_IPv6HOPHEADER:
-                #hop by hop header present, check flags and parse    
-                if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
-                    #error -- this packet has gone downstream somewhere.
-                    log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
-                if (ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG:
-                    #error -- loop in the route
-                    #log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
-                    print "detected possible loop on upstream route\n"
-                    print ipv6dic
+                # mark hop by hop header present, check hop_flags after obtaining src_addr in IPV6 header. 
+                hopbyhop_header_present = True
                 #skip the header and process the rest of the message.
                 ipv6dic['next_header'] = ipv6dic['hop_next_header']
                 
@@ -271,7 +300,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             if ipv6dic['next_header']==self.IPV6_HEADER:
                 #ipv6 header (inner)
                 ipv6dic_inner = {}
-                # prasing the iphc inner header and get the next_header
+                # parsing the iphc inner header and get the next_header
                 ipv6dic_inner = self.lowpan_to_ipv6([ipv6dic['pre_hop'],ipv6dic['payload']])
                 ipv6dic['next_header'] = ipv6dic_inner['next_header']
                 ipv6dic['payload'] = ipv6dic_inner['payload']
@@ -282,6 +311,15 @@ class OpenLbr(eventBusClient.eventBusClient):
                 ipv6dic['dst_addr'] = ipv6dic_inner['dst_addr']
                 ipv6dic['flow_label'] = ipv6dic_inner['flow_label']
                 
+                if hopbyhop_header_present:
+                    #hop by hop header present, check hop_flags
+                    if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
+                        #error -- this packet has gone downstream somewhere.
+                        log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                    if (ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG:
+                        #error -- loop in the route
+                        log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+
             if ipv6dic['next_header']==self.IANA_ICMPv6:
                 #icmp header
                 if len(ipv6dic['payload'])<5:
@@ -310,45 +348,59 @@ class OpenLbr(eventBusClient.eventBusClient):
                     lowpan_nhc        = ipv6dic['payload'][0]
                     udp_header_length = 0
                     newUdp            = []
+                    newUdp_header_length  = 0
 
                     if lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_INLINE:
-                        newUdp += [u.buf2int(ipv6dic['payload'][1:3])]
-                        newUdp += [u.buf2int(ipv6dic['payload'][3:5])]
+                        src_port  = u.buf2int(ipv6dic['payload'][1:3])
+                        dest_port = u.buf2int(ipv6dic['payload'][3:5])
                         udp_header_length = 5
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_16S_8D:
-                        newUdp += [u.buf2int(ipv6dic['payload'][1:3])]
-                        newUdp += [0xf000 + ipv6dic['payload'][3]]
+                        src_port  = u.buf2int(ipv6dic['payload'][1:3])
+                        dest_port = 0xf000 + ipv6dic['payload'][3]
                         udp_header_length = 4
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_8S_16D:
-                        newUdp += [0xf000 + ipv6dic['payload'][1]]
-                        newUdp += [u.buf2int(ipv6dic['payload'][2:4])]
+                        src_port  = 0xf000 + ipv6dic['payload'][1]
+                        dest_port = u.buf2int(ipv6dic['payload'][2:4])
                         udp_header_length = 4
                     elif lowpan_nhc & self.NHC_UDP_PORTS_MASK == self.NHC_UDP_PORTS_4S_4D:
-                        newUdp += [0xf0b0 +((ipv6dic['payload'][1] >> 4) & 0x0f)]
-                        newUdp += [0xf0b0 +((ipv6dic['payload'][1] >> 0) & 0x0f)]
+                        src_port  = 0xf0b0 +((ipv6dic['payload'][1] >> 4) & 0x0f)
+                        dest_port = 0xf0b0 +((ipv6dic['payload'][1] >> 0) & 0x0f)
                         udp_header_length = 2
 
+                    newUdp  =  [src_port  >>8 , src_port  & 0x00ff]
+                    newUdp  += [dest_port >>8 , dest_port & 0x00ff]
+
+                    idxLen = len(newUdp) # remember index of payload length
+                    newUdp += [0x00,0x00] # length (placeholder)
+                    newUdp_header_length += 2
+
+                    udp_header_length += 2 # skip two bytes checksum following
                     idxCS = len(newUdp) # remember index of checksum
                     newUdp += [0x00,0x00] # Checksum (placeholder)
-                    udp_header_length += 2
+                    newUdp_header_length += 2
 
                     #append payload to compute crc again
                     newUdp += ipv6dic['payload'][udp_header_length:] # data octets
                     
-                    checksum = u.calculateCRC(newUdp)
+                    udp_len  = [0, len(ipv6dic['payload'][udp_header_length:])+8]
+                    newUdp[idxLen]   = udp_len[0]
+                    newUdp[idxLen+1] = udp_len[1]
+
+                    checksum = u.calculatePseudoHeaderCRC(ipv6dic['src_addr'],ipv6dic['dst_addr'],udp_len,[0,ipv6dic['next_header']],newUdp)
                     #fill crc with the right value.
                     newUdp[idxCS] = checksum[0]
                     newUdp[idxCS+1] = checksum[1]
 
                     #keep fields for later processing if needed
-                    ipv6dic['udp_src_port']=newUdp[0]
-                    ipv6dic['udp_dest_port']=newUdp[1]
-                    ipv6dic['udp_length']=len(ipv6dic['payload'])
-                    ipv6dic['udp_checksum']=newUdp[2:4]
-                    ipv6dic['app_payload']=newUdp[4:]
+                    ipv6dic['udp_src_port']       = u.buf2int(newUdp[0:2])
+                    ipv6dic['udp_dest_port']      = u.buf2int(newUdp[2:4])
+                    ipv6dic['udp_length']         = newUdp[4:6]
+                    ipv6dic['udp_checksum']       = newUdp[6:8]
+                    ipv6dic['app_payload']        = newUdp[8:]
                     
                     #substitute udp header by the uncompressed header.               
                     ipv6dic['payload'] = newUdp
+                    ipv6dic['payload_length'] = len(newUdp)
                 else:
                     #No UDP header compressed    
                     ipv6dic['udp_src_port']=u.buf2int(ipv6dic['payload'][:2])
@@ -356,6 +408,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ipv6dic['udp_length']=ipv6dic['payload'][4:6]
                     ipv6dic['udp_checksum']=ipv6dic['payload'][6:8]
                     ipv6dic['app_payload']=ipv6dic['payload'][8:]
+
                 dispatchSignal=(tuple(ipv6dic['dst_addr']),self.PROTO_UDP,ipv6dic['udp_dest_port'])
             
             #keep payload and app_payload in case we want to assemble the message later. 
@@ -372,7 +425,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             
             self.dispatch('v6ToInternet',ipv6pkt)
             
-        except (ValueError,NotImplementedError) as err:
+        except (ValueError,IndexError,NotImplementedError) as err:
             log.error(err)
             pass
     
@@ -468,6 +521,11 @@ class OpenLbr(eventBusClient.eventBusClient):
         :returns: A list of bytes representing the 6LoWPAN packet.
         '''
         returnVal            = []
+
+
+        if self.usePageZero:
+            print 'Page dispatch page number zero is not supported!\n'
+            raise SystemError()
 
         # the 6lowpan packet contains 4 parts
         # 1. Page Dispatch (page 1)
@@ -592,13 +650,13 @@ class OpenLbr(eventBusClient.eventBusClient):
             raise NotImplementedError()
         # next header is in NHC format
         nh               = self.IPHC_NH_INLINE
-        if   lowpan['hlim']==1:
+        if   lowpan['hlim'][0]==1:
             hlim             = self.IPHC_HLIM_1
             lowpan['hlim'] = []
-        elif lowpan['hlim']==64:
+        elif lowpan['hlim'][0]==64:
             hlim             = self.IPHC_HLIM_64
             lowpan['hlim'] = []
-        elif lowpan['hlim']==255:
+        elif lowpan['hlim'][0]==255:
             hlim             = self.IPHC_HLIM_255
             lowpan['hlim'] = []
         else:
@@ -610,18 +668,34 @@ class OpenLbr(eventBusClient.eventBusClient):
             cid              = self.IPHC_CID_NO
         else:
             cid              = self.IPHC_CID_YES
+
+        if self._isLinkLocal(lowpan['src_addr']):
         sac                  = self.IPHC_SAC_STATELESS
+            lowpan['src_addr'] = lowpan['src_addr'][8:]
+        else:
+            sac                  = self.IPHC_SAC_STATEFUL
+            if lowpan['src_addr'][:8] == [187, 187, 0, 0, 0, 0, 0, 0]:
+                lowpan['src_addr'] = lowpan['src_addr'][8:]
+
         if   len(lowpan['src_addr'])==128/8:
             sam              = self.IPHC_SAM_128B
         elif len(lowpan['src_addr'])==64/8:
-            sam              = IPHC_SAM_64B
+            sam              = self.IPHC_SAM_64B
         elif len(lowpan['src_addr'])==16/8:
             sam              = self.IPHC_SAM_16B
         elif len(lowpan['src_addr'])==0:
             sam              = self.IPHC_SAM_ELIDED
         else:
             raise SystemError()
+
+        if self._isLinkLocal(lowpan['dst_addr']):
         dac                  = self.IPHC_DAC_STATELESS
+            lowpan['dst_addr'] = lowpan['dst_addr'][8:]
+        else:
+            dac                  = self.IPHC_DAC_STATEFUL
+            if lowpan['dst_addr'][:8] == [187, 187, 0, 0, 0, 0, 0, 0]:
+                lowpan['dst_addr'] = lowpan['dst_addr'][8:]
+
         m                    = self.IPHC_M_NO
         if   len(lowpan['dst_addr'])==128/8:
             dam              = self.IPHC_DAM_128B
@@ -704,6 +778,49 @@ class OpenLbr(eventBusClient.eventBusClient):
                         ptr += 16
                     else:
                         log.error("ERROR wrong length of encapsulate")
+                elif pkt_lowpan[ptr] & self.MASK_6LoRH == self.ELECTIVE_6LoRH and pkt_lowpan[ptr+1] == self.TYPE_6LoRH_DEADLINE:
+                    length = pkt_lowpan[ptr] & self.MASK_LENGTH_6LoRH_IPINIP
+                    nxt_byte = pkt_lowpan[ptr+2]
+
+                    # 3rd byte
+                    o_val = (pkt_lowpan[ptr+2] & self.ORG_FLAG) >> 7
+                    d_val = (pkt_lowpan[ptr+2] & self.DELAY_FLAG) >> 6
+                    etl_val = (pkt_lowpan[ptr+2] & self.ETL_FLAG) >> 3
+                    otl_val = (pkt_lowpan[ptr+2] & self.OTL_FLAG)
+
+                    # 4th byte
+                    tu_val = (pkt_lowpan[ptr+3] & self.TU_FLAG) >> 6
+                    exponent = (pkt_lowpan[ptr+3] & self.EXP_FLAG) >>  3
+
+                    # Expiration Time
+                    nxt_ptr = ptr+4
+                    exp_time = []
+                    for counter in range (0,etl_val+1):
+                        exp_time.append(pkt_lowpan[nxt_ptr+counter])
+                    e_time = exp_time[::-1]
+
+
+                    # Origination Time
+                    if o_val == 1:
+                        org_time = []
+                        nxt_ptr = nxt_ptr+counter+1
+                        for counter in range (0,otl_val+1):
+                            org_time.append(pkt_lowpan[nxt_ptr+counter])
+                        o_time = org_time[::-1]
+
+                    # log
+                    if log.isEnabledFor(logging.ERROR):
+                        output               = []
+                        output              += [' ']
+                        output              += ['Received a DeadLine Hop-by-Hop Header']
+                        output              += ['exp_time is {0}'.format(u.formatAddr(e_time))]
+                        if o_val == 1:
+                            output              += ['org_time is {0}'.format(u.formatAddr(o_time))]
+                        output               = '\n'.join(output)
+                        log.error(output)
+                        print output
+
+                    ptr += length+1
             else:
                 log.error("ERROR no support this type of 6LoRH yet")
         else:
@@ -745,21 +862,29 @@ class OpenLbr(eventBusClient.eventBusClient):
                 pkt_ipv6['hop_limit'] = 255
             else:
                 log.error("wrong hlim=="+str(hlim))
+
+            # sac
+            sac = ((pkt_lowpan[1]) >> 6) & 0x01
+            if sac == self.IPHC_SAC_STATELESS:
+                prefix = self.LINK_LOCAL_PREFIX
+            elif sac == self.IPHC_SAC_STATEFUL:
+                prefix = self.networkPrefix
+
             # sam
             sam = ((pkt_lowpan[1]) >> 4) & 0x03
             if sam == self.IPHC_SAM_ELIDED:
                 #pkt from the previous hop
-                pkt_ipv6['src_addr'] = self.networkPrefix + mac_prev_hop
+                pkt_ipv6['src_addr'] = prefix + mac_prev_hop
                 
             elif sam == self.IPHC_SAM_16B:
                 a1 = pkt_lowpan[ptr]
                 a2 = pkt_lowpan[ptr+1]
                 ptr = ptr+2
                 s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
-                pkt_ipv6['src_addr'] = self.networkPrefix+s
+                pkt_ipv6['src_addr'] = prefix+s
         
             elif sam == self.IPHC_SAM_64B:
-                pkt_ipv6['src_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
+                pkt_ipv6['src_addr'] = prefix+pkt_lowpan[ptr:ptr+8]
                 ptr = ptr + 8
             elif sam == self.IPHC_SAM_128B:
                 pkt_ipv6['src_addr'] = pkt_lowpan[ptr:ptr+16]
@@ -767,20 +892,27 @@ class OpenLbr(eventBusClient.eventBusClient):
             else:
                 log.error("wrong sam=="+str(sam))
                 
+            # dac
+            dac = ((pkt_lowpan[1]) >> 2) & 0x01
+            if dac == self.IPHC_DAC_STATELESS:
+                prefix = self.LINK_LOCAL_PREFIX
+            elif dac == self.IPHC_DAC_STATEFUL:
+                prefix = self.networkPrefix
+
             # dam
             dam = ((pkt_lowpan[1]) & 0x03)
             if dam == self.IPHC_DAM_ELIDED:
                 if log.isEnabledFor(logging.DEBUG):
                     log.debug("IPHC_DAM_ELIDED this packet is for the dagroot!")
-                pkt_ipv6['dst_addr'] = self.networkPrefix+self.dagRootEui64
+                pkt_ipv6['dst_addr'] = prefix+self.dagRootEui64
             elif dam == self.IPHC_DAM_16B:
                 a1 = pkt_lowpan[ptr]
                 a2 = pkt_lowpan[ptr+1]
                 ptr = ptr+2
                 s = ''.join(['\x00','\x00','\x00','\x00','\x00','\x00',a1,a2])
-                pkt_ipv6['dst_addr'] = self.networPrefix+s
+                pkt_ipv6['dst_addr'] = prefix+s
             elif dam == self.IPHC_DAM_64B:
-                pkt_ipv6['dst_addr'] = self.networkPrefix+pkt_lowpan[ptr:ptr+8]
+                pkt_ipv6['dst_addr'] = prefix+pkt_lowpan[ptr:ptr+8]
                 ptr = ptr + 8
             elif dam == self.IPHC_DAM_128B:
                 pkt_ipv6['dst_addr'] = pkt_lowpan[ptr:ptr+16]
@@ -884,6 +1016,11 @@ class OpenLbr(eventBusClient.eventBusClient):
         if data['isDAGroot']==1:
             with self.stateLock:
                 self.dagRootEui64     = data['eui64'][:]
+
+    def _isLinkLocal(self, ipv6Address):
+        if ipv6Address[:8] == self.LINK_LOCAL_PREFIX:
+            return True
+        return False
 
 #===== formatting
     

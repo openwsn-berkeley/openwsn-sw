@@ -59,7 +59,7 @@ class IETF90Client(object):
         
         # local variables
         self.dataLock             = threading.RLock()
-        self.coap                 = coap.coap()
+        self.coap                 = coap.coap(udpPort=61618)
         self.busy                 = False
         self.statusBusy           = False
         self._status              = ''
