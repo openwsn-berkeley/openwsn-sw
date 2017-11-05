@@ -32,6 +32,7 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 BAUDRATE_TELOSB = 115200
 BAUDRATE_GINA   = 115200
 BAUDRATE_WSN430 = 115200
+BAUDRATE_IOTLAB = 500000
 
 def findSerialPorts():
     '''
