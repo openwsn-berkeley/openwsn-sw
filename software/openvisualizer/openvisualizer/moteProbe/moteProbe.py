@@ -263,8 +263,6 @@ class moteProbe(threading.Thread):
                                                 outputToWrite = self.outputBuf.pop(0)
                                                 self.serial.write(outputToWrite)
                                     else:
-                                        with open('/home/root/A8/experiment/'+socket.gethostname()+'.log','a') as f:
-                                            f.write(tempBuf)
                                         # dispatch
                                         dispatcher.send(
                                             sender        = self.name,
