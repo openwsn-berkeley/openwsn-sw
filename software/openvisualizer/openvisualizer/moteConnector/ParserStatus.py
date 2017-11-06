@@ -187,7 +187,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBBQQHbBBBBBHHBBBB',
+                                    '<BBBBBBBQQHbBBBBBHHBBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
@@ -209,7 +209,6 @@ class ParserStatus(Parser.Parser):
                                         'asn_0_1',                   # H
                                         'joinPrio',                  # B
                                         'f6PNORES',                  # B
-                                        'sixtopGEN',                 # B
                                         'sixtopSeqNum',              # B
                                     ],
                                 )

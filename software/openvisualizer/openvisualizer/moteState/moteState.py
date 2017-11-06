@@ -269,7 +269,6 @@ class StateNeighborsRow(StateElem):
                                    notif.asn_2_3,
                                    notif.asn_4)
         self.data[0]['f6PNORES']                 = notif.f6PNORES
-        self.data[0]['sixtopGEN']                = notif.sixtopGEN
         self.data[0]['sixtopSeqNum']             = notif.sixtopSeqNum
 
 class StateIsSync(StateElem):
@@ -532,7 +531,6 @@ class moteState(eventBusClient.eventBusClient):
                                                         'asn',
                                                         'joinPrio',
                                                         'f6PNORES',
-                                                        'sixtopGEN',
                                                         'sixtopSeqNum',
                                                     ]
                                                 ))
