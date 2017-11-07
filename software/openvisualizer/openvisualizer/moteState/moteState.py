@@ -271,6 +271,8 @@ class StateNeighborsRow(StateElem):
         self.data[0]['f6PNORES']                 = notif.f6PNORES
         self.data[0]['sixtopGEN']                = notif.sixtopGEN
         self.data[0]['sixtopSeqNum']             = notif.sixtopSeqNum
+        self.data[0]['backoffExponent']          = notif.backoffExponent
+        self.data[0]['backoff']                  = notif.backoff
 
 class StateIsSync(StateElem):
     
@@ -534,6 +536,8 @@ class moteState(eventBusClient.eventBusClient):
                                                         'f6PNORES',
                                                         'sixtopGEN',
                                                         'sixtopSeqNum',
+                                                        'backoffExponent',
+                                                        'backoff',
                                                     ]
                                                 ))
         self.state[self.ST_ISSYNC]          = StateIsSync()
