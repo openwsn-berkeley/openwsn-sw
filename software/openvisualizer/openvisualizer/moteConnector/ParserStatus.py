@@ -187,7 +187,8 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBBQQHbBBBBBHHBBB',
+                                    '<BBBBBBBQQHbBBBBBHHBBBB',
+                                    '<BBBBBBBQQHbBBBBBHHBBBBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
@@ -210,6 +211,8 @@ class ParserStatus(Parser.Parser):
                                         'joinPrio',                  # B
                                         'f6PNORES',                  # B
                                         'sixtopSeqNum',              # B
+                                        'backoffExponent',           # B
+                                        'backoff',                   # B
                                     ],
                                 )
         self._addFieldsParser   (   
