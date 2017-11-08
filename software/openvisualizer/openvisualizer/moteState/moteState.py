@@ -193,8 +193,6 @@ class StateScheduleRow(StateElem):
         self.data[0]['lastUsedAsn'].update(notif.lastUsedAsn_0_1,
                                            notif.lastUsedAsn_2_3,
                                            notif.lastUsedAsn_4)
-        self.data[0]['usageBitMap']         = "{0:b}".format(notif.usageBitMap)
-        self.data[0]['bitMapIndex']         = notif.bitMapIndex
 
 class StateBackoff(StateElem):
     

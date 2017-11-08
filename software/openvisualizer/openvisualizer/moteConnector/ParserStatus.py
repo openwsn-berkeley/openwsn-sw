@@ -127,7 +127,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '<BHBBBBQQBBBBHHHB',
+                                    '<BHBBBBQQBBBBHH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
@@ -143,8 +143,7 @@ class ParserStatus(Parser.Parser):
                                         'lastUsedAsn_4',             # B
                                         'lastUsedAsn_2_3',           # H
                                         'lastUsedAsn_0_1',           # H
-                                        'usageBitMap',               # H
-                                        'bitMapIndex',               # B
+
                                     ],
                                 )
         self._addFieldsParser   (
