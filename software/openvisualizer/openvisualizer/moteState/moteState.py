@@ -509,8 +509,6 @@ class moteState(eventBusClient.eventBusClient):
                                                         'numTx',
                                                         'numTxACK',
                                                         'lastUsedAsn',
-                                                        'usageBitMap',
-                                                        'bitMapIndex',
                                                     ]
                                                 )
                                               )
