@@ -251,6 +251,8 @@ class moteProbe(threading.Thread):
                                 
                                 try:
                                     tempBuf = self.inputBuf
+                                    with open(socket.gethostname()+'.log','a') as f:
+                                        f.write(self.inputBuf)
                                     self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
                                     if log.isEnabledFor(logging.DEBUG):
                                         log.debug("{0}: {2} dehdlcized input: {1}".format(self.name, u.formatStringBuf(self.inputBuf), u.formatStringBuf(tempBuf)))
