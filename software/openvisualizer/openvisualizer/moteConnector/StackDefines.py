@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Mon, 14 Aug 2017 10:37:31
+# on Thu, 09 Nov 2017 11:16:05
 #
 
 components = {
@@ -134,10 +134,11 @@ sixtop_returncode = {
    3: "RC_RESET",
    4: "RC_VER_ERR",
    5: "RC_SFID_ERR",
-   6: "RC_GEN_ERR",
-   7: "RC_BUSY",
-   8: "RC_NORES",
-   9: "RC_CELLLIST_ERR",
+   6: "RC_SEQNUM_ERR",
+   7: "RC_CELLLIST_ERR",
+   8: "RC_BUSY",
+   9: "RC_LOCKED",
+  10: "RC_NORES",
 }
 
 sixtop_statemachine = {
