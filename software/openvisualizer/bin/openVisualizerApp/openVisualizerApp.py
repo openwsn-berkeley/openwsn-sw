@@ -410,6 +410,12 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'a topology can be loaded from a json file'
     )
+    parser.add_argument('-ro', '--root',
+        dest       = 'root',
+        default    = '',
+        action     = 'store',
+        help       = 'set mote associated to serial port as root'
+    )
 
 
 def _forceSlashSep(ospath, debug):
