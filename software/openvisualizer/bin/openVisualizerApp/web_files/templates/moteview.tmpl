@@ -319,13 +319,14 @@
 									        
 									        // Slot Schedule responsive table
 									        if (hasJson) {
-									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Offset</th><th>Type</th><th>Shared?</th><th>Channel</th><th>Nbr Type</th><th>RX</th><th>TX</th><th>TX ACK</th><th>Last ASN</th></tr></thead><tbody>";
+									        	var tbl_body = "<table class=\"table table-striped table-bordered table-hover\" id=\"dataTables-example\"><thead><tr><th>Offset</th><th>Type</th><th>Shared?</th><th>Channel</th><th>radioType</th><th>Nbr Type</th><th>RX</th><th>TX</th><th>TX ACK</th><th>Last ASN</th></tr></thead><tbody>";
 
 										        $.each(schedJson, function() {
 											        var tbl_row = "<td>" + this['slotOffset'] + "</td>";
 											        tbl_row += "<td>" + this['type'] + "</td>";
 											        tbl_row += "<td>" + this['shared'] + "</td>";
 											        tbl_row += "<td>" + this['channelOffset'] + "</td>";
+											        tbl_row += "<td>" + this['radioType'] + "</td>";
 											        tbl_row += "<td>" + this['neighbor'] + "</td>";
 											        tbl_row += "<td>" + this['numRx'] + "</td>";
 											        tbl_row += "<td>" + this['numTx'] + "</td>";

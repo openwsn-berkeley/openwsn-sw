@@ -127,13 +127,14 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     6,
                                     'ScheduleRow',
-                                    '<BHBBBBQQBBBBHH',
+                                    '<BHBBBBBQQBBBBHH',
                                     [
                                         'row',                       # B
                                         'slotOffset',                # H 
                                         'type',                      # B
                                         'shared',                    # B
                                         'channelOffset',             # B
+                                        'radioType',                 # B
                                         'neighbor_type',             # B
                                         'neighbor_bodyH',            # Q
                                         'neighbor_bodyL',            # Q
