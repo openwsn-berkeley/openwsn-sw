@@ -68,6 +68,15 @@ def uiRunner(target, source, env):
 
     if env['ROOT']:
         argList.append('--root={0}'.format(env['ROOT']))
+
+    if env['SNIFFER']:
+        argList.append('--snifferPort={0}'.format(env['SNIFFER']))
+
+    if env['NODE']:
+        argList.append('--nodePort={0}'.format(env['NODE']))
+
+    if env['DAGROOT']:
+        argList.append('--dagrootPort={0}'.format(env['DAGROOT']))
     
     result = 0
     try:

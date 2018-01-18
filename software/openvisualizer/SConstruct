@@ -175,6 +175,24 @@ AddOption('--root',
     type      = 'string')
 runnerEnv['ROOT'] = GetOption('root')
 
+AddOption('--snifferPort',
+    dest      = 'sniffer',
+    default   = '',
+    type      = 'string')
+runnerEnv['SNIFFER'] = GetOption('sniffer')
+
+AddOption('--nodePort',
+    dest      = 'node',
+    default   = '',
+    type      = 'string')
+runnerEnv['NODE'] = GetOption('node')
+
+AddOption('--dagrootPort',
+    dest      = 'dagroot',
+    default   = '',
+    type      = 'string')
+runnerEnv['DAGROOT'] = GetOption('dagroot')
+
 # These options are used only by the web runner. We define them here for
 # simplicity, but they must be removed from non-web use in the runner 
 # SConscript.

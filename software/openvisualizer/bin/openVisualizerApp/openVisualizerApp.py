@@ -29,6 +29,7 @@ from openvisualizer.RPL             import UDPInject
 from openvisualizer.RPL             import topology
 from openvisualizer                 import appdirs
 from openvisualizer.remoteConnectorServer   import remoteConnectorServer
+from openvisualizer.finteropAgent   import finteropAgent
 
 import openvisualizer.openvisualizer_utils as u
     
@@ -38,7 +39,7 @@ class OpenVisualizerApp(object):
     top-level functionality for several UI clients.
     '''
     
-    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes, pathTopo):
+    def __init__(self,confdir,datadir,logdir,simulatorMode,numMotes,trace,debug,usePageZero,simTopology,iotlabmotes,pathTopo,dagroot,sniffer,node):
         
         # store params
         self.confdir              = confdir
@@ -118,6 +119,9 @@ class OpenVisualizerApp(object):
 
         self.remoteConnectorServer = remoteConnectorServer.remoteConnectorServer()
 
+        self.finteropAgent         = finteropAgent.finteropAgent()
+        self.finteropAgent.setSerialPortRole(dagroot,sniffer,node)
+        self.finteropAgent.run()
 
         # boot all emulated motes, if applicable
         if self.simulatorMode:
@@ -352,7 +356,10 @@ def main(parser=None):
         usePageZero     = argspace.usePageZero,
         simTopology     = argspace.simTopology,
         iotlabmotes     = argspace.iotlabmotes,
-        pathTopo        = argspace.pathTopo
+        pathTopo        = argspace.pathTopo,
+        dagroot         = argspace.dagroot,
+        sniffer         = argspace.sniffer,
+        node            = argspace.node
     )
 
 def _addParserArgs(parser):
@@ -416,6 +423,26 @@ def _addParserArgs(parser):
         action     = 'store',
         help       = 'set mote associated to serial port as root'
     )
+    parser.add_argument('-sp', '--snifferPort',
+        dest       = 'sniffer',
+        default    = '',
+        action     = 'store',
+        help       = 'mark the serial port connected with sniffer'
+    )
+    parser.add_argument('-np', '--nodePort',
+        dest       = 'node',
+        default    = '',
+        action     = 'store',
+        help       = 'mark the serial port connected with node'
+    )
+
+    parser.add_argument('-dp', '--dagrootPort',
+        dest       = 'dagroot',
+        default    = '',
+        action     = 'store',
+        help       = 'mark the serial port connected with root'
+    )
+
 
 
 def _forceSlashSep(ospath, debug):
