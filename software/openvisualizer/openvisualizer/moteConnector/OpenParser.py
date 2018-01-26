@@ -14,6 +14,7 @@ import ParserStatus
 import ParserInfoErrorCritical as ParserIEC
 import ParserData
 import ParserPacket
+import ParserPrintf
 
 class OpenParser(Parser.Parser):
     
@@ -26,6 +27,7 @@ class OpenParser(Parser.Parser):
     SERFRAME_MOTE2PC_CRITICAL          = ParserIEC.ParserInfoErrorCritical.SEVERITY_CRITICAL
     SERFRAME_MOTE2PC_REQUEST           = ord('R')
     SERFRAME_MOTE2PC_SNIFFED_PACKET    = ord('P')
+    SERFRAME_MOTE2PC_PRINTF            = ord('F')
     
     SERFRAME_PC2MOTE_SETDAGROOT        = ord('R')
     SERFRAME_PC2MOTE_DATA              = ord('D')
@@ -51,7 +53,8 @@ class OpenParser(Parser.Parser):
         self.parserCritical  = ParserIEC.ParserInfoErrorCritical(self.SERFRAME_MOTE2PC_CRITICAL)
         self.parserData      = ParserData.ParserData()
         self.parserPacket    = ParserPacket.ParserPacket()
-        
+        self.parserPrintf    = ParserPrintf.ParserPrintf()
+
         # register subparsers
         self._addSubParser(
             index  = 0,
@@ -83,6 +86,12 @@ class OpenParser(Parser.Parser):
             val    = self.SERFRAME_MOTE2PC_SNIFFED_PACKET,
             parser = self.parserPacket.parseInput,
         )
+        self._addSubParser(
+            index  = 0,
+            val    = self.SERFRAME_MOTE2PC_PRINTF,
+            parser = self.parserPrintf.parseInput,
+        )
+
     #======================== public ==========================================
     
     #======================== private =========================================
