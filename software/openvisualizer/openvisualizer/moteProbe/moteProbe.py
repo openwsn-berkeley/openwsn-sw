@@ -189,8 +189,8 @@ class moteProbe(threading.Thread):
                 
                 if   self.mode==self.MODE_SERIAL:
                     self.serial = serial.Serial(self.serialport,self.baudrate,timeout=1)
-                    self.serial.setDTR(0)
-                    self.serial.setRTS(0)
+                    #self.serial.setDTR(0)
+                    #self.serial.setRTS(0)
                 elif self.mode==self.MODE_EMULATED:
                     self.serial = self.emulatedMote.bspUart
                 elif self.mode==self.MODE_IOTLAB:
