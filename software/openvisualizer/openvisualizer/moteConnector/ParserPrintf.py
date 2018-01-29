@@ -1,4 +1,4 @@
-# Copyright (c) 2015, CNRS. 
+# Copyright (c) 2017, CNRS. 
 # All rights reserved. 
 #  
 # Released under the BSD 3-Clause license as published at the link below.
@@ -21,12 +21,16 @@ class ParserPrintf(Parser.Parser):
     
     HEADER_LENGTH  = 2
     MSPERSLOT      = 15 #ms per slot.
+    
+    STRING = 0
+    INT32 = 1
+
    
     def __init__(self):
         
         # log
         log.debug('create ParserPrintf instance')
-        
+          
         # initialize parent class
         Parser.Parser.__init__(self,self.HEADER_LENGTH)
         
@@ -34,6 +38,10 @@ class ParserPrintf(Parser.Parser):
           'asn_2_3',                   # H
           'asn_0_1',                   # H
          ]
+        
+        self.buf_addr = ""    #address for the buffer
+        self.buf_txt  = ""    #buffer for the messages (to flush when I receive a '\n')
+        self.buf_asn = ""
     
     #returns a string with the decimal value of a uint16_t
     def BytesToString(self, bytes):
@@ -71,36 +79,51 @@ class ParserPrintf(Parser.Parser):
 
         return(str)
 
-
+    #prints the content of the buffer and flushes it
+    def flush(self):
+             
+         print("(asn={0}) from {1}: {2}\n".format(
+                self.buf_asn,
+                self.buf_addr,
+                self.buf_txt
+                )
+             )
+         
+         log.info("(asn={0}) from {1}: {2}\n".format(
+                self.buf_asn,
+                self.buf_addr,
+                self.buf_txt
+                )
+             )
+          
+         self.buf_txt = ""
+         self.buf_addr = ""
+         self.buf_asn = ""
+         
     def parseInput(self,input):
       
         # log
         if log.isEnabledFor(logging.DEBUG):
             log.debug('received printf {0}'.format(input))
          
-         
-        #headers
-        addr = input[:2]  
-        COMPONENT  = self._translateCallingComponent(input[2])
-        asnbytes = input[3:8]
-        (self._asn) = struct.unpack('<BHH',''.join([chr(c) for c in asnbytes]))
-        msg = input[8:]
-
-        print("(asn={2}) from {0}:{1}:{3}".format(
-                self.BytesToAddr(addr),
-                COMPONENT,
-                self.BytesToString(asnbytes),
-                self.BytesToStr(msg)
-                ))
+        #subtype: string
+        if (input[0] == self.STRING) :
+            self.buf_addr = self.BytesToAddr(input[1:3])
+            self.buf_asn  = self.BytesToString(input[3:8])
+            for c in input[8:] :
+                if (c == 10):   #EOL
+                    self.flush()
+                self.buf_txt = self.buf_txt + unichr(c)
         
-        log.info("(asn={2}) from {0}:{1}:{3}".format(
-                self.BytesToAddr(addr),
-                COMPONENT,
-                self.BytesToString(asnbytes),
-                self.BytesToStr(msg)
-                ))
-       
+            #subtype integer
+        elif(input[0] == self.INT32):
+            self.buf_txt = self.buf_txt + self.BytesToString(input[1:5])
+        else:
+            print("Unkwnon printf subtype\n")
+        
+        #everything was fine  
         return ('error', input)
+
 
     def _translateCallingComponent(self,callingComponent):
         try:
