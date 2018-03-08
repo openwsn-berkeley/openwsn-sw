@@ -648,4 +648,7 @@ if __name__=="__main__":
     banner  = '\n'.join(banner)
     print banner
 
+    argspace = parser.parse_args()
+    webapp.do_root(argspace.root)
+
     webapp.cmdloop()

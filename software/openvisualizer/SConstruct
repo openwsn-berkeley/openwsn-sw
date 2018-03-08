@@ -169,6 +169,12 @@ AddOption('--usePageZero',
     action    = 'store_true')
 runnerEnv['USEPAGEZERO'] = GetOption('usePageZero')
 
+AddOption('--root',
+    dest      = 'root',
+    default   = '',
+    type      = 'string')
+runnerEnv['ROOT'] = GetOption('root')
+
 # These options are used only by the web runner. We define them here for
 # simplicity, but they must be removed from non-web use in the runner 
 # SConscript.
