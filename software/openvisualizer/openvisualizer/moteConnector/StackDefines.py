@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Mon, 12 Mar 2018 10:36:03
+# on Mon, 12 Mar 2018 10:55:53
 #
 
 components = {
@@ -27,28 +27,25 @@ components = {
   20: "ICMPv6ECHO",
   21: "ICMPv6ROUTER",
   22: "ICMPv6RPL",
-  23: "OPENTCP",
-  24: "OPENUDP",
-  25: "OPENCOAP",
-  26: "C6T",
-  27: "CEXAMPLE",
-  28: "CINFO",
-  29: "CLEDS",
-  30: "CSENSORS",
-  31: "CSTORM",
-  32: "CWELLKNOWN",
-  33: "TECHO",
-  34: "TOHLONE",
-  35: "UECHO",
-  36: "UINJECT",
-  37: "RRT",
-  38: "SECURITY",
-  39: "USERIALBRIDGE",
-  40: "UEXPIRATION",
-  41: "UMONITOR",
-  42: "CJOIN",
-  43: "OPENOSCOAP",
-  45: "CINFRARED",
+  23: "OPENUDP",
+  24: "OPENCOAP",
+  25: "C6T",
+  26: "CEXAMPLE",
+  27: "CINFO",
+  28: "CLEDS",
+  29: "CSENSORS",
+  30: "CSTORM",
+  31: "CWELLKNOWN",
+  32: "UECHO",
+  33: "UINJECT",
+  34: "RRT",
+  35: "SECURITY",
+  36: "USERIALBRIDGE",
+  37: "UEXPIRATION",
+  38: "UMONITOR",
+  39: "CJOIN",
+  40: "OPENOSCOAP",
+  41: "CINFRARED",
 }
 
 errorDescriptions = {
