@@ -1,6 +1,6 @@
 # DO NOT EDIT DIRECTLY!
 # This file was generated automatically by GenStackDefines.py
-# on Thu, 09 Nov 2017 11:16:05
+# on Mon, 12 Mar 2018 10:36:03
 #
 
 components = {
@@ -20,35 +20,35 @@ components = {
   13: "NEIGHBORS",
   14: "SCHEDULE",
   15: "SIXTOP_RES",
-  16: "SF",
-  17: "OPENBRIDGE",
-  18: "IPHC",
-  19: "FORWARDING",
-  20: "ICMPv6",
-  21: "ICMPv6ECHO",
-  22: "ICMPv6ROUTER",
-  23: "ICMPv6RPL",
-  24: "OPENTCP",
-  25: "OPENUDP",
-  26: "OPENCOAP",
-  27: "C6T",
-  28: "CEXAMPLE",
-  29: "CINFO",
-  30: "CLEDS",
-  31: "CSENSORS",
-  32: "CSTORM",
-  33: "CWELLKNOWN",
-  34: "TECHO",
-  35: "TOHLONE",
-  36: "UECHO",
-  37: "UINJECT",
-  38: "RRT",
-  39: "SECURITY",
-  40: "USERIALBRIDGE",
-  41: "UEXPIRATION",
-  42: "UMONITOR",
-  43: "CJOIN",
-  44: "OPENOSCOAP",
+  16: "OPENBRIDGE",
+  17: "IPHC",
+  18: "FORWARDING",
+  19: "ICMPv6",
+  20: "ICMPv6ECHO",
+  21: "ICMPv6ROUTER",
+  22: "ICMPv6RPL",
+  23: "OPENTCP",
+  24: "OPENUDP",
+  25: "OPENCOAP",
+  26: "C6T",
+  27: "CEXAMPLE",
+  28: "CINFO",
+  29: "CLEDS",
+  30: "CSENSORS",
+  31: "CSTORM",
+  32: "CWELLKNOWN",
+  33: "TECHO",
+  34: "TOHLONE",
+  35: "UECHO",
+  36: "UINJECT",
+  37: "RRT",
+  38: "SECURITY",
+  39: "USERIALBRIDGE",
+  40: "UEXPIRATION",
+  41: "UMONITOR",
+  42: "CJOIN",
+  43: "OPENOSCOAP",
+  45: "CINFRARED",
 }
 
 errorDescriptions = {
@@ -129,8 +129,8 @@ errorDescriptions = {
 
 sixtop_returncode = {
    0: "RC_SUCCESS",
-   1: "RC_ERROR",
-   2: "RC_EOL",
+   1: "RC_EOL",
+   2: "RC_ERROR",
    3: "RC_RESET",
    4: "RC_VER_ERR",
    5: "RC_SFID_ERR",
@@ -138,7 +138,6 @@ sixtop_returncode = {
    7: "RC_CELLLIST_ERR",
    8: "RC_BUSY",
    9: "RC_LOCKED",
-  10: "RC_NORES",
 }
 
 sixtop_statemachine = {
