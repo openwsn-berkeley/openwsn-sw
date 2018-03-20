@@ -31,7 +31,8 @@ class topology(eventBusClient.eventBusClient):
         self.dataLock        = threading.Lock()
         self.parents         = {}
         self.parentsLastSeen = {}
-        self.NODE_TIMEOUT_THRESHOLD = 150
+        self.parentsDelay    = {}
+        self.NODE_TIMEOUT_THRESHOLD = 900
         
         eventBusClient.eventBusClient.__init__(
             self,
@@ -82,7 +83,11 @@ class topology(eventBusClient.eventBusClient):
             self.parents.update({data[0]:data[1]})
             self.parentsLastSeen.update({data[0]: time.time()})
 
-        self._clearNodeTimeout()
+            with open("dagRecord.txt",'a') as f:
+                f.write("\ntotal nodes number: {0}\n".format(len(self.parents)))
+                for addr, timestamp in self.parentsLastSeen.iteritems():
+                    f.write('--addr {0} timestamp {1}\n'.format(''.join(['%02X' % x for x in addr[-2:]]), time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))))
+        # self._clearNodeTimeout()
 
     def _clearNodeTimeout(self):
         threshold = time.time() - self.NODE_TIMEOUT_THRESHOLD
