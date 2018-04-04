@@ -32,6 +32,7 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 BAUDRATE_TELOSB = 115200
 BAUDRATE_GINA   = 115200
 BAUDRATE_WSN430 = 115200
+BAUDRATE_IOTLAB = 500000
 
 def findSerialPorts():
     '''
@@ -68,25 +69,27 @@ def findSerialPorts():
         if platform.system() == 'Darwin':
             portMask = ['/dev/tty.usbserial-*']
         else:
-            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
+            portMask = ['/dev/ttyUSB*']
         for mask in portMask :
-            serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
+            serialports += [(s,BAUDRATE_IOTLAB) for s in glob.glob(mask)]
 
     # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
     # Also test for 500000 to find IoT Lab M3 motes
     mote_ports = []
 
-    for port in serialports:
-        for baudrate in [port[1], 500000]:
-            probe = moteProbe(serialport=(port[0],baudrate))
-            tester = SerialTester(probe.portname)
-            tester.setNumTestPkt(1)
-            tester.setTimeout(2)
-            tester.test(blocking=True)
-            if tester.getStats()['numOk'] >= 1:
-                mote_ports.append((port[0],baudrate));
-            probe.close()
-            probe.join()
+    # for port in serialports:
+    #     for baudrate in [port[1], BAUDRATE_IOTLAB]:
+    #         probe = moteProbe(serialport=(port[0],baudrate))
+    #         tester = SerialTester(probe.portname)
+    #         tester.setNumTestPkt(1)
+    #         tester.setTimeout(2)
+    #         tester.test(blocking=True)
+    #         if tester.getStats()['numOk'] >= 1:
+    #             mote_ports.append((port[0],baudrate));
+    #         probe.close()
+    #         probe.join()
+
+    mote_ports = serialports
     
     # log
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
@@ -188,9 +191,7 @@ class moteProbe(threading.Thread):
                 log.info("open port {0}".format(self.portname))
                 
                 if   self.mode==self.MODE_SERIAL:
-                    self.serial = serial.Serial(self.serialport,self.baudrate,timeout=1)
-                    self.serial.setDTR(0)
-                    self.serial.setRTS(0)
+                    self.serial = serial.Serial(self.serialport,self.baudrate,timeout=1,rtscts=False,dsrdtr=False)
                 elif self.mode==self.MODE_EMULATED:
                     self.serial = self.emulatedMote.bspUart
                 elif self.mode==self.MODE_IOTLAB:
@@ -248,6 +249,8 @@ class moteProbe(threading.Thread):
                                 
                                 try:
                                     tempBuf = self.inputBuf
+                                    with open(socket.gethostname()+'.log','a') as f:
+                                        f.write(self.inputBuf)
                                     self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
                                     if log.isEnabledFor(logging.DEBUG):
                                         log.debug("{0}: {2} dehdlcized input: {1}".format(self.name, u.formatStringBuf(self.inputBuf), u.formatStringBuf(tempBuf)))
