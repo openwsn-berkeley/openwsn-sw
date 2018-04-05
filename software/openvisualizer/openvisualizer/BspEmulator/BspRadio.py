@@ -99,12 +99,12 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         # change state
         self._changeState(RadioState.STOPPED)
     
-    def cmd_setFrequency(self,frequency):
+    def cmd_setFrequency(self, channel_spacing, frequency_0, channel):
         '''emulates
            void radio_setFrequency(uint8_t frequency)'''
         
         # store params
-        self.frequency   = frequency
+        self.frequency   = channel
         
         # log the activity
         if self.log.isEnabledFor(logging.DEBUG):
@@ -147,7 +147,7 @@ class BspRadio(BspModule.BspModule,eventBusClient.eventBusClient):
         # wiggle de debugpin
         self.motehandler.bspDebugpins.cmd_radio_clr()
     
-    def cmd_loadPacket(self,packetToLoad):
+    def cmd_loadPacket(self,packetToLoad, length):
         '''emulates
            void radio_loadPacket(uint8_t* packet, uint8_t len)'''
         
