@@ -11,3 +11,4 @@ pylint==1.6.0
 pycryptodome
 cbor
 hkdf
+pywin32==2.2.3
