@@ -29,12 +29,10 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 
 #============================ functions =======================================
 
-BAUDRATE_TELOSB = 115200
-BAUDRATE_GINA   = 115200
-BAUDRATE_WSN430 = 115200
-BAUDRATE_IOTLAB = 500000
+BAUDRATE_LOCAL_BOARD  = 115200
+BAUDRATE_IOTLAB       = 500000
 
-def findSerialPorts():
+def findSerialPorts(isIotMotes=False):
     '''
     Returns the serial ports of the motes connected to the computer.
     
@@ -73,23 +71,23 @@ def findSerialPorts():
         for mask in portMask :
             serialports += [(s,BAUDRATE_IOTLAB) for s in glob.glob(mask)]
 
-    # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
-    # Also test for 500000 to find IoT Lab M3 motes
     mote_ports = []
 
-    # for port in serialports:
-    #     for baudrate in [port[1], BAUDRATE_IOTLAB]:
-    #         probe = moteProbe(serialport=(port[0],baudrate))
-    #         tester = SerialTester(probe.portname)
-    #         tester.setNumTestPkt(1)
-    #         tester.setTimeout(2)
-    #         tester.test(blocking=True)
-    #         if tester.getStats()['numOk'] >= 1:
-    #             mote_ports.append((port[0],baudrate));
-    #         probe.close()
-    #         probe.join()
-
-    mote_ports = serialports
+    if isIotMotes:
+        # this is IoTMotes, use the ports directly
+        mote_ports = serialports
+    else:
+        # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
+        for port in serialports:
+            probe = moteProbe(serialport=(port[0],BAUDRATE_LOCAL_BOARD))
+            tester = SerialTester(probe.portname)
+            tester.setNumTestPkt(1)
+            tester.setTimeout(2)
+            tester.test(blocking=True)
+            if tester.getStats()['numOk'] >= 1:
+                mote_ports.append((port[0],BAUDRATE_LOCAL_BOARD));
+            probe.close()
+            probe.join()
     
     # log
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
