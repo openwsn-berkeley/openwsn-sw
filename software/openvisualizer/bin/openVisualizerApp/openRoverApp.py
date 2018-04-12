@@ -56,8 +56,8 @@ class OpenRoverApp(object):
             probe.close()
         # in "hardware" mode, motes are connected to the serial port
         self.moteProbes = [
-            moteProbe.moteProbe(serialport=p) for p in moteProbe.findSerialPorts()
-            ]
+            moteProbe.moteProbe(serialport=p) for p in moteProbe.findSerialPorts(True)
+        ]
 
         if self.remoteConnector :
             self.remoteConnector.close()
