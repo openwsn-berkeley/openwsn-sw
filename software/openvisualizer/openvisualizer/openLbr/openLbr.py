@@ -135,6 +135,9 @@ class OpenLbr(eventBusClient.eventBusClient):
     NHC_UDP_PORTS_4S_4D      = 3
 
     LINK_LOCAL_PREFIX        = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
+    
+    #=== Errors    
+    ERR_DESTINATIONUNREACHABLE = 1
 
     def __init__(self,usePageZero):
 
@@ -246,6 +249,17 @@ class OpenLbr(eventBusClient.eventBusClient):
             if log.isEnabledFor(logging.DEBUG):
                 log.debug(self._format_lowpan(lowpan,lowpan_bytes))
 
+
+            # don't forward the ICMPv6 packets to the motes (unsupported)     
+            if (ipv6['next_header'] == self.IANA_ICMPv6) and (ipv6['payload'][0] == self.ERR_DESTINATIONUNREACHABLE) :
+                
+                log.error('ICMPv6 packet to forward to {0}, The packet is dropped (DESTINATIONUNREACHABLE not supported by openWSN)'.format(
+                    u.formatIPv6Addr(ipv6['dst_addr'])
+                    ))
+                log.error(self._format_lowpan(lowpan,lowpan_bytes))
+                return
+            
+
             #print "output:"
             #print lowpan_bytes
             # dispatch
@@ -272,17 +286,14 @@ class OpenLbr(eventBusClient.eventBusClient):
             success = True
             dispatchSignal = None
 
+            hopbyhop_header_present = False
+
             #read next header
             if ipv6dic['next_header']==self.IANA_IPv6HOPHEADER:
-                #hop by hop header present, check flags and parse
-                if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
-                    #error -- this packet has gone downstream somewhere.
-                    log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
-                if (ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG:
-                    #error -- loop in the route
-                    log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                # mark hop by hop header present, check hop_flags after obtaining src_addr in IPV6 header. 
+                hopbyhop_header_present = True
                 #skip the header and process the rest of the message.
-                ipv6dic['next_header'] = ipv6dic['hop_next_header']
+                ipv6dic['next_header']  = ipv6dic['hop_next_header']
 
             #===================================================================
 
@@ -299,6 +310,15 @@ class OpenLbr(eventBusClient.eventBusClient):
                     ipv6dic['hop_limit'] = ipv6dic_inner['hop_limit']
                 ipv6dic['dst_addr'] = ipv6dic_inner['dst_addr']
                 ipv6dic['flow_label'] = ipv6dic_inner['flow_label']
+
+                if hopbyhop_header_present:
+                    #hop by hop header present, check hop_flags
+                    if (ipv6dic['hop_flags'] & self.O_FLAG) == self.O_FLAG:
+                        #error -- this packet has gone downstream somewhere.
+                        log.error("detected possible downstream link on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
+                    if (ipv6dic['hop_flags'] & self.R_FLAG) == self.R_FLAG:
+                        #error -- loop in the route
+                        log.error("detected possible loop on upstream route from {0}".format(",".join(str(c) for c in ipv6dic['src_addr'])))
 
             if ipv6dic['next_header']==self.IANA_ICMPv6:
                 #icmp header

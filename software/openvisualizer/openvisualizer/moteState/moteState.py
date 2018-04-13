@@ -269,8 +269,10 @@ class StateNeighborsRow(StateElem):
                                    notif.asn_2_3,
                                    notif.asn_4)
         self.data[0]['f6PNORES']                 = notif.f6PNORES
-        self.data[0]['sixtopGEN']                = notif.sixtopGEN
+        self.data[0]['inBlacklist']              = notif.inBlacklist
         self.data[0]['sixtopSeqNum']             = notif.sixtopSeqNum
+        self.data[0]['backoffExponent']          = notif.backoffExponent
+        self.data[0]['backoff']                  = notif.backoff
 
 class StateIsSync(StateElem):
     
@@ -532,8 +534,10 @@ class moteState(eventBusClient.eventBusClient):
                                                         'asn',
                                                         'joinPrio',
                                                         'f6PNORES',
-                                                        'sixtopGEN',
+                                                        'inBlacklist',
                                                         'sixtopSeqNum',
+                                                        'backoffExponent',
+                                                        'backoff',
                                                     ]
                                                 ))
         self.state[self.ST_ISSYNC]          = StateIsSync()

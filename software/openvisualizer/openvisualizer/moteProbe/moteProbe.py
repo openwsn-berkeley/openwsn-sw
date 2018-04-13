@@ -29,11 +29,10 @@ from   openvisualizer.moteConnector.SerialTester import SerialTester
 
 #============================ functions =======================================
 
-BAUDRATE_TELOSB = 115200
-BAUDRATE_GINA   = 115200
-BAUDRATE_WSN430 = 115200
+BAUDRATE_LOCAL_BOARD  = 115200
+BAUDRATE_IOTLAB       = 500000
 
-def findSerialPorts():
+def findSerialPorts(isIotMotes=False):
     '''
     Returns the serial ports of the motes connected to the computer.
     
@@ -68,17 +67,19 @@ def findSerialPorts():
         if platform.system() == 'Darwin':
             portMask = ['/dev/tty.usbserial-*']
         else:
-            portMask = ['/dev/ttyUSB*', '/dev/ttyAMA*', '/dev/ttyA8_M3']
+            portMask = ['/dev/ttyUSB*']
         for mask in portMask :
-            serialports += [(s,BAUDRATE_GINA) for s in glob.glob(mask)]
+            serialports += [(s,BAUDRATE_IOTLAB) for s in glob.glob(mask)]
     
-    # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
-    # Also test for 500000 to find IoT Lab M3 motes
     mote_ports = []
 
+    if isIotMotes:
+        # this is IoTMotes, use the ports directly
+        mote_ports = serialports
+    else:
+        # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
     for port in serialports:
-        for baudrate in [port[1], 500000]:
-            probe = moteProbe(serialport=(port[0],baudrate))
+            probe = moteProbe(serialport=(port[0],BAUDRATE_LOCAL_BOARD))
             while hasattr(probe, 'serial')==False:
                 pass
             tester = SerialTester(probe.portname)
@@ -86,7 +87,7 @@ def findSerialPorts():
             tester.setTimeout(2)
             tester.test(blocking=True)
             if tester.getStats()['numOk'] >= 1:
-                mote_ports.append((port[0],baudrate));
+                mote_ports.append((port[0],BAUDRATE_LOCAL_BOARD));
             probe.close()
             while probe.serial.isOpen():
                 pass
@@ -198,14 +199,7 @@ class moteProbe(threading.Thread):
                 log.info("open port {0}".format(self.portname))
                 
                 if   self.mode==self.MODE_SERIAL:
-                    self.serial = serial.Serial(
-                        port                  = self.serialport,
-                        baudrate              = self.baudrate,
-                        timeout               = 1,
-                        xonxoff               = True,
-                    )
-                    self.serial.setDTR(0)
-                    self.serial.setRTS(0)
+                    self.serial = serial.Serial(self.serialport,self.baudrate,timeout=1,xonxoff=True,rtscts=False,dsrdtr=False)
                 elif self.mode==self.MODE_EMULATED:
                     self.serial = self.emulatedMote.bspUart
                 elif self.mode==self.MODE_IOTLAB:

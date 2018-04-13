@@ -31,7 +31,7 @@ class topology(eventBusClient.eventBusClient):
         self.dataLock        = threading.Lock()
         self.parents         = {}
         self.parentsLastSeen = {}
-        self.NODE_TIMEOUT_THRESHOLD = 150
+        self.NODE_TIMEOUT_THRESHOLD = 900
         
         eventBusClient.eventBusClient.__init__(
             self,

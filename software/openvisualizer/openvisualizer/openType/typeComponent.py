@@ -64,6 +64,8 @@ class typeComponent(openType.openType):
     COMPONENT_USERIALBRIDGE             = 0x27
     COMPONENT_UEXPIRATION               = 0x28
     COMPONENT_UMONITOR                  = 0x29
+    COMPONENT_CJOIN                     = 0x2a
+    COMPONENT_OPENOSCOAP                = 0x2b
     
     def __init__(self):
         # log
