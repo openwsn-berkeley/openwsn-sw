@@ -78,7 +78,7 @@ def findSerialPorts(isIotMotes=False):
         mote_ports = serialports
     else:
         # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
-    for port in serialports:
+        for port in serialports:
             probe = moteProbe(serialport=(port[0],BAUDRATE_LOCAL_BOARD))
             while hasattr(probe, 'serial')==False:
                 pass
