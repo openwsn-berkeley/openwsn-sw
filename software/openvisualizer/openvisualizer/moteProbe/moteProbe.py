@@ -57,12 +57,7 @@ def findSerialPorts(isIotMotes=False):
                 except:
                     pass
                 else:
-                    if   val[0].find('VCP')>-1:
-                        serialports.append( (str(val[1]),BAUDRATE_TELOSB) )
-                    elif val[0].find('Silabser')>-1:
-                        serialports.append( (str(val[1]),BAUDRATE_GINA) )
-                    elif val[0].find('ProlificSerial')>-1:
-                        serialports.append( (str(val[1]),BAUDRATE_WSN430) )
+                    serialports.append( (str(val[1]),BAUDRATE_LOCAL_BOARD) )
     elif os.name=='posix':
         if platform.system() == 'Darwin':
             portMask = ['/dev/tty.usbserial-*']
