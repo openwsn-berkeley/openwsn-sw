@@ -78,7 +78,7 @@ def findSerialPorts(isIotMotes=False):
             while hasattr(probe, 'serial')==False:
                 pass
             tester = SerialTester(probe.portname)
-            tester.setNumTestPkt(1)
+            tester.setNumTestPkt(3)
             tester.setTimeout(2)
             tester.test(blocking=True)
             if tester.getStats()['numOk'] >= 1:
