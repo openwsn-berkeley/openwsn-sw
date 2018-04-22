@@ -24,6 +24,8 @@ import OpenParser
 import ParserException
 
 class moteConnector(eventBusClient.eventBusClient):
+
+    DFLT_TIMEOUT        = 5   ##< timeout in second for getting an ack
     
     def __init__(self,serialport):
         
@@ -34,10 +36,15 @@ class moteConnector(eventBusClient.eventBusClient):
         self.serialport                = serialport
         
         # local variables
+        self.dataLock                  = threading.RLock()
         self.parser                    = OpenParser.OpenParser()
         self.stateLock                 = threading.Lock()
         self.networkPrefix             = None
         self._subcribedDataForDagRoot  = False
+        self.busySending               = False
+        self.lastReceived              = []
+        self.timeout                   = self.DFLT_TIMEOUT
+        self.waitForReply              = threading.Event()
               
         # give this thread a name
         self.name = 'moteConnector@{0}'.format(self.serialport)
@@ -56,9 +63,14 @@ class moteConnector(eventBusClient.eventBusClient):
                     'signal'   : 'cmdToMote',
                     'callback' : self._cmdToMote_handler,
                 },
+                {
+                    'sender'   : self.WILDCARD,
+                    'signal'   : 'fromMoteProbe@'+self.serialport,
+                    'callback' : self._receiveAckFromMoteSerial,
+                },
             ]
         )
-        
+
         # subscribe to dispatcher
         dispatcher.connect(
             self._sendToParser,
@@ -323,6 +335,21 @@ class moteConnector(eventBusClient.eventBusClient):
         self._sendToMoteProbe(
             dataToSend = [OpenParser.OpenParser.SERFRAME_PC2MOTE_DATA]+nextHop+lowpan,
         )
+
+
+    def _receiveAckFromMoteSerial(self,sender,signal,data):
+        
+        # handle ack
+        if chr(data[0])==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_ACKREPLY):
+            # don't handle if I'm not testing
+            with self.dataLock:
+                if not self.busySending:
+                    return
+            with self.dataLock:
+               self.lastReceived = data[1+2:] # type (1B), moteId (2B)
+
+               # wake up other thread
+               self.waitForReply.set()
     
     #======================== public ==========================================
     
@@ -333,12 +360,23 @@ class moteConnector(eventBusClient.eventBusClient):
     
     def _sendToMoteProbe(self,dataToSend):
         try:
-             dispatcher.send(
+            self.busySending = True
+            dispatcher.send(
                       sender        = self.name,
                       signal        = 'fromMoteConnector@'+self.serialport,
                       data          = ''.join([chr(c) for c in dataToSend])
-                      )
+            )
             
         except socket.error:
             log.error(err)
             pass
+        else:
+            # wait for ack
+            self.waitForReply.clear()
+            if self.waitForReply.wait(self.timeout):
+                # keep silence if the ACK is received
+            else:
+                # timeout
+                print "ack is missing !"
+
+            self.busySending = False

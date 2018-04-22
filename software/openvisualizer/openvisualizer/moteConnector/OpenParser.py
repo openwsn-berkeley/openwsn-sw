@@ -27,7 +27,8 @@ class OpenParser(Parser.Parser):
     SERFRAME_MOTE2PC_CRITICAL          = ParserIEC.ParserInfoErrorCritical.SEVERITY_CRITICAL
     SERFRAME_MOTE2PC_SNIFFED_PACKET    = ord('P')
     SERFRAME_MOTE2PC_PRINTF            = ord('F')
-    
+    SERFRAME_MOTE2PC_ACKREPLY          = ord('A')
+
     SERFRAME_PC2MOTE_SETDAGROOT        = ord('R')
     SERFRAME_PC2MOTE_DATA              = ord('D')
     SERFRAME_PC2MOTE_TRIGGERSERIALECHO = ord('S')
