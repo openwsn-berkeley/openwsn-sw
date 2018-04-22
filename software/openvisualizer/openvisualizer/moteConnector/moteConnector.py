@@ -375,6 +375,7 @@ class moteConnector(eventBusClient.eventBusClient):
             self.waitForReply.clear()
             if self.waitForReply.wait(self.timeout):
                 # keep silence if the ACK is received
+                pass
             else:
                 # timeout
                 print "ack is missing !"
