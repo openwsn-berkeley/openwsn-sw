@@ -346,8 +346,6 @@ class moteConnector(eventBusClient.eventBusClient):
                 if not self.busySending:
                     return
             with self.dataLock:
-               self.lastReceived = data[1+2:] # type (1B), moteId (2B)
-
                # wake up other thread
                self.waitForReply.set()
     
@@ -359,25 +357,25 @@ class moteConnector(eventBusClient.eventBusClient):
     #======================== private =========================================
     
     def _sendToMoteProbe(self,dataToSend):
-        try:
-            self.busySending = True
-            dispatcher.send(
-                      sender        = self.name,
-                      signal        = 'fromMoteConnector@'+self.serialport,
-                      data          = ''.join([chr(c) for c in dataToSend])
-            )
-            
-        except socket.error:
-            log.error(err)
-            pass
-        else:
-            # wait for ack
-            self.waitForReply.clear()
-            if self.waitForReply.wait(self.timeout):
-                # keep silence if the ACK is received
+
+        sendDone = False
+        while sendDone is False:
+
+            try:
+                self.busySending = True
+                dispatcher.send(
+                          sender        = self.name,
+                          signal        = 'fromMoteConnector@'+self.serialport,
+                          data          = ''.join([chr(c) for c in dataToSend])
+                )
+                
+            except socket.error:
+                log.error(err)
                 pass
             else:
-                # timeout
-                print "ack is missing !"
+                # wait for ack
+                self.waitForReply.clear()
+                if self.waitForReply.wait(self.timeout):
+                    sendDone = True
 
-            self.busySending = False
+        self.busySending = False
