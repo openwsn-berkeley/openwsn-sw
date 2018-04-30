@@ -9,14 +9,9 @@ log.setLevel(logging.ERROR)
 log.addHandler(logging.NullHandler())
 
 from openvisualizer.eventBus import eventBusClient
+from openvisualizer.openTun  import openTun
 import threading
 import openvisualizer.openvisualizer_utils as u
-
-import os
-import sys
-here = sys.path[0]
-sys.path.insert(0, os.path.join(here,'openvisualizer','openTun'))
-from openTun import IPV6PREFIX, IPV6HOST
 
 #============================ parameters ======================================
 
@@ -544,8 +539,8 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         returnVal += [self.PAGE_ONE_DISPATCH]
 
-        if lowpan['src_addr'][:8] != IPV6PREFIX:
-            compressReference = IPV6PREFIX + IPV6HOST
+        if lowpan['src_addr'][:8] != openTun.IPV6PREFIX:
+            compressReference = openTun.IPV6PREFIX + openTun.IPV6HOST
         else:
             compressReference = lowpan['src_addr']
 
@@ -633,7 +628,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         # ===================== 2. IPinIP 6LoRH ===============================
 
-        if lowpan['src_addr'][:8] != IPV6PREFIX:
+        if lowpan['src_addr'][:8] != openTun.IPV6PREFIX:
             # add RPI
             # TBD
             flag = self.O_FLAG | self.I_FLAG | self.K_FLAG
@@ -644,7 +639,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             returnVal += [self.ELECTIVE_6LoRH | l,self.TYPE_6LoRH_IP_IN_IP]
             returnVal += lowpan['hlim']
 
-            compressReference = IPV6PREFIX + IPV6HOST
+            compressReference = openTun.IPV6PREFIX + openTun.IPV6HOST
         else:
             compressReference = lowpan['src_addr']
 
@@ -679,7 +674,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             sac                  = self.IPHC_SAC_STATELESS
             lowpan['src_addr'] = lowpan['src_addr'][8:]
         else:
-            if lowpan['src_addr'][:8] == IPV6PREFIX:
+            if lowpan['src_addr'][:8] == openTun.IPV6PREFIX:
                 sac                  = self.IPHC_SAC_STATEFUL
                 lowpan['src_addr'] = lowpan['src_addr'][8:]
             else:
@@ -701,7 +696,7 @@ class OpenLbr(eventBusClient.eventBusClient):
             lowpan['dst_addr'] = lowpan['dst_addr'][8:]
         else:
             
-            if lowpan['dst_addr'][:8] == IPV6PREFIX:
+            if lowpan['dst_addr'][:8] == openTun.IPV6PREFIX:
                 dac                  = self.IPHC_DAC_STATEFUL
                 lowpan['dst_addr'] = lowpan['dst_addr'][8:]
             else:
@@ -780,7 +775,7 @@ class OpenLbr(eventBusClient.eventBusClient):
                     pkt_ipv6['hop_limit'] = pkt_lowpan[ptr+2]
                     ptr += 3
                     if length == 1:
-                        pkt_ipv6['src_addr'] = IPV6PREFIX + IPV6HOST
+                        pkt_ipv6['src_addr'] = openTun.IPV6PREFIX + openTun.IPV6HOST
                     elif length == 9:
                         pkt_ipv6['src_addr'] = self.networkPrefix + pkt_lowpan[ptr:ptr+8]
                         ptr += 8
