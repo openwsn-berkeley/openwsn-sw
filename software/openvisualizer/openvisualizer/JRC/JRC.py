@@ -131,7 +131,7 @@ class coapServer(eventBusClient.eventBusClient):
         '''
         Return L2 security key for the network.
         '''
-        return {'index' : self.coapResource.networkKeyIndex, 'value' : self.coapResource.networkKey}
+        return {'index' : [self.coapResource.networkKeyIndex], 'value' : self.coapResource.networkKey}
 
     def _registerDagRoot_notif(self, sender, signal, data):
         # register for the global address of the DAG root
@@ -250,7 +250,7 @@ class joinResource(coapResource.coapResource):
         self.joinedNodes = []
 
         self.networkKey = u.str2buf(binascii.unhexlify('11111111111111111111111111111111')) # value of K1/K2 from 6TiSCH TD
-        self.networkKeyIndex = [0x01] # L2 key index
+        self.networkKeyIndex = 0x01 # L2 key index
 
         # initialize parent class
         coapResource.coapResource.__init__(
@@ -264,7 +264,7 @@ class joinResource(coapResource.coapResource):
         respCode        = d.COAP_RC_2_04_CHANGED
         respOptions     = []
 
-        link_layer_keyset = [u.buf2str(self.networkKeyIndex), u.buf2str(self.networkKey)]
+        link_layer_keyset = [self.networkKeyIndex, u.buf2str(self.networkKey)]
 
         configuration = {}
 
