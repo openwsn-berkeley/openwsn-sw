@@ -26,7 +26,8 @@ import os
 class JRC():
     def __init__(self):
         coapResource = joinResource()
-        self.coapServer = coapServer(coapResource, contextHandler(coapResource).securityContextLookup)
+        #self.coapServer = coapServer(coapResource, contextHandler(coapResource).securityContextLookup)
+        self.coapServer = coapServer(coapResource)
 
     def close(self):
         self.coapServer.close()
@@ -82,7 +83,7 @@ class coapServer(eventBusClient.eventBusClient):
         # We interface this mode with OpenVisualizer to run JRC co-located with the DAG root
         self.coapServer = coap.coap(udpPort=d.DEFAULT_UDP_PORT, testing=True)
         self.coapServer.addResource(coapResource)
-        self.coapServer.addSecurityContextHandler(contextHandler)
+        #self.coapServer.addSecurityContextHandler(contextHandler)
         self.coapServer.maxRetransmit = 1
 
         self.coapClient = None
@@ -249,6 +250,7 @@ class joinResource(coapResource.coapResource):
     def __init__(self):
         self.joinedNodes = []
 
+        #self.networkKey = u.str2buf(os.urandom(16)) # random key every time OpenVisualizer is initialized
         self.networkKey = u.str2buf(binascii.unhexlify('11111111111111111111111111111111')) # value of K1/K2 from 6TiSCH TD
         self.networkKeyIndex = 0x01 # L2 key index
 
@@ -271,12 +273,13 @@ class joinResource(coapResource.coapResource):
         configuration[cojpDefines.COJP_PARAMETERS_LABELS_LLKEYSET]   = link_layer_keyset
         configuration_serialized = cbor.dumps(configuration)
 
-        objectSecurity = oscoap.objectSecurityOptionLookUp(options)
-        assert objectSecurity
         respPayload     = [ord(b) for b in configuration_serialized]
 
-        self.joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid[:8]), # remove last prepended byte
-                        'context' : objectSecurity.context}]
+        #objectSecurity = oscoap.objectSecurityOptionLookUp(options)
+        #assert objectSecurity
+
+        #self.joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid[:8]), # remove last prepended byte
+        #                'context' : objectSecurity.context}]
 
         return (respCode,respOptions,respPayload)
 
