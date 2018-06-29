@@ -628,7 +628,7 @@ class OpenLbr(eventBusClient.eventBusClient):
 
         # ===================== 2. IPinIP 6LoRH ===============================
 
-        if lowpan['src_addr'][:8] != openTun.IPV6PREFIX:
+        if lowpan['src_addr'][:8] != lowpan['dst_addr'][:8]:
             # add RPI
             # TBD
             flag = self.O_FLAG | self.I_FLAG | self.K_FLAG
