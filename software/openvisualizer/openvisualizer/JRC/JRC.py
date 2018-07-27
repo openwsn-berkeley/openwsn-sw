@@ -273,6 +273,9 @@ class joinResource(coapResource.coapResource):
         configuration[cojpDefines.COJP_PARAMETERS_LABELS_LLKEYSET]   = link_layer_keyset
         configuration_serialized = cbor.dumps(configuration)
 
+        contentFormat = o.ContentFormat(cformat=[d.FORMAT_CBOR])
+        respOptions += [contentFormat]
+
         respPayload     = [ord(b) for b in configuration_serialized]
 
         #objectSecurity = oscoap.objectSecurityOptionLookUp(options)
