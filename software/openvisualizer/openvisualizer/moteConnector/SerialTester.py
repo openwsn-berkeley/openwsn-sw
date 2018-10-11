@@ -145,43 +145,40 @@ class SerialTester(eventBusClient.eventBusClient):
             with self.dataLock:
                 self.lastSent = packetToSend[:]
 
-            sendDone = False
-            while sendDone is False: 
-                # send
-                self.dispatch(
-                    signal        = 'fromMoteConnector@'+self.moteProbeSerialPort,
-                    data          = ''.join(
-                        [chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend]
-                    )
+            # send
+            self.dispatch(
+                signal        = 'fromMoteConnector@'+self.moteProbeSerialPort,
+                data          = ''.join(
+                    [chr(OpenParser.OpenParser.SERFRAME_PC2MOTE_TRIGGERSERIALECHO)]+[chr(b) for b in packetToSend]
                 )
-                
-                with self.dataLock:
-                    self.stats['numSent']                 += 1
+            )
+            
+            with self.dataLock:
+                self.stats['numSent']                 += 1
+            
+            # log
+            self._log('--- packet {0}'.format(pktNum))
+            self._log('sent:     {0}'.format(self.formatList(self.lastSent)))
+
+            # wait for answer
+            self.waitForReply.clear()
+            if self.waitForReply.wait(timeout):
                 
                 # log
-                self._log('--- packet {0}'.format(pktNum))
-                self._log('sent:     {0}'.format(self.formatList(self.lastSent)))
-            
-                # wait for answer
-                self.waitForReply.clear()
-                if self.waitForReply.wait(timeout):
-                    
-                    # log
-                    self._log('received: {0}'.format(self.formatList(self.lastReceived)))
-                    
-                    # echo received
-                    with self.dataLock:
-                        if self.lastReceived==self.lastSent:
-                            self.stats['numOk']           += 1
-                            sendDone = True
-                        else:
-                            self.stats['numCorrupted']    += 1
-                            self._log('!! corrupted.')
-                else:
-                    # timeout
-                    with self.dataLock:
-                        self.stats['numTimeout']          += 1
-                        self._log('!! timeout.')
+                self._log('received: {0}'.format(self.formatList(self.lastReceived)))
+
+                # echo received
+                with self.dataLock:
+                    if self.lastReceived==self.lastSent:
+                        self.stats['numOk']           += 1
+                    else:
+                        self.stats['numCorrupted']    += 1
+                        self._log('!! corrupted.')
+            else:
+                # timeout
+                with self.dataLock:
+                    self.stats['numTimeout']          += 1
+                    self._log('!! timeout.')
         
         # I'm not testing
         with self.dataLock:
