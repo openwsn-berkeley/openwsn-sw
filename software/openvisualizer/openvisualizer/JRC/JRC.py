@@ -5,14 +5,14 @@ from   coap   import    coap,                    \
                         coapOption as o,         \
                         coapUtils as u,          \
                         coapObjectSecurity as oscoap
-
-import coseDefines
 import logging.handlers
 try:
     from openvisualizer.eventBus import eventBusClient
     import openvisualizer.openvisualizer_utils
 except ImportError:
     pass
+
+import cojpDefines
 
 log = logging.getLogger('JRC')
 log.setLevel(logging.ERROR)
@@ -26,14 +26,15 @@ import os
 class JRC():
     def __init__(self):
         coapResource = joinResource()
-        self.coapServer = coapServer(coapResource, contextHandler(coapResource).securityContextLookup)
+        #self.coapServer = coapServer(coapResource, contextHandler(coapResource).securityContextLookup)
+        self.coapServer = coapServer(coapResource)
 
     def close(self):
         self.coapServer.close()
 
 # ======================== Security Context Handler =========================
 class contextHandler():
-    MASTERSECRET = binascii.unhexlify('000102030405060708090A0B0C0D0E0F')
+    MASTERSECRET = binascii.unhexlify('DEADBEEFCAFEDEADBEEFCAFEDEADBEEF') # value of the OSCORE Master Secret from 6TiSCH TD
 
     def __init__(self, joinResource):
         self.joinResource = joinResource
@@ -71,7 +72,7 @@ class coapServer(eventBusClient.eventBusClient):
     # link-local prefix
     LINK_LOCAL_PREFIX = [0xfe, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]
 
-    def __init__(self, coapResource, contextHandler):
+    def __init__(self, coapResource, contextHandler=None):
         # log
         log.info("create instance")
 
@@ -82,7 +83,7 @@ class coapServer(eventBusClient.eventBusClient):
         # We interface this mode with OpenVisualizer to run JRC co-located with the DAG root
         self.coapServer = coap.coap(udpPort=d.DEFAULT_UDP_PORT, testing=True)
         self.coapServer.addResource(coapResource)
-        self.coapServer.addSecurityContextHandler(contextHandler)
+        #self.coapServer.addSecurityContextHandler(contextHandler)
         self.coapServer.maxRetransmit = 1
 
         self.coapClient = None
@@ -131,7 +132,7 @@ class coapServer(eventBusClient.eventBusClient):
         '''
         Return L2 security key for the network.
         '''
-        return {'index' : self.coapResource.networkKeyIndex, 'value' : self.coapResource.networkKey}
+        return {'index' : [self.coapResource.networkKeyIndex], 'value' : self.coapResource.networkKey}
 
     def _registerDagRoot_notif(self, sender, signal, data):
         # register for the global address of the DAG root
@@ -249,8 +250,9 @@ class joinResource(coapResource.coapResource):
     def __init__(self):
         self.joinedNodes = []
 
-        self.networkKey = u.str2buf(os.urandom(16)) # random key every time OpenVisualizer is initialized
-        self.networkKeyIndex = [0x01] # L2 key index
+        #self.networkKey = u.str2buf(os.urandom(16)) # random key every time OpenVisualizer is initialized
+        self.networkKey = u.str2buf(binascii.unhexlify('11111111111111111111111111111111')) # value of K1/K2 from 6TiSCH TD
+        self.networkKeyIndex = 0x01 # L2 key index
 
         # initialize parent class
         coapResource.coapResource.__init__(
@@ -258,27 +260,29 @@ class joinResource(coapResource.coapResource):
             path = 'j',
         )
 
-        self.addSecurityBinding((None, [d.METHOD_GET]))  # security context should be returned by the callback
-    
-    def GET(self,options=[]):
-        respCode        = d.COAP_RC_2_05_CONTENT
+        self.addSecurityBinding((None, [d.METHOD_POST]))  # security context should be returned by the callback
+
+    def POST(self,options=[], payload=[]):
+        respCode        = d.COAP_RC_2_04_CHANGED
         respOptions     = []
 
-        k1 = {}
-        k1[coseDefines.KEY_LABEL_KTY]   = coseDefines.KEY_VALUE_SYMMETRIC
-        k1[coseDefines.KEY_LABEL_KID]   = u.buf2str(self.networkKeyIndex)
-        k1[coseDefines.KEY_LABEL_K]     = u.buf2str(self.networkKey)
+        link_layer_keyset = [self.networkKeyIndex, u.buf2str(self.networkKey)]
 
-        join_response = [[k1]]
-        join_response_serialized = cbor.dumps(join_response)
+        configuration = {}
 
-        respPayload     = [ord(b) for b in join_response_serialized]
+        configuration[cojpDefines.COJP_PARAMETERS_LABELS_LLKEYSET]   = link_layer_keyset
+        configuration_serialized = cbor.dumps(configuration)
 
-        objectSecurity = oscoap.objectSecurityOptionLookUp(options)
-        assert objectSecurity
+        contentFormat = o.ContentFormat(cformat=[d.FORMAT_CBOR])
+        respOptions += [contentFormat]
 
-        self.joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid[:8]), # remove last prepended byte
-                        'context' : objectSecurity.context}]
+        respPayload     = [ord(b) for b in configuration_serialized]
+
+        #objectSecurity = oscoap.objectSecurityOptionLookUp(options)
+        #assert objectSecurity
+
+        #self.joinedNodes += [{'eui64' : u.buf2str(objectSecurity.kid[:8]), # remove last prepended byte
+        #                'context' : objectSecurity.context}]
 
         return (respCode,respOptions,respPayload)
 

@@ -123,7 +123,7 @@ def main():
     else:
         serialportname = raw_input('Serial port to connect to: ')
     
-    serialport = (serialportname, moteProbe.BAUDRATE_GINA)
+    serialport = (serialportname, moteProbe.BAUDRATE_LOCAL_BOARD)
     
     # create a moteProbe
     moteProbe_handler = moteProbe.moteProbe(serialport)
