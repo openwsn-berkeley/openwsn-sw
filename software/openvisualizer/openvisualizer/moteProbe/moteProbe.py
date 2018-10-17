@@ -65,7 +65,7 @@ def findSerialPorts(isIotMotes=False):
             portMask = ['/dev/ttyUSB*']
         for mask in portMask :
             serialports += [(s,BAUDRATE_IOTLAB) for s in glob.glob(mask)]
-
+    
     mote_ports = []
 
     if isIotMotes:
@@ -75,15 +75,19 @@ def findSerialPorts(isIotMotes=False):
         # Find all OpenWSN motes that answer to TRIGGERSERIALECHO commands
         for port in serialports:
             probe = moteProbe(serialport=(port[0],BAUDRATE_LOCAL_BOARD))
+            while hasattr(probe, 'serial')==False:
+                pass
             tester = SerialTester(probe.portname)
-            tester.setNumTestPkt(1)
+            tester.setNumTestPkt(3)
             tester.setTimeout(2)
             tester.test(blocking=True)
             if tester.getStats()['numOk'] >= 1:
                 mote_ports.append((port[0],BAUDRATE_LOCAL_BOARD));
             probe.close()
+            while probe.serial.isOpen():
+                pass
             probe.join()
-    
+
     # log
     log.info("discovered following COM port: {0}".format(['{0}@{1}'.format(s[0],s[1]) for s in mote_ports]))
     
@@ -101,6 +105,14 @@ class moteProbe(threading.Thread):
         MODE_EMULATED,
         MODE_IOTLAB,
     ]
+    
+    XOFF           = 0x13
+    XON            = 0x11
+    XONXOFF_ESCAPE = 0x12
+    XONXOFF_MASK   = 0x10
+    # XOFF            is transmitted as [XONXOFF_ESCAPE,           XOFF^XONXOFF_MASK]==[0x12,0x13^0x10]==[0x12,0x03]
+    # XON             is transmitted as [XONXOFF_ESCAPE,            XON^XONXOFF_MASK]==[0x12,0x11^0x10]==[0x12,0x01]
+    # XONXOFF_ESCAPE  is transmitted as [XONXOFF_ESCAPE, XONXOFF_ESCAPE^XONXOFF_MASK]==[0x12,0x12^0x10]==[0x12,0x02]
     
     def __init__(self,serialport=None,emulatedMote=None,iotlabmote=None):
         
@@ -145,8 +157,6 @@ class moteProbe(threading.Thread):
         self.lastRxByte           = self.hdlc.HDLC_FLAG
         self.busyReceiving        = False
         self.inputBuf             = ''
-        self.outputBuf            = []
-        self.outputBufLock        = threading.RLock()
         self.dataLock             = threading.Lock()
         # flag to permit exit from read loop
         self.goOn                 = True
@@ -164,7 +174,7 @@ class moteProbe(threading.Thread):
         
         # connect to dispatcher
         dispatcher.connect(
-            self._bufferDataToSend,
+            self._sendData,
             signal = 'fromMoteConnector@'+self.portname,
         )
     
@@ -184,7 +194,7 @@ class moteProbe(threading.Thread):
                 log.info("open port {0}".format(self.portname))
                 
                 if   self.mode==self.MODE_SERIAL:
-                    self.serial = serial.Serial(self.serialport,self.baudrate,timeout=1,rtscts=False,dsrdtr=False)
+                    self.serial = serial.Serial(self.serialport,self.baudrate,timeout=1,xonxoff=True,rtscts=False,dsrdtr=False)
                 elif self.mode==self.MODE_EMULATED:
                     self.serial = self.emulatedMote.bspUart
                 elif self.mode==self.MODE_IOTLAB:
@@ -221,15 +231,16 @@ class moteProbe(threading.Thread):
                                 if log.isEnabledFor(logging.DEBUG):
                                     log.debug("{0}: start of hdlc frame {1} {2}".format(self.name, u.formatStringBuf(self.hdlc.HDLC_FLAG), u.formatStringBuf(rxByte)))
                                 self.busyReceiving       = True
+                                self.xonxoffEscaping     = False
                                 self.inputBuf            = self.hdlc.HDLC_FLAG
-                                self.inputBuf           += rxByte
+                                self._addToInputBuf(rxByte)
                             elif    (
                                         self.busyReceiving                   and
                                         rxByte!=self.hdlc.HDLC_FLAG
                                     ):
                                 # middle of frame
                                 
-                                self.inputBuf           += rxByte
+                                self._addToInputBuf(rxByte)
                             elif    (
                                         self.busyReceiving                   and
                                         rxByte==self.hdlc.HDLC_FLAG
@@ -238,30 +249,22 @@ class moteProbe(threading.Thread):
                                 if log.isEnabledFor(logging.DEBUG):
                                     log.debug("{0}: end of hdlc frame {1} ".format(self.name, u.formatStringBuf(rxByte)))
                                 self.busyReceiving       = False
-                                self.inputBuf           += rxByte
+                                self._addToInputBuf(rxByte)
                                 
                                 try:
                                     tempBuf = self.inputBuf
-                                    with open(socket.gethostname()+'.log','a') as f:
-                                        f.write(self.inputBuf)
                                     self.inputBuf        = self.hdlc.dehdlcify(self.inputBuf)
                                     if log.isEnabledFor(logging.DEBUG):
                                         log.debug("{0}: {2} dehdlcized input: {1}".format(self.name, u.formatStringBuf(self.inputBuf), u.formatStringBuf(tempBuf)))
                                 except OpenHdlc.HdlcException as err:
                                     log.warning('{0}: invalid serial frame: {2} {1}'.format(self.name, err, u.formatStringBuf(tempBuf)))
                                 else:
-                                    if self.inputBuf==chr(OpenParser.OpenParser.SERFRAME_MOTE2PC_REQUEST):
-                                        with self.outputBufLock:
-                                            if self.outputBuf:
-                                                outputToWrite = self.outputBuf.pop(0)
-                                                self.serial.write(outputToWrite)
-                                    else:
-                                        # dispatch
-                                        dispatcher.send(
-                                            sender        = self.name,
-                                            signal        = 'fromMoteProbe@'+self.portname,
-                                            data          = [ord(c) for c in self.inputBuf],
-                                        )
+                                    # dispatch
+                                    dispatcher.send(
+                                        sender        = self.name,
+                                        signal        = 'fromMoteProbe@'+self.portname,
+                                        data          = [ord(c) for c in self.inputBuf],
+                                    )
                             
                             self.lastRxByte = rxByte
                         
@@ -291,7 +294,17 @@ class moteProbe(threading.Thread):
     
     #======================== private =========================================
     
-    def _bufferDataToSend(self,data):
+    def _addToInputBuf(self,byte):
+        if byte==chr(self.XONXOFF_ESCAPE):
+            self.xonxoffEscaping = True
+        else:
+            if self.xonxoffEscaping==True:
+                self.inputBuf += chr(ord(byte)^self.XONXOFF_MASK)
+                self.xonxoffEscaping=False
+            else:
+                self.inputBuf += byte
+    
+    def _sendData(self,data):
         
         # abort for IoT-LAB
         if self.mode==self.MODE_IOTLAB:
@@ -300,6 +313,5 @@ class moteProbe(threading.Thread):
         # frame with HDLC
         hdlcData = self.hdlc.hdlcify(data)
         
-        # add to outputBuf
-        with self.outputBufLock:
-            self.outputBuf += [hdlcData]
+        # write to serial
+        self.serial.write(hdlcData)

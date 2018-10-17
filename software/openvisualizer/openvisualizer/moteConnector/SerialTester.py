@@ -134,15 +134,17 @@ class SerialTester(eventBusClient.eventBusClient):
         self._resetStats()
         
         # send packets and collect stats
-        for i in range(numTestPkt):
+        for pktNum in range(numTestPkt):
             
             # prepare random packet to send
             packetToSend = [random.randint(0x00,0xff) for _ in range(testPktLen)]
+            #packetToSend = [i+1 for i in range(testPktLen)]
+            #packetToSend = [0x00]*testPktLen
             
             # remember as last sent packet
             with self.dataLock:
                 self.lastSent = packetToSend[:]
-            
+
             # send
             self.dispatch(
                 signal        = 'fromMoteConnector@'+self.moteProbeSerialPort,
@@ -155,15 +157,16 @@ class SerialTester(eventBusClient.eventBusClient):
                 self.stats['numSent']                 += 1
             
             # log
+            self._log('--- packet {0}'.format(pktNum))
             self._log('sent:     {0}'.format(self.formatList(self.lastSent)))
-            
+
             # wait for answer
             self.waitForReply.clear()
             if self.waitForReply.wait(timeout):
                 
                 # log
                 self._log('received: {0}'.format(self.formatList(self.lastReceived)))
-                
+
                 # echo received
                 with self.dataLock:
                     if self.lastReceived==self.lastSent:

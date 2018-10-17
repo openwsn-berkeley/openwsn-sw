@@ -143,7 +143,6 @@ class ParserStatus(Parser.Parser):
                                         'lastUsedAsn_4',             # B
                                         'lastUsedAsn_2_3',           # H
                                         'lastUsedAsn_0_1',           # H
-
                                     ],
                                 )
         self._addFieldsParser   (
