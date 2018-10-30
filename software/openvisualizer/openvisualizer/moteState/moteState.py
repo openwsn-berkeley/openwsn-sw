@@ -275,6 +275,7 @@ class StateNeighborsRow(StateElem):
         self.data[0]['sixtopSeqNum']             = notif.sixtopSeqNum
         self.data[0]['backoffExponent']          = notif.backoffExponent
         self.data[0]['backoff']                  = notif.backoff
+        self.data[0]['radioType']                = notif.radioType
 
 class StateIsSync(StateElem):
     

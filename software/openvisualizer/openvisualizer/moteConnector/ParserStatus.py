@@ -189,7 +189,7 @@ class ParserStatus(Parser.Parser):
                                     3,
                                     9,
                                     'NeighborsRow',
-                                    '<BBBBBBBQQHbBBBBBHHBBBBBB',
+                                    '<BBBBBBBQQHbBBBBBHHBBBBBBB',
                                     [
                                         'row',                       # B
                                         'used',                      # B
@@ -215,6 +215,7 @@ class ParserStatus(Parser.Parser):
                                         'sixtopSeqNum',              # B
                                         'backoffExponent',           # B
                                         'backoff',                   # B
+                                        'radioType',                 # B
                                     ],
                                 )
         self._addFieldsParser   (   
